@@ -7,14 +7,12 @@ package config // import "irmin-connectors/connectors/linear/config"
 Package config declares Linear's DynamicField schema and the ConnectorDetails
 payload served from the /info endpoint.
 
-Auth is **OAuth 2.1 with Dynamic Client Registration** against Linear's MCP
-OAuth server (https://mcp.linear.app). Per the OAuth roadmap (Phase 4),
-this is the first real connector that exercises the DCR path end-to-end
-— there is no admin-configured static OAuth app per environment, so the
-connector ships with no `details` form fields. The user clicks Connect,
-Core creates a per-workspace OAuth client via DCR, the user approves the grant,
-and the connector authenticates every vendor call from that point on with a
-transparently-refreshed bearer token resolved from Core at request time.
+Auth is OAuth 2.1 with Dynamic Client Registration against Linear's MCP OAuth
+server (https://mcp.linear.app). There is no admin- configured static OAuth
+app per environment, so the connector ships with no `details` form fields:
+the user clicks Connect, Core creates a per-workspace OAuth client via DCR,
+the user approves the grant, and every vendor call from that point on uses a
+transparently- refreshed bearer token resolved from Core at request time.
 
 FUNCTIONS
 
@@ -48,16 +46,9 @@ func GetRequiredFields() []string
     empty slice; the helper exists so the OperationConfigProvider contract
     (GetOperationFormFields) is met uniformly with sibling connectors.
 
-func GetRequiredSettingsFields() []string
-    GetRequiredSettingsFields returns only required settings field names (none
-    today).
-
 func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
     GetSettingsFieldDefinitions returns the per-Connection settings. Settings
     are user-tunable knobs that don't carry auth material.
-
-func GetSettingsFields() []string
-    GetSettingsFields returns every settings field name.
 
 </pre>
 </body></html>

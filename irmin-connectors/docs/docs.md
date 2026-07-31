@@ -63,7 +63,7 @@ import "irmin-connectors/connectors"
 
 
 <a name="RegisterAllConnectors"></a>
-## func [RegisterAllConnectors](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/connectors.go#L48-L53>)
+## func RegisterAllConnectors
 
 ```go
 func RegisterAllConnectors(ctx context.Context, database *db.Database, logger *slog.Logger, apiBaseURL, apiToken, url string) error
@@ -72,7 +72,7 @@ func RegisterAllConnectors(ctx context.Context, database *db.Database, logger *s
 RegisterAllConnectors registers all connectors.
 
 <a name="SetupConnectorRoutes"></a>
-## func [SetupConnectorRoutes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/connectors.go#L22>)
+## func SetupConnectorRoutes
 
 ```go
 func SetupConnectorRoutes(app *models.ConnectorsApp)
@@ -81,7 +81,7 @@ func SetupConnectorRoutes(app *models.ConnectorsApp)
 SetupConnectorRoutes sets up the routes for all connectors.
 
 <a name="SetupListenerManager"></a>
-## func [SetupListenerManager](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/connectors.go#L36>)
+## func SetupListenerManager
 
 ```go
 func SetupListenerManager(logger *slog.Logger, database *db.Database) *listeners.Manager
@@ -167,7 +167,7 @@ var ErrLockNotHeld = errors.New("advisory lock not held by current session")
 ```
 
 <a name="LockKeyTx"></a>
-## func [LockKeyTx](<https://github.com/IrminData/irmin-connectors/blob/main/db/lock.go#L14>)
+## func LockKeyTx
 
 ```go
 func LockKeyTx(tx *gorm.DB, key string) error
@@ -176,7 +176,7 @@ func LockKeyTx(tx *gorm.DB, key string) error
 LockKeyTx takes a namespaced key and grabs a 64\-bit transactional advisory lock.
 
 <a name="LockOperationCreation"></a>
-## func [LockOperationCreation](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_locks.go#L14>)
+## func LockOperationCreation
 
 ```go
 func LockOperationCreation(tx *gorm.DB, connectorName, configHash string) error
@@ -187,7 +187,7 @@ LockOperationCreation acquires a transaction\-scoped advisory lock for operation
 The lock is automatically released when the transaction commits or rolls back.
 
 <a name="TryLockKey"></a>
-## func [TryLockKey](<https://github.com/IrminData/irmin-connectors/blob/main/db/lock.go#L24>)
+## func TryLockKey
 
 ```go
 func TryLockKey(db *gorm.DB, key string) (bool, error)
@@ -196,7 +196,7 @@ func TryLockKey(db *gorm.DB, key string) (bool, error)
 TryLockKey attempts to acquire a session\-scoped advisory lock without blocking. Returns true if the lock was acquired, false if it's already held by another session. The lock must be explicitly released with UnlockKey.
 
 <a name="TryLockOperationExecution"></a>
-## func [TryLockOperationExecution](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_locks.go#L33>)
+## func TryLockOperationExecution
 
 ```go
 func TryLockOperationExecution(db *gorm.DB, operationID uint) (bool, error)
@@ -209,7 +209,7 @@ The lock must be explicitly released with UnlockOperationExecution.
 Deprecated: TryLockOperationExecution \+ UnlockOperationExecution is pool\-unsafe — the pool may route the unlock Raw\(\) call to a different session than the one that took the lock, silently leaking the advisory lock until the original conn is closed. Use the common.JobManager.Begin / OperationGuard.Release pair instead, which pins a single session via WithSessionLock for the full operation lifetime. Kept for one release so out\-of\-tree callers have a deprecation window.
 
 <a name="UnlockKey"></a>
-## func [UnlockKey](<https://github.com/IrminData/irmin-connectors/blob/main/db/lock.go#L38>)
+## func UnlockKey
 
 ```go
 func UnlockKey(db *gorm.DB, key string) error
@@ -218,7 +218,7 @@ func UnlockKey(db *gorm.DB, key string) error
 UnlockKey releases a session\-scoped advisory lock. Returns ErrLockNotHeld if the lock was not held by the current session.
 
 <a name="UnlockOperationExecution"></a>
-## func [UnlockOperationExecution](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_locks.go#L42>)
+## func UnlockOperationExecution
 
 ```go
 func UnlockOperationExecution(db *gorm.DB, operationID uint) error
@@ -229,7 +229,7 @@ UnlockOperationExecution releases a session\-scoped advisory lock for operation 
 Deprecated: see TryLockOperationExecution for the rationale. Use common.JobManager.Begin / OperationGuard.Release instead.
 
 <a name="WithOperationExecutionLock"></a>
-## func [WithOperationExecutionLock](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_locks.go#L51>)
+## func WithOperationExecutionLock
 
 ```go
 func WithOperationExecutionLock(db *gorm.DB, operationID uint, fn func(conn *gorm.DB) error) (bool, error)
@@ -238,7 +238,7 @@ func WithOperationExecutionLock(db *gorm.DB, operationID uint, fn func(conn *gor
 WithOperationExecutionLock acquires a session\-scoped execution lock for the operation, runs fn, then releases the lock — all on the same pinned database connection. Returns \(true, err\) if the lock was acquired and fn was executed. Returns \(false, nil\) if the operation is already being executed by another session.
 
 <a name="WithSessionLock"></a>
-## func [WithSessionLock](<https://github.com/IrminData/irmin-connectors/blob/main/db/lock.go#L58>)
+## func WithSessionLock
 
 ```go
 func WithSessionLock(db *gorm.DB, key string, fn func(conn *gorm.DB) error) (bool, error)
@@ -247,7 +247,7 @@ func WithSessionLock(db *gorm.DB, key string, fn func(conn *gorm.DB) error) (boo
 WithSessionLock pins a database connection, acquires a session\-scoped advisory lock, runs the provided function, then releases the lock — all on the same session. Returns \(true, err\) if the lock was acquired and fn was executed. Returns \(false, nil\) if the lock is already held by another session.
 
 <a name="ConnectorRegistration"></a>
-## type [ConnectorRegistration](<https://github.com/IrminData/irmin-connectors/blob/main/db/connector_registrations.go#L14-L20>)
+## type ConnectorRegistration
 
 ConnectorRegistration represents a record associating a system token with a connector.
 
@@ -262,7 +262,7 @@ type ConnectorRegistration struct {
 ```
 
 <a name="Database"></a>
-## type [Database](<https://github.com/IrminData/irmin-connectors/blob/main/db/db.go#L18-L21>)
+## type Database
 
 Database represents a database connection and its operations. It now shares a single underlying pgxpool for both GORM and direct pgx access.
 
@@ -274,7 +274,7 @@ type Database struct {
 ```
 
 <a name="InitialiseDB"></a>
-### func [InitialiseDB](<https://github.com/IrminData/irmin-connectors/blob/main/db/db.go#L41>)
+### func InitialiseDB
 
 ```go
 func InitialiseDB(ctx context.Context, runMigrations bool) (*Database, error)
@@ -283,7 +283,7 @@ func InitialiseDB(ctx context.Context, runMigrations bool) (*Database, error)
 InitialiseDB establishes a Postgres database connection, performs any necessary migrations, and returns an error if something goes wrong.
 
 <a name="Database.Close"></a>
-### func \(\*Database\) [Close](<https://github.com/IrminData/irmin-connectors/blob/main/db/db.go#L111>)
+### func \(\*Database\) Close
 
 ```go
 func (d *Database) Close()
@@ -292,7 +292,7 @@ func (d *Database) Close()
 Close closes the shared database connection pool.
 
 <a name="Database.CreateConnectorRegistration"></a>
-### func \(\*Database\) [CreateConnectorRegistration](<https://github.com/IrminData/irmin-connectors/blob/main/db/connector_registrations.go#L23>)
+### func \(\*Database\) CreateConnectorRegistration
 
 ```go
 func (d *Database) CreateConnectorRegistration(registration *ConnectorRegistration) (*ConnectorRegistration, error)
@@ -301,7 +301,7 @@ func (d *Database) CreateConnectorRegistration(registration *ConnectorRegistrati
 CreateConnectorRegistration inserts a new ConnectorRegistration record into the database.
 
 <a name="Database.CreateOperation"></a>
-### func \(\*Database\) [CreateOperation](<https://github.com/IrminData/irmin-connectors/blob/main/db/operations.go#L33>)
+### func \(\*Database\) CreateOperation
 
 ```go
 func (d *Database) CreateOperation(operation *Operation) (*Operation, error)
@@ -310,7 +310,7 @@ func (d *Database) CreateOperation(operation *Operation) (*Operation, error)
 CreateOperation inserts a new Operation record into the database.
 
 <a name="Database.CreateOperationJob"></a>
-### func \(\*Database\) [CreateOperationJob](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_jobs.go#L110>)
+### func \(\*Database\) CreateOperationJob
 
 ```go
 func (d *Database) CreateOperationJob(job *OperationJob) (*OperationJob, error)
@@ -319,7 +319,7 @@ func (d *Database) CreateOperationJob(job *OperationJob) (*OperationJob, error)
 CreateOperationJob inserts a new OperationJob record. Returns the record \(with zero\-value timestamps filled in by GORM\) so callers can surface CreatedAt on the accept\-path response without a re\-read.
 
 <a name="Database.CreateOperationLog"></a>
-### func \(\*Database\) [CreateOperationLog](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_logs.go#L32>)
+### func \(\*Database\) CreateOperationLog
 
 ```go
 func (d *Database) CreateOperationLog(operationLog *OperationLog) (*OperationLog, error)
@@ -328,7 +328,7 @@ func (d *Database) CreateOperationLog(operationLog *OperationLog) (*OperationLog
 CreateOperationLog inserts a new OperationLog record into the database.
 
 <a name="Database.CreateSubscription"></a>
-### func \(\*Database\) [CreateSubscription](<https://github.com/IrminData/irmin-connectors/blob/main/db/subscriptions.go#L41>)
+### func \(\*Database\) CreateSubscription
 
 ```go
 func (d *Database) CreateSubscription(subscription *Subscription) (*Subscription, error)
@@ -337,7 +337,7 @@ func (d *Database) CreateSubscription(subscription *Subscription) (*Subscription
 CreateSubscription inserts a new Subscription record into the database.
 
 <a name="Database.DeleteConnectorRegistration"></a>
-### func \(\*Database\) [DeleteConnectorRegistration](<https://github.com/IrminData/irmin-connectors/blob/main/db/connector_registrations.go#L71>)
+### func \(\*Database\) DeleteConnectorRegistration
 
 ```go
 func (d *Database) DeleteConnectorRegistration(id uint) error
@@ -346,7 +346,7 @@ func (d *Database) DeleteConnectorRegistration(id uint) error
 DeleteConnectorRegistration removes the record with the specified ID from the database.
 
 <a name="Database.DeleteExpiredOperationJobs"></a>
-### func \(\*Database\) [DeleteExpiredOperationJobs](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_jobs.go#L214>)
+### func \(\*Database\) DeleteExpiredOperationJobs
 
 ```go
 func (d *Database) DeleteExpiredOperationJobs(now time.Time) (int64, error)
@@ -355,7 +355,7 @@ func (d *Database) DeleteExpiredOperationJobs(now time.Time) (int64, error)
 DeleteExpiredOperationJobs removes all rows whose ExpiresAt is in the past. Returns the number of rows deleted so the janitor can log a meaningful number. The result file is NOT deleted here — the janitor handles filesystem cleanup separately \(it reads ResultPath first, then calls this\).
 
 <a name="Database.DeleteOperation"></a>
-### func \(\*Database\) [DeleteOperation](<https://github.com/IrminData/irmin-connectors/blob/main/db/operations.go#L69>)
+### func \(\*Database\) DeleteOperation
 
 ```go
 func (d *Database) DeleteOperation(id uint) error
@@ -364,7 +364,7 @@ func (d *Database) DeleteOperation(id uint) error
 DeleteOperation removes the record with the specified ID from the database.
 
 <a name="Database.DeleteSubscriptionByID"></a>
-### func \(\*Database\) [DeleteSubscriptionByID](<https://github.com/IrminData/irmin-connectors/blob/main/db/subscriptions.go#L74>)
+### func \(\*Database\) DeleteSubscriptionByID
 
 ```go
 func (d *Database) DeleteSubscriptionByID(id uint) error
@@ -373,7 +373,7 @@ func (d *Database) DeleteSubscriptionByID(id uint) error
 DeleteSubscriptionByID removes a subscription by its ID.
 
 <a name="Database.DeleteSubscriptionsByConnectorRegistrationID"></a>
-### func \(\*Database\) [DeleteSubscriptionsByConnectorRegistrationID](<https://github.com/IrminData/irmin-connectors/blob/main/db/subscriptions.go#L57>)
+### func \(\*Database\) DeleteSubscriptionsByConnectorRegistrationID
 
 ```go
 func (d *Database) DeleteSubscriptionsByConnectorRegistrationID(connectorRegistrationID uint) error
@@ -382,7 +382,7 @@ func (d *Database) DeleteSubscriptionsByConnectorRegistrationID(connectorRegistr
 DeleteSubscriptionsByConnectorRegistrationID removes all subscriptions associated with the specified connector registration ID.
 
 <a name="Database.DeleteSubscriptionsByOperationID"></a>
-### func \(\*Database\) [DeleteSubscriptionsByOperationID](<https://github.com/IrminData/irmin-connectors/blob/main/db/subscriptions.go#L49>)
+### func \(\*Database\) DeleteSubscriptionsByOperationID
 
 ```go
 func (d *Database) DeleteSubscriptionsByOperationID(operationID uint) error
@@ -391,7 +391,7 @@ func (d *Database) DeleteSubscriptionsByOperationID(operationID uint) error
 DeleteSubscriptionsByOperationID removes all subscriptions associated with the specified operation ID.
 
 <a name="Database.FindActiveOperationJob"></a>
-### func \(\*Database\) [FindActiveOperationJob](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_jobs.go#L151>)
+### func \(\*Database\) FindActiveOperationJob
 
 ```go
 func (d *Database) FindActiveOperationJob(operationID uint) (*OperationJob, error)
@@ -404,7 +404,7 @@ Used by the 409 path: when Begin fails to acquire the lock we surface the blocki
 Multiple active rows shouldn't happen in practice — Begin takes the advisory lock before creating the row — but if the DB is in a weird state we pick the most recently created one so the operator can find the live worker.
 
 <a name="Database.FindOperationByConfigHash"></a>
-### func \(\*Database\) [FindOperationByConfigHash](<https://github.com/IrminData/irmin-connectors/blob/main/db/operations.go#L78-L81>)
+### func \(\*Database\) FindOperationByConfigHash
 
 ```go
 func (d *Database) FindOperationByConfigHash(connectorRegistrationID uint, configHash *string) (*Operation, error)
@@ -413,7 +413,7 @@ func (d *Database) FindOperationByConfigHash(connectorRegistrationID uint, confi
 FindOperationByConfigHash retrieves an Operation record matching the connector registration ID and configuration hash using the main database connection.
 
 <a name="Database.GetAllConnectorRegistrations"></a>
-### func \(\*Database\) [GetAllConnectorRegistrations](<https://github.com/IrminData/irmin-connectors/blob/main/db/connector_registrations.go#L31>)
+### func \(\*Database\) GetAllConnectorRegistrations
 
 ```go
 func (d *Database) GetAllConnectorRegistrations() ([]ConnectorRegistration, error)
@@ -422,7 +422,7 @@ func (d *Database) GetAllConnectorRegistrations() ([]ConnectorRegistration, erro
 GetAllConnectorRegistrations retrieves all ConnectorRegistration records from the database.
 
 <a name="Database.GetAllOperations"></a>
-### func \(\*Database\) [GetAllOperations](<https://github.com/IrminData/irmin-connectors/blob/main/db/operations.go#L41>)
+### func \(\*Database\) GetAllOperations
 
 ```go
 func (d *Database) GetAllOperations() ([]Operation, error)
@@ -431,7 +431,7 @@ func (d *Database) GetAllOperations() ([]Operation, error)
 GetAllOperations retrieves all Operation records from the database.
 
 <a name="Database.GetAllSubscriptions"></a>
-### func \(\*Database\) [GetAllSubscriptions](<https://github.com/IrminData/irmin-connectors/blob/main/db/subscriptions.go#L32>)
+### func \(\*Database\) GetAllSubscriptions
 
 ```go
 func (d *Database) GetAllSubscriptions() ([]Subscription, error)
@@ -440,7 +440,7 @@ func (d *Database) GetAllSubscriptions() ([]Subscription, error)
 GetAllSubscriptions retrieves all Subscription records from the database.
 
 <a name="Database.GetConnectorRegistrationByConnectorName"></a>
-### func \(\*Database\) [GetConnectorRegistrationByConnectorName](<https://github.com/IrminData/irmin-connectors/blob/main/db/connector_registrations.go#L50>)
+### func \(\*Database\) GetConnectorRegistrationByConnectorName
 
 ```go
 func (d *Database) GetConnectorRegistrationByConnectorName(name string) (*ConnectorRegistration, error)
@@ -449,7 +449,7 @@ func (d *Database) GetConnectorRegistrationByConnectorName(name string) (*Connec
 GetConnectorRegistrationByConnectorName retrieves a ConnectorRegistration record from the database by the name of the connector.
 
 <a name="Database.GetConnectorRegistrationByID"></a>
-### func \(\*Database\) [GetConnectorRegistrationByID](<https://github.com/IrminData/irmin-connectors/blob/main/db/connector_registrations.go#L41>)
+### func \(\*Database\) GetConnectorRegistrationByID
 
 ```go
 func (d *Database) GetConnectorRegistrationByID(id uint) (*ConnectorRegistration, error)
@@ -458,7 +458,7 @@ func (d *Database) GetConnectorRegistrationByID(id uint) (*ConnectorRegistration
 GetConnectorRegistrationByID retrieves a ConnectorRegistration record from the database by ID. This includes soft\-deleted connector registrations.
 
 <a name="Database.GetConnectorRegistrationsByConnectorName"></a>
-### func \(\*Database\) [GetConnectorRegistrationsByConnectorName](<https://github.com/IrminData/irmin-connectors/blob/main/db/connector_registrations.go#L62>)
+### func \(\*Database\) GetConnectorRegistrationsByConnectorName
 
 ```go
 func (d *Database) GetConnectorRegistrationsByConnectorName(name string) ([]ConnectorRegistration, error)
@@ -467,7 +467,7 @@ func (d *Database) GetConnectorRegistrationsByConnectorName(name string) ([]Conn
 GetConnectorRegistrationsByConnectorName retrieves all ConnectorRegistration records from the database by the name of the connector.
 
 <a name="Database.GetOperationByID"></a>
-### func \(\*Database\) [GetOperationByID](<https://github.com/IrminData/irmin-connectors/blob/main/db/operations.go#L51>)
+### func \(\*Database\) GetOperationByID
 
 ```go
 func (d *Database) GetOperationByID(id uint) (*Operation, error)
@@ -476,7 +476,7 @@ func (d *Database) GetOperationByID(id uint) (*Operation, error)
 GetOperationByID retrieves an Operation record from the database by ID. This includes soft\-deleted operations.
 
 <a name="Database.GetOperationJob"></a>
-### func \(\*Database\) [GetOperationJob](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_jobs.go#L124>)
+### func \(\*Database\) GetOperationJob
 
 ```go
 func (d *Database) GetOperationJob(jobID string) (*OperationJob, error)
@@ -485,7 +485,7 @@ func (d *Database) GetOperationJob(jobID string) (*OperationJob, error)
 GetOperationJob fetches a job by its opaque JobID. Returns \(nil, nil\) when no row matches — callers decide whether that's a 404 \(unknown job\) or a 410 \(expired \+ already reaped\); the janitor deletes expired rows, so the distinction is made at the handler level by consulting a seen\-job cache we do not maintain here. The server\-side choice is "treat missing as 404"; a real 410 requires a tombstone row, which is a deliberate non\-goal of this phase.
 
 <a name="Database.GetOperationsByConnectorRegistrationID"></a>
-### func \(\*Database\) [GetOperationsByConnectorRegistrationID](<https://github.com/IrminData/irmin-connectors/blob/main/db/operations.go#L60>)
+### func \(\*Database\) GetOperationsByConnectorRegistrationID
 
 ```go
 func (d *Database) GetOperationsByConnectorRegistrationID(id uint) ([]Operation, error)
@@ -494,7 +494,7 @@ func (d *Database) GetOperationsByConnectorRegistrationID(id uint) ([]Operation,
 GetOperationsByConnectorRegistrationID retrieves all Operation records from the database by associated connector registration ID.
 
 <a name="Database.GetPgxConn"></a>
-### func \(\*Database\) [GetPgxConn](<https://github.com/IrminData/irmin-connectors/blob/main/db/db.go#L118>)
+### func \(\*Database\) GetPgxConn
 
 ```go
 func (d *Database) GetPgxConn(ctx context.Context) (*pgxpool.Conn, error)
@@ -503,7 +503,7 @@ func (d *Database) GetPgxConn(ctx context.Context) (*pgxpool.Conn, error)
 GetPgxConn returns a pgx connection from the shared pool.
 
 <a name="Database.GetSubscriptionByID"></a>
-### func \(\*Database\) [GetSubscriptionByID](<https://github.com/IrminData/irmin-connectors/blob/main/db/subscriptions.go#L65>)
+### func \(\*Database\) GetSubscriptionByID
 
 ```go
 func (d *Database) GetSubscriptionByID(id uint) (*Subscription, error)
@@ -512,7 +512,7 @@ func (d *Database) GetSubscriptionByID(id uint) (*Subscription, error)
 GetSubscriptionByID retrieves a Subscription by its ID.
 
 <a name="Database.GetSubscriptionsByOperationID"></a>
-### func \(\*Database\) [GetSubscriptionsByOperationID](<https://github.com/IrminData/irmin-connectors/blob/main/db/subscriptions.go#L23>)
+### func \(\*Database\) GetSubscriptionsByOperationID
 
 ```go
 func (d *Database) GetSubscriptionsByOperationID(operationID uint) ([]Subscription, error)
@@ -521,7 +521,7 @@ func (d *Database) GetSubscriptionsByOperationID(operationID uint) ([]Subscripti
 GetSubscriptionsByOperationID retrieves all Subscription records for a specific operation.
 
 <a name="Database.ListExpiredOperationJobs"></a>
-### func \(\*Database\) [ListExpiredOperationJobs](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_jobs.go#L226>)
+### func \(\*Database\) ListExpiredOperationJobs
 
 ```go
 func (d *Database) ListExpiredOperationJobs(now time.Time) ([]OperationJob, error)
@@ -530,7 +530,7 @@ func (d *Database) ListExpiredOperationJobs(now time.Time) ([]OperationJob, erro
 ListExpiredOperationJobs returns the jobs whose ExpiresAt is in the past, without deleting them. Used by the janitor to know which ResultPath files to unlink before issuing DeleteExpiredOperationJobs.
 
 <a name="Database.ListStuckOperationJobs"></a>
-### func \(\*Database\) [ListStuckOperationJobs](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_jobs.go#L249>)
+### func \(\*Database\) ListStuckOperationJobs
 
 ```go
 func (d *Database) ListStuckOperationJobs(threshold time.Time) ([]OperationJob, error)
@@ -541,7 +541,7 @@ ListStuckOperationJobs returns jobs still in a non\-terminal status \(pending / 
 The caller is expected to probe the operation's advisory lock before actually reclaiming the row, so a slow\-but\-alive worker \(e.g., one caught in a long network call with the heartbeat goroutine wedged\) is not falsely killed.
 
 <a name="Database.Migrate"></a>
-### func \(\*Database\) [Migrate](<https://github.com/IrminData/irmin-connectors/blob/main/db/db.go#L134>)
+### func \(\*Database\) Migrate
 
 ```go
 func (d *Database) Migrate() error
@@ -550,7 +550,7 @@ func (d *Database) Migrate() error
 Migrate runs the auto migration calls in the correct order. It separates the migrations into groups based on model dependencies.
 
 <a name="Database.Reset"></a>
-### func \(\*Database\) [Reset](<https://github.com/IrminData/irmin-connectors/blob/main/db/db.go#L189>)
+### func \(\*Database\) Reset
 
 ```go
 func (d *Database) Reset() error
@@ -559,7 +559,7 @@ func (d *Database) Reset() error
 Reset drops all tables to start fresh.
 
 <a name="Database.RunRawQuery"></a>
-### func \(\*Database\) [RunRawQuery](<https://github.com/IrminData/irmin-connectors/blob/main/db/db.go#L204>)
+### func \(\*Database\) RunRawQuery
 
 ```go
 func (d *Database) RunRawQuery(sqlQuery string, args ...any) error
@@ -568,7 +568,7 @@ func (d *Database) RunRawQuery(sqlQuery string, args ...any) error
 RunRawQuery executes a raw SQL query against the database.
 
 <a name="Database.UpdateOperationJobProgress"></a>
-### func \(\*Database\) [UpdateOperationJobProgress](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_jobs.go#L200>)
+### func \(\*Database\) UpdateOperationJobProgress
 
 ```go
 func (d *Database) UpdateOperationJobProgress(jobID string, progressJSON []byte) error
@@ -577,7 +577,7 @@ func (d *Database) UpdateOperationJobProgress(jobID string, progressJSON []byte)
 UpdateOperationJobProgress replaces the Progress JSON column for a job. Writers serialise the in\-memory slice before calling this, so there is no rows\-level race — the worker owns the authoritative copy and persists it after each append.
 
 <a name="Database.UpdateOperationJobStatus"></a>
-### func \(\*Database\) [UpdateOperationJobStatus](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_jobs.go#L169-L175>)
+### func \(\*Database\) UpdateOperationJobStatus
 
 ```go
 func (d *Database) UpdateOperationJobStatus(jobID string, status string, errMsg *string, resultPath *string, expiresAt *time.Time) error
@@ -586,7 +586,7 @@ func (d *Database) UpdateOperationJobStatus(jobID string, status string, errMsg 
 UpdateOperationJobStatus sets the Status column \(and optionally Error / ResultPath / ExpiresAt\) for a job. Uses a column\-scoped Updates\(\) call so concurrent Progress appends from the worker goroutine don't race — GORM serialises the single\-column write at the SQL level.
 
 <a name="Database.WithOperationExecutionLock"></a>
-### func \(\*Database\) [WithOperationExecutionLock](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_locks.go#L62-L65>)
+### func \(\*Database\) WithOperationExecutionLock
 
 ```go
 func (d *Database) WithOperationExecutionLock(operationID uint, fn func(conn *gorm.DB) error) (bool, error)
@@ -595,7 +595,7 @@ func (d *Database) WithOperationExecutionLock(operationID uint, fn func(conn *go
 WithOperationExecutionLock is the method\-form wrapper around the package\-level WithOperationExecutionLock helper. Exposed on \*Database so the JobStore interface used by common.JobManager can acquire the lock without reaching through to a raw \*gorm.DB — tests pass an in\-memory fake that stubs this method while production keeps the pinned\-connection semantics.
 
 <a name="LogEventType"></a>
-## type [LogEventType](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_logs.go#L10>)
+## type LogEventType
 
 
 
@@ -614,7 +614,7 @@ const (
 ```
 
 <a name="Operation"></a>
-## type [Operation](<https://github.com/IrminData/irmin-connectors/blob/main/db/operations.go#L19-L30>)
+## type Operation
 
 Operation represents a record of an initiated operation tied to a connector.
 
@@ -636,7 +636,7 @@ type Operation struct {
 ```
 
 <a name="FindOperationByConfigHashTx"></a>
-### func [FindOperationByConfigHashTx](<https://github.com/IrminData/irmin-connectors/blob/main/db/operations.go#L88-L92>)
+### func FindOperationByConfigHashTx
 
 ```go
 func FindOperationByConfigHashTx(tx *gorm.DB, connectorRegistrationID uint, configHash *string) (*Operation, error)
@@ -645,7 +645,7 @@ func FindOperationByConfigHashTx(tx *gorm.DB, connectorRegistrationID uint, conf
 FindOperationByConfigHashTx retrieves an Operation record matching the connector registration ID and configuration hash using the provided transaction context. This should be used within transactions to avoid race conditions.
 
 <a name="OperationJob"></a>
-## type [OperationJob](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_jobs.go#L19-L99>)
+## type OperationJob
 
 OperationJob is the GORM\-mapped persistence record for an asynchronous connector operation job \(e.g., a long\-running pull\).
 
@@ -736,7 +736,7 @@ type OperationJob struct {
 ```
 
 <a name="OperationJob.TableName"></a>
-### func \(OperationJob\) [TableName](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_jobs.go#L103>)
+### func \(OperationJob\) TableName
 
 ```go
 func (OperationJob) TableName() string
@@ -745,7 +745,7 @@ func (OperationJob) TableName() string
 TableName pins the GORM\-derived table name so future renames of the Go type \(unlikely but nonzero\) don't silently migrate schema.
 
 <a name="OperationLog"></a>
-## type [OperationLog](<https://github.com/IrminData/irmin-connectors/blob/main/db/operation_logs.go#L19-L29>)
+## type OperationLog
 
 OperationLog represents a record of a log tied to an operation.
 
@@ -764,7 +764,7 @@ type OperationLog struct {
 ```
 
 <a name="Subscription"></a>
-## type [Subscription](<https://github.com/IrminData/irmin-connectors/blob/main/db/subscriptions.go#L10-L20>)
+## type Subscription
 
 Subscription represents a record of an active subscription to changes in data.
 
@@ -855,6 +855,7 @@ All other non\-2xx responses collapse to a wrapped fmt\-error so callers can dec
 - [Constants](<#constants>)
 - [Variables](<#variables>)
 - [func ConnectionIDFromRequestHeader\(getHeader func\(string\) string\) \(uint, error\)](<#ConnectionIDFromRequestHeader>)
+- [func NewMCPSession\(ctx context.Context, endpoint string, tokenClient \*OAuthTokenClient, connectionID uint, httpClient \*http.Client, logger \*slog.Logger\) \(\*mcp.ClientSession, func\(\), error\)](<#NewMCPSession>)
 - [func UpdateConnectorInDB\(d \*db.Database, logger \*slog.Logger, irminID, token, connectorName string\) error](<#UpdateConnectorInDB>)
 - [func ValidateConnectorSystemToken\(d \*db.Database, env \*utils.ConnectorsEnv, logger \*slog.Logger, c fiber.Ctx, connectorName string\) \(bool, \*db.ConnectorRegistration\)](<#ValidateConnectorSystemToken>)
 - [type OAuthTokenClient](<#OAuthTokenClient>)
@@ -905,8 +906,16 @@ var (
 )
 ```
 
+<a name="ErrMCPMissingDeps"></a>ErrMCPMissingDeps is returned when NewMCPSession is called with a nil token client or zero connectionID. Mirrors AsyncOAuthRoundTripper's fail\-closed behaviour — better to error early than to send unauth'd requests to a vendor MCP server.
+
+```go
+var ErrMCPMissingDeps = errors.New(
+    "mcp: token client and connection id are required",
+)
+```
+
 <a name="ConnectionIDFromRequestHeader"></a>
-## func [ConnectionIDFromRequestHeader](<https://github.com/IrminData/irmin-connectors/blob/main/lib/oauth_token_client.go#L291>)
+## func ConnectionIDFromRequestHeader
 
 ```go
 func ConnectionIDFromRequestHeader(getHeader func(string) string) (uint, error)
@@ -914,8 +923,31 @@ func ConnectionIDFromRequestHeader(getHeader func(string) string) (uint, error)
 
 ConnectionIDFromRequestHeader reads the X\-Irmin\-Connection\-Id header from the given getter and returns the numeric Connection ID. The getter is any fiber.Ctx.Get\-shaped function, so this helper works for both the fiber.Ctx and http.Request paths without forcing a direct Fiber dependency in every connector.
 
+<a name="NewMCPSession"></a>
+## func NewMCPSession
+
+```go
+func NewMCPSession(ctx context.Context, endpoint string, tokenClient *OAuthTokenClient, connectionID uint, httpClient *http.Client, logger *slog.Logger) (*mcp.ClientSession, func(), error)
+```
+
+NewMCPSession constructs a live MCP client session against the given endpoint, using the OAuth token client to authenticate and refresh tokens transparently. The returned cleanup func MUST be called when the caller is done with the session — it closes the underlying transport and releases any standalone\-SSE connection.
+
+httpClient is the base transport \(typically http.DefaultClient\). When nil, http.DefaultClient is used. The OAuth round\-tripper wraps this base, so callers that need custom timeouts or proxies should pass a pre\-configured client here rather than mutating http.DefaultTransport.
+
+connectionID identifies which Connection's token to fetch — same contract as AsyncOAuthRoundTripper.ConnectionID.
+
+logger is used for diagnostic Warn\-level events from the round\- tripper \(e.g., second\-401\-after\-refresh body snippet\). When nil, slog.Default\(\) is used. Tests typically pass slog.New with a discard handler to keep test output quiet.
+
+Lifecycle:
+
+1. NewMCPSession opens the streamable HTTP connection and runs the MCP \`initialize\` handshake \(latency: one round\-trip\).
+2. Caller invokes ListTools / CallTool on the returned session.
+3. Caller invokes the cleanup func, which closes the session.
+
+Errors during initialize bubble up unwrapped so the caller can distinguish auth \(401 → vendor\_error\) from transport \(DNS / TLS\).
+
 <a name="UpdateConnectorInDB"></a>
-## func [UpdateConnectorInDB](<https://github.com/IrminData/irmin-connectors/blob/main/lib/updateConnectorInDB.go#L9-L13>)
+## func UpdateConnectorInDB
 
 ```go
 func UpdateConnectorInDB(d *db.Database, logger *slog.Logger, irminID, token, connectorName string) error
@@ -924,7 +956,7 @@ func UpdateConnectorInDB(d *db.Database, logger *slog.Logger, irminID, token, co
 UpdateConnectorInDB updates the connector registration in the database.
 
 <a name="ValidateConnectorSystemToken"></a>
-## func [ValidateConnectorSystemToken](<https://github.com/IrminData/irmin-connectors/blob/main/lib/validateConnectorSystemToken.go#L14-L20>)
+## func ValidateConnectorSystemToken
 
 ```go
 func ValidateConnectorSystemToken(d *db.Database, env *utils.ConnectorsEnv, logger *slog.Logger, c fiber.Ctx, connectorName string) (bool, *db.ConnectorRegistration)
@@ -933,7 +965,7 @@ func ValidateConnectorSystemToken(d *db.Database, env *utils.ConnectorsEnv, logg
 ValidateConnectorSystemToken validates the provided token against the system token of the connector registration instance.
 
 <a name="OAuthTokenClient"></a>
-## type [OAuthTokenClient](<https://github.com/IrminData/irmin-connectors/blob/main/lib/oauth_token_client.go#L126-L141>)
+## type OAuthTokenClient
 
 OAuthTokenClient talks to Core's internal access\-token endpoint. One instance per connector process; safe for concurrent use.
 
@@ -959,7 +991,7 @@ type OAuthTokenClient struct {
 ```
 
 <a name="NewOAuthTokenClient"></a>
-### func [NewOAuthTokenClient](<https://github.com/IrminData/irmin-connectors/blob/main/lib/oauth_token_client.go#L146>)
+### func NewOAuthTokenClient
 
 ```go
 func NewOAuthTokenClient(coreBaseURL, systemToken string) *OAuthTokenClient
@@ -967,8 +999,10 @@ func NewOAuthTokenClient(coreBaseURL, systemToken string) *OAuthTokenClient
 
 NewOAuthTokenClient returns a client wired with a sensible default timeout. Callers that need custom retries, TLS config, or proxy handling can assign .HTTPClient after construction.
 
+The provided coreBaseURL is normalized via utils.NormalizeCoreBaseURL so a \`/api\[/v1\]\`\-suffixed value still produces correct paths. This duplicates the normalization done at env\-load time so direct callers \(tests, third\-party uses\) get the same behavior as the env\-loader path.
+
 <a name="OAuthTokenClient.FetchVendorAccessToken"></a>
-### func \(\*OAuthTokenClient\) [FetchVendorAccessToken](<https://github.com/IrminData/irmin-connectors/blob/main/lib/oauth_token_client.go#L181-L184>)
+### func \(\*OAuthTokenClient\) FetchVendorAccessToken
 
 ```go
 func (c *OAuthTokenClient) FetchVendorAccessToken(ctx context.Context, connectionID uint) (*VendorAccessToken, error)
@@ -979,7 +1013,7 @@ FetchVendorAccessToken asks Core for a currently\-valid vendor token for the giv
 Idempotent and safe to call on every vendor\-bound request; the fast path is a single small HTTPS round\-trip to Core with no vendor I/O.
 
 <a name="OAuthTokenClient.ForceRefreshVendorAccessToken"></a>
-### func \(\*OAuthTokenClient\) [ForceRefreshVendorAccessToken](<https://github.com/IrminData/irmin-connectors/blob/main/lib/oauth_token_client.go#L194-L197>)
+### func \(\*OAuthTokenClient\) ForceRefreshVendorAccessToken
 
 ```go
 func (c *OAuthTokenClient) ForceRefreshVendorAccessToken(ctx context.Context, connectionID uint) (*VendorAccessToken, error)
@@ -988,7 +1022,7 @@ func (c *OAuthTokenClient) ForceRefreshVendorAccessToken(ctx context.Context, co
 ForceRefreshVendorAccessToken asks Core to rotate the stored token unconditionally and return the freshly\-issued access token. Callers use this on retry after the vendor rejected a previously\-cached token mid\-operation \(401 on a token that hadn't yet entered the local expiry skew window\). Uses the same sentinel errors as FetchVendorAccessToken.
 
 <a name="VendorAccessToken"></a>
-## type [VendorAccessToken](<https://github.com/IrminData/irmin-connectors/blob/main/lib/oauth_token_client.go#L157-L162>)
+## type VendorAccessToken
 
 VendorAccessToken is the subset of fields a connector actually uses when authenticating against a vendor API. Mirrors Core's systemAccessTokenResponse so the JSON unmarshal is a direct map.
 
@@ -1002,13 +1036,17 @@ type VendorAccessToken struct {
 ```
 
 <a name="VendorAccessToken.AuthorizationHeader"></a>
-### func \(\*VendorAccessToken\) [AuthorizationHeader](<https://github.com/IrminData/irmin-connectors/blob/main/lib/oauth_token_client.go#L167>)
+### func \(\*VendorAccessToken\) AuthorizationHeader
 
 ```go
 func (t *VendorAccessToken) AuthorizationHeader() string
 ```
 
-AuthorizationHeader returns the exact value a connector should set on outbound vendor requests, e.g. "Bearer ya29...". Uses "Bearer" when the vendor omitted token\_type, matching OAuth 2.0 §5.1 convention.
+AuthorizationHeader returns the exact value a connector should set on outbound vendor requests, e.g. "Bearer ya29...".
+
+We canonicalise any case\-variant of "bearer" to the spec\-grammar form "Bearer". RFC 6750 §2.1's ABNF uses the literal token "Bearer" with a capital B, and while §1.2 says the scheme should be parsed case\- insensitively \(per HTTP/1.1 norms\), some resource servers — Linear's MCP server included — reject the lowercase form with \`invalid\_token: Missing or invalid access token\`. The vendor's /token response often returns "bearer" lowercase \(RFC 6749 §5.1 shows it lowercase in the example\), so we cannot assume the stored type is already normalised. Empty token\_type also defaults to "Bearer" matching OAuth 2.0 §5.1 convention.
+
+Non\-bearer schemes \(theoretical; we don't currently support any vendor using MAC, DPoP, etc.\) are preserved verbatim.
 
 # listeners
 
@@ -1031,7 +1069,7 @@ import "irmin-connectors/listeners"
 
 
 <a name="ListenerFunc"></a>
-## type [ListenerFunc](<https://github.com/IrminData/irmin-connectors/blob/main/listeners/manager.go#L13>)
+## type ListenerFunc
 
 ListenerFunc is a function type for starting a connector\-specific listener. It should block until the context is cancelled or an error occurs.
 
@@ -1040,7 +1078,7 @@ type ListenerFunc func(ctx context.Context, logger *slog.Logger, subscription db
 ```
 
 <a name="Manager"></a>
-## type [Manager](<https://github.com/IrminData/irmin-connectors/blob/main/listeners/manager.go#L23-L32>)
+## type Manager
 
 Manager manages active listeners for subscriptions. It provides thread\-safe methods to start and stop listeners dynamically.
 
@@ -1055,7 +1093,7 @@ type Manager struct {
 ```
 
 <a name="NewManager"></a>
-### func [NewManager](<https://github.com/IrminData/irmin-connectors/blob/main/listeners/manager.go#L35>)
+### func NewManager
 
 ```go
 func NewManager(logger *slog.Logger, database *db.Database) *Manager
@@ -1064,7 +1102,7 @@ func NewManager(logger *slog.Logger, database *db.Database) *Manager
 NewManager creates a new listener manager.
 
 <a name="Manager.GetActiveListenerCount"></a>
-### func \(\*Manager\) [GetActiveListenerCount](<https://github.com/IrminData/irmin-connectors/blob/main/listeners/manager.go#L154>)
+### func \(\*Manager\) GetActiveListenerCount
 
 ```go
 func (m *Manager) GetActiveListenerCount() int
@@ -1073,7 +1111,7 @@ func (m *Manager) GetActiveListenerCount() int
 GetActiveListenerCount returns the number of active listeners.
 
 <a name="Manager.IsListenerRunning"></a>
-### func \(\*Manager\) [IsListenerRunning](<https://github.com/IrminData/irmin-connectors/blob/main/listeners/manager.go#L146>)
+### func \(\*Manager\) IsListenerRunning
 
 ```go
 func (m *Manager) IsListenerRunning(subscriptionID uint) bool
@@ -1082,7 +1120,7 @@ func (m *Manager) IsListenerRunning(subscriptionID uint) bool
 IsListenerRunning checks if a listener is running for the given subscription ID.
 
 <a name="Manager.RegisterConnectorListener"></a>
-### func \(\*Manager\) [RegisterConnectorListener](<https://github.com/IrminData/irmin-connectors/blob/main/listeners/manager.go#L45>)
+### func \(\*Manager\) RegisterConnectorListener
 
 ```go
 func (m *Manager) RegisterConnectorListener(connectorName string, listenerFunc ListenerFunc)
@@ -1091,7 +1129,7 @@ func (m *Manager) RegisterConnectorListener(connectorName string, listenerFunc L
 RegisterConnectorListener registers a listener function for a connector.
 
 <a name="Manager.StartListener"></a>
-### func \(\*Manager\) [StartListener](<https://github.com/IrminData/irmin-connectors/blob/main/listeners/manager.go#L53>)
+### func \(\*Manager\) StartListener
 
 ```go
 func (m *Manager) StartListener(connectorName string, subscription db.Subscription) error
@@ -1100,7 +1138,7 @@ func (m *Manager) StartListener(connectorName string, subscription db.Subscripti
 StartListener starts a listener for the given subscription. If a listener is already running for this subscription, it returns an error.
 
 <a name="Manager.StopAll"></a>
-### func \(\*Manager\) [StopAll](<https://github.com/IrminData/irmin-connectors/blob/main/listeners/manager.go#L162>)
+### func \(\*Manager\) StopAll
 
 ```go
 func (m *Manager) StopAll()
@@ -1109,7 +1147,7 @@ func (m *Manager) StopAll()
 StopAll stops all active listeners. This should be called during graceful shutdown.
 
 <a name="Manager.StopListener"></a>
-### func \(\*Manager\) [StopListener](<https://github.com/IrminData/irmin-connectors/blob/main/listeners/manager.go#L111>)
+### func \(\*Manager\) StopListener
 
 ```go
 func (m *Manager) StopListener(subscriptionID uint) error
@@ -1118,7 +1156,7 @@ func (m *Manager) StopListener(subscriptionID uint) error
 StopListener stops the listener for the given subscription ID. It waits for the listener to fully stop before returning.
 
 <a name="Manager.StopListenerAsync"></a>
-### func \(\*Manager\) [StopListenerAsync](<https://github.com/IrminData/irmin-connectors/blob/main/listeners/manager.go#L130>)
+### func \(\*Manager\) StopListenerAsync
 
 ```go
 func (m *Manager) StopListenerAsync(subscriptionID uint) error
@@ -1139,7 +1177,7 @@ import "irmin-connectors/models"
 
 
 <a name="ConnectorDetails"></a>
-## type [ConnectorDetails](<https://github.com/IrminData/irmin-connectors/blob/main/models/connectorDetails.go#L5-L26>)
+## type ConnectorDetails
 
 
 
@@ -1169,7 +1207,7 @@ type ConnectorDetails struct {
 ```
 
 <a name="ConnectorsApp"></a>
-## type [ConnectorsApp](<https://github.com/IrminData/irmin-connectors/blob/main/models/app.go#L13-L29>)
+## type ConnectorsApp
 
 ConnectorsApp holds all the application dependencies.
 
@@ -1227,7 +1265,7 @@ const (
 ```
 
 <a name="Field"></a>
-## type [Field](<https://github.com/IrminData/irmin-connectors/blob/main/schema/generator.go#L27-L32>)
+## type Field
 
 Field represents one column or nested field in the DuckDB schema. Used internally for DuckDB introspection before converting to JSONSchema. Name is the column name or nested field name. Type is the DuckDB data type \(e.g. "VARCHAR", "STRUCT", or "ARRAY\<STRUCT\>"\). Required indicates whether the field is non\-nullable in DuckDB \(is\_nullable = 'NO'\). Children holds nested struct fields if this column is a STRUCT or array of STRUCTs.
 
@@ -1241,7 +1279,7 @@ type Field struct {
 ```
 
 <a name="GenerationOptions"></a>
-## type [GenerationOptions](<https://github.com/IrminData/irmin-connectors/blob/main/schema/generator.go#L246-L251>)
+## type GenerationOptions
 
 GenerationOptions represents legacy options for backward compatibility.
 
@@ -1255,7 +1293,7 @@ type GenerationOptions struct {
 ```
 
 <a name="DefaultSchemaGenerationOptions"></a>
-### func [DefaultSchemaGenerationOptions](<https://github.com/IrminData/irmin-connectors/blob/main/schema/generator.go#L254>)
+### func DefaultSchemaGenerationOptions
 
 ```go
 func DefaultSchemaGenerationOptions() GenerationOptions
@@ -1264,7 +1302,7 @@ func DefaultSchemaGenerationOptions() GenerationOptions
 DefaultSchemaGenerationOptions returns default options \(for test compatibility\).
 
 <a name="Generator"></a>
-## type [Generator](<https://github.com/IrminData/irmin-connectors/blob/main/schema/generator.go#L35-L39>)
+## type Generator
 
 Generator provides schema generation capabilities for in\-memory data processing.
 
@@ -1275,7 +1313,7 @@ type Generator struct {
 ```
 
 <a name="NewGenerator"></a>
-### func [NewGenerator](<https://github.com/IrminData/irmin-connectors/blob/main/schema/generator.go#L42>)
+### func NewGenerator
 
 ```go
 func NewGenerator(c context.Context, logger *slog.Logger) (*Generator, error)
@@ -1284,7 +1322,7 @@ func NewGenerator(c context.Context, logger *slog.Logger) (*Generator, error)
 NewGenerator creates a new schema generator with DuckDB backend.
 
 <a name="Generator.Close"></a>
-### func \(\*Generator\) [Close](<https://github.com/IrminData/irmin-connectors/blob/main/schema/generator.go#L56>)
+### func \(\*Generator\) Close
 
 ```go
 func (g *Generator) Close() error
@@ -1293,7 +1331,7 @@ func (g *Generator) Close() error
 Close closes the underlying DuckDB connection.
 
 <a name="Generator.GenerateObjectSchema"></a>
-### func \(\*Generator\) [GenerateObjectSchema](<https://github.com/IrminData/irmin-connectors/blob/main/schema/generator.go#L66-L69>)
+### func \(\*Generator\) GenerateObjectSchema
 
 ```go
 func (g *Generator) GenerateObjectSchema(data []byte, filename string) (*irminmodels.ObjectSchema, error)
@@ -1302,7 +1340,7 @@ func (g *Generator) GenerateObjectSchema(data []byte, filename string) (*irminmo
 GenerateObjectSchema analyzes file content and generates an ObjectSchema. This follows the EXACT same pattern as the Core API's GenerateObjectSchema. The only difference: we work with in\-memory data instead of S3/LakeFS files.
 
 <a name="Generator.GenerateObjectSchemaFromData"></a>
-### func \(\*Generator\) [GenerateObjectSchemaFromData](<https://github.com/IrminData/irmin-connectors/blob/main/schema/generator.go#L103-L105>)
+### func \(\*Generator\) GenerateObjectSchemaFromData
 
 ```go
 func (g *Generator) GenerateObjectSchemaFromData(data []map[string]any) (*irminmodels.ObjectSchema, error)
@@ -1311,7 +1349,7 @@ func (g *Generator) GenerateObjectSchemaFromData(data []map[string]any) (*irminm
 GenerateObjectSchemaFromData analyzes Go data structures and generates an ObjectSchema. This follows the same pattern as the Core API but works with in\-memory Go data.
 
 <a name="Generator.GenerateSchemaFromBytes"></a>
-### func \(\*Generator\) [GenerateSchemaFromBytes](<https://github.com/IrminData/irmin-connectors/blob/main/schema/generator.go#L233>)
+### func \(\*Generator\) GenerateSchemaFromBytes
 
 ```go
 func (g *Generator) GenerateSchemaFromBytes(data []byte, filename string) (*irminmodels.ObjectSchema, error)
@@ -1320,7 +1358,7 @@ func (g *Generator) GenerateSchemaFromBytes(data []byte, filename string) (*irmi
 GenerateSchemaFromBytes is deprecated \- use GenerateObjectSchema instead. This exists only for backward compatibility and will be removed.
 
 <a name="Generator.GenerateSchemaFromData"></a>
-### func \(\*Generator\) [GenerateSchemaFromData](<https://github.com/IrminData/irmin-connectors/blob/main/schema/generator.go#L239>)
+### func \(\*Generator\) GenerateSchemaFromData
 
 ```go
 func (g *Generator) GenerateSchemaFromData(data []map[string]any) (*irminmodels.ObjectSchema, error)
@@ -1329,7 +1367,7 @@ func (g *Generator) GenerateSchemaFromData(data []map[string]any) (*irminmodels.
 GenerateSchemaFromData is deprecated \- use GenerateObjectSchemaFromData instead. This exists only for backward compatibility and will be removed.
 
 <a name="Generator.SupportsStructuredAnalysis"></a>
-### func \(\*Generator\) [SupportsStructuredAnalysis](<https://github.com/IrminData/irmin-connectors/blob/main/schema/generator.go#L264>)
+### func \(\*Generator\) SupportsStructuredAnalysis
 
 ```go
 func (g *Generator) SupportsStructuredAnalysis(filename string) bool
@@ -1365,7 +1403,7 @@ const FlushTimeout = 2 * time.Second
 ```
 
 <a name="CaptureError"></a>
-## func [CaptureError](<https://github.com/IrminData/irmin-connectors/blob/main/sentry/sentry.go#L51>)
+## func CaptureError
 
 ```go
 func CaptureError(err error)
@@ -1374,7 +1412,7 @@ func CaptureError(err error)
 CaptureError reports an error to Sentry.
 
 <a name="FiberMiddleware"></a>
-## func [FiberMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/sentry/middleware.go#L14>)
+## func FiberMiddleware
 
 ```go
 func FiberMiddleware() fiber.Handler
@@ -1383,7 +1421,7 @@ func FiberMiddleware() fiber.Handler
 FiberMiddleware returns a Fiber middleware that clones the Sentry hub per request, sets request metadata, stores the hub in c.Locals, and manages a Sentry transaction.
 
 <a name="Flush"></a>
-## func [Flush](<https://github.com/IrminData/irmin-connectors/blob/main/sentry/sentry.go#L46>)
+## func Flush
 
 ```go
 func Flush(timeout time.Duration)
@@ -1392,7 +1430,7 @@ func Flush(timeout time.Duration)
 Flush waits for buffered events to be sent to Sentry, up to the given timeout.
 
 <a name="GetHubFromFiber"></a>
-## func [GetHubFromFiber](<https://github.com/IrminData/irmin-connectors/blob/main/sentry/middleware.go#L58>)
+## func GetHubFromFiber
 
 ```go
 func GetHubFromFiber(c fiber.Ctx) *sentry.Hub
@@ -1401,7 +1439,7 @@ func GetHubFromFiber(c fiber.Ctx) *sentry.Hub
 GetHubFromFiber retrieves the Sentry hub from Fiber context locals. Falls back to sentry.CurrentHub\(\) if not found.
 
 <a name="Init"></a>
-## func [Init](<https://github.com/IrminData/irmin-connectors/blob/main/sentry/sentry.go#L17>)
+## func Init
 
 ```go
 func Init(logger *slog.Logger, env *utils.ConnectorsEnv)
@@ -1410,7 +1448,7 @@ func Init(logger *slog.Logger, env *utils.ConnectorsEnv)
 Init initializes the Sentry SDK using the provided environment configuration. Returns early if Sentry is disabled or no DSN is configured.
 
 <a name="RecoverAndCapture"></a>
-## func [RecoverAndCapture](<https://github.com/IrminData/irmin-connectors/blob/main/sentry/sentry.go#L60>)
+## func RecoverAndCapture
 
 ```go
 func RecoverAndCapture(logger *slog.Logger, component string)
@@ -1431,7 +1469,7 @@ import "irmin-connectors/swagger"
 
 
 <a name="JSON"></a>
-## func [JSON](<https://github.com/IrminData/irmin-connectors/blob/main/swagger/swagger.go#L19>)
+## func JSON
 
 ```go
 func JSON(c fiber.Ctx) error
@@ -1440,7 +1478,7 @@ func JSON(c fiber.Ctx) error
 JSON godoc @Summary Get Swagger JSON specification @Description Retrieve the OpenAPI 3.0 specification in JSON format for this API @Tags documentation @Accept json @Produce json @Success 200 \{object\} object "OpenAPI 3.0 specification in JSON format" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Swagger specification file not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /swagger.json \[get\]
 
 <a name="UI"></a>
-## func [UI](<https://github.com/IrminData/irmin-connectors/blob/main/swagger/swagger.go#L32>)
+## func UI
 
 ```go
 func UI(c fiber.Ctx) error
@@ -1512,7 +1550,7 @@ var SwaggerUIHTML []byte
 ```
 
 <a name="ConnectorDetailsData"></a>
-## type [ConnectorDetailsData](<https://github.com/IrminData/irmin-connectors/blob/main/templates/templates.go#L10-L17>)
+## type ConnectorDetailsData
 
 ConnectorDetailsData represents the data structure for connector detail templates.
 
@@ -1528,7 +1566,7 @@ type ConnectorDetailsData struct {
 ```
 
 <a name="ConnectorTemplate"></a>
-## type [ConnectorTemplate](<https://github.com/IrminData/irmin-connectors/blob/main/templates/templates.go#L20-L23>)
+## type ConnectorTemplate
 
 ConnectorTemplate represents a loaded template.
 
@@ -1540,7 +1578,7 @@ type ConnectorTemplate struct {
 ```
 
 <a name="ConnectorTemplate.RenderHTML"></a>
-### func \(\*ConnectorTemplate\) [RenderHTML](<https://github.com/IrminData/irmin-connectors/blob/main/templates/templates.go#L81>)
+### func \(\*ConnectorTemplate\) RenderHTML
 
 ```go
 func (ct *ConnectorTemplate) RenderHTML(data ConnectorDetailsData) (string, error)
@@ -1549,7 +1587,7 @@ func (ct *ConnectorTemplate) RenderHTML(data ConnectorDetailsData) (string, erro
 RenderHTML renders the template with the provided data.
 
 <a name="ConnectorTemplateManager"></a>
-## type [ConnectorTemplateManager](<https://github.com/IrminData/irmin-connectors/blob/main/templates/templates.go#L26-L28>)
+## type ConnectorTemplateManager
 
 ConnectorTemplateManager handles loading and rendering of connector templates.
 
@@ -1560,7 +1598,7 @@ type ConnectorTemplateManager struct {
 ```
 
 <a name="NewConnectorTemplateManager"></a>
-### func [NewConnectorTemplateManager](<https://github.com/IrminData/irmin-connectors/blob/main/templates/templates.go#L31>)
+### func NewConnectorTemplateManager
 
 ```go
 func NewConnectorTemplateManager() *ConnectorTemplateManager
@@ -1569,7 +1607,7 @@ func NewConnectorTemplateManager() *ConnectorTemplateManager
 NewConnectorTemplateManager creates a new connector template manager.
 
 <a name="ConnectorTemplateManager.ClearCache"></a>
-### func \(\*ConnectorTemplateManager\) [ClearCache](<https://github.com/IrminData/irmin-connectors/blob/main/templates/templates.go#L96>)
+### func \(\*ConnectorTemplateManager\) ClearCache
 
 ```go
 func (ctm *ConnectorTemplateManager) ClearCache()
@@ -1578,7 +1616,7 @@ func (ctm *ConnectorTemplateManager) ClearCache()
 ClearCache clears the template cache.
 
 <a name="ConnectorTemplateManager.GetAvailableTemplates"></a>
-### func \(\*ConnectorTemplateManager\) [GetAvailableTemplates](<https://github.com/IrminData/irmin-connectors/blob/main/templates/templates.go#L91>)
+### func \(\*ConnectorTemplateManager\) GetAvailableTemplates
 
 ```go
 func (ctm *ConnectorTemplateManager) GetAvailableTemplates() []string
@@ -1587,7 +1625,7 @@ func (ctm *ConnectorTemplateManager) GetAvailableTemplates() []string
 GetAvailableTemplates returns a list of available connector templates.
 
 <a name="ConnectorTemplateManager.LoadTemplate"></a>
-### func \(\*ConnectorTemplateManager\) [LoadTemplate](<https://github.com/IrminData/irmin-connectors/blob/main/templates/templates.go#L38>)
+### func \(\*ConnectorTemplateManager\) LoadTemplate
 
 ```go
 func (ctm *ConnectorTemplateManager) LoadTemplate(templateName string) (*ConnectorTemplate, error)
@@ -1619,11 +1657,13 @@ import "irmin-connectors/utils"
 - [func HashJSONFields\(details, settings \[\]byte\) \(string, error\)](<#HashJSONFields>)
 - [func IsBinaryContentType\(contentType \*string\) bool](<#IsBinaryContentType>)
 - [func JoinURL\(baseURL, path string\) string](<#JoinURL>)
+- [func NormalizeCoreBaseURL\(coreBaseURL string\) string](<#NormalizeCoreBaseURL>)
 - [func ParseFormFields\(c fiber.Ctx, required, optional \[\]string\) \(map\[string\]string, error\)](<#ParseFormFields>)
 - [func ParseHeaders\(r \*http.Request, required, optional \[\]string\) \(map\[string\]string, error\)](<#ParseHeaders>)
 - [func ParseQueryParams\(r \*http.Request, required, optional \[\]string\) \(map\[string\]string, error\)](<#ParseQueryParams>)
 - [type ConnectorsEnv](<#ConnectorsEnv>)
   - [func LoadEnv\(\) \(\*ConnectorsEnv, error\)](<#LoadEnv>)
+  - [func \(e \*ConnectorsEnv\) SDKBaseURL\(\) string](<#ConnectorsEnv.SDKBaseURL>)
 
 
 ## Constants
@@ -1653,7 +1693,7 @@ const (
 ```
 
 <a name="ConstructPath"></a>
-## func [ConstructPath](<https://github.com/IrminData/irmin-connectors/blob/main/utils/pathComponents.go#L17>)
+## func ConstructPath
 
 ```go
 func ConstructPath(databaseName, tableName, rowIdentifier, columnName string) string
@@ -1662,7 +1702,7 @@ func ConstructPath(databaseName, tableName, rowIdentifier, columnName string) st
 ConstructPath takes a database name, table name, row identifier, and column name and returns a path matching the format used by ExtractPathComponents. Example: "/myDatabase/myTable.json/42/name".
 
 <a name="ConvertStringToType"></a>
-## func [ConvertStringToType](<https://github.com/IrminData/irmin-connectors/blob/main/utils/convertStringToType.go#L10>)
+## func ConvertStringToType
 
 ```go
 func ConvertStringToType(stringValue string, referenceValue any) (any, error)
@@ -1671,7 +1711,7 @@ func ConvertStringToType(stringValue string, referenceValue any) (any, error)
 ConvertStringToType attempts to convert a string value to match the type of the reference value. Returns an error if the conversion fails, ensuring early failure detection.
 
 <a name="DecodeBinaryValue"></a>
-## func [DecodeBinaryValue](<https://github.com/IrminData/irmin-connectors/blob/main/utils/binary.go#L59>)
+## func DecodeBinaryValue
 
 ```go
 func DecodeBinaryValue(contentType *string, value any) (any, bool, error)
@@ -1684,7 +1724,7 @@ DecodeBinaryValue decodes a base64\-encoded binary value from a patch operation.
 - err: any error that occurred during decoding
 
 <a name="DecodeCompositeKey"></a>
-## func [DecodeCompositeKey](<https://github.com/IrminData/irmin-connectors/blob/main/utils/compositeKeys.go#L35>)
+## func DecodeCompositeKey
 
 ```go
 func DecodeCompositeKey(identifier string, expectedCount int) ([]string, error)
@@ -1693,7 +1733,7 @@ func DecodeCompositeKey(identifier string, expectedCount int) ([]string, error)
 DecodeCompositeKey decodes a composite key identifier back into individual values. This is the counterpart to EncodeCompositeKey and handles URL\-encoded values.
 
 <a name="DecodePatchValue"></a>
-## func [DecodePatchValue](<https://github.com/IrminData/irmin-connectors/blob/main/utils/binary.go#L26>)
+## func DecodePatchValue
 
 ```go
 func DecodePatchValue(op irminmodels.PatchOperation) ([]byte, bool, error)
@@ -1706,7 +1746,7 @@ DecodePatchValue decodes the value of a patch operation. If the patch has a bina
 - err: any error that occurred during decoding
 
 <a name="EncodeCompositeKey"></a>
-## func [EncodeCompositeKey](<https://github.com/IrminData/irmin-connectors/blob/main/utils/compositeKeys.go#L11>)
+## func EncodeCompositeKey
 
 ```go
 func EncodeCompositeKey(values []string) string
@@ -1715,7 +1755,7 @@ func EncodeCompositeKey(values []string) string
 EncodeCompositeKey encodes multiple primary key values into a single string identifier. Values containing colon characters are URL\-encoded to prevent parsing conflicts.
 
 <a name="ExtractPathComponents"></a>
-## func [ExtractPathComponents](<https://github.com/IrminData/irmin-connectors/blob/main/utils/pathComponents.go#L60>)
+## func ExtractPathComponents
 
 ```go
 func ExtractPathComponents(pathStr string) (string, string, string, string)
@@ -1743,7 +1783,7 @@ It handles:
 Returns empty strings for any missing component.
 
 <a name="FindProjectRoot"></a>
-## func [FindProjectRoot](<https://github.com/IrminData/irmin-connectors/blob/main/utils/findProjectRoot.go#L11>)
+## func FindProjectRoot
 
 ```go
 func FindProjectRoot() (string, error)
@@ -1752,7 +1792,7 @@ func FindProjectRoot() (string, error)
 FindProjectRoot traverses upwards from the current file's directory until it finds a "go.mod" file.
 
 <a name="GenerateToken"></a>
-## func [GenerateToken](<https://github.com/IrminData/irmin-connectors/blob/main/utils/token.go#L11>)
+## func GenerateToken
 
 ```go
 func GenerateToken(length int) (string, error)
@@ -1761,7 +1801,7 @@ func GenerateToken(length int) (string, error)
 GenerateToken creates a secure random token for system\-level authentication. The token is base64 encoded to ensure it's a string that can be easily used in headers.
 
 <a name="GetIntFromMap"></a>
-## func [GetIntFromMap](<https://github.com/IrminData/irmin-connectors/blob/main/utils/getFieldFromMap.go#L16>)
+## func GetIntFromMap
 
 ```go
 func GetIntFromMap(m map[string]any, key string, defaultValue int) int
@@ -1770,7 +1810,7 @@ func GetIntFromMap(m map[string]any, key string, defaultValue int) int
 GetIntFromMap extracts an integer value from a map with type conversion.
 
 <a name="GetStringFromMap"></a>
-## func [GetStringFromMap](<https://github.com/IrminData/irmin-connectors/blob/main/utils/getFieldFromMap.go#L6>)
+## func GetStringFromMap
 
 ```go
 func GetStringFromMap(m map[string]any, key string, defaultValue string) string
@@ -1779,7 +1819,7 @@ func GetStringFromMap(m map[string]any, key string, defaultValue string) string
 GetStringFromMap extracts a string value from a map with type conversion.
 
 <a name="HashConfigMap"></a>
-## func [HashConfigMap](<https://github.com/IrminData/irmin-connectors/blob/main/utils/config_hash.go#L13>)
+## func HashConfigMap
 
 ```go
 func HashConfigMap(config map[string]string) (string, error)
@@ -1788,7 +1828,7 @@ func HashConfigMap(config map[string]string) (string, error)
 HashConfigMap generates a deterministic hash from a configuration map. Keys are sorted alphabetically before hashing to ensure consistent hashes regardless of map iteration order.
 
 <a name="HashJSONFields"></a>
-## func [HashJSONFields](<https://github.com/IrminData/irmin-connectors/blob/main/utils/config_hash.go#L44>)
+## func HashJSONFields
 
 ```go
 func HashJSONFields(details, settings []byte) (string, error)
@@ -1797,7 +1837,7 @@ func HashJSONFields(details, settings []byte) (string, error)
 HashJSONFields generates a deterministic hash from JSON fields \(Details and Settings\). Both fields are unmarshaled, keys are sorted, and then hashed together.
 
 <a name="IsBinaryContentType"></a>
-## func [IsBinaryContentType](<https://github.com/IrminData/irmin-connectors/blob/main/utils/binary.go#L13>)
+## func IsBinaryContentType
 
 ```go
 func IsBinaryContentType(contentType *string) bool
@@ -1806,7 +1846,7 @@ func IsBinaryContentType(contentType *string) bool
 IsBinaryContentType checks if the given content type indicates binary data. Returns true if the content type should be treated as binary. It delegates to the unified MIME utility in irmin\-sdk\-go.
 
 <a name="JoinURL"></a>
-## func [JoinURL](<https://github.com/IrminData/irmin-connectors/blob/main/utils/joinURL.go#L14>)
+## func JoinURL
 
 ```go
 func JoinURL(baseURL, path string) string
@@ -1814,8 +1854,26 @@ func JoinURL(baseURL, path string) string
 
 JoinURL properly joins a base URL with a path, handling absolute URLs and slashes correctly. Used to properly format full URLs to public links, like the connector web pages, and assets like logos. It prevents malformed URLs like: \- https://example.com/https://other.com/path \(absolute URL concatenation\) \- https://example.com//path \(double slashes\) \- https://example.compath \(missing slash\)
 
+<a name="NormalizeCoreBaseURL"></a>
+## func NormalizeCoreBaseURL
+
+```go
+func NormalizeCoreBaseURL(coreBaseURL string) string
+```
+
+NormalizeCoreBaseURL trims a trailing slash from coreBaseURL and, if the remaining suffix is \`/api\` or \`/api/v1\`, strips that too. Used by the env loader so a misconfigured IRMIN\_API\_BASE\_URL does not silently break downstream URL construction.
+
+Why this exists: the contract is that callers append the path they need. The OAuth token client wants \`IRMIN\_API\_BASE\_URL \+ "/api/v1/system/oauth/...\`; the SDK wants \`IRMIN\_API\_BASE\_URL \+ "/api"\` already baked in. A reader of our docs can easily fold the \`/api\` prefix into the env value because the redirect\-URI guidance reads \`\{IRMIN\_API\_BASE\_URL\}/api/v1/oauth/callback\`, and once it's in the env value, a previously\-working SDK call with shape \`BaseURL \+ "/v1/..."\` produces \`/api/api/v1/...\` and Core 404s. By stripping at env\-load time, we make the env value canonical \(host, no path\) and let each caller append the prefix they need:
+
+- SDK callers: Env.SDKBaseURL\(\) → host \+ "/api"
+- OAuth token client: Env.APIBaseURL → host \(it appends /api/v1/... itself\)
+
+Genuine path\-prefixed deployments \(e.g. a reverse\-proxy\-mounted Core at /irmin\-core\) are NOT stripped because they don't end in /api or /api/v1.
+
+Also exported so the OAuth token client can normalize independently — it's expected to be used as a public construction helper by anyone wiring up Core access tokens, not just code that reads from our env loader.
+
 <a name="ParseFormFields"></a>
-## func [ParseFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/utils/parseFormFields.go#L21>)
+## func ParseFormFields
 
 ```go
 func ParseFormFields(c fiber.Ctx, required, optional []string) (map[string]string, error)
@@ -1831,7 +1889,7 @@ Returns:
 - An error if any required fields are missing.
 
 <a name="ParseHeaders"></a>
-## func [ParseHeaders](<https://github.com/IrminData/irmin-connectors/blob/main/utils/parseHeaders.go#L21>)
+## func ParseHeaders
 
 ```go
 func ParseHeaders(r *http.Request, required, optional []string) (map[string]string, error)
@@ -1847,7 +1905,7 @@ Returns:
 - An error if any required headers are missing.
 
 <a name="ParseQueryParams"></a>
-## func [ParseQueryParams](<https://github.com/IrminData/irmin-connectors/blob/main/utils/parseQueryParams.go#L21>)
+## func ParseQueryParams
 
 ```go
 func ParseQueryParams(r *http.Request, required, optional []string) (map[string]string, error)
@@ -1863,7 +1921,7 @@ Returns:
 - An error if any required parameters are missing.
 
 <a name="ConnectorsEnv"></a>
-## type [ConnectorsEnv](<https://github.com/IrminData/irmin-connectors/blob/main/utils/loadEnvs.go#L13-L30>)
+## type ConnectorsEnv
 
 ConnectorsEnv is a struct that holds the environment variables for the connectors server.
 
@@ -1875,7 +1933,7 @@ type ConnectorsEnv struct {
     CorsEnabled              bool   // Whether CORS is enabled
     CorsOrigins              string // Origins allowed to access the connectors server
     UniversalConnectorAPIKey string // Universal API Key for all connectors.
-    APIBaseURL               string // Base URL of the Irmin Core API
+    APIBaseURL               string // APIBaseURL is the canonical Core base URL — host only, no path
     APIToken                 string // Token to authenticate system requests to the Irmin Core API
     DatabaseConnectionString string // Connection string for the database
     // Sentry — SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN are read
@@ -1889,13 +1947,24 @@ type ConnectorsEnv struct {
 ```
 
 <a name="LoadEnv"></a>
-### func [LoadEnv](<https://github.com/IrminData/irmin-connectors/blob/main/utils/loadEnvs.go#L65>)
+### func LoadEnv
 
 ```go
 func LoadEnv() (*ConnectorsEnv, error)
 ```
 
 LoadEnv loads environment variables from the .env file in the project root, sets default values for required system variables if not present, and returns a ConnectorsEnv struct with the loaded environment variables.
+
+<a name="ConnectorsEnv.SDKBaseURL"></a>
+### func \(\*ConnectorsEnv\) SDKBaseURL
+
+```go
+func (e *ConnectorsEnv) SDKBaseURL() string
+```
+
+SDKBaseURL returns the Core base URL formatted for the irmin\-sdk\-go \`api.NewClient\` constructor, which expects a base of the form \`https://host/api\` \(the SDK's endpoint constants are \`/v1/...\` and the Request method does a literal string concat\). Callers that POST to system endpoints directly \(the OAuth token client\) use APIBaseURL instead because those callers append the full \`/api/v1/...\` path.
+
+Keeping the conversion here means env value normalization stays in one place — APIBaseURL is canonical, and any "this caller needs a different shape" knowledge lives next to the env definition rather than scattered across SDK callsites.
 
 # common
 
@@ -1936,6 +2005,7 @@ Concrete connectors compose \*OAuthConnector into their Controllers struct. Stat
 - [func GetRequiredFieldNames\(detailsDefs, settingsDefs map\[string\]irminmodels.DynamicField\) \[\]string](<#GetRequiredFieldNames>)
 - [func GetRequiredSettingsFieldNames\(settingsDefs map\[string\]irminmodels.DynamicField\) \[\]string](<#GetRequiredSettingsFieldNames>)
 - [func GetSettingsFieldNames\(settingsDefs map\[string\]irminmodels.DynamicField\) \[\]string](<#GetSettingsFieldNames>)
+- [func GroupPatchesByFileKey\(patches \[\]irminmodels.PatchOperation\) \(map\[string\]\[\]irminmodels.PatchOperation, error\)](<#GroupPatchesByFileKey>)
 - [func HandleNotSupportedPatch\(c fiber.Ctx\) error](<#HandleNotSupportedPatch>)
 - [func HandleNotSupportedPull\(c fiber.Ctx\) error](<#HandleNotSupportedPull>)
 - [func HandleNotSupportedPush\(c fiber.Ctx\) error](<#HandleNotSupportedPush>)
@@ -1947,7 +2017,9 @@ Concrete connectors compose \*OAuthConnector into their Controllers struct. Stat
 - [func LogOperationEvent\(dbInstance \*db.Database, logger \*slog.Logger, operationID uint, eventType db.LogEventType, message string, metadata map\[string\]any\)](<#LogOperationEvent>)
 - [func LogOperationProgress\(dbInstance \*db.Database, logger \*slog.Logger, operationID uint, event ProgressEvent\)](<#LogOperationProgress>)
 - [func MarkFailedAndRespond\(c fiber.Ctx, outcome \*JobOutcome, status int, stage string, err error\) error](<#MarkFailedAndRespond>)
+- [func MarshalJSONArray\(records \[\]json.RawMessage\) \[\]byte](<#MarshalJSONArray>)
 - [func MountJobHandlersOnGroup\(group fiber.Router, connectorsApp \*models.ConnectorsApp\)](<#MountJobHandlersOnGroup>)
+- [func ParsePositiveInt\(raw any\) int](<#ParsePositiveInt>)
 - [func ReadPatchesFromForm\(c fiber.Ctx\) \(\[\]irminmodels.PatchOperation, error\)](<#ReadPatchesFromForm>)
 - [func RegisterJobHandlers\(app \*fiber.App, connectorsApp \*models.ConnectorsApp\)](<#RegisterJobHandlers>)
 - [func RenderConnectorDetailsPage\(c fiber.Ctx, app \*models.ConnectorsApp, connectorSlug string, getConnectorInfo func\(\) models.ConnectorDetails, eventDescription ...string\) error](<#RenderConnectorDetailsPage>)
@@ -1956,6 +2028,7 @@ Concrete connectors compose \*OAuthConnector into their Controllers struct. Stat
 - [func RespondAlreadyRunning\(c fiber.Ctx, err \*AlreadyRunningError\) error](<#RespondAlreadyRunning>)
 - [func RespondJobError\(c fiber.Ctx, status int, reason sdkmodels.JobErrorReason, err error, jobID string\) error](<#RespondJobError>)
 - [func SetupConnectorRoutes\(config ConnectorRouteConfig\)](<#SetupConnectorRoutes>)
+- [func SortedPaths\(files map\[string\]\[\]byte\) \[\]string](<#SortedPaths>)
 - [func ThrottledQueryEmitter\(handler ProgressHandler, resourcePath string, minRows int64, minInterval time.Duration\) func\(rowsScanned int64\)](<#ThrottledQueryEmitter>)
 - [func TrimPatchFilePrefix\(pointer, fileKey string\) \(string, error\)](<#TrimPatchFilePrefix>)
 - [func ValidateSystemToken\(c fiber.Ctx, app \*models.ConnectorsApp, getConnectorInfo func\(\) models.ConnectorDetails\) error](<#ValidateSystemToken>)
@@ -2039,6 +2112,7 @@ Concrete connectors compose \*OAuthConnector into their Controllers struct. Stat
 - [type ProgressHandler](<#ProgressHandler>)
   - [func NewProgressHandler\(dbInstance \*db.Database, logger \*slog.Logger, operation \*db.Operation\) ProgressHandler](<#NewProgressHandler>)
   - [func NewProgressHandlerWithContext\(ctx context.Context, dbInstance \*db.Database, logger \*slog.Logger, operation \*db.Operation\) ProgressHandler](<#NewProgressHandlerWithContext>)
+- [type PullByPathMultiProvider](<#PullByPathMultiProvider>)
 - [type PullOperationProvider](<#PullOperationProvider>)
 - [type PushOperationProvider](<#PushOperationProvider>)
 - [type SchemaOperationProvider](<#SchemaOperationProvider>)
@@ -2138,7 +2212,7 @@ var ErrOAuthNotConfigured = errors.New(
 ```
 
 <a name="BuildDetailsFromFields"></a>
-## func [BuildDetailsFromFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L17-L20>)
+## func BuildDetailsFromFields
 
 ```go
 func BuildDetailsFromFields(fields map[string]string, definitions map[string]irminmodels.DynamicField) map[string]string
@@ -2147,7 +2221,7 @@ func BuildDetailsFromFields(fields map[string]string, definitions map[string]irm
 BuildDetailsFromFields creates a details map from form fields using the provided field definitions.
 
 <a name="BuildSettingsFromFields"></a>
-## func [BuildSettingsFromFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L33-L36>)
+## func BuildSettingsFromFields
 
 ```go
 func BuildSettingsFromFields(fields map[string]string, definitions map[string]irminmodels.DynamicField) map[string]string
@@ -2156,7 +2230,7 @@ func BuildSettingsFromFields(fields map[string]string, definitions map[string]ir
 BuildSettingsFromFields creates a settings map from form fields using the provided field definitions.
 
 <a name="CapabilitiesToOperationTypes"></a>
-## func [CapabilitiesToOperationTypes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationSchemaGet.go#L34>)
+## func CapabilitiesToOperationTypes
 
 ```go
 func CapabilitiesToOperationTypes(capabilities []irminmodels.ConnectorCapability) []string
@@ -2165,7 +2239,7 @@ func CapabilitiesToOperationTypes(capabilities []irminmodels.ConnectorCapability
 CapabilitiesToOperationTypes converts connector capabilities to supported operation types.
 
 <a name="ClassifyJobReadError"></a>
-## func [ClassifyJobReadError](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationResponses.go#L119>)
+## func ClassifyJobReadError
 
 ```go
 func ClassifyJobReadError(err error) (int, sdkmodels.JobErrorReason)
@@ -2180,7 +2254,7 @@ ClassifyJobReadError maps a DB / IO error observed on a read path \(GetOperation
 - anything else → 500 \+ internal \(not retryable\)
 
 <a name="ConvertFormFieldsToMaps"></a>
-## func [ConvertFormFieldsToMaps](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configValidate.go#L81>)
+## func ConvertFormFieldsToMaps
 
 ```go
 func ConvertFormFieldsToMaps(fields map[string]string) (map[string]any, map[string]any)
@@ -2189,7 +2263,7 @@ func ConvertFormFieldsToMaps(fields map[string]string) (map[string]any, map[stri
 ConvertFormFieldsToMaps converts form fields into separate details and settings maps.
 
 <a name="CreateEnsureOperationMiddleware"></a>
-## func [CreateEnsureOperationMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/middlewares.go#L77-L80>)
+## func CreateEnsureOperationMiddleware
 
 ```go
 func CreateEnsureOperationMiddleware(app *models.ConnectorsApp, provider OperationConfigProvider) fiber.Handler
@@ -2198,7 +2272,7 @@ func CreateEnsureOperationMiddleware(app *models.ConnectorsApp, provider Operati
 CreateEnsureOperationMiddleware returns a fiber.Handler that runs EnsureOperation against the connector's controller \(which must satisfy OperationConfigProvider\). Each per\-connector controller supplies its own concrete provider; this factory keeps the route\- wiring boilerplate in setupConnectorRoutes free of generic\-method gymnastics.
 
 <a name="CreateSelectOptions"></a>
-## func [CreateSelectOptions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L173>)
+## func CreateSelectOptions
 
 ```go
 func CreateSelectOptions(values []string) []irminmodels.SelectOption
@@ -2207,7 +2281,7 @@ func CreateSelectOptions(values []string) []irminmodels.SelectOption
 CreateSelectOptions creates select options from a slice of strings.
 
 <a name="CreateSelectOptionsWithLabels"></a>
-## func [CreateSelectOptionsWithLabels](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L185>)
+## func CreateSelectOptionsWithLabels
 
 ```go
 func CreateSelectOptionsWithLabels(keyValuePairs map[string]string) []irminmodels.SelectOption
@@ -2216,7 +2290,7 @@ func CreateSelectOptionsWithLabels(keyValuePairs map[string]string) []irminmodel
 CreateSelectOptionsWithLabels creates select options with custom labels.
 
 <a name="CreateSystemTokenMiddleware"></a>
-## func [CreateSystemTokenMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/middlewares.go#L87-L90>)
+## func CreateSystemTokenMiddleware
 
 ```go
 func CreateSystemTokenMiddleware(app *models.ConnectorsApp, getConnectorInfo func() models.ConnectorDetails) fiber.Handler
@@ -2225,7 +2299,7 @@ func CreateSystemTokenMiddleware(app *models.ConnectorsApp, getConnectorInfo fun
 CreateSystemTokenMiddleware creates a system token validation middleware for a specific connector.
 
 <a name="EnsureOperation"></a>
-## func [EnsureOperation](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/middlewares.go#L52-L56>)
+## func EnsureOperation
 
 ```go
 func EnsureOperation(c fiber.Ctx, database *db.Database, provider OperationConfigProvider) error
@@ -2236,7 +2310,7 @@ EnsureOperation is the Phase\-4 middleware that runs after ValidateSystemToken o
 Why this isn't merged into ValidateSystemToken: cheap metadata routes \(info / configuration/\{key\}/fields / configuration/validate\) don't need an Operation row, and EnsureOperationFromRequest does real work \(DB transaction, advisory lock\). Splitting them keeps metadata fast and avoids creating empty\-credential Operation rows for the cases that don't need them.
 
 <a name="ExtractPatchFileKey"></a>
-## func [ExtractPatchFileKey](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPatchHelpers.go#L85>)
+## func ExtractPatchFileKey
 
 ```go
 func ExtractPatchFileKey(pointer string) (string, error)
@@ -2247,7 +2321,7 @@ ExtractPatchFileKey peels the \`\<resource\>/\<id\>.json\` prefix off a JSON\-Po
 Boundary is strict: the \`.json\` segment must be followed by either a \`/\` \(field pointer, e.g., \`/customers/cus\_abc.json/email\`\) or end of string \(whole\-file pointer\). An earlier revision used \`strings.Index\(trimmed, ".json"\)\` which would accept \`customers/cus\_abc.jsonEVIL/email\` and silently produce a malformed field path — fixed once, in this shared helper.
 
 <a name="GetConnectorCapabilitiesFromConfig"></a>
-## func [GetConnectorCapabilitiesFromConfig](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/routes.go#L136-L138>)
+## func GetConnectorCapabilitiesFromConfig
 
 ```go
 func GetConnectorCapabilitiesFromConfig(getConnectorInfo func() models.ConnectorDetails) []irminmodels.ConnectorCapability
@@ -2256,7 +2330,7 @@ func GetConnectorCapabilitiesFromConfig(getConnectorInfo func() models.Connector
 GetConnectorCapabilitiesFromConfig is a helper function to extract capabilities from connector info.
 
 <a name="GetDetailsFieldNames"></a>
-## func [GetDetailsFieldNames](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L109>)
+## func GetDetailsFieldNames
 
 ```go
 func GetDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string
@@ -2265,7 +2339,7 @@ func GetDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []str
 GetDetailsFieldNames returns all detail field names from the provided definitions.
 
 <a name="GetOptionalDetailsFieldNames"></a>
-## func [GetOptionalDetailsFieldNames](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L80>)
+## func GetOptionalDetailsFieldNames
 
 ```go
 func GetOptionalDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string
@@ -2274,7 +2348,7 @@ func GetOptionalDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicFiel
 GetOptionalDetailsFieldNames returns only detail field names that are marked as optional.
 
 <a name="GetOptionalFieldNames"></a>
-## func [GetOptionalFieldNames](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L103>)
+## func GetOptionalFieldNames
 
 ```go
 func GetOptionalFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string
@@ -2283,7 +2357,7 @@ func GetOptionalFieldNames(detailsDefs, settingsDefs map[string]irminmodels.Dyna
 GetOptionalFieldNames returns field names that are marked as optional from both details and settings definitions. This composes GetOptionalDetailsFieldNames and GetOptionalSettingsFieldNames.
 
 <a name="GetOptionalSettingsFieldNames"></a>
-## func [GetOptionalSettingsFieldNames](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L91>)
+## func GetOptionalSettingsFieldNames
 
 ```go
 func GetOptionalSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string
@@ -2292,7 +2366,7 @@ func GetOptionalSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicFi
 GetOptionalSettingsFieldNames returns only settings field names that are marked as optional.
 
 <a name="GetRequiredDetailsFieldNames"></a>
-## func [GetRequiredDetailsFieldNames](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L50>)
+## func GetRequiredDetailsFieldNames
 
 ```go
 func GetRequiredDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicField) []string
@@ -2301,7 +2375,7 @@ func GetRequiredDetailsFieldNames(detailsDefs map[string]irminmodels.DynamicFiel
 GetRequiredDetailsFieldNames returns only detail field names that are marked as required. Use this when validating connection details separately from settings.
 
 <a name="GetRequiredFieldNames"></a>
-## func [GetRequiredFieldNames](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L74>)
+## func GetRequiredFieldNames
 
 ```go
 func GetRequiredFieldNames(detailsDefs, settingsDefs map[string]irminmodels.DynamicField) []string
@@ -2310,7 +2384,7 @@ func GetRequiredFieldNames(detailsDefs, settingsDefs map[string]irminmodels.Dyna
 GetRequiredFieldNames returns field names that are marked as required from both details and settings definitions. This composes GetRequiredDetailsFieldNames and GetRequiredSettingsFieldNames.
 
 <a name="GetRequiredSettingsFieldNames"></a>
-## func [GetRequiredSettingsFieldNames](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L62>)
+## func GetRequiredSettingsFieldNames
 
 ```go
 func GetRequiredSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string
@@ -2319,7 +2393,7 @@ func GetRequiredSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicFi
 GetRequiredSettingsFieldNames returns only settings field names that are marked as required. Use this when validating connection settings separately from details.
 
 <a name="GetSettingsFieldNames"></a>
-## func [GetSettingsFieldNames](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L118>)
+## func GetSettingsFieldNames
 
 ```go
 func GetSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []string
@@ -2327,8 +2401,17 @@ func GetSettingsFieldNames(settingsDefs map[string]irminmodels.DynamicField) []s
 
 GetSettingsFieldNames returns all settings field names from the provided definitions.
 
+<a name="GroupPatchesByFileKey"></a>
+## func GroupPatchesByFileKey
+
+```go
+func GroupPatchesByFileKey(patches []irminmodels.PatchOperation) (map[string][]irminmodels.PatchOperation, error)
+```
+
+GroupPatchesByFileKey buckets each op by the file\-path prefix of its JSON\-Pointer. All ops on the same \`\<resource\>/\<id\>.json\` target fold into a single key, so vendor callers can issue one update mutation per record. Errors are returned as \`patch\[\<index\>\]: \<reason\>\` so an operator scanning logs can pin the offending entry quickly.
+
 <a name="HandleNotSupportedPatch"></a>
-## func [HandleNotSupportedPatch](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPatch.go#L352>)
+## func HandleNotSupportedPatch
 
 ```go
 func HandleNotSupportedPatch(c fiber.Ctx) error
@@ -2337,7 +2420,7 @@ func HandleNotSupportedPatch(c fiber.Ctx) error
 HandleNotSupportedPatch provides a common handler for connectors that don't support patch operations.
 
 <a name="HandleNotSupportedPull"></a>
-## func [HandleNotSupportedPull](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPull.go#L461>)
+## func HandleNotSupportedPull
 
 ```go
 func HandleNotSupportedPull(c fiber.Ctx) error
@@ -2346,7 +2429,7 @@ func HandleNotSupportedPull(c fiber.Ctx) error
 HandleNotSupportedPull provides a common handler for connectors that don't support pull operations.
 
 <a name="HandleNotSupportedPush"></a>
-## func [HandleNotSupportedPush](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPush.go#L636>)
+## func HandleNotSupportedPush
 
 ```go
 func HandleNotSupportedPush(c fiber.Ctx) error
@@ -2355,7 +2438,7 @@ func HandleNotSupportedPush(c fiber.Ctx) error
 HandleNotSupportedPush provides a common handler for connectors that don't support push operations.
 
 <a name="HandleNotSupportedSchemaGet"></a>
-## func [HandleNotSupportedSchemaGet](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationSchemaGet.go#L246>)
+## func HandleNotSupportedSchemaGet
 
 ```go
 func HandleNotSupportedSchemaGet(c fiber.Ctx) error
@@ -2364,7 +2447,7 @@ func HandleNotSupportedSchemaGet(c fiber.Ctx) error
 HandleNotSupportedSchemaGet provides a common handler for connectors that don't support schema operations.
 
 <a name="HandleOperationPatch"></a>
-## func [HandleOperationPatch](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPatch.go#L54-L60>)
+## func HandleOperationPatch
 
 ```go
 func HandleOperationPatch(c fiber.Ctx, provider PatchOperationProvider, logger *slog.Logger, dbInstance *db.Database, app *models.ConnectorsApp) error
@@ -2375,7 +2458,7 @@ HandleOperationPatch starts an async patch job and returns HTTP 202 Accepted wit
 The uploaded patch file is read in the HTTP goroutine before the worker is launched because fiber.Ctx is not safe to dereference once the response has been written.
 
 <a name="HandleOperationPull"></a>
-## func [HandleOperationPull](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPull.go#L75-L81>)
+## func HandleOperationPull
 
 ```go
 func HandleOperationPull(c fiber.Ctx, provider PullOperationProvider, logger *slog.Logger, dbInstance *db.Database, app *models.ConnectorsApp) error
@@ -2386,7 +2469,7 @@ HandleOperationPull starts an async pull job and returns HTTP 202 Accepted with 
 Streaming is intentionally avoided here. The pre\-async handler buffered the full zip in memory because SendStreamWriter's callback runs after the handler returns, which deadlocks against the session\-scoped advisory lock held by WithOperationExecutionLock. Under the async protocol we go one step further: the zip is written to a tmpfile inside the worker goroutine and served from disk via /operation/result/:job\_id, so neither the accept path nor the result path holds the advisory lock across a long file transfer.
 
 <a name="HandleOperationPush"></a>
-## func [HandleOperationPush](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPush.go#L102-L108>)
+## func HandleOperationPush
 
 ```go
 func HandleOperationPush(c fiber.Ctx, provider PushOperationProvider, logger *slog.Logger, dbInstance *db.Database, app *models.ConnectorsApp) error
@@ -2397,7 +2480,7 @@ HandleOperationPush starts an async push job and returns HTTP 202 Accepted with 
 The request body \(file upload or presigned URL\) is consumed in the HTTP goroutine before the worker is launched because fiber.Ctx is not safe to dereference once the response has been written. Form parsing failures surface as structured 4xx before the guard is taken, so a malformed request does not hold the lock.
 
 <a name="HandleOperationSchemaGet"></a>
-## func [HandleOperationSchemaGet](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationSchemaGet.go#L60-L66>)
+## func HandleOperationSchemaGet
 
 ```go
 func HandleOperationSchemaGet(c fiber.Ctx, provider SchemaOperationProvider, logger *slog.Logger, dbInstance *db.Database, app *models.ConnectorsApp) (retErr error)
@@ -2408,7 +2491,7 @@ HandleOperationSchemaGet provides a common HTTP handler for schema operation end
 Under the unified Guard API the handler persists an OperationJob row via manager.Begin so concurrent schema requests against the same operation get a structured 409 carrying the blocking job\_id. Release is deferred; a provider panic is recovered so the row never sticks at running.
 
 <a name="LogOperationEvent"></a>
-## func [LogOperationEvent](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationLogging.go#L18-L25>)
+## func LogOperationEvent
 
 ```go
 func LogOperationEvent(dbInstance *db.Database, logger *slog.Logger, operationID uint, eventType db.LogEventType, message string, metadata map[string]any)
@@ -2419,7 +2502,7 @@ LogOperationEvent creates an operation log entry with the specified type, messag
 logger is nil\-safe — callers that haven't wired one in \(notably the Phase\-4 inline EnsureOperationFromRequest path, which has no per\-call logger to thread\) fall through to slog.Default\(\) so a metadata\-marshal or DB\-write failure still surfaces somewhere.
 
 <a name="LogOperationProgress"></a>
-## func [LogOperationProgress](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/progress.go#L169-L174>)
+## func LogOperationProgress
 
 ```go
 func LogOperationProgress(dbInstance *db.Database, logger *slog.Logger, operationID uint, event ProgressEvent)
@@ -2436,7 +2519,7 @@ Throttling rules:
 Nil\-safe for dbInstance \+ logger — used by tests that don't want DB side effects.
 
 <a name="MarkFailedAndRespond"></a>
-## func [MarkFailedAndRespond](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationResponses.go#L94-L100>)
+## func MarkFailedAndRespond
 
 ```go
 func MarkFailedAndRespond(c fiber.Ctx, outcome *JobOutcome, status int, stage string, err error) error
@@ -2446,8 +2529,19 @@ MarkFailedAndRespond is a small helper used by sync handlers \(push, patch, sche
 
 Keeps the handler bodies short enough to satisfy funlen and centralises the "outcome reason" string format so all connectors emit the same shape in status responses.
 
+<a name="MarshalJSONArray"></a>
+## func MarshalJSONArray
+
+```go
+func MarshalJSONArray(records []json.RawMessage) []byte
+```
+
+MarshalJSONArray collapses a slice of pre\-validated JSON records into a compact JSON array. We avoid re\-encoding the records — they're already valid JSON objects from the vendor — so the output is a faithful passthrough of the vendor's wire shape.
+
+Pre\-allocates the output buffer at the exact final size to avoid the growth/realloc churn for large snapshots. Empty / nil input returns the canonical \`\[\]\` \(parsers downstream expect a JSON array, never a \`null\` or empty buffer\).
+
 <a name="MountJobHandlersOnGroup"></a>
-## func [MountJobHandlersOnGroup](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationJobHandlers.go#L49>)
+## func MountJobHandlersOnGroup
 
 ```go
 func MountJobHandlersOnGroup(group fiber.Router, connectorsApp *models.ConnectorsApp)
@@ -2455,8 +2549,26 @@ func MountJobHandlersOnGroup(group fiber.Router, connectorsApp *models.Connector
 
 MountJobHandlersOnGroup mirrors the lifecycle routes onto a per\- connector router group so the SDK's slug\-prefixed URLs hit the expected handlers. Called from SetupConnectorRoutes — see the RegisterJobHandlers doc comment for why both mounts are needed.
 
+<a name="ParsePositiveInt"></a>
+## func ParsePositiveInt
+
+```go
+func ParsePositiveInt(raw any) int
+```
+
+ParsePositiveInt coerces a settings value into a positive int and returns 0 on any failure \(wrong type, non\-numeric string, zero, or negative\). Used to read OOM\-guard caps like \`max\_records\_per\_resource\` from connection settings.
+
+Settings values arrive as strings via DynamicField in the common case, but other call paths \(tests, programmatic config\) can pass int / int64 / float64 / json.Number, so the union covers all the shapes Go's encoding/json may produce. The deliberate "0 on failure" contract means callers can write
+
+```
+cap := common.ParsePositiveInt(settings["max_records_per_resource"])
+if cap <= 0 { cap = defaultCap }
+```
+
+without a separate "is it valid" check. If we ever returned \-1 or math.MinInt on failure, callers would silently disable the OOM guard when settings JSON arrives malformed.
+
 <a name="ReadPatchesFromForm"></a>
-## func [ReadPatchesFromForm](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPatchHelpers.go#L41>)
+## func ReadPatchesFromForm
 
 ```go
 func ReadPatchesFromForm(c fiber.Ctx) ([]irminmodels.PatchOperation, error)
@@ -2467,7 +2579,7 @@ ReadPatchesFromForm reads the \`patches\` form\-file out of the inbound multipar
 Returns an error wrapping http.ErrMissingFile when no \`patches\` field was uploaded; callers map that to a 400.
 
 <a name="RegisterJobHandlers"></a>
-## func [RegisterJobHandlers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationJobHandlers.go#L38>)
+## func RegisterJobHandlers
 
 ```go
 func RegisterJobHandlers(app *fiber.App, connectorsApp *models.ConnectorsApp)
@@ -2488,7 +2600,7 @@ POST /operation/cancel/:job_id   — cancel an in-flight job
 All routes require the per\-job operation token returned in the 202 body of the corresponding Start\* request. The connector's system token is rejected by design.
 
 <a name="RenderConnectorDetailsPage"></a>
-## func [RenderConnectorDetailsPage](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/detailsPage.go#L89-L95>)
+## func RenderConnectorDetailsPage
 
 ```go
 func RenderConnectorDetailsPage(c fiber.Ctx, app *models.ConnectorsApp, connectorSlug string, getConnectorInfo func() models.ConnectorDetails, eventDescription ...string) error
@@ -2497,7 +2609,7 @@ func RenderConnectorDetailsPage(c fiber.Ctx, app *models.ConnectorsApp, connecto
 RenderConnectorDetailsPage is a helper function for connectors to easily render their details page.
 
 <a name="RenderConnectorInfo"></a>
-## func [RenderConnectorInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/info.go#L12-L16>)
+## func RenderConnectorInfo
 
 ```go
 func RenderConnectorInfo(c fiber.Ctx, app *models.ConnectorsApp, getConnectorInfo func() models.ConnectorDetails) error
@@ -2506,7 +2618,7 @@ func RenderConnectorInfo(c fiber.Ctx, app *models.ConnectorsApp, getConnectorInf
 RenderConnectorInfo handles the common logic for connector info endpoints. It retrieves connector information, prefixes URLs with the base URL, and returns the JSON response.
 
 <a name="RenderDetailsPage"></a>
-## func [RenderDetailsPage](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/detailsPage.go#L22>)
+## func RenderDetailsPage
 
 ```go
 func RenderDetailsPage(c fiber.Ctx, config DetailsPageConfig) error
@@ -2515,7 +2627,7 @@ func RenderDetailsPage(c fiber.Ctx, config DetailsPageConfig) error
 RenderDetailsPage handles the common logic for rendering connector details pages.
 
 <a name="RespondAlreadyRunning"></a>
-## func [RespondAlreadyRunning](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationResponses.go#L32>)
+## func RespondAlreadyRunning
 
 ```go
 func RespondAlreadyRunning(c fiber.Ctx, err *AlreadyRunningError) error
@@ -2526,7 +2638,7 @@ RespondAlreadyRunning writes the 409 Conflict response for a "operation is alrea
 err is the AlreadyRunningError returned by JobManager.Begin; it carries the pre\-populated JobID/Kind/OperationID/StartedAt from the lookup done inside Begin. Callers should not reach for the individual fields — this helper is the only place the wire shape is serialised so the shape stays uniform across all connectors.
 
 <a name="RespondJobError"></a>
-## func [RespondJobError](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationResponses.go#L68-L74>)
+## func RespondJobError
 
 ```go
 func RespondJobError(c fiber.Ctx, status int, reason sdkmodels.JobErrorReason, err error, jobID string) error
@@ -2537,7 +2649,7 @@ RespondJobError writes a structured error response using the SDK's JobErrorBody 
 jobID may be empty when the handler couldn't parse the path parameter — the body then omits the field so the caller doesn't misread the URL they sent.
 
 <a name="SetupConnectorRoutes"></a>
-## func [SetupConnectorRoutes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/routes.go#L56>)
+## func SetupConnectorRoutes
 
 ```go
 func SetupConnectorRoutes(config ConnectorRouteConfig)
@@ -2545,8 +2657,17 @@ func SetupConnectorRoutes(config ConnectorRouteConfig)
 
 SetupConnectorRoutes sets up all routes for a connector based on its capabilities.
 
+<a name="SortedPaths"></a>
+## func SortedPaths
+
+```go
+func SortedPaths(files map[string][]byte) []string
+```
+
+SortedPaths returns the map keys in sorted order for deterministic iteration. ZIP archives don't preserve order and Go map iteration is randomized, so re\-running a push with the same input would otherwise produce a different audit shape across retries — which makes reproducing a customer report harder than it needs to be.
+
 <a name="ThrottledQueryEmitter"></a>
-## func [ThrottledQueryEmitter](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/progress.go#L282-L287>)
+## func ThrottledQueryEmitter
 
 ```go
 func ThrottledQueryEmitter(handler ProgressHandler, resourcePath string, minRows int64, minInterval time.Duration) func(rowsScanned int64)
@@ -2559,7 +2680,7 @@ Designed for ProgressKindQuery \(and any future per\-row / per\-byte kind that L
 Returns a no\-op when handler is nil so the row\-loop call site can invoke it unconditionally.
 
 <a name="TrimPatchFilePrefix"></a>
-## func [TrimPatchFilePrefix](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPatchHelpers.go#L112>)
+## func TrimPatchFilePrefix
 
 ```go
 func TrimPatchFilePrefix(pointer, fileKey string) (string, error)
@@ -2568,7 +2689,7 @@ func TrimPatchFilePrefix(pointer, fileKey string) (string, error)
 TrimPatchFilePrefix removes the file\-path prefix from a JSON\- Pointer and returns just the field\-path component \(e.g., \`email\` or \`metadata/plan\`\). Returns "" when the pointer is exactly the file key — vendor callers reject that case as "whole\-record replace; use push instead".
 
 <a name="ValidateSystemToken"></a>
-## func [ValidateSystemToken](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/middlewares.go#L13-L17>)
+## func ValidateSystemToken
 
 ```go
 func ValidateSystemToken(c fiber.Ctx, app *models.ConnectorsApp, getConnectorInfo func() models.ConnectorDetails) error
@@ -2577,7 +2698,7 @@ func ValidateSystemToken(c fiber.Ctx, app *models.ConnectorsApp, getConnectorInf
 ValidateSystemToken validates the system token for connector endpoints. It automatically gets connector info and sets context locals.
 
 <a name="WithJobProgress"></a>
-## func [WithJobProgress](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/progress.go#L29-L32>)
+## func WithJobProgress
 
 ```go
 func WithJobProgress(ctx context.Context, appendProgress func(sdkprogress.ProgressEvent)) context.Context
@@ -2586,7 +2707,7 @@ func WithJobProgress(ctx context.Context, appendProgress func(sdkprogress.Progre
 WithJobProgress returns a new ctx that carries appendProgress — consumed by NewProgressHandler inside the provider's InitializeClient to fan out events to the job status response. The async\-pull worker is the only caller; no production code outside asyncOperation.go should use this directly.
 
 <a name="WrapHTTPClient"></a>
-## func [WrapHTTPClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_client.go#L77-L81>)
+## func WrapHTTPClient
 
 ```go
 func WrapHTTPClient(client *http.Client, o *OAuthConnector, c fiber.Ctx) *http.Client
@@ -2595,7 +2716,7 @@ func WrapHTTPClient(client *http.Client, o *OAuthConnector, c fiber.Ctx) *http.C
 WrapHTTPClient returns a new \*http.Client whose Transport is an OAuthRoundTripper around the input client's transport. Preserves the input client's Timeout, CheckRedirect, Jar — only the Transport is replaced. Pass nil to start from an empty client.
 
 <a name="WrapHTTPClientForJob"></a>
-## func [WrapHTTPClientForJob](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_async.go#L71-L75>)
+## func WrapHTTPClientForJob
 
 ```go
 func WrapHTTPClientForJob(client *http.Client, tc *lib.OAuthTokenClient, connectionID uint) *http.Client
@@ -2604,7 +2725,7 @@ func WrapHTTPClientForJob(client *http.Client, tc *lib.OAuthTokenClient, connect
 WrapHTTPClientForJob returns a new \*http.Client whose Transport is an AsyncOAuthRoundTripper around the input client's transport. Mirrors WrapHTTPClient \(the sync variant\) but takes the connection ID \+ token client directly so the result is safe to use inside a worker goroutine.
 
 <a name="AlreadyRunningError"></a>
-## type [AlreadyRunningError](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationGuard.go#L33-L52>)
+## type AlreadyRunningError
 
 AlreadyRunningError is returned by JobManager.Begin when the operation\-execution advisory lock is already held by another session. Fields are populated from the row FindActiveOperationJob returns; when no active row exists \(legacy sync holder\), JobID is empty and StartedAt is the zero time.
 
@@ -2634,7 +2755,7 @@ type AlreadyRunningError struct {
 ```
 
 <a name="AlreadyRunningError.Error"></a>
-### func \(\*AlreadyRunningError\) [Error](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationGuard.go#L58>)
+### func \(\*AlreadyRunningError\) Error
 
 ```go
 func (e *AlreadyRunningError) Error() string
@@ -2643,7 +2764,7 @@ func (e *AlreadyRunningError) Error() string
 Error implements the error interface so AlreadyRunningError can be returned from anywhere an error is expected. The message is operator\-facing; machine\-readable consumers should type\-assert via errors.As.
 
 <a name="AsyncOAuthRoundTripper"></a>
-## type [AsyncOAuthRoundTripper](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_async.go#L28-L44>)
+## type AsyncOAuthRoundTripper
 
 AsyncOAuthRoundTripper is the worker\-safe outbound middleware. Wrap the connector's \*http.Client transport with this once at the start of the worker, then drive the client normally — no fiber.Ctx required.
 
@@ -2668,7 +2789,7 @@ type AsyncOAuthRoundTripper struct {
 ```
 
 <a name="NewAsyncOAuthRoundTripper"></a>
-### func [NewAsyncOAuthRoundTripper](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_async.go#L55-L59>)
+### func NewAsyncOAuthRoundTripper
 
 ```go
 func NewAsyncOAuthRoundTripper(base http.RoundTripper, tc *lib.OAuthTokenClient, connectionID uint) *AsyncOAuthRoundTripper
@@ -2677,7 +2798,7 @@ func NewAsyncOAuthRoundTripper(base http.RoundTripper, tc *lib.OAuthTokenClient,
 NewAsyncOAuthRoundTripper constructs a round\-tripper for the given connection. Base defaults to http.DefaultTransport when nil.
 
 <a name="AsyncOAuthRoundTripper.RoundTrip"></a>
-### func \(\*AsyncOAuthRoundTripper\) [RoundTrip](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_async.go#L87>)
+### func \(\*AsyncOAuthRoundTripper\) RoundTrip
 
 ```go
 func (rt *AsyncOAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
@@ -2686,7 +2807,7 @@ func (rt *AsyncOAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, 
 RoundTrip stamps Authorization and retries once on 401 with a forced refresh, mirroring OAuthRoundTripper but driven from req.Context\(\) instead of a captured fiber.Ctx.
 
 <a name="BeginOperationJobInput"></a>
-## type [BeginOperationJobInput](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationGuard.go#L99-L116>)
+## type BeginOperationJobInput
 
 BeginOperationJobInput carries the caller\-specified knobs that the OperationJob row needs at creation time. Kept as a struct so new fields can be added without breaking every call site.
 
@@ -2712,7 +2833,7 @@ type BeginOperationJobInput struct {
 ```
 
 <a name="ConfigFieldProvider"></a>
-## type [ConfigFieldProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L12-L14>)
+## type ConfigFieldProvider
 
 ConfigFieldProvider defines the interface for providing configuration fields.
 
@@ -2723,7 +2844,7 @@ type ConfigFieldProvider interface {
 ```
 
 <a name="ConfigValidationProvider"></a>
-## type [ConfigValidationProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configValidate.go#L12-L25>)
+## type ConfigValidationProvider
 
 ConfigValidationProvider defines the interface for validating connector configurations.
 
@@ -2745,7 +2866,7 @@ type ConfigValidationProvider interface {
 ```
 
 <a name="ConnectorController"></a>
-## type [ConnectorController](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/routes.go#L12-L45>)
+## type ConnectorController
 
 ConnectorController defines the interface that all connector controllers must implement.
 
@@ -2787,7 +2908,7 @@ type ConnectorController interface {
 ```
 
 <a name="ConnectorRouteConfig"></a>
-## type [ConnectorRouteConfig](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/routes.go#L48-L53>)
+## type ConnectorRouteConfig
 
 ConnectorRouteConfig holds the configuration for setting up connector routes.
 
@@ -2801,7 +2922,7 @@ type ConnectorRouteConfig struct {
 ```
 
 <a name="Controllers"></a>
-## type [Controllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/controllers.go#L10-L14>)
+## type Controllers
 
 Controllers holds the dependencies for connector controllers.
 
@@ -2814,7 +2935,7 @@ type Controllers struct {
 ```
 
 <a name="NewControllers"></a>
-### func [NewControllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/controllers.go#L17>)
+### func NewControllers
 
 ```go
 func NewControllers(app *models.ConnectorsApp) *Controllers
@@ -2823,7 +2944,7 @@ func NewControllers(app *models.ConnectorsApp) *Controllers
 NewControllers creates a new instance of controllers with the required dependencies.
 
 <a name="Controllers.HandleConfigFields"></a>
-### func \(\*Controllers\) [HandleConfigFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configFields.go#L127>)
+### func \(\*Controllers\) HandleConfigFields
 
 ```go
 func (cs *Controllers) HandleConfigFields(c fiber.Ctx, provider ConfigFieldProvider) error
@@ -2832,7 +2953,7 @@ func (cs *Controllers) HandleConfigFields(c fiber.Ctx, provider ConfigFieldProvi
 HandleConfigFields provides a common HTTP handler for configuration fields endpoints.
 
 <a name="Controllers.HandleConfigValidation"></a>
-### func \(\*Controllers\) [HandleConfigValidation](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/configValidate.go#L28>)
+### func \(\*Controllers\) HandleConfigValidation
 
 ```go
 func (cs *Controllers) HandleConfigValidation(c fiber.Ctx, provider ConfigValidationProvider) error
@@ -2841,7 +2962,7 @@ func (cs *Controllers) HandleConfigValidation(c fiber.Ctx, provider ConfigValida
 HandleConfigValidation provides a common HTTP handler for configuration validation endpoints.
 
 <a name="Controllers.HandleUnsubscribeFromChanges"></a>
-### func \(\*Controllers\) [HandleUnsubscribeFromChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationUnsubscribe.go#L22-L25>)
+### func \(\*Controllers\) HandleUnsubscribeFromChanges
 
 ```go
 func (cs *Controllers) HandleUnsubscribeFromChanges(c fiber.Ctx, provider UnsubscribeProvider) error
@@ -2850,7 +2971,7 @@ func (cs *Controllers) HandleUnsubscribeFromChanges(c fiber.Ctx, provider Unsubs
 HandleUnsubscribeFromChanges provides common logic for unsubscribing from database changes. It validates the request, verifies subscription ownership, stops any active listeners, and deletes the subscription from the database.
 
 <a name="DetailsPageConfig"></a>
-## type [DetailsPageConfig](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/detailsPage.go#L15-L19>)
+## type DetailsPageConfig
 
 DetailsPageConfig holds configuration for rendering a connector details page.
 
@@ -2863,7 +2984,7 @@ type DetailsPageConfig struct {
 ```
 
 <a name="EnsureOperationFromRequestError"></a>
-## type [EnsureOperationFromRequestError](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationConfig.go#L42-L46>)
+## type EnsureOperationFromRequestError
 
 EnsureOperationFromRequestError carries an HTTP\-shaped error returned by EnsureOperationFromRequest. Handlers translate it into the appropriate JobError envelope or other HTTP response.
 
@@ -2876,7 +2997,7 @@ type EnsureOperationFromRequestError struct {
 ```
 
 <a name="EnsureOperationFromRequest"></a>
-### func [EnsureOperationFromRequest](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationConfig.go#L86-L91>)
+### func EnsureOperationFromRequest
 
 ```go
 func EnsureOperationFromRequest(c fiber.Ctx, database *db.Database, info *models.ConnectorDetails, provider OperationConfigProvider) (*db.Operation, *EnsureOperationFromRequestError)
@@ -2887,7 +3008,7 @@ EnsureOperationFromRequest is the Phase 4 replacement for the /operation/init ha
 Returns \*EnsureOperationFromRequestError on failure so handlers can translate the carried HTTP status into their preferred envelope \(RespondJobError for Start\*, plain fiber.Map for the legacy init route during the transitional release\).
 
 <a name="EnsureOperationFromRequestError.Error"></a>
-### func \(\*EnsureOperationFromRequestError\) [Error](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationConfig.go#L51>)
+### func \(\*EnsureOperationFromRequestError\) Error
 
 ```go
 func (e *EnsureOperationFromRequestError) Error() string
@@ -2896,7 +3017,7 @@ func (e *EnsureOperationFromRequestError) Error() string
 Error implements the error interface so the type works with errors.Is / errors.As and so a bare \`return err\` from a handler still produces an operator\-facing message in the worst case.
 
 <a name="EnsureOperationFromRequestError.Unwrap"></a>
-### func \(\*EnsureOperationFromRequestError\) [Unwrap](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationConfig.go#L62>)
+### func \(\*EnsureOperationFromRequestError\) Unwrap
 
 ```go
 func (e *EnsureOperationFromRequestError) Unwrap() error
@@ -2905,7 +3026,7 @@ func (e *EnsureOperationFromRequestError) Unwrap() error
 Unwrap exposes the underlying cause for errors.Is / errors.As.
 
 <a name="JobManager"></a>
-## type [JobManager](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L164-L180>)
+## type JobManager
 
 JobManager owns the lifecycle of async operation jobs: persistence, worker goroutines, cancellation, and janitor GC. Construct one per process and share by reference; it is safe for concurrent use.
 
@@ -2916,7 +3037,7 @@ type JobManager struct {
 ```
 
 <a name="NewJobManager"></a>
-### func [NewJobManager](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L240-L244>)
+### func NewJobManager
 
 ```go
 func NewJobManager(dbInstance *db.Database, logger *slog.Logger, cfg JobManagerConfig) *JobManager
@@ -2925,7 +3046,7 @@ func NewJobManager(dbInstance *db.Database, logger *slog.Logger, cfg JobManagerC
 NewJobManager builds a JobManager against the provided database and logger. Defaults are applied for any zero\-value config field; the caller is responsible for eventually invoking StartJanitor on the returned manager so expired jobs get reaped.
 
 <a name="NewJobManagerWithStore"></a>
-### func [NewJobManagerWithStore](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L253-L257>)
+### func NewJobManagerWithStore
 
 ```go
 func NewJobManagerWithStore(store JobStore, logger *slog.Logger, cfg JobManagerConfig) *JobManager
@@ -2934,7 +3055,7 @@ func NewJobManagerWithStore(store JobStore, logger *slog.Logger, cfg JobManagerC
 NewJobManagerWithStore is the test\-friendly constructor: it accepts any JobStore \(real DB, in\-memory fake\) so unit tests don't need a running Postgres. Production callers should use NewJobManager with a \*db.Database — the latter satisfies JobStore directly via the methods defined on db.Database.
 
 <a name="JobManager.Begin"></a>
-### func \(\*JobManager\) [Begin](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationGuard.go#L303-L305>)
+### func \(\*JobManager\) Begin
 
 ```go
 func (m *JobManager) Begin(input BeginOperationJobInput) (*OperationGuard, *AlreadyRunningError, error)
@@ -2951,7 +3072,7 @@ Return values:
 Implementation note: the Guard holds the advisory lock for the lifetime of its Release call via a goroutine that pins a PG connection. The goroutine's WithOperationExecutionLock closure blocks on a release channel, applies the terminal status write while the lock is still held, then returns — which triggers Postgres's pg\_advisory\_unlock on the same session.
 
 <a name="JobManager.Cancel"></a>
-### func \(\*JobManager\) [Cancel](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L717>)
+### func \(\*JobManager\) Cancel
 
 ```go
 func (m *JobManager) Cancel(jobID string) bool
@@ -2962,7 +3083,7 @@ Cancel marks a job for cancellation. Returns true if the job was known to this m
 Prefer CancelWithOutcome for new handler code — it reports whether the live worker's context was actually signalled \(vs. a no\-op against a placeholder or already\-exited worker\), which the structured cancel response exposes as was\_active.
 
 <a name="JobManager.CancelWithOutcome"></a>
-### func \(\*JobManager\) [CancelWithOutcome](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L733>)
+### func \(\*JobManager\) CancelWithOutcome
 
 ```go
 func (m *JobManager) CancelWithOutcome(jobID string) (bool, bool)
@@ -2973,7 +3094,7 @@ CancelWithOutcome is the enriched form of Cancel. Returns \(active, tracked\): a
 Handlers surface active as was\_active on the cancel response so clients can tell "we signalled a running worker" apart from "no\-op against a terminal row".
 
 <a name="JobManager.EnsureResultDir"></a>
-### func \(\*JobManager\) [EnsureResultDir](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L282>)
+### func \(\*JobManager\) EnsureResultDir
 
 ```go
 func (m *JobManager) EnsureResultDir() error
@@ -2982,7 +3103,7 @@ func (m *JobManager) EnsureResultDir() error
 EnsureResultDir creates the result directory if it does not exist. Called lazily by StartJob so the first pull on a fresh pod works without an init step, and idempotent so repeated calls are free.
 
 <a name="JobManager.RunJanitor"></a>
-### func \(\*JobManager\) [RunJanitor](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L877>)
+### func \(\*JobManager\) RunJanitor
 
 ```go
 func (m *JobManager) RunJanitor()
@@ -2996,7 +3117,7 @@ Two reclaim passes run on each tick:
 2. Stuck\-row pass: rows still in pending/running whose updated\_at is older than cfg.StuckThreshold have their advisory lock probed. If the probe acquires \(i.e., the original holder's PG connection is gone\), the row is marked failed so /operation/status reports a terminal state instead of sticking at running indefinitely.
 
 <a name="JobManager.Snapshot"></a>
-### func \(\*JobManager\) [Snapshot](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L792>)
+### func \(\*JobManager\) Snapshot
 
 ```go
 func (m *JobManager) Snapshot(jobID string) (*db.OperationJob, []sdkprogress.ProgressEvent, error)
@@ -3005,7 +3126,7 @@ func (m *JobManager) Snapshot(jobID string) (*db.OperationJob, []sdkprogress.Pro
 Snapshot returns the current in\-memory progress slice and the persisted status row. The status row is always fetched from the DB so a caller hitting this right after StartJob sees the running transition even if the worker goroutine hasn't emitted any progress yet. If the DB lookup returns NotFound, the \(row, err\) pair carries that upward so the handler can surface 404.
 
 <a name="JobManager.StartJanitor"></a>
-### func \(\*JobManager\) [StartJanitor](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L833>)
+### func \(\*JobManager\) StartJanitor
 
 ```go
 func (m *JobManager) StartJanitor()
@@ -3014,7 +3135,7 @@ func (m *JobManager) StartJanitor()
 StartJanitor launches the periodic GC goroutine. Safe to call multiple times — only the first call has effect, so startup code can invoke it unconditionally. The janitor runs until StopJanitor is called or the process exits.
 
 <a name="JobManager.StartJob"></a>
-### func \(\*JobManager\) [StartJob](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L304-L310>)
+### func \(\*JobManager\) StartJob
 
 ```go
 func (m *JobManager) StartJob(ctx context.Context, connectorRegistrationID uint, connectorName string, operationID uint, fn WorkerFunc) (*db.OperationJob, error)
@@ -3027,7 +3148,7 @@ The caller owns: selecting the connector / operation fields on the OperationJob.
 If fn returns nil, the worker transitions the job to complete and writes ExpiresAt = now \+ TTL. If fn returns a non\-nil error, the worker transitions to failed and records the error message. If the job's context is cancelled before fn returns, the worker transitions to cancelled \(even if fn eventually returns nil — cancel wins the race\).
 
 <a name="JobManager.StartJobWithGuard"></a>
-### func \(\*JobManager\) [StartJobWithGuard](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L390>)
+### func \(\*JobManager\) StartJobWithGuard
 
 ```go
 func (m *JobManager) StartJobWithGuard(guard *OperationGuard, fn WorkerFunc) *db.OperationJob
@@ -3040,7 +3161,7 @@ Unlike the legacy StartJob path, this function does NOT take the advisory lock i
 The resultPath the worker writes to is placed under the manager's ResultDir and named after the guard's jobID; callers that need a different layout can pre\-compute a path and have their WorkerFunc ignore the one we pass.
 
 <a name="JobManager.StopJanitor"></a>
-### func \(\*JobManager\) [StopJanitor](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L842>)
+### func \(\*JobManager\) StopJanitor
 
 ```go
 func (m *JobManager) StopJanitor()
@@ -3049,7 +3170,7 @@ func (m *JobManager) StopJanitor()
 StopJanitor signals the janitor goroutine to exit. Idempotent; a second call is a no\-op. Intended for graceful shutdown tests — in production, the process exit handles it.
 
 <a name="JobManager.WaitForJob"></a>
-### func \(\*JobManager\) [WaitForJob](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L771>)
+### func \(\*JobManager\) WaitForJob
 
 ```go
 func (m *JobManager) WaitForJob(ctx context.Context, jobID string) error
@@ -3060,7 +3181,7 @@ WaitForJob blocks until the worker for jobID has exited, or until ctx is done. R
 Useful for tests; not used on the hot path.
 
 <a name="JobManagerConfig"></a>
-## type [JobManagerConfig](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L90-L113>)
+## type JobManagerConfig
 
 JobManagerConfig parameterises the manager. Zero\-value fields fall back to the Default\* constants. Kept small on purpose — the production deployment never needs more than TTL/janitor/result\-dir.
 
@@ -3092,7 +3213,7 @@ type JobManagerConfig struct {
 ```
 
 <a name="JobOutcome"></a>
-## type [JobOutcome](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationGuard.go#L79-L94>)
+## type JobOutcome
 
 JobOutcome is the terminal state a Guard caller reports on Release: success → complete, failure → failed, cooperative stop → cancelled. Zero value is a failed outcome with no message so a caller that forgets to populate it at least surfaces as failure rather than accidentally masking a bug as success.
 
@@ -3116,7 +3237,7 @@ type JobOutcome struct {
 ```
 
 <a name="JobStore"></a>
-## type [JobStore](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L120-L159>)
+## type JobStore
 
 JobStore is the minimal persistence surface the JobManager relies on. Production code passes a \*db.Database \(adapted via gormJobStore\); tests can provide an in\-memory implementation so the manager's state\-machine behaviour is unit\-testable without a Postgres instance.
 
@@ -3164,7 +3285,7 @@ type JobStore interface {
 ```
 
 <a name="ListenerManagerUnsubscribeProvider"></a>
-## type [ListenerManagerUnsubscribeProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationUnsubscribe.go#L91-L93>)
+## type ListenerManagerUnsubscribeProvider
 
 ListenerManagerUnsubscribeProvider implements UnsubscribeProvider using a ListenerManager.
 
@@ -3175,7 +3296,7 @@ type ListenerManagerUnsubscribeProvider struct {
 ```
 
 <a name="ListenerManagerUnsubscribeProvider.StopListener"></a>
-### func \(\*ListenerManagerUnsubscribeProvider\) [StopListener](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationUnsubscribe.go#L96>)
+### func \(\*ListenerManagerUnsubscribeProvider\) StopListener
 
 ```go
 func (p *ListenerManagerUnsubscribeProvider) StopListener(subscriptionID uint) error
@@ -3184,7 +3305,7 @@ func (p *ListenerManagerUnsubscribeProvider) StopListener(subscriptionID uint) e
 StopListener implements UnsubscribeProvider by delegating to the ListenerManager.
 
 <a name="NotSupportedPatchProvider"></a>
-## type [NotSupportedPatchProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPatch.go#L329>)
+## type NotSupportedPatchProvider
 
 NotSupportedPatchProvider provides a default implementation for connectors that don't support patch operations.
 
@@ -3193,7 +3314,7 @@ type NotSupportedPatchProvider struct{}
 ```
 
 <a name="NotSupportedPatchProvider.ExecutePatchOperation"></a>
-### func \(\*NotSupportedPatchProvider\) [ExecutePatchOperation](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPatch.go#L341-L347>)
+### func \(\*NotSupportedPatchProvider\) ExecutePatchOperation
 
 ```go
 func (p *NotSupportedPatchProvider) ExecutePatchOperation(_ context.Context, _ any, _ sdkmodels.PatchOperation, _, _, _ string, _, _, _, _ string) error
@@ -3202,7 +3323,7 @@ func (p *NotSupportedPatchProvider) ExecutePatchOperation(_ context.Context, _ a
 ExecutePatchOperation returns an error indicating patch operations are not supported.
 
 <a name="NotSupportedPatchProvider.InitializeClient"></a>
-### func \(\*NotSupportedPatchProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPatch.go#L332-L336>)
+### func \(\*NotSupportedPatchProvider\) InitializeClient
 
 ```go
 func (p *NotSupportedPatchProvider) InitializeClient(_ context.Context, _ *slog.Logger, _ *db.Operation) (any, func(), error)
@@ -3211,7 +3332,7 @@ func (p *NotSupportedPatchProvider) InitializeClient(_ context.Context, _ *slog.
 InitializeClient returns an error indicating patch operations are not supported.
 
 <a name="NotSupportedPullProvider"></a>
-## type [NotSupportedPullProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPull.go#L419>)
+## type NotSupportedPullProvider
 
 NotSupportedPullProvider provides a default implementation for connectors that don't support pull operations.
 
@@ -3220,7 +3341,7 @@ type NotSupportedPullProvider struct{}
 ```
 
 <a name="NotSupportedPullProvider.GetAllFiles"></a>
-### func \(\*NotSupportedPullProvider\) [GetAllFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPull.go#L433-L437>)
+### func \(\*NotSupportedPullProvider\) GetAllFiles
 
 ```go
 func (p *NotSupportedPullProvider) GetAllFiles(_ context.Context, _ any, _ *db.Operation) ([]string, [][]byte, error)
@@ -3229,7 +3350,7 @@ func (p *NotSupportedPullProvider) GetAllFiles(_ context.Context, _ any, _ *db.O
 GetAllFiles returns an error indicating pull operations are not supported.
 
 <a name="NotSupportedPullProvider.GetFileByPath"></a>
-### func \(\*NotSupportedPullProvider\) [GetFileByPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPull.go#L444-L449>)
+### func \(\*NotSupportedPullProvider\) GetFileByPath
 
 ```go
 func (p *NotSupportedPullProvider) GetFileByPath(_ context.Context, _ any, _ *db.Operation, _ string) (string, []byte, error)
@@ -3238,7 +3359,7 @@ func (p *NotSupportedPullProvider) GetFileByPath(_ context.Context, _ any, _ *db
 GetFileByPath returns an error indicating pull operations are not supported.
 
 <a name="NotSupportedPullProvider.InitializeClient"></a>
-### func \(\*NotSupportedPullProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPull.go#L422-L426>)
+### func \(\*NotSupportedPullProvider\) InitializeClient
 
 ```go
 func (p *NotSupportedPullProvider) InitializeClient(_ context.Context, _ *slog.Logger, _ *db.Operation) (any, *string, func(), error)
@@ -3247,7 +3368,7 @@ func (p *NotSupportedPullProvider) InitializeClient(_ context.Context, _ *slog.L
 InitializeClient returns an error indicating pull operations are not supported.
 
 <a name="NotSupportedPullProvider.ProgressHandler"></a>
-### func \(\*NotSupportedPullProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPull.go#L456>)
+### func \(\*NotSupportedPullProvider\) ProgressHandler
 
 ```go
 func (p *NotSupportedPullProvider) ProgressHandler(_ *db.Operation) ProgressHandler
@@ -3256,7 +3377,7 @@ func (p *NotSupportedPullProvider) ProgressHandler(_ *db.Operation) ProgressHand
 ProgressHandler returns nil — providers that reject every pull call have nothing to observe.
 
 <a name="NotSupportedPushProvider"></a>
-## type [NotSupportedPushProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPush.go#L400>)
+## type NotSupportedPushProvider
 
 NotSupportedPushProvider provides a default implementation for connectors that don't support push operations.
 
@@ -3265,7 +3386,7 @@ type NotSupportedPushProvider struct{}
 ```
 
 <a name="NotSupportedPushProvider.InitializeClient"></a>
-### func \(\*NotSupportedPushProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPush.go#L403-L407>)
+### func \(\*NotSupportedPushProvider\) InitializeClient
 
 ```go
 func (p *NotSupportedPushProvider) InitializeClient(_ context.Context, _ *slog.Logger, _ *db.Operation) (any, *string, func(), error)
@@ -3274,7 +3395,7 @@ func (p *NotSupportedPushProvider) InitializeClient(_ context.Context, _ *slog.L
 InitializeClient returns an error indicating push operations are not supported.
 
 <a name="NotSupportedPushProvider.ProcessFiles"></a>
-### func \(\*NotSupportedPushProvider\) [ProcessFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPush.go#L412-L418>)
+### func \(\*NotSupportedPushProvider\) ProcessFiles
 
 ```go
 func (p *NotSupportedPushProvider) ProcessFiles(_ context.Context, _ any, _ *db.Operation, _ map[string][]byte, _ string) error
@@ -3283,7 +3404,7 @@ func (p *NotSupportedPushProvider) ProcessFiles(_ context.Context, _ any, _ *db.
 ProcessFiles returns an error indicating push operations are not supported.
 
 <a name="NotSupportedPushProvider.ProgressHandler"></a>
-### func \(\*NotSupportedPushProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPush.go#L425-L427>)
+### func \(\*NotSupportedPushProvider\) ProgressHandler
 
 ```go
 func (p *NotSupportedPushProvider) ProgressHandler(_ *db.Operation) ProgressHandler
@@ -3292,7 +3413,7 @@ func (p *NotSupportedPushProvider) ProgressHandler(_ *db.Operation) ProgressHand
 ProgressHandler returns nil — providers that reject every push call have nothing to observe. The common push worker's baseline heartbeat is still installed anyway.
 
 <a name="NotSupportedSchemaProvider"></a>
-## type [NotSupportedSchemaProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationSchemaGet.go#L219>)
+## type NotSupportedSchemaProvider
 
 NotSupportedSchemaProvider provides a default implementation for connectors that don't support schema operations.
 
@@ -3301,7 +3422,7 @@ type NotSupportedSchemaProvider struct{}
 ```
 
 <a name="NotSupportedSchemaProvider.GetSchema"></a>
-### func \(\*NotSupportedSchemaProvider\) [GetSchema](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationSchemaGet.go#L231-L236>)
+### func \(\*NotSupportedSchemaProvider\) GetSchema
 
 ```go
 func (p *NotSupportedSchemaProvider) GetSchema(_ fiber.Ctx, _ any, _ string, _ *string) (*irminmodels.ObjectSchema, error)
@@ -3310,7 +3431,7 @@ func (p *NotSupportedSchemaProvider) GetSchema(_ fiber.Ctx, _ any, _ string, _ *
 GetSchema returns an error indicating schema operations are not supported.
 
 <a name="NotSupportedSchemaProvider.GetSupportedOperationTypes"></a>
-### func \(\*NotSupportedSchemaProvider\) [GetSupportedOperationTypes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationSchemaGet.go#L241>)
+### func \(\*NotSupportedSchemaProvider\) GetSupportedOperationTypes
 
 ```go
 func (p *NotSupportedSchemaProvider) GetSupportedOperationTypes() []string
@@ -3319,7 +3440,7 @@ func (p *NotSupportedSchemaProvider) GetSupportedOperationTypes() []string
 GetSupportedOperationTypes returns an empty slice for unsupported connectors.
 
 <a name="NotSupportedSchemaProvider.InitializeClient"></a>
-### func \(\*NotSupportedSchemaProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationSchemaGet.go#L222-L226>)
+### func \(\*NotSupportedSchemaProvider\) InitializeClient
 
 ```go
 func (p *NotSupportedSchemaProvider) InitializeClient(_ fiber.Ctx, _ *slog.Logger, _ *db.Operation) (any, *string, func(), error)
@@ -3328,7 +3449,7 @@ func (p *NotSupportedSchemaProvider) InitializeClient(_ fiber.Ctx, _ *slog.Logge
 InitializeClient returns an error indicating schema operations are not supported.
 
 <a name="OAuthConnector"></a>
-## type [OAuthConnector](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_base.go#L42-L53>)
+## type OAuthConnector
 
 OAuthConnector holds the shared OAuth machinery a concrete connector composes into its controller. One instance per connector process; safe for concurrent use \(every method operates on the immutable Config \+ a stateless token client\).
 
@@ -3350,7 +3471,7 @@ type OAuthConnector struct {
 ```
 
 <a name="NewOAuthConnector"></a>
-### func [NewOAuthConnector](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_base.go#L63-L66>)
+### func NewOAuthConnector
 
 ```go
 func NewOAuthConnector(app *models.ConnectorsApp, cfg *irminmodels.ConnectionOAuthConfig) *OAuthConnector
@@ -3361,7 +3482,7 @@ NewOAuthConnector wires an OAuthConnector from the connector app's environment. 
 The caller retains ownership of the app — the OAuthConnector keeps only the token client \+ logger references it needs.
 
 <a name="OAuthConnector.ForceRefreshAccessToken"></a>
-### func \(\*OAuthConnector\) [ForceRefreshAccessToken](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_base.go#L98>)
+### func \(\*OAuthConnector\) ForceRefreshAccessToken
 
 ```go
 func (o *OAuthConnector) ForceRefreshAccessToken(c fiber.Ctx) (*lib.VendorAccessToken, error)
@@ -3370,7 +3491,7 @@ func (o *OAuthConnector) ForceRefreshAccessToken(c fiber.Ctx) (*lib.VendorAccess
 ForceRefreshAccessToken is the retry variant: it asks Core to rotate the stored token unconditionally. Callers use this after a vendor returns 401 on a token that was still within the local expiry window \(i.e., the user revoked Irmin at the vendor side mid\-flight\).
 
 <a name="OAuthConnector.InjectInfoOAuthConfig"></a>
-### func \(\*OAuthConnector\) [InjectInfoOAuthConfig](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_base.go#L176>)
+### func \(\*OAuthConnector\) InjectInfoOAuthConfig
 
 ```go
 func (o *OAuthConnector) InjectInfoOAuthConfig(info *models.ConnectorDetails)
@@ -3379,7 +3500,7 @@ func (o *OAuthConnector) InjectInfoOAuthConfig(info *models.ConnectorDetails)
 InjectInfoOAuthConfig stamps this connector's ConnectionOAuthConfig onto the provided /info response. No\-op when the connector declared no OAuth config — callers pass their regular ConnectorDetails through this method uniformly regardless of OAuth status.
 
 <a name="OAuthConnector.ResolveAccessToken"></a>
-### func \(\*OAuthConnector\) [ResolveAccessToken](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_base.go#L90>)
+### func \(\*OAuthConnector\) ResolveAccessToken
 
 ```go
 func (o *OAuthConnector) ResolveAccessToken(c fiber.Ctx) (*lib.VendorAccessToken, error)
@@ -3390,7 +3511,7 @@ ResolveAccessToken returns a currently\-valid vendor access token for the Connec
 The returned \*VendorAccessToken has an AuthorizationHeader\(\) helper that callers stamp straight onto vendor requests. Sentinel errors are translated to HTTP status codes by the companion WriteResolveError.
 
 <a name="OAuthConnector.ResolveOrWriteError"></a>
-### func \(\*OAuthConnector\) [ResolveOrWriteError](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_base.go#L194>)
+### func \(\*OAuthConnector\) ResolveOrWriteError
 
 ```go
 func (o *OAuthConnector) ResolveOrWriteError(c fiber.Ctx) (*lib.VendorAccessToken, bool)
@@ -3407,7 +3528,7 @@ if !ok {
 ```
 
 <a name="OAuthConnector.WriteResolveError"></a>
-### func \(\*OAuthConnector\) [WriteResolveError](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_base.go#L144>)
+### func \(\*OAuthConnector\) WriteResolveError
 
 ```go
 func (o *OAuthConnector) WriteResolveError(c fiber.Ctx, err error) error
@@ -3425,7 +3546,7 @@ Status mapping:
 - anything else → 500 Internal Server Error
 
 <a name="OAuthRoundTripper"></a>
-## type [OAuthRoundTripper](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_client.go#L43-L58>)
+## type OAuthRoundTripper
 
 OAuthRoundTripper is the outbound middleware that stamps a vendor access token on every request and retries once on 401 with a forced refresh. Wrap the connector's existing http.Client transport with this once at construction, then let vendor\-specific code drive the client normally.
 
@@ -3451,7 +3572,7 @@ type OAuthRoundTripper struct {
 ```
 
 <a name="NewOAuthRoundTripper"></a>
-### func [NewOAuthRoundTripper](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_client.go#L62-L66>)
+### func NewOAuthRoundTripper
 
 ```go
 func NewOAuthRoundTripper(base http.RoundTripper, o *OAuthConnector, c fiber.Ctx) *OAuthRoundTripper
@@ -3460,7 +3581,7 @@ func NewOAuthRoundTripper(base http.RoundTripper, o *OAuthConnector, c fiber.Ctx
 NewOAuthRoundTripper constructs a RoundTripper wired to the given Fiber request. Base defaults to http.DefaultTransport when nil.
 
 <a name="OAuthRoundTripper.RoundTrip"></a>
-### func \(\*OAuthRoundTripper\) [RoundTrip](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/oauth_client.go#L98>)
+### func \(\*OAuthRoundTripper\) RoundTrip
 
 ```go
 func (rt *OAuthRoundTripper) RoundTrip(req *http.Request) (*http.Response, error)
@@ -3471,7 +3592,7 @@ RoundTrip stamps the Authorization header and, on a 401 response, retries once a
 The retry needs a re\-readable request body. We buffer the body once at entry so the second attempt can replay it; connectors typically send small JSON payloads to vendor APIs so the memory cost is negligible. If the body is too large for that tradeoff, the caller should set req.GetBody themselves and we'll honor it.
 
 <a name="OperationConfigProvider"></a>
-## type [OperationConfigProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationConfig.go#L27-L37>)
+## type OperationConfigProvider
 
 OperationConfigProvider exposes a connector's request\-time configuration shape. EnsureOperationFromRequest consumes it on every data route to parse the SDK's \`details\[\<key\>\]\` / \`settings\[\<key\>\]\` form fields, build the per\-connector credential maps, and upsert the matching Operation row keyed on \(Connector, ConfigHash\).
 
@@ -3492,7 +3613,7 @@ type OperationConfigProvider interface {
 ```
 
 <a name="OperationGuard"></a>
-## type [OperationGuard](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationGuard.go#L128-L163>)
+## type OperationGuard
 
 OperationGuard is the handle returned by JobManager.Begin. It represents a successfully\-acquired operation lock and an associated pending OperationJob row. The caller is obligated to invoke Release exactly once, ideally via defer, to transition the row to a terminal state and free the advisory lock.
 
@@ -3505,7 +3626,7 @@ type OperationGuard struct {
 ```
 
 <a name="OperationGuard.JobID"></a>
-### func \(\*OperationGuard\) [JobID](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationGuard.go#L169>)
+### func \(\*OperationGuard\) JobID
 
 ```go
 func (g *OperationGuard) JobID() string
@@ -3514,7 +3635,7 @@ func (g *OperationGuard) JobID() string
 JobID returns the opaque identifier of the underlying OperationJob row. Handlers surface this on their successful response \(202 Accepted for async pulls, 200 for sync push/patch/schema\).
 
 <a name="OperationGuard.OperationID"></a>
-### func \(\*OperationGuard\) [OperationID](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationGuard.go#L194>)
+### func \(\*OperationGuard\) OperationID
 
 ```go
 func (g *OperationGuard) OperationID() uint
@@ -3523,7 +3644,7 @@ func (g *OperationGuard) OperationID() uint
 OperationID returns the numeric operation identifier this guard is protecting. Exposed for logging and for callers that want to correlate the guard with their existing Operation row handle.
 
 <a name="OperationGuard.OperationToken"></a>
-### func \(\*OperationGuard\) [OperationToken](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationGuard.go#L184>)
+### func \(\*OperationGuard\) OperationToken
 
 ```go
 func (g *OperationGuard) OperationToken() string
@@ -3532,7 +3653,7 @@ func (g *OperationGuard) OperationToken() string
 OperationToken returns the per\-job credential the connector returns to Core in the 202 Start\* response. Core re\-sends this on every subsequent call against the job's lifecycle routes \(status / result / cancel\); see db.OperationJob.OperationToken for the full contract. Empty when the guard is nil — handlers are expected to nil\-check before constructing the response, but the empty\-string fallback is safe for tests / hand\-wired guards that bypass Begin.
 
 <a name="OperationGuard.Release"></a>
-### func \(\*OperationGuard\) [Release](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationGuard.go#L226>)
+### func \(\*OperationGuard\) Release
 
 ```go
 func (g *OperationGuard) Release(outcome JobOutcome)
@@ -3543,7 +3664,7 @@ Release transitions the underlying OperationJob row to a terminal state and free
 outcome.Status must be one of OperationJobStatusComplete / Failed / Cancelled. Guard converts any other value \(including the zero value\) into Failed with a defensive error message, so a buggy caller can't accidentally leave the row in a non\-terminal state.
 
 <a name="OperationGuard.SetResultPath"></a>
-### func \(\*OperationGuard\) [SetResultPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationGuard.go#L207>)
+### func \(\*OperationGuard\) SetResultPath
 
 ```go
 func (g *OperationGuard) SetResultPath(path string)
@@ -3554,7 +3675,7 @@ SetResultPath records the path the worker wrote the result to. The guard forward
 Must be called before Release; calling after Release is a no\-op.
 
 <a name="PatchOperationProvider"></a>
-## type [PatchOperationProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPatch.go#L27-L43>)
+## type PatchOperationProvider
 
 PatchOperationProvider defines the interface for connector\-specific patch operation handling.
 
@@ -3581,7 +3702,7 @@ type PatchOperationProvider interface {
 ```
 
 <a name="ProgressEvent"></a>
-## type [ProgressEvent](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/progress.go#L63>)
+## type ProgressEvent
 
 ProgressEvent — see \[sdkprogress.ProgressEvent\].
 
@@ -3590,7 +3711,7 @@ type ProgressEvent = sdkprogress.ProgressEvent
 ```
 
 <a name="ProgressHandler"></a>
-## type [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/progress.go#L66>)
+## type ProgressHandler
 
 ProgressHandler — see \[sdkprogress.ProgressHandler\].
 
@@ -3599,7 +3720,7 @@ type ProgressHandler = sdkprogress.ProgressHandler
 ```
 
 <a name="NewProgressHandler"></a>
-### func [NewProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/progress.go#L114-L118>)
+### func NewProgressHandler
 
 ```go
 func NewProgressHandler(dbInstance *db.Database, logger *slog.Logger, operation *db.Operation) ProgressHandler
@@ -3610,7 +3731,7 @@ NewProgressHandler returns a ProgressHandler that forwards every event to LogOpe
 nil\-operation safe: an event arriving before the operation is hydrated logs against operationID=0, which the LogOperationProgress → LogOperationEvent path tolerates. Callers that want to drop events when operation is nil can wrap this themselves.
 
 <a name="NewProgressHandlerWithContext"></a>
-### func [NewProgressHandlerWithContext](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/progress.go#L136-L141>)
+### func NewProgressHandlerWithContext
 
 ```go
 func NewProgressHandlerWithContext(ctx context.Context, dbInstance *db.Database, logger *slog.Logger, operation *db.Operation) ProgressHandler
@@ -3620,8 +3741,26 @@ NewProgressHandlerWithContext is the async\-aware variant: if ctx carries a With
 
 Providers that want the fan\-out should call this from inside InitializeClient \(which now receives a job\-scoped ctx\), and pass the returned handler to their vendor client in place of the ctx\-less NewProgressHandler. New connectors should prefer this variant; the older one is retained for non\-async callers \(push, patch\) until they migrate.
 
+<a name="PullByPathMultiProvider"></a>
+## type PullByPathMultiProvider
+
+PullByPathMultiProvider is an optional capability mixin. A connector implements it when a single path can resolve to multiple output files \(e.g. a folder of PDFs in a cloud\-storage connector\). The framework prefers GetFilesByPath over GetFileByPath via a type assertion in collectPullResults, so existing single\-file implementations are unaffected — they simply don't satisfy this interface.
+
+Contract: the returned filePaths and fileContents slices MUST have the same length, paired by index. collectPullResults validates this and surfaces a job error rather than panicking on mismatch.
+
+```go
+type PullByPathMultiProvider interface {
+    GetFilesByPath(
+        ctx context.Context,
+        client any,
+        operation *db.Operation,
+        path string,
+    ) (filePaths []string, fileContents [][]byte, err error)
+}
+```
+
 <a name="PullOperationProvider"></a>
-## type [PullOperationProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPull.go#L29-L59>)
+## type PullOperationProvider
 
 PullOperationProvider defines the interface for connector\-specific pull operation handling.
 
@@ -3662,7 +3801,7 @@ type PullOperationProvider interface {
 ```
 
 <a name="PushOperationProvider"></a>
-## type [PushOperationProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationPush.go#L58-L88>)
+## type PushOperationProvider
 
 PushOperationProvider defines the interface for connector\-specific push operation handling.
 
@@ -3703,7 +3842,7 @@ type PushOperationProvider interface {
 ```
 
 <a name="SchemaOperationProvider"></a>
-## type [SchemaOperationProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationSchemaGet.go#L18-L31>)
+## type SchemaOperationProvider
 
 SchemaOperationProvider defines the interface for connector\-specific schema operation handling.
 
@@ -3725,7 +3864,7 @@ type SchemaOperationProvider interface {
 ```
 
 <a name="UnsubscribeProvider"></a>
-## type [UnsubscribeProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/operationUnsubscribe.go#L13-L17>)
+## type UnsubscribeProvider
 
 UnsubscribeProvider defines the interface for handling subscription unsubscription.
 
@@ -3738,7 +3877,7 @@ type UnsubscribeProvider interface {
 ```
 
 <a name="WorkerFunc"></a>
-## type [WorkerFunc](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/asyncOperation.go#L81-L85>)
+## type WorkerFunc
 
 WorkerFunc is the body the JobManager runs on a background goroutine after StartJob returns 202 to the caller. It receives:
 
@@ -3768,13 +3907,35 @@ import "irmin-connectors/connectors/firecrawl"
 
 
 <a name="SetupRoutes"></a>
-## func [SetupRoutes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/routes.go#L11>)
+## func SetupRoutes
 
 ```go
 func SetupRoutes(app *models.ConnectorsApp)
 ```
 
 SetupRoutes sets up the routes for the Firecrawl connector.
+
+# googledriveconnector
+
+```go
+import "irmin-connectors/connectors/googledrive"
+```
+
+Package googledriveconnector wires the Google Drive connector's controllers into the shared HTTP router. Call SetupRoutes once at startup; every request flows through common.SetupConnectorRoutes from there.
+
+## Index
+
+- [func SetupRoutes\(app \*models.ConnectorsApp\)](<#SetupRoutes>)
+
+
+<a name="SetupRoutes"></a>
+## func SetupRoutes
+
+```go
+func SetupRoutes(app *models.ConnectorsApp)
+```
+
+SetupRoutes mounts the Google Drive connector under /googledrive. The controller embeds \*common.OAuthConnector so every operation inherits the OAuth machinery without per\-route wiring.
 
 # httpconnector
 
@@ -3788,7 +3949,7 @@ import "irmin-connectors/connectors/http"
 
 
 <a name="SetupRoutes"></a>
-## func [SetupRoutes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/routes.go#L11>)
+## func SetupRoutes
 
 ```go
 func SetupRoutes(app *models.ConnectorsApp)
@@ -3810,7 +3971,7 @@ Package linearconnector wires the Linear connector's controllers into the shared
 
 
 <a name="SetupRoutes"></a>
-## func [SetupRoutes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/routes.go#L16>)
+## func SetupRoutes
 
 ```go
 func SetupRoutes(app *models.ConnectorsApp)
@@ -3831,7 +3992,7 @@ import "irmin-connectors/connectors/mysql"
 
 
 <a name="SetupRoutes"></a>
-## func [SetupRoutes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/routes.go#L11>)
+## func SetupRoutes
 
 ```go
 func SetupRoutes(app *models.ConnectorsApp)
@@ -3840,7 +4001,7 @@ func SetupRoutes(app *models.ConnectorsApp)
 SetupRoutes sets up the routes for the MySQL connector.
 
 <a name="StartListener"></a>
-## func [StartListener](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/listener.go#L20-L25>)
+## func StartListener
 
 ```go
 func StartListener(ctx context.Context, logger *slog.Logger, subscription db.Subscription, database *db.Database) error
@@ -3860,7 +4021,7 @@ import "irmin-connectors/connectors/pinecone"
 
 
 <a name="SetupRoutes"></a>
-## func [SetupRoutes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/routes.go#L11>)
+## func SetupRoutes
 
 ```go
 func SetupRoutes(app *models.ConnectorsApp)
@@ -3881,7 +4042,7 @@ import "irmin-connectors/connectors/postgres"
 
 
 <a name="SetupRoutes"></a>
-## func [SetupRoutes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/routes.go#L11>)
+## func SetupRoutes
 
 ```go
 func SetupRoutes(app *models.ConnectorsApp)
@@ -3890,7 +4051,7 @@ func SetupRoutes(app *models.ConnectorsApp)
 SetupRoutes sets up the routes for the PostgreSQL connector.
 
 <a name="StartListener"></a>
-## func [StartListener](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/listener.go#L122>)
+## func StartListener
 
 ```go
 func StartListener(ctx context.Context, logger *slog.Logger, subscription db.Subscription, d *db.Database) error
@@ -3910,7 +4071,7 @@ import "irmin-connectors/connectors/sftp"
 
 
 <a name="SetupRoutes"></a>
-## func [SetupRoutes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/routes.go#L11>)
+## func SetupRoutes
 
 ```go
 func SetupRoutes(app *models.ConnectorsApp)
@@ -3932,7 +4093,7 @@ Package stripeconnector wires the Stripe controllers into the shared HTTP router
 
 
 <a name="SetupRoutes"></a>
-## func [SetupRoutes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/routes.go#L14>)
+## func SetupRoutes
 
 ```go
 func SetupRoutes(app *models.ConnectorsApp)
@@ -3980,7 +4141,7 @@ const DefaultConnectorTimeout = 30 * time.Second
 ```
 
 <a name="Client"></a>
-## type [Client](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L29-L33>)
+## type Client
 
 Client represents the Connector API client.
 
@@ -3993,7 +4154,7 @@ type Client struct {
 ```
 
 <a name="NewClient"></a>
-### func [NewClient](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L38>)
+### func NewClient
 
 ```go
 func NewClient(baseURL, token string) *Client
@@ -4002,7 +4163,7 @@ func NewClient(baseURL, token string) *Client
 NewClient creates a new Connector API client with default settings. Connector responses are English\-only — there is no Accept\-Language negotiation.
 
 <a name="Client.FetchAPI"></a>
-### func \(\*Client\) [FetchAPI](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L267>)
+### func \(\*Client\) FetchAPI
 
 ```go
 func (c *Client) FetchAPI(ctx context.Context, opts RequestOptions, out any) error
@@ -4011,7 +4172,7 @@ func (c *Client) FetchAPI(ctx context.Context, opts RequestOptions, out any) err
 FetchAPI sends a request and attempts to parse the JSON response into a struct if provided.
 
 <a name="Client.FetchStreamFiles"></a>
-### func \(\*Client\) [FetchStreamFiles](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L284>)
+### func \(\*Client\) FetchStreamFiles
 
 ```go
 func (c *Client) FetchStreamFiles(ctx context.Context, opts RequestOptions) ([]PulledFile, error)
@@ -4020,7 +4181,7 @@ func (c *Client) FetchStreamFiles(ctx context.Context, opts RequestOptions) ([]P
 FetchStreamFiles sends a request and returns a slice of PulledFile.
 
 <a name="Client.GetConfigFields"></a>
-### func \(\*Client\) [GetConfigFields](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L407-L411>)
+### func \(\*Client\) GetConfigFields
 
 ```go
 func (c *Client) GetConfigFields(ctx context.Context, configurationType string, details, settings map[string]string) (map[string]irminmodels.DynamicField, error)
@@ -4029,7 +4190,7 @@ func (c *Client) GetConfigFields(ctx context.Context, configurationType string, 
 GetConfigFields retrieves configuration fields from the connector.
 
 <a name="Client.GetInfo"></a>
-### func \(\*Client\) [GetInfo](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L395>)
+### func \(\*Client\) GetInfo
 
 ```go
 func (c *Client) GetInfo(ctx context.Context) (*ConnectorInfo, error)
@@ -4038,7 +4199,7 @@ func (c *Client) GetInfo(ctx context.Context) (*ConnectorInfo, error)
 GetInfo fetches the connector's information from the /info endpoint.
 
 <a name="Client.GetSchema"></a>
-### func \(\*Client\) [GetSchema](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L483>)
+### func \(\*Client\) GetSchema
 
 ```go
 func (c *Client) GetSchema(ctx context.Context, method, path string) (*irminmodels.ObjectSchema, error)
@@ -4047,7 +4208,7 @@ func (c *Client) GetSchema(ctx context.Context, method, path string) (*irminmode
 GetSchema retrieves the schema for a specific operation method.
 
 <a name="Client.InitOperation"></a>
-### func \(\*Client\) [InitOperation](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L460>)
+### func \(\*Client\) InitOperation
 
 ```go
 func (c *Client) InitOperation(ctx context.Context, details, settings map[string]string) (*Operation, error)
@@ -4056,7 +4217,7 @@ func (c *Client) InitOperation(ctx context.Context, details, settings map[string
 InitOperation creates a new operation with the connector.
 
 <a name="Client.OperationPatch"></a>
-### func \(\*Client\) [OperationPatch](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L532>)
+### func \(\*Client\) OperationPatch
 
 ```go
 func (c *Client) OperationPatch(ctx context.Context, patchFile FormFile) (string, error)
@@ -4065,7 +4226,7 @@ func (c *Client) OperationPatch(ctx context.Context, patchFile FormFile) (string
 OperationPatch sends a patch file to apply JSON patch operations.
 
 <a name="Client.OperationPull"></a>
-### func \(\*Client\) [OperationPull](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L497>)
+### func \(\*Client\) OperationPull
 
 ```go
 func (c *Client) OperationPull(ctx context.Context, path string) ([]PulledFile, error)
@@ -4074,7 +4235,7 @@ func (c *Client) OperationPull(ctx context.Context, path string) ([]PulledFile, 
 OperationPull sends a file pull request.
 
 <a name="Client.OperationPush"></a>
-### func \(\*Client\) [OperationPush](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L511>)
+### func \(\*Client\) OperationPush
 
 ```go
 func (c *Client) OperationPush(ctx context.Context, path string, file FormFile) (string, error)
@@ -4083,7 +4244,7 @@ func (c *Client) OperationPush(ctx context.Context, path string, file FormFile) 
 OperationPush sends a file to the /operation/push endpoint.
 
 <a name="Client.Request"></a>
-### func \(\*Client\) [Request](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L227>)
+### func \(\*Client\) Request
 
 ```go
 func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, error)
@@ -4092,7 +4253,7 @@ func (c *Client) Request(ctx context.Context, opts RequestOptions) ([]byte, erro
 Request sends requests to the REST API of the connector and returns the raw response data.
 
 <a name="Client.SubscribeToChanges"></a>
-### func \(\*Client\) [SubscribeToChanges](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L550>)
+### func \(\*Client\) SubscribeToChanges
 
 ```go
 func (c *Client) SubscribeToChanges(ctx context.Context, webhook, webhookAccessToken string) (*Subscription, error)
@@ -4101,7 +4262,7 @@ func (c *Client) SubscribeToChanges(ctx context.Context, webhook, webhookAccessT
 SubscribeToChanges subscribes to changes in the data.
 
 <a name="Client.ValidateConfigFields"></a>
-### func \(\*Client\) [ValidateConfigFields](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L434-L437>)
+### func \(\*Client\) ValidateConfigFields
 
 ```go
 func (c *Client) ValidateConfigFields(ctx context.Context, details, settings map[string]string) (*irminmodels.ConnectorConfigurationValidationResult, error)
@@ -4110,7 +4271,7 @@ func (c *Client) ValidateConfigFields(ctx context.Context, details, settings map
 ValidateConfigFields validates configuration details and settings.
 
 <a name="ConnectorInfo"></a>
-## type [ConnectorInfo](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/types.go#L8-L22>)
+## type ConnectorInfo
 
 ConnectorInfo holds metadata about a connector returned from the connector's /info endpoint.
 
@@ -4133,7 +4294,7 @@ type ConnectorInfo struct {
 ```
 
 <a name="FormFile"></a>
-## type [FormFile](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L61-L66>)
+## type FormFile
 
 FormFile holds information about a file you want to upload with multipart/form\-data.
 
@@ -4147,7 +4308,7 @@ type FormFile struct {
 ```
 
 <a name="Operation"></a>
-## type [Operation](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/types.go#L37-L47>)
+## type Operation
 
 Operation represents a record of an initiated operation tied to a connector.
 
@@ -4166,7 +4327,7 @@ type Operation struct {
 ```
 
 <a name="PulledFile"></a>
-## type [PulledFile](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L69-L72>)
+## type PulledFile
 
 PulledFile represents a file returned with a stream request.
 
@@ -4178,7 +4339,7 @@ type PulledFile struct {
 ```
 
 <a name="RequestOptions"></a>
-## type [RequestOptions](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/client.go#L49-L58>)
+## type RequestOptions
 
 RequestOptions allows you to specify how you'd like to send data in the request.
 
@@ -4196,7 +4357,7 @@ type RequestOptions struct {
 ```
 
 <a name="Subscription"></a>
-## type [Subscription](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/connectors-client/types.go#L25-L34>)
+## type Subscription
 
 Subscription represents a record of an active subscription to changes in data.
 
@@ -4260,7 +4421,7 @@ import "irmin-connectors/e2e-tests/helpers"
 
 
 <a name="AssertCapabilityContains"></a>
-## func [AssertCapabilityContains](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L64-L68>)
+## func AssertCapabilityContains
 
 ```go
 func AssertCapabilityContains(capabilities []irminmodels.ConnectorCapability, capability irminmodels.ConnectorCapability, context string) error
@@ -4269,7 +4430,7 @@ func AssertCapabilityContains(capabilities []irminmodels.ConnectorCapability, ca
 AssertCapabilityContains checks that capabilities contain a specific capability.
 
 <a name="AssertContains"></a>
-## func [AssertContains](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L54>)
+## func AssertContains
 
 ```go
 func AssertContains(slice []string, value string, context string) error
@@ -4278,7 +4439,7 @@ func AssertContains(slice []string, value string, context string) error
 AssertContains checks that a slice contains a specific value.
 
 <a name="AssertError"></a>
-## func [AssertError](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L46>)
+## func AssertError
 
 ```go
 func AssertError(err error, context string) error
@@ -4287,7 +4448,7 @@ func AssertError(err error, context string) error
 AssertError checks that an error occurred.
 
 <a name="AssertFalse"></a>
-## func [AssertFalse](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L86>)
+## func AssertFalse
 
 ```go
 func AssertFalse(condition bool, message string) error
@@ -4296,7 +4457,7 @@ func AssertFalse(condition bool, message string) error
 AssertFalse checks that a condition is false.
 
 <a name="AssertGreaterThan"></a>
-## func [AssertGreaterThan](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L94>)
+## func AssertGreaterThan
 
 ```go
 func AssertGreaterThan(value, threshold int, context string) error
@@ -4305,7 +4466,7 @@ func AssertGreaterThan(value, threshold int, context string) error
 AssertGreaterThan checks that a value is greater than another.
 
 <a name="AssertNoError"></a>
-## func [AssertNoError](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L38>)
+## func AssertNoError
 
 ```go
 func AssertNoError(err error, context string) error
@@ -4314,7 +4475,7 @@ func AssertNoError(err error, context string) error
 AssertNoError checks that an error is nil.
 
 <a name="AssertNotEmpty"></a>
-## func [AssertNotEmpty](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L30>)
+## func AssertNotEmpty
 
 ```go
 func AssertNotEmpty(value string, fieldName string) error
@@ -4323,7 +4484,7 @@ func AssertNotEmpty(value string, fieldName string) error
 AssertNotEmpty checks that a string is not empty.
 
 <a name="AssertNotNil"></a>
-## func [AssertNotNil](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L22>)
+## func AssertNotNil
 
 ```go
 func AssertNotNil(value any, message string) error
@@ -4332,7 +4493,7 @@ func AssertNotNil(value any, message string) error
 AssertNotNil checks that a value is not nil.
 
 <a name="AssertTrue"></a>
-## func [AssertTrue](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L78>)
+## func AssertTrue
 
 ```go
 func AssertTrue(condition bool, message string) error
@@ -4341,7 +4502,7 @@ func AssertTrue(condition bool, message string) error
 AssertTrue checks that a condition is true.
 
 <a name="AssertValidConnectorInfo"></a>
-## func [AssertValidConnectorInfo](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L102>)
+## func AssertValidConnectorInfo
 
 ```go
 func AssertValidConnectorInfo(info *connectorsclient.ConnectorInfo) error
@@ -4350,7 +4511,7 @@ func AssertValidConnectorInfo(info *connectorsclient.ConnectorInfo) error
 AssertValidConnectorInfo validates the connector info structure.
 
 <a name="AssertValidDynamicField"></a>
-## func [AssertValidDynamicField](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L122>)
+## func AssertValidDynamicField
 
 ```go
 func AssertValidDynamicField(field irminmodels.DynamicField, fieldName string) error
@@ -4359,7 +4520,7 @@ func AssertValidDynamicField(field irminmodels.DynamicField, fieldName string) e
 AssertValidDynamicField validates a dynamic field structure.
 
 <a name="AssertValidObjectSchema"></a>
-## func [AssertValidObjectSchema](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L147>)
+## func AssertValidObjectSchema
 
 ```go
 func AssertValidObjectSchema(schema *irminmodels.ObjectSchema) error
@@ -4368,7 +4529,7 @@ func AssertValidObjectSchema(schema *irminmodels.ObjectSchema) error
 AssertValidObjectSchema validates an object schema structure.
 
 <a name="AssertValidOperation"></a>
-## func [AssertValidOperation](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L133>)
+## func AssertValidOperation
 
 ```go
 func AssertValidOperation(op *connectorsclient.Operation) error
@@ -4377,7 +4538,7 @@ func AssertValidOperation(op *connectorsclient.Operation) error
 AssertValidOperation validates an operation structure.
 
 <a name="AssertValidationResult"></a>
-## func [AssertValidationResult](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L156>)
+## func AssertValidationResult
 
 ```go
 func AssertValidationResult(result *irminmodels.ConnectorConfigurationValidationResult, shouldBeValid bool) error
@@ -4386,7 +4547,7 @@ func AssertValidationResult(result *irminmodels.ConnectorConfigurationValidation
 AssertValidationResult checks connector configuration validation results.
 
 <a name="CleanupTestFile"></a>
-## func [CleanupTestFile](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L30>)
+## func CleanupTestFile
 
 ```go
 func CleanupTestFile(filePath string) error
@@ -4395,7 +4556,7 @@ func CleanupTestFile(filePath string) error
 CleanupTestFile removes a temporary test file.
 
 <a name="ContentSimilar"></a>
-## func [ContentSimilar](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L247>)
+## func ContentSimilar
 
 ```go
 func ContentSimilar(expected, actual []byte) bool
@@ -4404,7 +4565,7 @@ func ContentSimilar(expected, actual []byte) bool
 ContentSimilar checks if two byte slices are similar enough to be considered equivalent. This accounts for minor differences like line ending normalization or whitespace.
 
 <a name="CreateFormFile"></a>
-## func [CreateFormFile](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L48>)
+## func CreateFormFile
 
 ```go
 func CreateFormFile(filePath, fieldName string) connectorsclient.FormFile
@@ -4413,7 +4574,7 @@ func CreateFormFile(filePath, fieldName string) connectorsclient.FormFile
 CreateFormFile creates a FormFile struct from a file path.
 
 <a name="CreateFormFileFromBytes"></a>
-## func [CreateFormFileFromBytes](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L57>)
+## func CreateFormFileFromBytes
 
 ```go
 func CreateFormFileFromBytes(filename, fieldName string, content []byte) connectorsclient.FormFile
@@ -4422,7 +4583,7 @@ func CreateFormFileFromBytes(filename, fieldName string, content []byte) connect
 CreateFormFileFromBytes creates a FormFile struct from bytes.
 
 <a name="CreatePatchFile"></a>
-## func [CreatePatchFile](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L38>)
+## func CreatePatchFile
 
 ```go
 func CreatePatchFile(patches []irminmodels.PatchOperation) (string, error)
@@ -4431,7 +4592,7 @@ func CreatePatchFile(patches []irminmodels.PatchOperation) (string, error)
 CreatePatchFile creates a JSON patch file for testing.
 
 <a name="CreateSampleCSVData"></a>
-## func [CreateSampleCSVData](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L81>)
+## func CreateSampleCSVData
 
 ```go
 func CreateSampleCSVData() []byte
@@ -4440,7 +4601,7 @@ func CreateSampleCSVData() []byte
 CreateSampleCSVData creates sample CSV data for testing.
 
 <a name="CreateSampleJSONData"></a>
-## func [CreateSampleJSONData](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L86>)
+## func CreateSampleJSONData
 
 ```go
 func CreateSampleJSONData() []byte
@@ -4449,7 +4610,7 @@ func CreateSampleJSONData() []byte
 CreateSampleJSONData creates sample JSON data for testing.
 
 <a name="CreateSampleParquetData"></a>
-## func [CreateSampleParquetData](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L67>)
+## func CreateSampleParquetData
 
 ```go
 func CreateSampleParquetData() []byte
@@ -4458,7 +4619,7 @@ func CreateSampleParquetData() []byte
 CreateSampleParquetData creates sample data for Parquet file testing. Note: This is a placeholder. Real implementation would use a Parquet library.
 
 <a name="CreateSampleZipFile"></a>
-## func [CreateSampleZipFile](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L96>)
+## func CreateSampleZipFile
 
 ```go
 func CreateSampleZipFile(filename string) (string, error)
@@ -4467,7 +4628,7 @@ func CreateSampleZipFile(filename string) (string, error)
 CreateSampleZipFile creates a sample zip file with CSV data for testing.
 
 <a name="CreateTestFile"></a>
-## func [CreateTestFile](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L17>)
+## func CreateTestFile
 
 ```go
 func CreateTestFile(filename string, content []byte) (string, error)
@@ -4476,7 +4637,7 @@ func CreateTestFile(filename string, content []byte) (string, error)
 CreateTestFile creates a temporary test file with the given content.
 
 <a name="CreateZipFileWithContent"></a>
-## func [CreateZipFileWithContent](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L165>)
+## func CreateZipFileWithContent
 
 ```go
 func CreateZipFileWithContent(filename string, content []byte) (string, error)
@@ -4485,7 +4646,7 @@ func CreateZipFileWithContent(filename string, content []byte) (string, error)
 CreateZipFileWithContent creates a ZIP file with the given content and filename.
 
 <a name="ExtractZipContent"></a>
-## func [ExtractZipContent](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L196>)
+## func ExtractZipContent
 
 ```go
 func ExtractZipContent(zipData []byte) (map[string][]byte, error)
@@ -4494,7 +4655,7 @@ func ExtractZipContent(zipData []byte) (map[string][]byte, error)
 ExtractZipContent extracts all files from a ZIP archive in memory. Returns a map of filename to content.
 
 <a name="FileNameMatches"></a>
-## func [FileNameMatches](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L236>)
+## func FileNameMatches
 
 ```go
 func FileNameMatches(actual, expected string) bool
@@ -4503,7 +4664,7 @@ func FileNameMatches(actual, expected string) bool
 FileNameMatches checks if a filename matches the expected name, accounting for path prefixes.
 
 <a name="IsValidZip"></a>
-## func [IsValidZip](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L227>)
+## func IsValidZip
 
 ```go
 func IsValidZip(data []byte) bool
@@ -4512,7 +4673,7 @@ func IsValidZip(data []byte) bool
 IsValidZip checks if the given data is a valid ZIP archive.
 
 <a name="WrapFileInZip"></a>
-## func [WrapFileInZip](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/fixtures.go#L129>)
+## func WrapFileInZip
 
 ```go
 func WrapFileInZip(filePath string) (string, error)
@@ -4521,7 +4682,7 @@ func WrapFileInZip(filePath string) (string, error)
 WrapFileInZip wraps an existing file in a ZIP archive.
 
 <a name="ConnectorClient"></a>
-## type [ConnectorClient](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/client.go#L12-L17>)
+## type ConnectorClient
 
 ConnectorClient wraps the connector client with test\-specific functionality.
 
@@ -4535,7 +4696,7 @@ type ConnectorClient struct {
 ```
 
 <a name="NewConnectorClient"></a>
-### func [NewConnectorClient](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/client.go#L20>)
+### func NewConnectorClient
 
 ```go
 func NewConnectorClient(connectorName, url, systemToken string) *ConnectorClient
@@ -4544,7 +4705,7 @@ func NewConnectorClient(connectorName, url, systemToken string) *ConnectorClient
 NewConnectorClient creates a new connector client for testing.
 
 <a name="ConnectorClient.GetInfoWithContext"></a>
-### func \(\*ConnectorClient\) [GetInfoWithContext](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/client.go#L47>)
+### func \(\*ConnectorClient\) GetInfoWithContext
 
 ```go
 func (c *ConnectorClient) GetInfoWithContext(ctx context.Context) (*connectorsclient.ConnectorInfo, error)
@@ -4553,7 +4714,7 @@ func (c *ConnectorClient) GetInfoWithContext(ctx context.Context) (*connectorscl
 GetInfoWithContext is a context\-aware wrapper for GetInfo.
 
 <a name="ConnectorClient.SetTimeout"></a>
-### func \(\*ConnectorClient\) [SetTimeout](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/client.go#L40>)
+### func \(\*ConnectorClient\) SetTimeout
 
 ```go
 func (c *ConnectorClient) SetTimeout(timeout time.Duration)
@@ -4562,7 +4723,7 @@ func (c *ConnectorClient) SetTimeout(timeout time.Duration)
 SetTimeout updates the HTTP client timeout.
 
 <a name="ConnectorClient.WithOperationToken"></a>
-### func \(\*ConnectorClient\) [WithOperationToken](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/client.go#L30>)
+### func \(\*ConnectorClient\) WithOperationToken
 
 ```go
 func (c *ConnectorClient) WithOperationToken(operationToken string) *ConnectorClient
@@ -4571,7 +4732,7 @@ func (c *ConnectorClient) WithOperationToken(operationToken string) *ConnectorCl
 WithOperationToken creates a new client with an operation token instead of system token.
 
 <a name="TestError"></a>
-## type [TestError](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L13-L15>)
+## type TestError
 
 TestError represents a test assertion failure.
 
@@ -4582,7 +4743,7 @@ type TestError struct {
 ```
 
 <a name="TestError.Error"></a>
-### func \(\*TestError\) [Error](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/helpers/assertions.go#L17>)
+### func \(\*TestError\) Error
 
 ```go
 func (e *TestError) Error() string
@@ -4622,7 +4783,7 @@ import "irmin-connectors/e2e-tests/runner"
 
 
 <a name="ConnectorConfig"></a>
-## type [ConnectorConfig](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/config.go#L23-L31>)
+## type ConnectorConfig
 
 ConnectorConfig represents configuration for a single connector.
 
@@ -4639,7 +4800,7 @@ type ConnectorConfig struct {
 ```
 
 <a name="ConnectorConfig.GetOperationConfig"></a>
-### func \(\*ConnectorConfig\) [GetOperationConfig](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/config.go#L84>)
+### func \(\*ConnectorConfig\) GetOperationConfig
 
 ```go
 func (c *ConnectorConfig) GetOperationConfig(operation string) (map[string]string, map[string]string)
@@ -4656,7 +4817,7 @@ The operation parameter can be any string. Common values include:
 If no override exists for the given operation, the base config is returned unchanged.
 
 <a name="OperationConfig"></a>
-## type [OperationConfig](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/config.go#L17-L20>)
+## type OperationConfig
 
 OperationConfig represents per\-operation configuration overrides. Fields specified here will override the base connector config for that operation.
 
@@ -4668,7 +4829,7 @@ type OperationConfig struct {
 ```
 
 <a name="TestConfig"></a>
-## type [TestConfig](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/config.go#L11-L13>)
+## type TestConfig
 
 TestConfig represents the test configuration structure.
 
@@ -4679,7 +4840,7 @@ type TestConfig struct {
 ```
 
 <a name="LoadConfig"></a>
-### func [LoadConfig](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/config.go#L44>)
+### func LoadConfig
 
 ```go
 func LoadConfig(configPath string) (*TestConfig, error)
@@ -4688,7 +4849,7 @@ func LoadConfig(configPath string) (*TestConfig, error)
 LoadConfig loads the test configuration from a JSON file.
 
 <a name="TestConfig.GetConnector"></a>
-### func \(\*TestConfig\) [GetConnector](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/config.go#L70>)
+### func \(\*TestConfig\) GetConnector
 
 ```go
 func (c *TestConfig) GetConnector(name string) (ConnectorConfig, bool)
@@ -4697,7 +4858,7 @@ func (c *TestConfig) GetConnector(name string) (ConnectorConfig, bool)
 GetConnector returns the configuration for a specific connector.
 
 <a name="TestConfig.GetEnabledConnectors"></a>
-### func \(\*TestConfig\) [GetEnabledConnectors](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/config.go#L59>)
+### func \(\*TestConfig\) GetEnabledConnectors
 
 ```go
 func (c *TestConfig) GetEnabledConnectors() []string
@@ -4706,7 +4867,7 @@ func (c *TestConfig) GetEnabledConnectors() []string
 GetEnabledConnectors returns a list of enabled connector names.
 
 <a name="TestDataConfig"></a>
-## type [TestDataConfig](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/config.go#L34-L41>)
+## type TestDataConfig
 
 TestDataConfig represents test data configuration for a connector.
 
@@ -4722,7 +4883,7 @@ type TestDataConfig struct {
 ```
 
 <a name="TestResult"></a>
-## type [TestResult](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/results.go#L16-L24>)
+## type TestResult
 
 TestResult represents the result of a single test.
 
@@ -4739,7 +4900,7 @@ type TestResult struct {
 ```
 
 <a name="TestRunner"></a>
-## type [TestRunner](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/runner.go#L16-L20>)
+## type TestRunner
 
 TestRunner orchestrates the execution of connector tests.
 
@@ -4752,7 +4913,7 @@ type TestRunner struct {
 ```
 
 <a name="NewTestRunner"></a>
-### func [NewTestRunner](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/runner.go#L23>)
+### func NewTestRunner
 
 ```go
 func NewTestRunner(config *TestConfig, verbose bool) *TestRunner
@@ -4761,7 +4922,7 @@ func NewTestRunner(config *TestConfig, verbose bool) *TestRunner
 NewTestRunner creates a new test runner.
 
 <a name="TestRunner.RunAll"></a>
-### func \(\*TestRunner\) [RunAll](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/runner.go#L77>)
+### func \(\*TestRunner\) RunAll
 
 ```go
 func (r *TestRunner) RunAll(ctx context.Context, specificConnector, specificTest string) error
@@ -4770,7 +4931,7 @@ func (r *TestRunner) RunAll(ctx context.Context, specificConnector, specificTest
 RunAll executes all tests for all enabled connectors.
 
 <a name="TestRunner.RunTest"></a>
-### func \(\*TestRunner\) [RunTest](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/runner.go#L32>)
+### func \(\*TestRunner\) RunTest
 
 ```go
 func (r *TestRunner) RunTest(name, connector string, testFunc func() error)
@@ -4779,7 +4940,7 @@ func (r *TestRunner) RunTest(name, connector string, testFunc func() error)
 RunTest executes a single test and records the result.
 
 <a name="TestRunner.SkipTest"></a>
-### func \(\*TestRunner\) [SkipTest](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/runner.go#L60>)
+### func \(\*TestRunner\) SkipTest
 
 ```go
 func (r *TestRunner) SkipTest(name, connector, reason string)
@@ -4788,7 +4949,7 @@ func (r *TestRunner) SkipTest(name, connector, reason string)
 SkipTest records a skipped test.
 
 <a name="TestSummary"></a>
-## type [TestSummary](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/results.go#L27-L36>)
+## type TestSummary
 
 TestSummary represents a summary of all test results.
 
@@ -4806,7 +4967,7 @@ type TestSummary struct {
 ```
 
 <a name="NewTestSummary"></a>
-### func [NewTestSummary](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/results.go#L39>)
+### func NewTestSummary
 
 ```go
 func NewTestSummary() *TestSummary
@@ -4815,7 +4976,7 @@ func NewTestSummary() *TestSummary
 NewTestSummary creates a new test summary.
 
 <a name="TestSummary.AddResult"></a>
-### func \(\*TestSummary\) [AddResult](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/results.go#L47>)
+### func \(\*TestSummary\) AddResult
 
 ```go
 func (s *TestSummary) AddResult(result TestResult)
@@ -4824,7 +4985,7 @@ func (s *TestSummary) AddResult(result TestResult)
 AddResult adds a test result to the summary.
 
 <a name="TestSummary.Finalize"></a>
-### func \(\*TestSummary\) [Finalize](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/results.go#L63>)
+### func \(\*TestSummary\) Finalize
 
 ```go
 func (s *TestSummary) Finalize()
@@ -4833,7 +4994,7 @@ func (s *TestSummary) Finalize()
 Finalize marks the end of testing.
 
 <a name="TestSummary.GetFailedTests"></a>
-### func \(\*TestSummary\) [GetFailedTests](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/results.go#L137>)
+### func \(\*TestSummary\) GetFailedTests
 
 ```go
 func (s *TestSummary) GetFailedTests() []TestResult
@@ -4842,7 +5003,7 @@ func (s *TestSummary) GetFailedTests() []TestResult
 GetFailedTests returns all failed test results.
 
 <a name="TestSummary.HasFailures"></a>
-### func \(\*TestSummary\) [HasFailures](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/results.go#L132>)
+### func \(\*TestSummary\) HasFailures
 
 ```go
 func (s *TestSummary) HasFailures() bool
@@ -4851,7 +5012,7 @@ func (s *TestSummary) HasFailures() bool
 HasFailures returns true if any tests failed.
 
 <a name="TestSummary.Print"></a>
-### func \(\*TestSummary\) [Print](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/runner/results.go#L68>)
+### func \(\*TestSummary\) Print
 
 ```go
 func (s *TestSummary) Print(verbose bool)
@@ -4895,7 +5056,7 @@ import "irmin-connectors/e2e-tests/tests"
 
 
 <a name="HasCapability"></a>
-## func [HasCapability](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/helpers.go#L8>)
+## func HasCapability
 
 ```go
 func HasCapability(capabilities []irminmodels.ConnectorCapability, capability string) bool
@@ -4904,7 +5065,7 @@ func HasCapability(capabilities []irminmodels.ConnectorCapability, capability st
 HasCapability checks if a connector has a specific capability.
 
 <a name="TestConfigFields"></a>
-## func [TestConfigFields](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/config.go#L10-L15>)
+## func TestConfigFields
 
 ```go
 func TestConfigFields(ctx context.Context, client *helpers.ConnectorClient, configurationType string, details, settings map[string]string) error
@@ -4913,7 +5074,7 @@ func TestConfigFields(ctx context.Context, client *helpers.ConnectorClient, conf
 TestConfigFields tests the configuration fields endpoint.
 
 <a name="TestConfigValidation"></a>
-## func [TestConfigValidation](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/config.go#L36-L41>)
+## func TestConfigValidation
 
 ```go
 func TestConfigValidation(ctx context.Context, client *helpers.ConnectorClient, details, settings map[string]string, shouldBeValid bool) error
@@ -4922,7 +5083,7 @@ func TestConfigValidation(ctx context.Context, client *helpers.ConnectorClient, 
 TestConfigValidation tests the configuration validation endpoint with valid config.
 
 <a name="TestConfigValidationInvalid"></a>
-## func [TestConfigValidationInvalid](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/config.go#L51>)
+## func TestConfigValidationInvalid
 
 ```go
 func TestConfigValidationInvalid(ctx context.Context, client *helpers.ConnectorClient) error
@@ -4931,7 +5092,7 @@ func TestConfigValidationInvalid(ctx context.Context, client *helpers.ConnectorC
 TestConfigValidationInvalid tests the configuration validation with invalid credentials.
 
 <a name="TestInfo"></a>
-## func [TestInfo](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/info.go#L10>)
+## func TestInfo
 
 ```go
 func TestInfo(ctx context.Context, client *helpers.ConnectorClient) error
@@ -4940,7 +5101,7 @@ func TestInfo(ctx context.Context, client *helpers.ConnectorClient) error
 TestInfo tests the /info endpoint of a connector.
 
 <a name="TestOperationInit"></a>
-## func [TestOperationInit](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/operation.go#L13-L17>)
+## func TestOperationInit
 
 ```go
 func TestOperationInit(ctx context.Context, client *helpers.ConnectorClient, details, settings map[string]string) (string, error)
@@ -4951,7 +5112,7 @@ TestOperationInit tests the operation initialization endpoint. Returns the opera
 Deprecated: Use TestOperationInitWithID instead to also get the operation ID.
 
 <a name="TestOperationInitWithID"></a>
-## func [TestOperationInitWithID](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/operation.go#L24-L28>)
+## func TestOperationInitWithID
 
 ```go
 func TestOperationInitWithID(ctx context.Context, client *helpers.ConnectorClient, details, settings map[string]string) (string, uint, error)
@@ -4960,7 +5121,7 @@ func TestOperationInitWithID(ctx context.Context, client *helpers.ConnectorClien
 TestOperationInitWithID tests the operation initialization endpoint. Returns the operation token and ID for use in subsequent tests.
 
 <a name="TestPatch"></a>
-## func [TestPatch](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/patch.go#L13>)
+## func TestPatch
 
 ```go
 func TestPatch(ctx context.Context, client *helpers.ConnectorClient, patchFile string) error
@@ -4969,7 +5130,7 @@ func TestPatch(ctx context.Context, client *helpers.ConnectorClient, patchFile s
 TestPatch tests the patch capability of a connector.
 
 <a name="TestPull"></a>
-## func [TestPull](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/pull.go#L11>)
+## func TestPull
 
 ```go
 func TestPull(ctx context.Context, client *helpers.ConnectorClient, pullPath string) error
@@ -4978,7 +5139,7 @@ func TestPull(ctx context.Context, client *helpers.ConnectorClient, pullPath str
 TestPull tests the pull capability of a connector.
 
 <a name="TestPullEmptyPath"></a>
-## func [TestPullEmptyPath](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/pull.go#L81>)
+## func TestPullEmptyPath
 
 ```go
 func TestPullEmptyPath(ctx context.Context, client *helpers.ConnectorClient) error
@@ -4987,7 +5148,7 @@ func TestPullEmptyPath(ctx context.Context, client *helpers.ConnectorClient) err
 TestPullEmptyPath tests pulling with an empty path \(should return all available data\).
 
 <a name="TestPullSpecificPath"></a>
-## func [TestPullSpecificPath](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/pull.go#L97>)
+## func TestPullSpecificPath
 
 ```go
 func TestPullSpecificPath(ctx context.Context, client *helpers.ConnectorClient, specificPath string) error
@@ -4996,7 +5157,7 @@ func TestPullSpecificPath(ctx context.Context, client *helpers.ConnectorClient, 
 TestPullSpecificPath tests pulling with a specific path.
 
 <a name="TestPullWithZipVerification"></a>
-## func [TestPullWithZipVerification](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/pull.go#L39>)
+## func TestPullWithZipVerification
 
 ```go
 func TestPullWithZipVerification(ctx context.Context, client *helpers.ConnectorClient, pullPath string) error
@@ -5005,7 +5166,7 @@ func TestPullWithZipVerification(ctx context.Context, client *helpers.ConnectorC
 TestPullWithZipVerification tests pull and verifies the content is a valid ZIP archive.
 
 <a name="TestPush"></a>
-## func [TestPush](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/push.go#L12>)
+## func TestPush
 
 ```go
 func TestPush(ctx context.Context, client *helpers.ConnectorClient, pushPath, pushFile string) error
@@ -5014,7 +5175,7 @@ func TestPush(ctx context.Context, client *helpers.ConnectorClient, pushPath, pu
 TestPush tests the push capability of a connector.
 
 <a name="TestPushEmptyPath"></a>
-## func [TestPushEmptyPath](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/push.go#L107>)
+## func TestPushEmptyPath
 
 ```go
 func TestPushEmptyPath(ctx context.Context, client *helpers.ConnectorClient) error
@@ -5023,7 +5184,7 @@ func TestPushEmptyPath(ctx context.Context, client *helpers.ConnectorClient) err
 TestPushEmptyPath tests pushing to an empty/root path.
 
 <a name="TestPushSpecificPath"></a>
-## func [TestPushSpecificPath](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/push.go#L132>)
+## func TestPushSpecificPath
 
 ```go
 func TestPushSpecificPath(ctx context.Context, client *helpers.ConnectorClient, specificPath string) error
@@ -5032,7 +5193,7 @@ func TestPushSpecificPath(ctx context.Context, client *helpers.ConnectorClient, 
 TestPushSpecificPath tests pushing to a specific path.
 
 <a name="TestPushWithContent"></a>
-## func [TestPushWithContent](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/push.go#L76-L82>)
+## func TestPushWithContent
 
 ```go
 func TestPushWithContent(ctx context.Context, client *helpers.ConnectorClient, pushPath string, content []byte, filename string) error
@@ -5041,7 +5202,7 @@ func TestPushWithContent(ctx context.Context, client *helpers.ConnectorClient, p
 TestPushWithContent tests pushing specific content to a path.
 
 <a name="TestRoundTrip"></a>
-## func [TestRoundTrip](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/roundtrip.go#L108-L113>)
+## func TestRoundTrip
 
 ```go
 func TestRoundTrip(ctx context.Context, client *helpers.ConnectorClient, pushPath string, pushFile string) error
@@ -5050,7 +5211,7 @@ func TestRoundTrip(ctx context.Context, client *helpers.ConnectorClient, pushPat
 TestRoundTrip tests pushing data and then pulling it back to verify integrity. This is a comprehensive test that validates the full data lifecycle. If pushFile is provided and exists, it will be used instead of generating sample data.
 
 <a name="TestRoundTripWithVerification"></a>
-## func [TestRoundTripWithVerification](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/roundtrip.go#L180-L185>)
+## func TestRoundTripWithVerification
 
 ```go
 func TestRoundTripWithVerification(ctx context.Context, client *helpers.ConnectorClient, pushPath string, expectedContent []byte) error
@@ -5059,7 +5220,7 @@ func TestRoundTripWithVerification(ctx context.Context, client *helpers.Connecto
 TestRoundTripWithVerification performs a detailed round\-trip test with content verification.
 
 <a name="TestSchema"></a>
-## func [TestSchema](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/schema.go#L12-L16>)
+## func TestSchema
 
 ```go
 func TestSchema(ctx context.Context, client *helpers.ConnectorClient, capabilities []irminmodels.ConnectorCapability) error
@@ -5068,7 +5229,7 @@ func TestSchema(ctx context.Context, client *helpers.ConnectorClient, capabiliti
 TestSchema tests the schema retrieval for all supported operation types.
 
 <a name="TestSchemaEmptyPath"></a>
-## func [TestSchemaEmptyPath](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/schema.go#L102-L106>)
+## func TestSchemaEmptyPath
 
 ```go
 func TestSchemaEmptyPath(ctx context.Context, client *helpers.ConnectorClient, capabilities []irminmodels.ConnectorCapability) error
@@ -5077,7 +5238,7 @@ func TestSchemaEmptyPath(ctx context.Context, client *helpers.ConnectorClient, c
 TestSchemaEmptyPath tests schema retrieval with an empty path \(root\).
 
 <a name="TestSchemaForPull"></a>
-## func [TestSchemaForPull](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/schema.go#L92>)
+## func TestSchemaForPull
 
 ```go
 func TestSchemaForPull(ctx context.Context, client *helpers.ConnectorClient, path string) error
@@ -5086,7 +5247,7 @@ func TestSchemaForPull(ctx context.Context, client *helpers.ConnectorClient, pat
 TestSchemaForPull tests pull schema retrieval with optional path.
 
 <a name="TestSchemaForPush"></a>
-## func [TestSchemaForPush](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/schema.go#L97>)
+## func TestSchemaForPush
 
 ```go
 func TestSchemaForPush(ctx context.Context, client *helpers.ConnectorClient, path string) error
@@ -5095,7 +5256,7 @@ func TestSchemaForPush(ctx context.Context, client *helpers.ConnectorClient, pat
 TestSchemaForPush tests push schema retrieval with optional path.
 
 <a name="TestSchemaSpecificPath"></a>
-## func [TestSchemaSpecificPath](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/schema.go#L122-L127>)
+## func TestSchemaSpecificPath
 
 ```go
 func TestSchemaSpecificPath(ctx context.Context, client *helpers.ConnectorClient, capabilities []irminmodels.ConnectorCapability, specificPath string) error
@@ -5104,7 +5265,7 @@ func TestSchemaSpecificPath(ctx context.Context, client *helpers.ConnectorClient
 TestSchemaSpecificPath tests schema retrieval with a specific path.
 
 <a name="TestSchemaWithPath"></a>
-## func [TestSchemaWithPath](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/schema.go#L73-L78>)
+## func TestSchemaWithPath
 
 ```go
 func TestSchemaWithPath(ctx context.Context, client *helpers.ConnectorClient, method string, path string) error
@@ -5113,7 +5274,7 @@ func TestSchemaWithPath(ctx context.Context, client *helpers.ConnectorClient, me
 TestSchemaWithPath tests schema retrieval for a specific path.
 
 <a name="TestSubscribe"></a>
-## func [TestSubscribe](<https://github.com/IrminData/irmin-connectors/blob/main/e2e-tests/tests/subscribe.go#L10>)
+## func TestSubscribe
 
 ```go
 func TestSubscribe(ctx context.Context, client *helpers.ConnectorClient, webhookURL, webhookToken string) error
@@ -5145,6 +5306,10 @@ Together they let a test drive the OAuthRoundTripper through the retry loop with
   - [func \(fc \*FakeCore\) ForceCalls\(\) int](<#FakeCore.ForceCalls>)
   - [func \(fc \*FakeCore\) LastServedToken\(\) string](<#FakeCore.LastServedToken>)
   - [func \(fc \*FakeCore\) LazyCalls\(\) int](<#FakeCore.LazyCalls>)
+- [type FakeMCPServer](<#FakeMCPServer>)
+  - [func NewFakeMCPServer\(t \*testing.T\) \*FakeMCPServer](<#NewFakeMCPServer>)
+  - [func \(f \*FakeMCPServer\) OnTool\(name string, handler MCPToolHandler\)](<#FakeMCPServer.OnTool>)
+  - [func \(f \*FakeMCPServer\) Session\(\) \*mcp.ClientSession](<#FakeMCPServer.Session>)
 - [type FakeVendor](<#FakeVendor>)
   - [func NewFakeVendor\(t \*testing.T\) \*FakeVendor](<#NewFakeVendor>)
   - [func \(fv \*FakeVendor\) AlwaysReject\(\)](<#FakeVendor.AlwaysReject>)
@@ -5152,10 +5317,11 @@ Together they let a test drive the OAuthRoundTripper through the retry loop with
   - [func \(fv \*FakeVendor\) RejectOnceThenAccept\(successBody string\)](<#FakeVendor.RejectOnceThenAccept>)
   - [func \(fv \*FakeVendor\) SetHandler\(h http.HandlerFunc\)](<#FakeVendor.SetHandler>)
   - [func \(fv \*FakeVendor\) URL\(\) string](<#FakeVendor.URL>)
+- [type MCPToolHandler](<#MCPToolHandler>)
 
 
 <a name="ReadBody"></a>
-## func [ReadBody](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L267>)
+## func ReadBody
 
 ```go
 func ReadBody(t *testing.T, resp *http.Response) string
@@ -5164,7 +5330,7 @@ func ReadBody(t *testing.T, resp *http.Response) string
 ReadBody returns the response body as a string. Wraps the usual io.ReadAll \+ Close dance tests otherwise repeat a dozen times.
 
 <a name="FakeCore"></a>
-## type [FakeCore](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L44-L63>)
+## type FakeCore
 
 FakeCore is an in\-process stand\-in for Irmin Core's internal access\-token endpoint. The zero value is not useful; call NewFakeCore.
 
@@ -5184,7 +5350,7 @@ type FakeCore struct {
 ```
 
 <a name="NewFakeCore"></a>
-### func [NewFakeCore](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L72>)
+### func NewFakeCore
 
 ```go
 func NewFakeCore(t *testing.T, systemToken string, tokenSequence ...string) *FakeCore
@@ -5195,7 +5361,7 @@ NewFakeCore starts an httptest server pre\-seeded with the given sequence of acc
 systemToken is the Bearer credential the server will check for on inbound requests; supply the same value to NewOAuthTokenClient so the signing round\-trips match.
 
 <a name="FakeCore.BaseURL"></a>
-### func \(\*FakeCore\) [BaseURL](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L85>)
+### func \(\*FakeCore\) BaseURL
 
 ```go
 func (fc *FakeCore) BaseURL() string
@@ -5204,7 +5370,7 @@ func (fc *FakeCore) BaseURL() string
 BaseURL returns the server's root URL for passing into NewOAuthTokenClient.
 
 <a name="FakeCore.ForceCalls"></a>
-### func \(\*FakeCore\) [ForceCalls](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L95>)
+### func \(\*FakeCore\) ForceCalls
 
 ```go
 func (fc *FakeCore) ForceCalls() int
@@ -5213,7 +5379,7 @@ func (fc *FakeCore) ForceCalls() int
 ForceCalls returns the number of force\_refresh:true fetches served.
 
 <a name="FakeCore.LastServedToken"></a>
-### func \(\*FakeCore\) [LastServedToken](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L104>)
+### func \(\*FakeCore\) LastServedToken
 
 ```go
 func (fc *FakeCore) LastServedToken() string
@@ -5222,7 +5388,7 @@ func (fc *FakeCore) LastServedToken() string
 LastServedToken returns the value of the most recent access\_token the server handed out. Handy for assertions that verify the round\-tripper actually stamped the right header.
 
 <a name="FakeCore.LazyCalls"></a>
-### func \(\*FakeCore\) [LazyCalls](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L88>)
+### func \(\*FakeCore\) LazyCalls
 
 ```go
 func (fc *FakeCore) LazyCalls() int
@@ -5230,8 +5396,46 @@ func (fc *FakeCore) LazyCalls() int
 
 LazyCalls returns the number of non\-force access\-token fetches served.
 
+<a name="FakeMCPServer"></a>
+## type FakeMCPServer
+
+FakeMCPServer is an in\-memory MCP server with registerable tool callbacks. The zero value is not useful; call NewFakeMCPServer.
+
+```go
+type FakeMCPServer struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="NewFakeMCPServer"></a>
+### func NewFakeMCPServer
+
+```go
+func NewFakeMCPServer(t *testing.T) *FakeMCPServer
+```
+
+NewFakeMCPServer stands up an in\-memory MCP server connected to a matching client session via mcp.NewInMemoryTransports. The session is closed automatically via t.Cleanup so tests don't leak goroutines.
+
+<a name="FakeMCPServer.OnTool"></a>
+### func \(\*FakeMCPServer\) OnTool
+
+```go
+func (f *FakeMCPServer) OnTool(name string, handler MCPToolHandler)
+```
+
+OnTool registers a handler for the given MCP tool name. Calling OnTool a second time for the same name registers another handler — the SDK invokes whichever one matches at dispatch time, so test code is expected to set up its expectations once and not re\-register.
+
+<a name="FakeMCPServer.Session"></a>
+### func \(\*FakeMCPServer\) Session
+
+```go
+func (f *FakeMCPServer) Session() *mcp.ClientSession
+```
+
+Session returns the live MCP client session connected to the fixture. Callers wrap it in a connector\-specific client \(e.g., linearclient.NewWithSession\) and exercise that.
+
 <a name="FakeVendor"></a>
-## type [FakeVendor](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L171-L177>)
+## type FakeVendor
 
 FakeVendor is an in\-process stand\-in for a vendor API. The behavior per request is caller\-configurable via SetHandler; the default handler rejects everything until explicitly wired.
 
@@ -5245,7 +5449,7 @@ type FakeVendor struct {
 ```
 
 <a name="NewFakeVendor"></a>
-### func [NewFakeVendor](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L181>)
+### func NewFakeVendor
 
 ```go
 func NewFakeVendor(t *testing.T) *FakeVendor
@@ -5254,7 +5458,7 @@ func NewFakeVendor(t *testing.T) *FakeVendor
 NewFakeVendor starts an httptest server with a no\-op default handler. Call SetHandler to install the behavior a given test wants.
 
 <a name="FakeVendor.AlwaysReject"></a>
-### func \(\*FakeVendor\) [AlwaysReject](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L242>)
+### func \(\*FakeVendor\) AlwaysReject
 
 ```go
 func (fv *FakeVendor) AlwaysReject()
@@ -5263,7 +5467,7 @@ func (fv *FakeVendor) AlwaysReject()
 AlwaysReject installs a handler that returns 401 unconditionally. Mirrors the "user revoked the app at the vendor" terminal state — the retry loop hits it, force\-refreshes, retries, and still gets 401; the connector should then surface the failure.
 
 <a name="FakeVendor.AuthHeaders"></a>
-### func \(\*FakeVendor\) [AuthHeaders](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L210>)
+### func \(\*FakeVendor\) AuthHeaders
 
 ```go
 func (fv *FakeVendor) AuthHeaders() []string
@@ -5272,7 +5476,7 @@ func (fv *FakeVendor) AuthHeaders() []string
 AuthHeaders returns a snapshot of the Authorization header values every inbound request carried, in arrival order. Callers assert on this to prove the round\-tripper stamped the right token on each attempt \(first = cached, second = force\-refreshed\).
 
 <a name="FakeVendor.RejectOnceThenAccept"></a>
-### func \(\*FakeVendor\) [RejectOnceThenAccept](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L221>)
+### func \(\*FakeVendor\) RejectOnceThenAccept
 
 ```go
 func (fv *FakeVendor) RejectOnceThenAccept(successBody string)
@@ -5281,7 +5485,7 @@ func (fv *FakeVendor) RejectOnceThenAccept(successBody string)
 RejectOnceThenAccept installs a handler that 401s the first request and 200s every subsequent one. The canonical "vendor revoked the token mid\-flight" scenario the retry loop exists to handle.
 
 <a name="FakeVendor.SetHandler"></a>
-### func \(\*FakeVendor\) [SetHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L200>)
+### func \(\*FakeVendor\) SetHandler
 
 ```go
 func (fv *FakeVendor) SetHandler(h http.HandlerFunc)
@@ -5290,13 +5494,22 @@ func (fv *FakeVendor) SetHandler(h http.HandlerFunc)
 SetHandler replaces the active request handler atomically. Safe to call mid\-test to flip behavior between scenarios \(e.g., first run returns 401, next run returns 200\).
 
 <a name="FakeVendor.URL"></a>
-### func \(\*FakeVendor\) [URL](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/common/commontest/oauth_fixture.go#L195>)
+### func \(\*FakeVendor\) URL
 
 ```go
 func (fv *FakeVendor) URL() string
 ```
 
 URL returns the vendor's root URL. Tests use this as the base for any vendor\-bound request they drive through the round\-tripper.
+
+<a name="MCPToolHandler"></a>
+## type MCPToolHandler
+
+MCPToolHandler is the callback shape registered via OnTool. It receives the args map verbatim and returns the JSON document the tool should emit \(which the SDK wraps in a TextContent block\) or an error to surface as IsError=true on the result.
+
+```go
+type MCPToolHandler func(args map[string]any) (json.RawMessage, error)
+```
 
 # client
 
@@ -5357,7 +5570,7 @@ const CrawlPollInterval = 5 * time.Second
 ```
 
 <a name="DeduplicateFilename"></a>
-## func [DeduplicateFilename](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L766>)
+## func DeduplicateFilename
 
 ```go
 func DeduplicateFilename(filename string, filenameCounts map[string]int, existingFiles map[string][]byte) string
@@ -5366,7 +5579,7 @@ func DeduplicateFilename(filename string, filenameCounts map[string]int, existin
 DeduplicateFilename ensures filename uniqueness by adding a counter suffix when collisions occur.
 
 <a name="SanitizeFilename"></a>
-## func [SanitizeFilename](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L794>)
+## func SanitizeFilename
 
 ```go
 func SanitizeFilename(filename string) string
@@ -5375,7 +5588,7 @@ func SanitizeFilename(filename string) string
 SanitizeFilename removes or replaces invalid characters from a filename.
 
 <a name="URLToFilename"></a>
-## func [URLToFilename](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L718>)
+## func URLToFilename
 
 ```go
 func URLToFilename(urlStr string) string
@@ -5384,7 +5597,7 @@ func URLToFilename(urlStr string) string
 URLToFilename converts a URL to a valid filename.
 
 <a name="ValidateConfiguration"></a>
-## func [ValidateConfiguration](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L275>)
+## func ValidateConfiguration
 
 ```go
 func ValidateConfiguration(config map[string]any) error
@@ -5393,7 +5606,7 @@ func ValidateConfiguration(config map[string]any) error
 ValidateConfiguration validates the Firecrawl client configuration.
 
 <a name="Config"></a>
-## type [Config](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L110-L118>)
+## type Config
 
 Config holds the configuration for the Firecrawl client.
 
@@ -5410,7 +5623,7 @@ type Config struct {
 ```
 
 <a name="FirecrawlClient"></a>
-## type [FirecrawlClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L47-L65>)
+## type FirecrawlClient
 
 FirecrawlClient represents a client for interacting with the Firecrawl API.
 
@@ -5428,7 +5641,7 @@ type FirecrawlClient struct {
 ```
 
 <a name="InitFirecrawlClient"></a>
-### func [InitFirecrawlClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L121>)
+### func InitFirecrawlClient
 
 ```go
 func InitFirecrawlClient(_ any, logger *slog.Logger, operation *db.Operation) (*FirecrawlClient, error)
@@ -5437,7 +5650,7 @@ func InitFirecrawlClient(_ any, logger *slog.Logger, operation *db.Operation) (*
 InitFirecrawlClient initializes a Firecrawl client from operation configuration.
 
 <a name="FirecrawlClient.Crawl"></a>
-### func \(\*FirecrawlClient\) [Crawl](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L371>)
+### func \(\*FirecrawlClient\) Crawl
 
 ```go
 func (c *FirecrawlClient) Crawl() (map[string][]byte, error)
@@ -5446,7 +5659,7 @@ func (c *FirecrawlClient) Crawl() (map[string][]byte, error)
 Crawl performs a crawl operation on a URL and all its subpages. When a progress handler is installed via SetProgressHandler, Crawl switches from the SDK's synchronous CrawlURL to AsyncCrawlURL \+ CheckCrawlStatus polling so per\-poll progress \(completed/total page counts\) surfaces into the operation log. Without a handler, Crawl preserves the original synchronous path so existing callers that don't wire progress are unaffected.
 
 <a name="FirecrawlClient.Execute"></a>
-### func \(\*FirecrawlClient\) [Execute](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L622>)
+### func \(\*FirecrawlClient\) Execute
 
 ```go
 func (c *FirecrawlClient) Execute() (map[string][]byte, error)
@@ -5455,7 +5668,7 @@ func (c *FirecrawlClient) Execute() (map[string][]byte, error)
 Execute runs the configured operation and returns the resulting files.
 
 <a name="FirecrawlClient.Map"></a>
-### func \(\*FirecrawlClient\) [Map](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L560>)
+### func \(\*FirecrawlClient\) Map
 
 ```go
 func (c *FirecrawlClient) Map() (map[string][]byte, error)
@@ -5464,7 +5677,7 @@ func (c *FirecrawlClient) Map() (map[string][]byte, error)
 Map performs a map operation to discover all URLs from a website.
 
 <a name="FirecrawlClient.Scrape"></a>
-### func \(\*FirecrawlClient\) [Scrape](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L334>)
+### func \(\*FirecrawlClient\) Scrape
 
 ```go
 func (c *FirecrawlClient) Scrape() (map[string][]byte, error)
@@ -5473,7 +5686,7 @@ func (c *FirecrawlClient) Scrape() (map[string][]byte, error)
 Scrape performs a scrape operation on a single URL.
 
 <a name="FirecrawlClient.Search"></a>
-### func \(\*FirecrawlClient\) [Search](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L610>)
+### func \(\*FirecrawlClient\) Search
 
 ```go
 func (c *FirecrawlClient) Search() (map[string][]byte, error)
@@ -5482,7 +5695,7 @@ func (c *FirecrawlClient) Search() (map[string][]byte, error)
 Search performs a search operation \(note: may not be available in all API versions\).
 
 <a name="FirecrawlClient.SetProgressHandler"></a>
-### func \(\*FirecrawlClient\) [SetProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/client/client.go#L105>)
+### func \(\*FirecrawlClient\) SetProgressHandler
 
 ```go
 func (c *FirecrawlClient) SetProgressHandler(h common.ProgressHandler)
@@ -5508,7 +5721,7 @@ import "irmin-connectors/connectors/firecrawl/config"
 
 
 <a name="GetConnectorInfo"></a>
-## func [GetConnectorInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/config/config.go#L128>)
+## func GetConnectorInfo
 
 ```go
 func GetConnectorInfo() models.ConnectorDetails
@@ -5517,7 +5730,7 @@ func GetConnectorInfo() models.ConnectorDetails
 GetConnectorInfo returns the default connector information for Firecrawl.
 
 <a name="GetDetailsFieldDefinitions"></a>
-## func [GetDetailsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/config/config.go#L17>)
+## func GetDetailsFieldDefinitions
 
 ```go
 func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -5526,7 +5739,7 @@ func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
 GetDetailsFieldDefinitions returns all detail fields with their metadata.
 
 <a name="GetDetailsFields"></a>
-## func [GetDetailsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/config/config.go#L41>)
+## func GetDetailsFields
 
 ```go
 func GetDetailsFields() []string
@@ -5535,7 +5748,7 @@ func GetDetailsFields() []string
 GetDetailsFields returns the detail\-specific fields.
 
 <a name="GetOptionalFields"></a>
-## func [GetOptionalFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/config/config.go#L35>)
+## func GetOptionalFields
 
 ```go
 func GetOptionalFields() []string
@@ -5544,7 +5757,7 @@ func GetOptionalFields() []string
 GetOptionalFields returns the optional form fields for Firecrawl.
 
 <a name="GetRequiredFields"></a>
-## func [GetRequiredFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/config/config.go#L29>)
+## func GetRequiredFields
 
 ```go
 func GetRequiredFields() []string
@@ -5553,7 +5766,7 @@ func GetRequiredFields() []string
 GetRequiredFields returns the mandatory form fields for Firecrawl.
 
 <a name="GetSettingsFieldDefinitions"></a>
-## func [GetSettingsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/config/config.go#L23>)
+## func GetSettingsFieldDefinitions
 
 ```go
 func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -5562,7 +5775,7 @@ func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
 GetSettingsFieldDefinitions returns static settings fields.
 
 <a name="GetSettingsFields"></a>
-## func [GetSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/config/config.go#L47>)
+## func GetSettingsFields
 
 ```go
 func GetSettingsFields() []string
@@ -5611,7 +5824,7 @@ import "irmin-connectors/connectors/firecrawl/controllers"
 
 
 <a name="Controllers"></a>
-## type [Controllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/controllers.go#L9-L11>)
+## type Controllers
 
 Controllers holds the dependencies for the Firecrawl connector controllers.
 
@@ -5622,7 +5835,7 @@ type Controllers struct {
 ```
 
 <a name="NewControllers"></a>
-### func [NewControllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/controllers.go#L14>)
+### func NewControllers
 
 ```go
 func NewControllers(app *models.ConnectorsApp) *Controllers
@@ -5631,7 +5844,7 @@ func NewControllers(app *models.ConnectorsApp) *Controllers
 NewControllers creates a new instance of controllers with the required dependencies.
 
 <a name="Controllers.BuildDetails"></a>
-### func \(\*Controllers\) [BuildDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationConfig.go#L14>)
+### func \(\*Controllers\) BuildDetails
 
 ```go
 func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
@@ -5640,7 +5853,7 @@ func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string
 BuildDetails implements the OperationConfigProvider interface.
 
 <a name="Controllers.BuildSettings"></a>
-### func \(\*Controllers\) [BuildSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationConfig.go#L19>)
+### func \(\*Controllers\) BuildSettings
 
 ```go
 func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
@@ -5649,7 +5862,7 @@ func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]strin
 BuildSettings implements the OperationConfigProvider interface.
 
 <a name="Controllers.ConfigFields"></a>
-### func \(\*Controllers\) [ConfigFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/configFields.go#L25>)
+### func \(\*Controllers\) ConfigFields
 
 ```go
 func (cs *Controllers) ConfigFields(c fiber.Ctx) error
@@ -5658,7 +5871,7 @@ func (cs *Controllers) ConfigFields(c fiber.Ctx) error
 ConfigFields godoc @Summary Get Firecrawl connector configuration fields @Description Get dynamic configuration fields for the Firecrawl connector based on the configuration key \(details or settings\) @Tags firecrawl @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/configuration/\{key\}/fields \[post\]
 
 <a name="Controllers.ConfigValidate"></a>
-### func \(\*Controllers\) [ConfigValidate](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/configValidate.go#L30>)
+### func \(\*Controllers\) ConfigValidate
 
 ```go
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
@@ -5667,7 +5880,7 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ConfigValidate godoc @Summary Validate Firecrawl connector configuration @Description Validate Firecrawl configuration by checking the API key and operation parameters @Tags firecrawl @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[api\_key\] formData string true "Firecrawl API key" @Param details\[operation\_type\] formData string true "Operation type \(scrape, crawl, map, search\)" @Param details\[url\] formData string false "Target URL \(required for scrape, crawl, map\)" @Param details\[query\] formData string false "Search query \(required for search\)" @Param details\[output\_format\] formData string false "Output format \(markdown, html, json\)" @Param details\[limit\] formData integer false "Maximum pages/results limit" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
-### func \(\*Controllers\) [DetailsPage](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/detailsPage.go#L17>)
+### func \(\*Controllers\) DetailsPage
 
 ```go
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error
@@ -5676,7 +5889,7 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
 DetailsPage godoc @Summary Get Firecrawl connector details page @Description Returns an HTML page with information about the Firecrawl connector @Tags firecrawl @Produce html @Success 200 \{string\} string "HTML page with connector details" @Failure 500 \{string\} string "Internal server error" @Router /firecrawl/details \[get\]
 
 <a name="Controllers.EnsureOperationMiddleware"></a>
-### func \(\*Controllers\) [EnsureOperationMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/middlewares.go#L19>)
+### func \(\*Controllers\) EnsureOperationMiddleware
 
 ```go
 func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
@@ -5685,7 +5898,7 @@ func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
 EnsureOperationMiddleware upserts the Operation row from the \`details\[\]\` / \`settings\[\]\` form fields the SDK's StartOperation\* requests now carry. Registered as the second handler on every data route after ValidateSystemToken — see common/routes.go.
 
 <a name="Controllers.GetDynamicFields"></a>
-### func \(\*Controllers\) [GetDynamicFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/configFields.go#L30-L34>)
+### func \(\*Controllers\) GetDynamicFields
 
 ```go
 func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]string) (map[string]irminmodels.DynamicField, error)
@@ -5694,7 +5907,7 @@ func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]st
 GetDynamicFields implements the ConfigFieldProvider interface.
 
 <a name="Controllers.GetOperationFormFields"></a>
-### func \(\*Controllers\) [GetOperationFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationConfig.go#L9>)
+### func \(\*Controllers\) GetOperationFormFields
 
 ```go
 func (cs *Controllers) GetOperationFormFields() ([]string, []string)
@@ -5703,7 +5916,7 @@ func (cs *Controllers) GetOperationFormFields() ([]string, []string)
 GetOperationFormFields implements the OperationConfigProvider interface.
 
 <a name="Controllers.GetRequiredFormFields"></a>
-### func \(\*Controllers\) [GetRequiredFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/configValidate.go#L35>)
+### func \(\*Controllers\) GetRequiredFormFields
 
 ```go
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
@@ -5712,7 +5925,7 @@ func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
 GetRequiredFormFields implements the ConfigValidationProvider interface.
 
 <a name="Controllers.Info"></a>
-### func \(\*Controllers\) [Info](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/info.go#L21>)
+### func \(\*Controllers\) Info
 
 ```go
 func (cs *Controllers) Info(c fiber.Ctx) error
@@ -5721,7 +5934,7 @@ func (cs *Controllers) Info(c fiber.Ctx) error
 Info godoc @Summary Get Firecrawl connector information @Description Get detailed information about the Firecrawl connector including capabilities, configuration fields, and API endpoints @Tags firecrawl @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "Firecrawl connector information retrieved successfully" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/info \[get\]
 
 <a name="Controllers.OperationPatch"></a>
-### func \(\*Controllers\) [OperationPatch](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationPatch.go#L17>)
+### func \(\*Controllers\) OperationPatch
 
 ```go
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
@@ -5730,7 +5943,7 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error
 OperationPatch godoc @Summary Firecrawl connector does not support patch operations @Description Firecrawl connector does not support patch operations \- it is read\-only @Tags firecrawl @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Success 501 \{object\} fiber.Map "Not implemented \- Firecrawl connector does not support patch operations" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /firecrawl/operation/patch \[post\]
 
 <a name="Controllers.OperationPull"></a>
-### func \(\*Controllers\) [OperationPull](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationPull.go#L212>)
+### func \(\*Controllers\) OperationPull
 
 ```go
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
@@ -5739,7 +5952,7 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error
 OperationPull godoc @Summary Pull data from Firecrawl @Description Execute the configured Firecrawl operation \(scrape, crawl, map, or search\) and return the results as files. @Tags firecrawl @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param path formData string false "Optional URL to scrape \(overrides configured URL for single\-page scraping\)" @Success 200 \{object\} fiber.Map "Data pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/operation/pull \[post\]
 
 <a name="Controllers.OperationPush"></a>
-### func \(\*Controllers\) [OperationPush](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationPush.go#L17>)
+### func \(\*Controllers\) OperationPush
 
 ```go
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
@@ -5748,7 +5961,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error
 OperationPush godoc @Summary Firecrawl connector does not support push operations @Description Firecrawl connector does not support push operations \- it is read\-only @Tags firecrawl @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Success 501 \{object\} fiber.Map "Not implemented \- Firecrawl connector does not support push operations" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /firecrawl/operation/push \[post\]
 
 <a name="Controllers.OperationSchemaGet"></a>
-### func \(\*Controllers\) [OperationSchemaGet](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationSchemaGet.go#L198>)
+### func \(\*Controllers\) OperationSchemaGet
 
 ```go
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
@@ -5757,7 +5970,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
 OperationSchemaGet godoc @Summary Get Firecrawl operation schema @Description Get the response schema for Firecrawl operations, returning an Irmin\-compatible ObjectSchema based on the configured operation type and output format @Tags firecrawl @Security SystemTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull\) @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /firecrawl/operation/schema/\{operation\} \[post\]
 
 <a name="Controllers.SubscribeToChanges"></a>
-### func \(\*Controllers\) [SubscribeToChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/subscribeToChanges.go#L17>)
+### func \(\*Controllers\) SubscribeToChanges
 
 ```go
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
@@ -5766,7 +5979,7 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
 SubscribeToChanges godoc @Summary Firecrawl connector does not support webhook subscriptions @Description Firecrawl connector does not support webhook subscriptions @Tags firecrawl @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Success 501 \{object\} fiber.Map "Not implemented \- Firecrawl connector does not support webhook subscriptions" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /firecrawl/operation/subscribe \[post\]
 
 <a name="Controllers.TestConnection"></a>
-### func \(\*Controllers\) [TestConnection](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/configValidate.go#L54-L58>)
+### func \(\*Controllers\) TestConnection
 
 ```go
 func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, _ map[string]any) (bool, bool, bool, []string)
@@ -5775,7 +5988,7 @@ func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, _ map
 TestConnection implements the ConfigValidationProvider interface. For Firecrawl, we validate the configuration but don't make an actual API call since that would consume credits.
 
 <a name="Controllers.UnsubscribeFromChanges"></a>
-### func \(\*Controllers\) [UnsubscribeFromChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/subscribeToChanges.go#L34>)
+### func \(\*Controllers\) UnsubscribeFromChanges
 
 ```go
 func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
@@ -5784,7 +5997,7 @@ func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
 UnsubscribeFromChanges godoc @Summary Firecrawl connector does not support webhook subscriptions @Description Firecrawl connector does not support webhook subscriptions @Tags firecrawl @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param subscription\_id formData string true "Subscription ID" @Success 501 \{object\} fiber.Map "Not implemented \- Firecrawl connector does not support webhook subscriptions" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /firecrawl/operation/unsubscribe \[post\]
 
 <a name="Controllers.ValidateFields"></a>
-### func \(\*Controllers\) [ValidateFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/configValidate.go#L40>)
+### func \(\*Controllers\) ValidateFields
 
 ```go
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
@@ -5793,7 +6006,7 @@ func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map
 ValidateFields implements the ConfigValidationProvider interface.
 
 <a name="Controllers.ValidateSystemTokenMiddleware"></a>
-### func \(\*Controllers\) [ValidateSystemTokenMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/middlewares.go#L11>)
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
 
 ```go
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
@@ -5802,7 +6015,7 @@ func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
 ValidateSystemTokenMiddleware validates the system token.
 
 <a name="FirecrawlPullProvider"></a>
-## type [FirecrawlPullProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationPull.go#L17-L23>)
+## type FirecrawlPullProvider
 
 FirecrawlPullProvider implements the PullOperationProvider interface for Firecrawl.
 
@@ -5813,7 +6026,7 @@ type FirecrawlPullProvider struct {
 ```
 
 <a name="FirecrawlPullProvider.GetAllFiles"></a>
-### func \(\*FirecrawlPullProvider\) [GetAllFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationPull.go#L67-L69>)
+### func \(\*FirecrawlPullProvider\) GetAllFiles
 
 ```go
 func (p *FirecrawlPullProvider) GetAllFiles(_ context.Context, clientAny any, operation *db.Operation) ([]string, [][]byte, error)
@@ -5822,7 +6035,7 @@ func (p *FirecrawlPullProvider) GetAllFiles(_ context.Context, clientAny any, op
 GetAllFiles executes the configured Firecrawl operation and returns the results as files.
 
 <a name="FirecrawlPullProvider.GetFileByPath"></a>
-### func \(\*FirecrawlPullProvider\) [GetFileByPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationPull.go#L117-L119>)
+### func \(\*FirecrawlPullProvider\) GetFileByPath
 
 ```go
 func (p *FirecrawlPullProvider) GetFileByPath(ctx context.Context, clientAny any, operation *db.Operation, path string) (string, []byte, error)
@@ -5831,7 +6044,7 @@ func (p *FirecrawlPullProvider) GetFileByPath(ctx context.Context, clientAny any
 GetFileByPath retrieves a specific file by path. For Firecrawl, this is treated as a new URL to scrape.
 
 <a name="FirecrawlPullProvider.InitializeClient"></a>
-### func \(\*FirecrawlPullProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationPull.go#L42-L46>)
+### func \(\*FirecrawlPullProvider\) InitializeClient
 
 ```go
 func (p *FirecrawlPullProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -5840,7 +6053,7 @@ func (p *FirecrawlPullProvider) InitializeClient(ctx context.Context, logger *sl
 InitializeClient initializes the Firecrawl client for pull operations.
 
 <a name="FirecrawlPullProvider.ProgressHandler"></a>
-### func \(\*FirecrawlPullProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationPull.go#L37>)
+### func \(\*FirecrawlPullProvider\) ProgressHandler
 
 ```go
 func (p *FirecrawlPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
@@ -5853,7 +6066,7 @@ Always returns a non\-nil handler. Nil\-safety lives one layer down in common.Lo
 Throttling lives in common.LogOperationProgress \(every 5 polls\) since each poll\-loop iteration is a "page" event.
 
 <a name="FirecrawlSchemaProvider"></a>
-## type [FirecrawlSchemaProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationSchemaGet.go#L19-L22>)
+## type FirecrawlSchemaProvider
 
 FirecrawlSchemaProvider implements the SchemaOperationProvider interface for Firecrawl.
 
@@ -5865,7 +6078,7 @@ type FirecrawlSchemaProvider struct {
 ```
 
 <a name="FirecrawlSchemaProvider.GetSchema"></a>
-### func \(\*FirecrawlSchemaProvider\) [GetSchema](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationSchemaGet.go#L41-L46>)
+### func \(\*FirecrawlSchemaProvider\) GetSchema
 
 ```go
 func (p *FirecrawlSchemaProvider) GetSchema(_ fiber.Ctx, clientAny any, operationType string, _ *string) (*irminmodels.ObjectSchema, error)
@@ -5874,7 +6087,7 @@ func (p *FirecrawlSchemaProvider) GetSchema(_ fiber.Ctx, clientAny any, operatio
 GetSchema retrieves a schema based on the Firecrawl operation type. For Firecrawl, the schema is relatively simple since output is always markdown, HTML, or JSON.
 
 <a name="FirecrawlSchemaProvider.GetSupportedOperationTypes"></a>
-### func \(\*FirecrawlSchemaProvider\) [GetSupportedOperationTypes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationSchemaGet.go#L180>)
+### func \(\*FirecrawlSchemaProvider\) GetSupportedOperationTypes
 
 ```go
 func (p *FirecrawlSchemaProvider) GetSupportedOperationTypes() []string
@@ -5883,13 +6096,470 @@ func (p *FirecrawlSchemaProvider) GetSupportedOperationTypes() []string
 GetSupportedOperationTypes returns the list of supported operation types for Firecrawl.
 
 <a name="FirecrawlSchemaProvider.InitializeClient"></a>
-### func \(\*FirecrawlSchemaProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/firecrawl/controllers/operationSchemaGet.go#L25-L29>)
+### func \(\*FirecrawlSchemaProvider\) InitializeClient
 
 ```go
 func (p *FirecrawlSchemaProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
 ```
 
 InitializeClient initializes the Firecrawl client for schema operations.
+
+# config
+
+```go
+import "irmin-connectors/connectors/googledrive/config"
+```
+
+Package config declares Google Drive's DynamicField schema and the ConnectorDetails payload served from the /info endpoint.
+
+Auth is OAuth 2.0 \+ PKCE as a static\-client connector \(no RFC 7591 Dynamic Client Registration — Google does not support DCR\). An admin must register one OAuth app per environment in Google Cloud Console; the resulting client\_id/client\_secret are stored in Core's connection\_oauth\_clients table as a global \(workspace\_id = NULL\) row.
+
+Users only see a "Connect with Google" button — they never touch Google Cloud Console.
+
+Google's OAuth has two quirks the flow must handle:
+
+- Refresh tokens in testing mode expire after 7 days \(production mode issues indefinite refresh tokens\). The scheduled refresh path handles this transparently.
+- The consent screen must be set to "External" \(or "Internal" for Google Workspace domains\) and published, or refresh tokens expire after 7 days regardless of mode.
+
+## Index
+
+- [Constants](<#constants>)
+- [func DefaultScopes\(\) \[\]string](<#DefaultScopes>)
+- [func GetConnectorInfo\(\) models.ConnectorDetails](<#GetConnectorInfo>)
+- [func GetDetailsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetDetailsFieldDefinitions>)
+- [func GetOptionalFields\(\) \[\]string](<#GetOptionalFields>)
+- [func GetRequiredDetailsFields\(\) \[\]string](<#GetRequiredDetailsFields>)
+- [func GetRequiredFields\(\) \[\]string](<#GetRequiredFields>)
+- [func GetSettingsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetSettingsFieldDefinitions>)
+
+
+## Constants
+
+<a name="AuthorizationURL"></a>OAuth constants for Google's endpoints.
+
+```go
+const (
+    // AuthorizationURL is where the user-agent goes to approve the grant.
+    AuthorizationURL = "https://accounts.google.com/o/oauth2/auth"
+
+    // TokenURL exchanges authorization codes and refresh tokens.
+    TokenURL = "https://oauth2.googleapis.com/token" //nolint:gosec // OAuth endpoint URL, not a credential
+
+    // RevocationURL is where Core POSTs the token on disconnect.
+    RevocationURL = "https://oauth2.googleapis.com/revoke"
+
+    // Google Drive API base URL.
+    APIBaseURL = "https://www.googleapis.com"
+
+    // DefaultMaxRecords is the default cap on files pulled per operation.
+    DefaultMaxRecords = "100000"
+)
+```
+
+<a name="DefaultScopes"></a>
+## func DefaultScopes
+
+```go
+func DefaultScopes() []string
+```
+
+DefaultScopes returns the OAuth scopes the connector requests. drive.readonly is sufficient for pulling file metadata \+ contents. drive.file is needed for push \(creating app\-owned files\). drive provides full access \(read/write all files\). Returned as a fresh slice each call \(lint disallows package\-level slices\).
+
+<a name="GetConnectorInfo"></a>
+## func GetConnectorInfo
+
+```go
+func GetConnectorInfo() models.ConnectorDetails
+```
+
+GetConnectorInfo returns the static connector metadata.
+
+The ConnectionOAuthConfig block \(without DCREndpoint\) tells Core to use the global admin\-configured connection\_oauth\_clients row for this connector — Google does not support Dynamic Client Registration.
+
+<a name="GetDetailsFieldDefinitions"></a>
+## func GetDetailsFieldDefinitions
+
+```go
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
+```
+
+GetDetailsFieldDefinitions returns the connection details schema.
+
+Google Drive is OAuth\-backed so there are no user\-entered detail fields — the credential is the OAuth bearer token Core mints on behalf of the workspace. The empty map keeps the embed uniform.
+
+<a name="GetOptionalFields"></a>
+## func GetOptionalFields
+
+```go
+func GetOptionalFields() []string
+```
+
+GetOptionalFields returns optional field names from both maps.
+
+<a name="GetRequiredDetailsFields"></a>
+## func GetRequiredDetailsFields
+
+```go
+func GetRequiredDetailsFields() []string
+```
+
+GetRequiredDetailsFields returns only the required detail field names.
+
+<a name="GetRequiredFields"></a>
+## func GetRequiredFields
+
+```go
+func GetRequiredFields() []string
+```
+
+GetRequiredFields returns the union of required detail and settings field names.
+
+<a name="GetSettingsFieldDefinitions"></a>
+## func GetSettingsFieldDefinitions
+
+```go
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
+```
+
+GetSettingsFieldDefinitions returns the per\-Connection settings.
+
+# googledrivecontrollers
+
+```go
+import "irmin-connectors/connectors/googledrive/controllers"
+```
+
+Package googledrivecontrollers wires the Google Drive connector's HTTP handlers. The Controllers struct embeds \*common.OAuthConnector so every method inherits the shared OAuth machinery \(token resolution, sentinel\-to\-HTTP mapping, /info OAuth\-config stamping\) alongside \*common.Controllers for the per\-connector base routes.
+
+Google Drive is a static\-client OAuth connector: an admin registers one OAuth app per environment in Google Cloud Console, and the resulting client credentials live in Core's connection\_oauth\_clients table \(workspace\_id = NULL, global\). No DCR.
+
+## Index
+
+- [type Controllers](<#Controllers>)
+  - [func NewControllers\(app \*models.ConnectorsApp\) \*Controllers](<#NewControllers>)
+  - [func \(cs \*Controllers\) BuildDetails\(fields map\[string\]string\) \(map\[string\]string, error\)](<#Controllers.BuildDetails>)
+  - [func \(cs \*Controllers\) BuildSettings\(fields map\[string\]string\) \(map\[string\]string, error\)](<#Controllers.BuildSettings>)
+  - [func \(cs \*Controllers\) ConfigFields\(c fiber.Ctx\) error](<#Controllers.ConfigFields>)
+  - [func \(cs \*Controllers\) ConfigValidate\(c fiber.Ctx\) error](<#Controllers.ConfigValidate>)
+  - [func \(cs \*Controllers\) DetailsPage\(c fiber.Ctx\) error](<#Controllers.DetailsPage>)
+  - [func \(cs \*Controllers\) EnsureOperationMiddleware\(c fiber.Ctx\) error](<#Controllers.EnsureOperationMiddleware>)
+  - [func \(cs \*Controllers\) GetDynamicFields\(\_ fiber.Ctx, key string, \_ map\[string\]string\) \(map\[string\]irminmodels.DynamicField, error\)](<#Controllers.GetDynamicFields>)
+  - [func \(cs \*Controllers\) GetOperationFormFields\(\) \(\[\]string, \[\]string\)](<#Controllers.GetOperationFormFields>)
+  - [func \(cs \*Controllers\) GetRequiredFormFields\(\) \(\[\]string, \[\]string\)](<#Controllers.GetRequiredFormFields>)
+  - [func \(cs \*Controllers\) Info\(c fiber.Ctx\) error](<#Controllers.Info>)
+  - [func \(cs \*Controllers\) OperationPatch\(c fiber.Ctx\) error](<#Controllers.OperationPatch>)
+  - [func \(cs \*Controllers\) OperationPull\(c fiber.Ctx\) error](<#Controllers.OperationPull>)
+  - [func \(cs \*Controllers\) OperationPush\(c fiber.Ctx\) error](<#Controllers.OperationPush>)
+  - [func \(cs \*Controllers\) OperationSchemaGet\(c fiber.Ctx\) error](<#Controllers.OperationSchemaGet>)
+  - [func \(cs \*Controllers\) SubscribeToChanges\(c fiber.Ctx\) error](<#Controllers.SubscribeToChanges>)
+  - [func \(cs \*Controllers\) TestConnection\(\_ fiber.Ctx, \_, \_ map\[string\]any\) \(bool, bool, bool, \[\]string\)](<#Controllers.TestConnection>)
+  - [func \(cs \*Controllers\) UnsubscribeFromChanges\(c fiber.Ctx\) error](<#Controllers.UnsubscribeFromChanges>)
+  - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, \_, settings map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
+  - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
+- [type GoogleDrivePullProvider](<#GoogleDrivePullProvider>)
+  - [func \(p \*GoogleDrivePullProvider\) GetAllFiles\(ctx context.Context, clientAny any, operation \*db.Operation\) \(\[\]string, \[\]\[\]byte, error\)](<#GoogleDrivePullProvider.GetAllFiles>)
+  - [func \(p \*GoogleDrivePullProvider\) GetFileByPath\(ctx context.Context, clientAny any, operation \*db.Operation, rawPath string\) \(string, \[\]byte, error\)](<#GoogleDrivePullProvider.GetFileByPath>)
+  - [func \(p \*GoogleDrivePullProvider\) GetFilesByPath\(ctx context.Context, clientAny any, operation \*db.Operation, rawPath string\) \(\[\]string, \[\]\[\]byte, error\)](<#GoogleDrivePullProvider.GetFilesByPath>)
+  - [func \(p \*GoogleDrivePullProvider\) InitializeClient\(ctx context.Context, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#GoogleDrivePullProvider.InitializeClient>)
+  - [func \(p \*GoogleDrivePullProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#GoogleDrivePullProvider.ProgressHandler>)
+- [type GoogleDrivePushProvider](<#GoogleDrivePushProvider>)
+  - [func \(p \*GoogleDrivePushProvider\) InitializeClient\(ctx context.Context, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#GoogleDrivePushProvider.InitializeClient>)
+  - [func \(p \*GoogleDrivePushProvider\) ProcessFiles\(ctx context.Context, clientAny any, operation \*db.Operation, files map\[string\]\[\]byte, rawPath string\) error](<#GoogleDrivePushProvider.ProcessFiles>)
+  - [func \(p \*GoogleDrivePushProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#GoogleDrivePushProvider.ProgressHandler>)
+
+
+<a name="Controllers"></a>
+## type Controllers
+
+Controllers holds the dependencies for every Google Drive handler.
+
+```go
+type Controllers struct {
+    *common.Controllers
+    *common.OAuthConnector
+}
+```
+
+<a name="NewControllers"></a>
+### func NewControllers
+
+```go
+func NewControllers(app *models.ConnectorsApp) *Controllers
+```
+
+NewControllers wires the Google Drive controller from the connector app.
+
+<a name="Controllers.BuildDetails"></a>
+### func \(\*Controllers\) BuildDetails
+
+```go
+func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
+```
+
+BuildDetails implements common.OperationConfigProvider. Google Drive has no detail fields; the result is an empty map by construction because GetDetailsFieldDefinitions returns an empty map.
+
+<a name="Controllers.BuildSettings"></a>
+### func \(\*Controllers\) BuildSettings
+
+```go
+func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
+```
+
+BuildSettings implements common.OperationConfigProvider.
+
+<a name="Controllers.ConfigFields"></a>
+### func \(\*Controllers\) ConfigFields
+
+```go
+func (cs *Controllers) ConfigFields(c fiber.Ctx) error
+```
+
+ConfigFields godoc @Summary Get Google Drive connector configuration fields @Description Returns dynamic configuration field definitions for the Google Drive connector. The "details" key returns an empty map because Google Drive authenticates via OAuth; the "settings" key returns user\-tunable options like scope and max\_records\_per\_resource. @Tags googledrive @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /googledrive/configuration/\{key\}/fields \[post\]
+
+<a name="Controllers.ConfigValidate"></a>
+### func \(\*Controllers\) ConfigValidate
+
+```go
+func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
+```
+
+ConfigValidate godoc @Summary Validate Google Drive connector configuration @Description Validates the provided configuration fields for the Google Drive connector. @Tags googledrive @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Success 200 \{object\} map\[string\]any "Validation result" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /googledrive/configuration/validate \[post\]
+
+<a name="Controllers.DetailsPage"></a>
+### func \(\*Controllers\) DetailsPage
+
+```go
+func (cs *Controllers) DetailsPage(c fiber.Ctx) error
+```
+
+DetailsPage godoc @Summary Get Google Drive connector details page @Description Renders an HTML page describing what the Google Drive connector does, what it supports, and how to set it up. Public — no authentication required. @Tags googledrive @Accept json @Produce text/html @Success 200 \{string\} string "Google Drive connector details page" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /googledrive/details \[get\]
+
+<a name="Controllers.EnsureOperationMiddleware"></a>
+### func \(\*Controllers\) EnsureOperationMiddleware
+
+```go
+func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
+```
+
+EnsureOperationMiddleware upserts the Operation row from the \`details\[\]\` / \`settings\[\]\` form fields the SDK's StartOperation\* requests carry. Google Drive has no \`details\[\]\` fields \(OAuth supplies the credential\), but the middleware still runs so settings get captured uniformly across operations.
+
+<a name="Controllers.GetDynamicFields"></a>
+### func \(\*Controllers\) GetDynamicFields
+
+```go
+func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]string) (map[string]irminmodels.DynamicField, error)
+```
+
+GetDynamicFields implements common.ConfigFieldProvider. Returns the static schema for the requested key — Google Drive's config is fully declarative so the provider does no per\-request decisions.
+
+<a name="Controllers.GetOperationFormFields"></a>
+### func \(\*Controllers\) GetOperationFormFields
+
+```go
+func (cs *Controllers) GetOperationFormFields() ([]string, []string)
+```
+
+GetOperationFormFields implements common.OperationConfigProvider. Google Drive has no required detail fields \(OAuth supplies the credential\), but has optional settings \(scope, max\_records\_per\_resource\).
+
+<a name="Controllers.GetRequiredFormFields"></a>
+### func \(\*Controllers\) GetRequiredFormFields
+
+```go
+func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
+```
+
+GetRequiredFormFields implements common.ConfigValidationProvider. Google Drive is OAuth\-backed and every setting is optional.
+
+<a name="Controllers.Info"></a>
+### func \(\*Controllers\) Info
+
+```go
+func (cs *Controllers) Info(c fiber.Ctx) error
+```
+
+Info godoc @Summary Get Google Drive connector information @Description Returns connector metadata including capabilities, OAuth configuration, and dynamic field schema. The embedded ConnectionOAuthConfig tells the console to render a Connect\-with\-Google button instead of a credential form. @Tags googledrive @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "Google Drive connector information" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /googledrive/info \[get\]
+
+<a name="Controllers.OperationPatch"></a>
+### func \(\*Controllers\) OperationPatch
+
+```go
+func (cs *Controllers) OperationPatch(c fiber.Ctx) error
+```
+
+OperationPatch godoc @Summary Google Drive connector does not support patch operations @Description Google Drive connector does not support patch operations. @Tags googledrive @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Success 501 \{object\} fiber.Map "Not implemented \- Google Drive does not support patch" @Failure 401 \{object\} fiber.Map "Unauthorized" @Router /googledrive/operation/patch \[post\]
+
+<a name="Controllers.OperationPull"></a>
+### func \(\*Controllers\) OperationPull
+
+```go
+func (cs *Controllers) OperationPull(c fiber.Ctx) error
+```
+
+OperationPull godoc @Summary Pull files from Google Drive @Description Starts an asynchronous pull job that fetches file metadata from Google Drive as a JSON file. The connection ID is captured from the request before the async worker starts so the worker can resolve OAuth tokens without a fiber.Ctx. @Tags googledrive @Security SystemTokenAuth @Accept multipart/form\-data @Produce application/zip @Param path formData string false "What to pull. Empty or 'files' / 'files.json' returns metadata for every accessible file as files.json. A Drive file ID downloads that single file. A Drive folder ID walks the folder \(recursive per connection settings\) and returns files.json plus one blob per downloaded file at files/\<driveId\>\-\<safeName\>.\<ext\>." @Success 202 \{object\} fiber.Map "Pull job started" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 428 \{object\} fiber.Map "OAuth not connected" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /googledrive/operation/pull \[post\]
+
+<a name="Controllers.OperationPush"></a>
+### func \(\*Controllers\) OperationPush
+
+```go
+func (cs *Controllers) OperationPush(c fiber.Ctx) error
+```
+
+OperationPush godoc @Summary Push files to Google Drive @Description Upload files to the connected user's Google Drive as new files. The uploaded ZIP contents are created as individual Drive files under the optional path \(treated as a folder hierarchy created on the fly\). @Tags googledrive @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param file formData file true "ZIP file containing files to push to Google Drive" @Param path formData string false "Target folder path in Google Drive \(e.g., '/Irmin/backup' — created if missing\)" @Success 202 \{object\} fiber.Map "Push job started" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 428 \{object\} fiber.Map "OAuth not connected" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /googledrive/operation/push \[post\]
+
+<a name="Controllers.OperationSchemaGet"></a>
+### func \(\*Controllers\) OperationSchemaGet
+
+```go
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
+```
+
+OperationSchemaGet godoc @Summary Get Google Drive operation schema @Description Returns the schema describing what files a pull operation produces and what a push operation accepts. The schema is path\-aware: an empty path returns the legacy files.json catalogue alongside the user's My Drive root; a Drive folder ID returns that folder's direct children; a Drive file ID returns a single leaf. @Tags googledrive @Security SystemTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull,push\) @Param path query string false "Drive resource to inspect. Empty / 'files' / 'files.json' returns the legacy metadata catalogue; 'root' returns My Drive's top level; any Drive folder/file ID is resolved via files.get." @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /googledrive/operation/schema/\{operation\} \[post\]
+
+<a name="Controllers.SubscribeToChanges"></a>
+### func \(\*Controllers\) SubscribeToChanges
+
+```go
+func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
+```
+
+SubscribeToChanges is not supported.
+
+<a name="Controllers.TestConnection"></a>
+### func \(\*Controllers\) TestConnection
+
+```go
+func (cs *Controllers) TestConnection(_ fiber.Ctx, _, _ map[string]any) (bool, bool, bool, []string)
+```
+
+TestConnection implements common.ConfigValidationProvider. We cannot probe Google Drive here because no bearer token is available \(the OAuth flow lives on Core, not on connectors\), so we report success unconditionally.
+
+<a name="Controllers.UnsubscribeFromChanges"></a>
+### func \(\*Controllers\) UnsubscribeFromChanges
+
+```go
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+```
+
+UnsubscribeFromChanges is not supported.
+
+<a name="Controllers.ValidateFields"></a>
+### func \(\*Controllers\) ValidateFields
+
+```go
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, _, settings map[string]any) []string
+```
+
+ValidateFields implements common.ConfigValidationProvider. Each setting is optional; we only flag invalid non\-empty values so empty defaults fall through to runtime fallbacks.
+
+<a name="Controllers.ValidateSystemTokenMiddleware"></a>
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
+
+```go
+func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
+```
+
+ValidateSystemTokenMiddleware verifies the inbound system token \(cross\-service auth from Core\) and stamps the connector info on the request locals so EnsureOperationMiddleware can pick it up.
+
+<a name="GoogleDrivePullProvider"></a>
+## type GoogleDrivePullProvider
+
+GoogleDrivePullProvider implements common.PullOperationProvider.
+
+```go
+type GoogleDrivePullProvider struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="GoogleDrivePullProvider.GetAllFiles"></a>
+### func \(\*GoogleDrivePullProvider\) GetAllFiles
+
+```go
+func (p *GoogleDrivePullProvider) GetAllFiles(ctx context.Context, clientAny any, operation *db.Operation) ([]string, [][]byte, error)
+```
+
+GetAllFiles is the legacy metadata\-only pull entry point. It fetches file metadata across the user's authorised Drive and returns it as a single files.json blob. Content download, recursive folder walks, and Google\-native format export are handled by GetFilesByPath when a non\-empty path is supplied; this method preserves the original behaviour for the empty\-path case so existing workflows are unaffected.
+
+<a name="GoogleDrivePullProvider.GetFileByPath"></a>
+### func \(\*GoogleDrivePullProvider\) GetFileByPath
+
+```go
+func (p *GoogleDrivePullProvider) GetFileByPath(ctx context.Context, clientAny any, operation *db.Operation, rawPath string) (string, []byte, error)
+```
+
+GetFileByPath delegates to GetFilesByPath and returns the single \(path, blob\) result. The framework now prefers GetFilesByPath when a provider implements PullByPathMultiProvider, so this method only fires if a future framework change calls it explicitly.
+
+If GetFilesByPath produces more than one entry \(a folder pull\), we error rather than silently returning the first blob and dropping the rest — losing data without telling the user is the worst failure mode for a sync workflow.
+
+<a name="GoogleDrivePullProvider.GetFilesByPath"></a>
+### func \(\*GoogleDrivePullProvider\) GetFilesByPath
+
+```go
+func (p *GoogleDrivePullProvider) GetFilesByPath(ctx context.Context, clientAny any, operation *db.Operation, rawPath string) ([]string, [][]byte, error)
+```
+
+GetFilesByPath implements common.PullByPathMultiProvider. The path semantics are:
+
+- "" / "files" / "files.json" — metadata\-only legacy pull. Identical to the empty\-path GetAllFiles output. Kept for back\-compat with existing workflows.
+- any other string — treated as a Drive ID. files.get resolves it; folders are walked \(respecting the recursive setting and per\-file filters\), regular files are downloaded directly. Drive folder paths like "/Backup/Reports" are out of scope for v1; the framework's schema picker passes Drive IDs, not paths.
+
+<a name="GoogleDrivePullProvider.InitializeClient"></a>
+### func \(\*GoogleDrivePullProvider\) InitializeClient
+
+```go
+func (p *GoogleDrivePullProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient creates the Google Drive API client. The OAuth bearer token is resolved transparently by the round\-tripper embedded in the HTTP transport via WrapHTTPClient.
+
+The returned cleanup func is a no\-op — the HTTP client has no persistent connection to close.
+
+<a name="GoogleDrivePullProvider.ProgressHandler"></a>
+### func \(\*GoogleDrivePullProvider\) ProgressHandler
+
+```go
+func (p *GoogleDrivePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler emits per\-page events.
+
+<a name="GoogleDrivePushProvider"></a>
+## type GoogleDrivePushProvider
+
+GoogleDrivePushProvider implements common.PushOperationProvider for Google Drive. Files from the uploaded ZIP are pushed to the connected user's Drive as new Drive files using the multipart upload API.
+
+```go
+type GoogleDrivePushProvider struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="GoogleDrivePushProvider.InitializeClient"></a>
+### func \(\*GoogleDrivePushProvider\) InitializeClient
+
+```go
+func (p *GoogleDrivePushProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+```
+
+InitializeClient creates the OAuth\-wrapped HTTP client for Drive API calls.
+
+<a name="GoogleDrivePushProvider.ProcessFiles"></a>
+### func \(\*GoogleDrivePushProvider\) ProcessFiles
+
+```go
+func (p *GoogleDrivePushProvider) ProcessFiles(ctx context.Context, clientAny any, operation *db.Operation, files map[string][]byte, rawPath string) error
+```
+
+ProcessFiles uploads each file from the push ZIP to Google Drive. rawPath is treated as a folder path — files are created under the resolved folder hierarchy \(created if missing\).
+
+<a name="GoogleDrivePushProvider.ProgressHandler"></a>
+### func \(\*GoogleDrivePushProvider\) ProgressHandler
+
+```go
+func (p *GoogleDrivePushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+```
+
+ProgressHandler emits per\-file events.
 
 # client
 
@@ -5912,7 +6582,7 @@ import "irmin-connectors/connectors/http/client"
 
 
 <a name="ValidateConfiguration"></a>
-## func [ValidateConfiguration](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/client/client.go#L351>)
+## func ValidateConfiguration
 
 ```go
 func ValidateConfiguration(config map[string]any) error
@@ -5921,7 +6591,7 @@ func ValidateConfiguration(config map[string]any) error
 ValidateConfiguration validates the HTTP client configuration.
 
 <a name="HTTPClient"></a>
-## type [HTTPClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/client/client.go#L29-L38>)
+## type HTTPClient
 
 HTTPClient represents an HTTP client for making requests. Note: HTTPClient instances should not be shared across goroutines. The Headers map is not protected by synchronization. For concurrent use, create separate HTTPClient instances \(the underlying http.Client can be shared\).
 
@@ -5939,7 +6609,7 @@ type HTTPClient struct {
 ```
 
 <a name="InitHTTPClient"></a>
-### func [InitHTTPClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/client/client.go#L41>)
+### func InitHTTPClient
 
 ```go
 func InitHTTPClient(c any, logger *slog.Logger, operation *db.Operation) (*HTTPClient, error)
@@ -5948,7 +6618,7 @@ func InitHTTPClient(c any, logger *slog.Logger, operation *db.Operation) (*HTTPC
 InitHTTPClient initializes an HTTP client from operation configuration.
 
 <a name="HTTPClient.GetContentType"></a>
-### func \(\*HTTPClient\) [GetContentType](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/client/client.go#L158>)
+### func \(\*HTTPClient\) GetContentType
 
 ```go
 func (h *HTTPClient) GetContentType(resp *http.Response) string
@@ -5957,7 +6627,7 @@ func (h *HTTPClient) GetContentType(resp *http.Response) string
 GetContentType returns the content type from response headers.
 
 <a name="HTTPClient.GetFileNameFromResponse"></a>
-### func \(\*HTTPClient\) [GetFileNameFromResponse](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/client/client.go#L163>)
+### func \(\*HTTPClient\) GetFileNameFromResponse
 
 ```go
 func (h *HTTPClient) GetFileNameFromResponse(resp *http.Response) string
@@ -5966,7 +6636,7 @@ func (h *HTTPClient) GetFileNameFromResponse(resp *http.Response) string
 GetFileNameFromResponse generates a filename based on response headers, URL, and content type.
 
 <a name="HTTPClient.GetResponseBody"></a>
-### func \(\*HTTPClient\) [GetResponseBody](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/client/client.go#L148>)
+### func \(\*HTTPClient\) GetResponseBody
 
 ```go
 func (h *HTTPClient) GetResponseBody(resp *http.Response) ([]byte, error)
@@ -5975,7 +6645,7 @@ func (h *HTTPClient) GetResponseBody(resp *http.Response) ([]byte, error)
 GetResponseBody reads and returns the response body as bytes. Note: The caller is responsible for closing the response body.
 
 <a name="HTTPClient.IsAcceptedStatusCode"></a>
-### func \(\*HTTPClient\) [IsAcceptedStatusCode](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/client/client.go#L655>)
+### func \(\*HTTPClient\) IsAcceptedStatusCode
 
 ```go
 func (h *HTTPClient) IsAcceptedStatusCode(statusCode int) bool
@@ -5984,7 +6654,7 @@ func (h *HTTPClient) IsAcceptedStatusCode(statusCode int) bool
 IsAcceptedStatusCode checks if the given status code is in the accepted list.
 
 <a name="HTTPClient.MakeRequest"></a>
-### func \(\*HTTPClient\) [MakeRequest](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/client/client.go#L107>)
+### func \(\*HTTPClient\) MakeRequest
 
 ```go
 func (h *HTTPClient) MakeRequest() (*http.Response, error)
@@ -5993,7 +6663,7 @@ func (h *HTTPClient) MakeRequest() (*http.Response, error)
 MakeRequest makes an HTTP request and returns the response. This method is not safe for concurrent use on the same HTTPClient instance.
 
 <a name="HTTPClient.MakeRequestWithContext"></a>
-### func \(\*HTTPClient\) [MakeRequestWithContext](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/client/client.go#L113>)
+### func \(\*HTTPClient\) MakeRequestWithContext
 
 ```go
 func (h *HTTPClient) MakeRequestWithContext(ctx context.Context) (*http.Response, error)
@@ -6002,7 +6672,7 @@ func (h *HTTPClient) MakeRequestWithContext(ctx context.Context) (*http.Response
 MakeRequestWithContext makes an HTTP request tied to ctx so async operation cancellation interrupts in\-flight network I/O.
 
 <a name="HTTPClient.WithPath"></a>
-### func \(\*HTTPClient\) [WithPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/client/client.go#L665>)
+### func \(\*HTTPClient\) WithPath
 
 ```go
 func (h *HTTPClient) WithPath(newPath string) *HTTPClient
@@ -6028,7 +6698,7 @@ import "irmin-connectors/connectors/http/config"
 
 
 <a name="GetConnectorInfo"></a>
-## func [GetConnectorInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/config/config.go#L122>)
+## func GetConnectorInfo
 
 ```go
 func GetConnectorInfo() models.ConnectorDetails
@@ -6037,7 +6707,7 @@ func GetConnectorInfo() models.ConnectorDetails
 GetConnectorInfo returns the default connector information for HTTP.
 
 <a name="GetDetailsFieldDefinitions"></a>
-## func [GetDetailsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/config/config.go#L11>)
+## func GetDetailsFieldDefinitions
 
 ```go
 func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -6046,7 +6716,7 @@ func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
 GetDetailsFieldDefinitions returns all detail fields with their metadata.
 
 <a name="GetDetailsFields"></a>
-## func [GetDetailsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/config/config.go#L35>)
+## func GetDetailsFields
 
 ```go
 func GetDetailsFields() []string
@@ -6055,7 +6725,7 @@ func GetDetailsFields() []string
 GetDetailsFields returns the detail\-specific fields.
 
 <a name="GetOptionalFields"></a>
-## func [GetOptionalFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/config/config.go#L29>)
+## func GetOptionalFields
 
 ```go
 func GetOptionalFields() []string
@@ -6064,7 +6734,7 @@ func GetOptionalFields() []string
 GetOptionalFields returns the optional form fields for HTTP.
 
 <a name="GetRequiredFields"></a>
-## func [GetRequiredFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/config/config.go#L23>)
+## func GetRequiredFields
 
 ```go
 func GetRequiredFields() []string
@@ -6073,7 +6743,7 @@ func GetRequiredFields() []string
 GetRequiredFields returns the mandatory form fields for HTTP.
 
 <a name="GetSettingsFieldDefinitions"></a>
-## func [GetSettingsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/config/config.go#L17>)
+## func GetSettingsFieldDefinitions
 
 ```go
 func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -6082,7 +6752,7 @@ func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
 GetSettingsFieldDefinitions returns static settings fields \(dynamic ones are handled in controllers\).
 
 <a name="GetSettingsFields"></a>
-## func [GetSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/config/config.go#L41>)
+## func GetSettingsFields
 
 ```go
 func GetSettingsFields() []string
@@ -6135,7 +6805,7 @@ import "irmin-connectors/connectors/http/controllers"
 
 
 <a name="Controllers"></a>
-## type [Controllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/controllers.go#L16-L19>)
+## type Controllers
 
 Controllers holds the dependencies for the HTTP connector controllers.
 
@@ -6149,7 +6819,7 @@ type Controllers struct {
 ```
 
 <a name="NewControllers"></a>
-### func [NewControllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/controllers.go#L22>)
+### func NewControllers
 
 ```go
 func NewControllers(app *models.ConnectorsApp) *Controllers
@@ -6158,7 +6828,7 @@ func NewControllers(app *models.ConnectorsApp) *Controllers
 NewControllers creates a new instance of controllers with the required dependencies.
 
 <a name="Controllers.BuildDetails"></a>
-### func \(\*Controllers\) [BuildDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationConfig.go#L14>)
+### func \(\*Controllers\) BuildDetails
 
 ```go
 func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
@@ -6167,7 +6837,7 @@ func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string
 BuildDetails implements the OperationConfigProvider interface.
 
 <a name="Controllers.BuildSettings"></a>
-### func \(\*Controllers\) [BuildSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationConfig.go#L19>)
+### func \(\*Controllers\) BuildSettings
 
 ```go
 func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
@@ -6176,7 +6846,7 @@ func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]strin
 BuildSettings implements the OperationConfigProvider interface.
 
 <a name="Controllers.ConfigFields"></a>
-### func \(\*Controllers\) [ConfigFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/configFields.go#L25>)
+### func \(\*Controllers\) ConfigFields
 
 ```go
 func (cs *Controllers) ConfigFields(c fiber.Ctx) error
@@ -6185,7 +6855,7 @@ func (cs *Controllers) ConfigFields(c fiber.Ctx) error
 ConfigFields godoc @Summary Get HTTP connector configuration fields @Description Get dynamic configuration fields for the HTTP connector based on the configuration key \(details or settings\) @Tags http @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/configuration/\{key\}/fields \[post\]
 
 <a name="Controllers.ConfigValidate"></a>
-### func \(\*Controllers\) [ConfigValidate](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/configValidate.go#L32>)
+### func \(\*Controllers\) ConfigValidate
 
 ```go
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
@@ -6194,7 +6864,7 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ConfigValidate godoc @Summary Validate HTTP connector configuration @Description Validate HTTP endpoint configuration by testing the connection to the specified URL @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[url\] formData string true "HTTP endpoint URL" @Param details\[method\] formData string true "HTTP method \(GET, POST, PUT, PATCH, DELETE\)" @Param details\[headers\] formData string false "HTTP headers as JSON object" @Param details\[body\] formData string false "Request body content" @Param details\[timeout\] formData integer false "Request timeout in seconds \(default: 30\)" @Param details\[verify\_ssl\] formData boolean false "Verify SSL certificates \(default: true\)" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
-### func \(\*Controllers\) [DetailsPage](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/detailsPage.go#L19>)
+### func \(\*Controllers\) DetailsPage
 
 ```go
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error
@@ -6203,7 +6873,7 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
 DetailsPage godoc @Summary Get HTTP connector details page @Description Get an HTML page with detailed information about the HTTP connector including capabilities, authentication methods, and usage examples @Tags http @Accept json @Produce text/html @Success 200 \{string\} string "HTTP connector details page" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/details \[get\]
 
 <a name="Controllers.EnsureOperationMiddleware"></a>
-### func \(\*Controllers\) [EnsureOperationMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/middlewares.go#L19>)
+### func \(\*Controllers\) EnsureOperationMiddleware
 
 ```go
 func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
@@ -6212,7 +6882,7 @@ func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
 EnsureOperationMiddleware upserts the Operation row from the \`details\[\]\` / \`settings\[\]\` form fields the SDK's StartOperation\* requests now carry. Registered as the second handler on every data route after ValidateSystemToken — see common/routes.go.
 
 <a name="Controllers.GetDynamicFields"></a>
-### func \(\*Controllers\) [GetDynamicFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/configFields.go#L30-L34>)
+### func \(\*Controllers\) GetDynamicFields
 
 ```go
 func (cs *Controllers) GetDynamicFields(c fiber.Ctx, key string, fields map[string]string) (map[string]irminmodels.DynamicField, error)
@@ -6221,7 +6891,7 @@ func (cs *Controllers) GetDynamicFields(c fiber.Ctx, key string, fields map[stri
 GetDynamicFields implements the ConfigFieldProvider interface.
 
 <a name="Controllers.GetOperationFormFields"></a>
-### func \(\*Controllers\) [GetOperationFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationConfig.go#L9>)
+### func \(\*Controllers\) GetOperationFormFields
 
 ```go
 func (cs *Controllers) GetOperationFormFields() ([]string, []string)
@@ -6230,7 +6900,7 @@ func (cs *Controllers) GetOperationFormFields() ([]string, []string)
 GetOperationFormFields implements the OperationConfigProvider interface.
 
 <a name="Controllers.GetRequiredFormFields"></a>
-### func \(\*Controllers\) [GetRequiredFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/configValidate.go#L37>)
+### func \(\*Controllers\) GetRequiredFormFields
 
 ```go
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
@@ -6239,7 +6909,7 @@ func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
 GetRequiredFormFields implements the ConfigValidationProvider interface.
 
 <a name="Controllers.Info"></a>
-### func \(\*Controllers\) [Info](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/info.go#L21>)
+### func \(\*Controllers\) Info
 
 ```go
 func (cs *Controllers) Info(c fiber.Ctx) error
@@ -6248,7 +6918,7 @@ func (cs *Controllers) Info(c fiber.Ctx) error
 Info godoc @Summary Get HTTP connector information @Description Get detailed information about the HTTP connector including capabilities, configuration fields, and API endpoints @Tags http @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "HTTP connector information retrieved successfully" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/info \[get\]
 
 <a name="Controllers.OperationPatch"></a>
-### func \(\*Controllers\) [OperationPatch](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationPatch.go#L33>)
+### func \(\*Controllers\) OperationPatch
 
 ```go
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
@@ -6257,7 +6927,7 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error
 OperationPatch godoc @Summary Apply patch operations via HTTP requests @Description Apply JSON Patch operations by making HTTP requests to the configured endpoint. Each patch operation becomes an HTTP request. @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param patches formData file true "JSON file containing array of patch operations" @Success 200 \{object\} fiber.Map "Patch operations applied successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid patch format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/patch \[post\]
 
 <a name="Controllers.OperationPull"></a>
-### func \(\*Controllers\) [OperationPull](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationPull.go#L319>)
+### func \(\*Controllers\) OperationPull
 
 ```go
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
@@ -6266,7 +6936,7 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error
 OperationPull godoc @Summary Pull data from HTTP endpoint @Description Make a request to the configured HTTP endpoint and return the response as a file. Use the path parameter to modify the request URL \(absolute path replaces, relative path appends\). @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param path formData string false "Path to append/replace in the request URL \(e.g., /api/users or customers\)" @Success 200 \{object\} fiber.Map "Data pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "HTTP endpoint not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/pull \[post\]
 
 <a name="Controllers.OperationPush"></a>
-### func \(\*Controllers\) [OperationPush](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationPush.go#L257>)
+### func \(\*Controllers\) OperationPush
 
 ```go
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
@@ -6275,7 +6945,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error
 OperationPush godoc @Summary Push data to HTTP endpoint @Description Send file content to the configured HTTP endpoint using the specified method and headers. Use the path parameter to modify the request URL \(absolute path replaces, relative path appends\). @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param file formData file true "File to send to HTTP endpoint" @Param path formData string false "Path to append/replace in the request URL \(e.g., /api/users or customers\)" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/push \[post\]
 
 <a name="Controllers.OperationSchemaGet"></a>
-### func \(\*Controllers\) [OperationSchemaGet](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationSchemaGet.go#L135>)
+### func \(\*Controllers\) OperationSchemaGet
 
 ```go
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
@@ -6284,7 +6954,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
 OperationSchemaGet godoc @Summary Get HTTP operation schema @Description Get the response schema for HTTP operations, returning an Irmin\-compatible ObjectSchema based on the operation type \(pull or push\). Use the path query parameter to specify which API endpoint or resource to analyze. @Tags http @Security SystemTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param path query string false "API endpoint or resource path to get schema for \(e.g., /api/users or /data.json\)" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/schema/\{operation\} \[post\]
 
 <a name="Controllers.SubscribeToChanges"></a>
-### func \(\*Controllers\) [SubscribeToChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/subscribeToChanges.go#L17>)
+### func \(\*Controllers\) SubscribeToChanges
 
 ```go
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
@@ -6293,7 +6963,7 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
 SubscribeToChanges godoc @Summary HTTP connector does not support webhook subscriptions @Description HTTP connector does not support webhook subscriptions @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Success 501 \{object\} fiber.Map "Not implemented \- HTTP connector does not support webhook subscriptions" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /http/operation/subscribe \[post\]
 
 <a name="Controllers.TestConnection"></a>
-### func \(\*Controllers\) [TestConnection](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/configValidate.go#L54-L58>)
+### func \(\*Controllers\) TestConnection
 
 ```go
 func (cs *Controllers) TestConnection(ctx fiber.Ctx, details map[string]any, settings map[string]any) (bool, bool, bool, []string)
@@ -6302,7 +6972,7 @@ func (cs *Controllers) TestConnection(ctx fiber.Ctx, details map[string]any, set
 TestConnection implements the ConfigValidationProvider interface.
 
 <a name="Controllers.UnsubscribeFromChanges"></a>
-### func \(\*Controllers\) [UnsubscribeFromChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/subscribeToChanges.go#L34>)
+### func \(\*Controllers\) UnsubscribeFromChanges
 
 ```go
 func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
@@ -6311,7 +6981,7 @@ func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
 UnsubscribeFromChanges godoc @Summary HTTP connector does not support webhook subscriptions @Description HTTP connector does not support webhook subscriptions @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param subscription\_id formData string true "Subscription ID" @Success 501 \{object\} fiber.Map "Not implemented \- HTTP connector does not support webhook subscriptions" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /http/operation/unsubscribe \[post\]
 
 <a name="Controllers.ValidateFields"></a>
-### func \(\*Controllers\) [ValidateFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/configValidate.go#L42>)
+### func \(\*Controllers\) ValidateFields
 
 ```go
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
@@ -6320,7 +6990,7 @@ func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map
 ValidateFields implements the ConfigValidationProvider interface.
 
 <a name="Controllers.ValidateSystemTokenMiddleware"></a>
-### func \(\*Controllers\) [ValidateSystemTokenMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/middlewares.go#L11>)
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
 
 ```go
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
@@ -6329,7 +6999,7 @@ func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
 ValidateSystemTokenMiddleware validates the system token.
 
 <a name="HTTPPullProvider"></a>
-## type [HTTPPullProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationPull.go#L16-L19>)
+## type HTTPPullProvider
 
 HTTPPullProvider implements the PullOperationProvider interface for HTTP.
 
@@ -6340,7 +7010,7 @@ type HTTPPullProvider struct {
 ```
 
 <a name="HTTPPullProvider.GetAllFiles"></a>
-### func \(\*HTTPPullProvider\) [GetAllFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationPull.go#L51-L53>)
+### func \(\*HTTPPullProvider\) GetAllFiles
 
 ```go
 func (p *HTTPPullProvider) GetAllFiles(_ context.Context, client any, operation *db.Operation) ([]string, [][]byte, error)
@@ -6349,7 +7019,7 @@ func (p *HTTPPullProvider) GetAllFiles(_ context.Context, client any, operation 
 GetAllFiles makes a request to the configured endpoint and returns the response as a file.
 
 <a name="HTTPPullProvider.GetFileByPath"></a>
-### func \(\*HTTPPullProvider\) [GetFileByPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationPull.go#L175-L177>)
+### func \(\*HTTPPullProvider\) GetFileByPath
 
 ```go
 func (p *HTTPPullProvider) GetFileByPath(_ context.Context, client any, operation *db.Operation, path string) (string, []byte, error)
@@ -6358,7 +7028,7 @@ func (p *HTTPPullProvider) GetFileByPath(_ context.Context, client any, operatio
 GetFileByPath makes a request to the configured endpoint with an optional path modification. The path parameter is used to modify the request URL \(absolute path replaces, relative path appends\).
 
 <a name="HTTPPullProvider.InitializeClient"></a>
-### func \(\*HTTPPullProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationPull.go#L30-L34>)
+### func \(\*HTTPPullProvider\) InitializeClient
 
 ```go
 func (p *HTTPPullProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -6367,7 +7037,7 @@ func (p *HTTPPullProvider) InitializeClient(ctx context.Context, logger *slog.Lo
 InitializeClient initializes the HTTP client for pull operations.
 
 <a name="HTTPPullProvider.ProgressHandler"></a>
-### func \(\*HTTPPullProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationPull.go#L25>)
+### func \(\*HTTPPullProvider\) ProgressHandler
 
 ```go
 func (p *HTTPPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
@@ -6376,7 +7046,7 @@ func (p *HTTPPullProvider) ProgressHandler(_ *db.Operation) common.ProgressHandl
 ProgressHandler returns nil — a single HTTP request bounded by the configured timeout \(default 300s\) can't produce a meaningful silent\-window incident, and the common pull handler's baseline heartbeat covers what little exposure remains.
 
 <a name="HTTPPushProvider"></a>
-## type [HTTPPushProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationPush.go#L20-L23>)
+## type HTTPPushProvider
 
 HTTPPushProvider implements the PushOperationProvider interface for HTTP.
 
@@ -6387,7 +7057,7 @@ type HTTPPushProvider struct {
 ```
 
 <a name="HTTPPushProvider.InitializeClient"></a>
-### func \(\*HTTPPushProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationPush.go#L33-L37>)
+### func \(\*HTTPPushProvider\) InitializeClient
 
 ```go
 func (p *HTTPPushProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -6396,7 +7066,7 @@ func (p *HTTPPushProvider) InitializeClient(ctx context.Context, logger *slog.Lo
 InitializeClient initializes the HTTP client for push operations.
 
 <a name="HTTPPushProvider.ProcessFiles"></a>
-### func \(\*HTTPPushProvider\) [ProcessFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationPush.go#L55-L61>)
+### func \(\*HTTPPushProvider\) ProcessFiles
 
 ```go
 func (p *HTTPPushProvider) ProcessFiles(ctx context.Context, client any, operation *db.Operation, files map[string][]byte, rawPath string) error
@@ -6405,7 +7075,7 @@ func (p *HTTPPushProvider) ProcessFiles(ctx context.Context, client any, operati
 ProcessFiles processes the extracted files and sends them to the HTTP endpoint. The rawPath parameter is used to modify the request URL \(absolute path replaces, relative path appends\).
 
 <a name="HTTPPushProvider.ProgressHandler"></a>
-### func \(\*HTTPPushProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationPush.go#L28>)
+### func \(\*HTTPPushProvider\) ProgressHandler
 
 ```go
 func (p *HTTPPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
@@ -6414,7 +7084,7 @@ func (p *HTTPPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandl
 ProgressHandler returns nil — HTTP push is a single bounded request. The baseline heartbeat from the common push handler covers the brief silent window.
 
 <a name="HTTPSchemaProvider"></a>
-## type [HTTPSchemaProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationSchemaGet.go#L23-L26>)
+## type HTTPSchemaProvider
 
 HTTPSchemaProvider implements the SchemaOperationProvider interface for HTTP endpoints.
 
@@ -6426,7 +7096,7 @@ type HTTPSchemaProvider struct {
 ```
 
 <a name="HTTPSchemaProvider.GetSchema"></a>
-### func \(\*HTTPSchemaProvider\) [GetSchema](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationSchemaGet.go#L44-L49>)
+### func \(\*HTTPSchemaProvider\) GetSchema
 
 ```go
 func (p *HTTPSchemaProvider) GetSchema(c fiber.Ctx, client any, _ string, requestPath *string) (*irminmodels.ObjectSchema, error)
@@ -6435,7 +7105,7 @@ func (p *HTTPSchemaProvider) GetSchema(c fiber.Ctx, client any, _ string, reques
 GetSchema retrieves the HTTP endpoint schema and returns an Irmin\-compatible ObjectSchema.
 
 <a name="HTTPSchemaProvider.GetSupportedOperationTypes"></a>
-### func \(\*HTTPSchemaProvider\) [GetSupportedOperationTypes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationSchemaGet.go#L116>)
+### func \(\*HTTPSchemaProvider\) GetSupportedOperationTypes
 
 ```go
 func (p *HTTPSchemaProvider) GetSupportedOperationTypes() []string
@@ -6444,7 +7114,7 @@ func (p *HTTPSchemaProvider) GetSupportedOperationTypes() []string
 GetSupportedOperationTypes returns the list of supported operation types for HTTP.
 
 <a name="HTTPSchemaProvider.InitializeClient"></a>
-### func \(\*HTTPSchemaProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/http/controllers/operationSchemaGet.go#L29-L33>)
+### func \(\*HTTPSchemaProvider\) InitializeClient
 
 ```go
 func (p *HTTPSchemaProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -6458,15 +7128,19 @@ InitializeClient initializes the HTTP client for schema operations.
 import "irmin-connectors/connectors/linear/client"
 ```
 
-Package linearclient is a small GraphQL client for Linear's public API. It is intentionally not a full Linear SDK — only the queries and mutations the Irmin connector needs \(pull issues / projects / cycles / teams; create \+ update issues\) are implemented inline.
+Package linearclient is a small MCP client for Linear's official MCP server \(https://mcp.linear.app/mcp\). It is intentionally not a full Linear SDK — only the tool calls the Irmin connector needs \(pull issues / projects / cycles / teams; create \+ update issues\) are implemented. Auth is OAuth 2.1 via DCR \+ PKCE; tokens are bound to the mcp.linear.app resource per Linear's RFC 9728 metadata.
+
+MCP OAuth endpoints. See client.go for the package\-level overview.
 
 ## Index
 
 - [Constants](<#constants>)
 - [func DefaultScopes\(\) \[\]string](<#DefaultScopes>)
+- [func ResolveEndpoint\(setting string\) \(string, error\)](<#ResolveEndpoint>)
 - [type Client](<#Client>)
-  - [func New\(httpClient \*http.Client, endpoint string\) \*Client](<#New>)
-  - [func \(c \*Client\) Do\(ctx context.Context, query string, variables map\[string\]any\) \(json.RawMessage, error\)](<#Client.Do>)
+  - [func NewWithSession\(session \*mcp.ClientSession\) \*Client](<#NewWithSession>)
+  - [func OpenSession\(ctx context.Context, endpoint string, tokenClient \*lib.OAuthTokenClient, connectionID uint, httpClient \*http.Client, logger \*slog.Logger\) \(\*Client, func\(\), error\)](<#OpenSession>)
+  - [func \(c \*Client\) CallTool\(ctx context.Context, name string, args map\[string\]any\) \(json.RawMessage, error\)](<#Client.CallTool>)
   - [func \(c \*Client\) IssueCreate\(ctx context.Context, input map\[string\]any\) \(\*IssueCreated, error\)](<#Client.IssueCreate>)
   - [func \(c \*Client\) IssueUpdate\(ctx context.Context, id string, input map\[string\]any\) \(\*IssueUpdated, error\)](<#Client.IssueUpdate>)
   - [func \(c \*Client\) ListBounded\(ctx context.Context, resource Resource, opts PullOptions\) \(\[\]json.RawMessage, bool, error\)](<#Client.ListBounded>)
@@ -6482,7 +7156,7 @@ Package linearclient is a small GraphQL client for Linear's public API. It is in
 
 ## Constants
 
-<a name="AuthorizationURL"></a>Linear MCP OAuth 2.1 endpoints. Confirmed against the live \`https://mcp.linear.app/.well-known/oauth-authorization-server\` discovery document on 2026\-04\-26. RFC 7591 Dynamic Client Registration is supported via the registration endpoint, which is what makes Linear the right pick for the first OAuth connector — per the OAuth roadmap, Phase 4 exists to prove the DCR path end\-to\-end.
+<a name="AuthorizationURL"></a>Linear MCP OAuth 2.1 endpoints, confirmed against https://mcp.linear.app/.well-known/oauth-authorization-server. RFC 7591 Dynamic Client Registration is supported via DCREndpoint.
 
 ```go
 const (
@@ -6517,169 +7191,14 @@ const (
 )
 ```
 
-<a name="CyclesQuery"></a>CyclesQuery fetches a page of cycles \(sprints\). The team field is always included so the resulting JSON is self\-describing without needing a separate join against teams.json.
+<a name="DefaultMCPEndpoint"></a>DefaultMCPEndpoint is Linear's MCP server \(Streamable HTTP\). Tokens issued at TokenURL are bound to this resource per Linear's RFC 9728 oauth\-protected\-resource document. Tests override via the \`mcp\_endpoint\` setting on the Connection.
 
 ```go
-const CyclesQuery = `
-query IrminCycles($first: Int!, $after: String) {
-  cycles(first: $first, after: $after) {
-    nodes {
-      id
-      number
-      name
-      description
-      startsAt
-      endsAt
-      completedAt
-      progress
-      issueCountHistory
-      completedIssueCountHistory
-      team { id key name }
-      createdAt
-      updatedAt
-    }
-    pageInfo { endCursor hasNextPage }
-  }
-}
-`
-```
-
-<a name="DefaultGraphQLEndpoint"></a>DefaultGraphQLEndpoint is Linear's GraphQL HTTPS endpoint. Tests override this via the \`api\_endpoint\` setting on the Connection so they can point at an httptest fixture without touching this file.
-
-```go
-const DefaultGraphQLEndpoint = "https://api.linear.app/graphql"
-```
-
-<a name="IssueCreateMutation"></a>IssueCreateMutation creates a new issue from an \`IssueCreateInput\`. The mutation returns the created issue so the connector can write the new identifier \(e.g., \`IRM\-42\`\) back into the operation log without a follow\-up read.
-
-```go
-const IssueCreateMutation = `
-mutation IrminIssueCreate($input: IssueCreateInput!) {
-  issueCreate(input: $input) {
-    success
-    issue {
-      id
-      identifier
-      title
-      url
-    }
-  }
-}
-`
-```
-
-<a name="IssueUpdateMutation"></a>IssueUpdateMutation updates an existing issue by ID. Only the fields explicitly set in \`$input\` are touched — Linear's mutation follows partial\-update semantics, which matches JSON\-Patch's \`replace\` op cleanly.
-
-```go
-const IssueUpdateMutation = `
-mutation IrminIssueUpdate($id: String!, $input: IssueUpdateInput!) {
-  issueUpdate(id: $id, input: $input) {
-    success
-    issue {
-      id
-      identifier
-      title
-      url
-    }
-  }
-}
-`
-```
-
-<a name="IssuesQuery"></a>IssuesQuery fetches a page of issues. The optional \`$filter\` variable is a Linear \`IssueFilter\`; we set it server\-side from the \`team\_key\` connection setting when present so a workspace\-wide pull degenerates cleanly to "everything you can read."
-
-```go
-const IssuesQuery = `
-query IrminIssues($first: Int!, $after: String, $filter: IssueFilter) {
-  issues(first: $first, after: $after, filter: $filter) {
-    nodes {
-      id
-      identifier
-      title
-      description
-      priority
-      estimate
-      state { id name type }
-      assignee { id name email }
-      creator { id name email }
-      team { id key name }
-      project { id name }
-      cycle { id number startsAt endsAt }
-      labels { nodes { id name color } }
-      url
-      branchName
-      createdAt
-      updatedAt
-      startedAt
-      completedAt
-      canceledAt
-      dueDate
-      sortOrder
-      subIssueSortOrder
-      parent { id identifier }
-    }
-    pageInfo { endCursor hasNextPage }
-  }
-}
-`
-```
-
-<a name="ProjectsQuery"></a>ProjectsQuery fetches a page of projects. Project membership of teams is included because it is the most useful join key for downstream queries.
-
-```go
-const ProjectsQuery = `
-query IrminProjects($first: Int!, $after: String) {
-  projects(first: $first, after: $after) {
-    nodes {
-      id
-      name
-      slugId
-      description
-      state
-      progress
-      startDate
-      targetDate
-      startedAt
-      completedAt
-      canceledAt
-      url
-      teams { nodes { id key name } }
-      lead { id name email }
-      createdAt
-      updatedAt
-    }
-    pageInfo { endCursor hasNextPage }
-  }
-}
-`
-```
-
-<a name="TeamsQuery"></a>TeamsQuery fetches a page of teams. Linear typically has a small number of teams per workspace; pagination is implemented for correctness even though most workspaces fit on a single page.
-
-```go
-const TeamsQuery = `
-query IrminTeams($first: Int!, $after: String) {
-  teams(first: $first, after: $after) {
-    nodes {
-      id
-      key
-      name
-      description
-      color
-      icon
-      private
-      timezone
-      createdAt
-      updatedAt
-    }
-    pageInfo { endCursor hasNextPage }
-  }
-}
-`
+const DefaultMCPEndpoint = "https://mcp.linear.app/mcp"
 ```
 
 <a name="DefaultScopes"></a>
-## func [DefaultScopes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/constants.go#L40>)
+## func DefaultScopes
 
 ```go
 func DefaultScopes() []string
@@ -6687,65 +7206,100 @@ func DefaultScopes() []string
 
 DefaultScopes returns the OAuth scopes this connector requests. \`read\` is sufficient for pulling issues / projects / cycles / teams; \`write\` is required for the create / update mutations the push \+ patch handlers use. Returned as a fresh slice each call \(lint disallows package\-level slice variables\) — callers may store the result.
 
-<a name="Client"></a>
-## type [Client](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/client.go#L19-L29>)
+<a name="ResolveEndpoint"></a>
+## func ResolveEndpoint
 
-Client is a thin GraphQL client for Linear. It does no resource\- specific shaping itself — every public method that touches the vendor returns \`json.RawMessage\`, which downstream code emits verbatim into pull files or logs. Avoiding intermediate Go structs means a Linear API change adding a field cannot silently drop data from a pulled snapshot.
+```go
+func ResolveEndpoint(setting string) (string, error)
+```
+
+ResolveEndpoint validates a user\-supplied \`mcp\_endpoint\` setting against the allowlist and returns the URL the MCP client should dial. An empty setting resolves to DefaultMCPEndpoint.
+
+Why an allowlist: a workspace member with connection\-edit rights could otherwise point the endpoint at an attacker\-controlled URL and exfiltrate the OAuth bearer. The allowlist closes that vector while preserving overrides for self\-hosted Linear MCP deployments and integration tests.
+
+Allowed hosts:
+
+- Anything ending in \`linear.app\` \(Linear's production MCP host mcp.linear.app and any future regional subdomains\).
+- Loopback \(127.0.0.0/8, ::1, \`localhost\`\) — only when LINEAR\_ALLOW\_LOOPBACK\_ENDPOINT=true. Production builds reject loopback so a sidecar service can't receive the bearer.
+- Suffixes listed in the LINEAR\_ALLOWED\_API\_HOSTS env var.
+
+Scheme must be http or https; http is accepted only behind the loopback gate \(httptest fixtures, local dev\).
+
+<a name="Client"></a>
+## type Client
+
+Client wraps a live MCP client session against Linear's MCP server. One Client per connector operation — sessions are not designed to be reused across handler invocations because the underlying transport holds a long\-lived HTTP/SSE connection. Callers construct a Client via OpenSession \(production\) or NewWithSession \(tests\), and MUST invoke the returned cleanup func when done.
+
+All public methods return JSON via \`json.RawMessage\` so the on\-disk pull file format passes Linear's payload through verbatim — a Linear API change adding a field cannot silently drop data from a snapshot, and the post\-processing pipeline \(DuckDB ingest, schema validation\) stays decoupled from the wire shape.
 
 ```go
 type Client struct {
-    // HTTPClient drives the actual HTTP round-trip. In production it
-    // is wrapped by common.WrapHTTPClientForJob so every request
-    // carries a fresh OAuth bearer token; in tests it is a plain
-    // http.DefaultClient pointed at an httptest server.
-    HTTPClient *http.Client
-
-    // Endpoint is the GraphQL URL. Defaults to DefaultGraphQLEndpoint
-    // when New is called with an empty string.
-    Endpoint string
+    // Session is the live MCP client session. CallTool calls flow
+    // through here. Tests substitute a session connected to an
+    // in-process MCP stub (commontest/mcp_fixture.go).
+    Session *mcp.ClientSession
 }
 ```
 
-<a name="New"></a>
-### func [New](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/client.go#L34>)
+<a name="NewWithSession"></a>
+### func NewWithSession
 
 ```go
-func New(httpClient *http.Client, endpoint string) *Client
+func NewWithSession(session *mcp.ClientSession) *Client
 ```
 
-New constructs a Client. Pass nil for httpClient to use http.DefaultClient \(only safe in tests; production handlers must supply the OAuth\-wrapped client\).
+NewWithSession constructs a Client around an already\-connected MCP session. Used by tests that wire a stub server directly via the SDK's in\-memory or httptest transport.
 
-<a name="Client.Do"></a>
-### func \(\*Client\) [Do](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/client.go#L77-L81>)
+<a name="OpenSession"></a>
+### func OpenSession
 
 ```go
-func (c *Client) Do(ctx context.Context, query string, variables map[string]any) (json.RawMessage, error)
+func OpenSession(ctx context.Context, endpoint string, tokenClient *lib.OAuthTokenClient, connectionID uint, httpClient *http.Client, logger *slog.Logger) (*Client, func(), error)
 ```
 
-Do issues one GraphQL operation and returns the raw \`data\` block. Vendor\-side errors \(HTTP 4xx/5xx\) become Go errors with the body preview included for log diagnosis; in\-band GraphQL errors \(HTTP 200 \+ non\-empty \`errors\` array\) become a wrapped error too — Linear sometimes returns 200 with \`errors\` for permission\-denied or rate\-limited operations.
+OpenSession is the production constructor. It dials Linear's MCP server using the connection's OAuth token \(refreshed transparently by the round\-tripper inside lib.NewMCPSession\) and returns a Client plus a cleanup func.
+
+endpoint is typically DefaultMCPEndpoint; tests override it to point at a local httptest stub.
+
+httpClient is the base HTTP transport \(typically http.DefaultClient\). It is wrapped with the OAuth round\-tripper before being handed to the MCP transport, so the same auth \+ force\-refresh path that other connectors use also covers MCP tool calls.
+
+logger receives the round\-tripper's diagnostic Warn events \(e.g., vendor 401\-after\-refresh body snippets\). Pass the connector's job\- scoped logger so the events land in the operation log; nil falls back to slog.Default\(\).
+
+<a name="Client.CallTool"></a>
+### func \(\*Client\) CallTool
+
+```go
+func (c *Client) CallTool(ctx context.Context, name string, args map[string]any) (json.RawMessage, error)
+```
+
+CallTool invokes an MCP tool by name and returns the inner JSON payload. Linear's tools all return a single TextContent block whose text is a JSON document — typically \`\{"\<resource\>": \[...\], "hasNextPage": bool, "cursor": "..."\}\`.
+
+Error cases:
+
+- Tool returned IsError=true: the message from the first text block is wrapped as a Go error so the caller surfaces a meaningful log.
+- No content blocks: caller passed a tool name the server doesn't support, or the server is misbehaving — bubbled up as an error.
+- Content\[0\] not text: future\-proofing; Linear may add typed embedded resources for some tools, in which case this client needs to be extended.
 
 <a name="Client.IssueCreate"></a>
-### func \(\*Client\) [IssueCreate](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/push.go#L28-L31>)
+### func \(\*Client\) IssueCreate
 
 ```go
 func (c *Client) IssueCreate(ctx context.Context, input map[string]any) (*IssueCreated, error)
 ```
 
-IssueCreate runs the IssueCreateMutation. \`input\` is the IssueCreateInput payload Linear documents — passed straight through without re\-typing because Linear's input type evolves faster than a Go struct should track. The handler is responsible for ensuring required fields \(\`teamId\`, \`title\`\) are present; missing fields surface as a Linear graphql error and bubble back through Client.Do.
+IssueCreate creates a new Linear issue via the save\_issue MCP tool. \`input\` is the argument map the tool documents — typically \`\{"title": "...", "team": "\<id\-or\-name\>", ...\}\`. Required fields \(title, team\) are the caller's responsibility; missing fields surface as an MCP tool error and bubble back through Client.CallTool.
 
 <a name="Client.IssueUpdate"></a>
-### func \(\*Client\) [IssueUpdate](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/patch.go#L30-L34>)
+### func \(\*Client\) IssueUpdate
 
 ```go
 func (c *Client) IssueUpdate(ctx context.Context, id string, input map[string]any) (*IssueUpdated, error)
 ```
 
-IssueUpdate runs the IssueUpdateMutation. \`id\` is Linear's UUID \(the \`id\` field on issues, not the human\-readable identifier like \`IRM\-42\`\). The mutation accepts the identifier in some Linear versions; we use the UUID for forward\-compatibility with the public schema.
-
-\`input\` is the partial IssueUpdateInput — only fields explicitly included are touched. Empty input is rejected up front so a patch that resolves to no changes doesn't silently log "update succeeded" against an empty mutation.
+IssueUpdate updates an existing Linear issue via the save\_issue MCP tool. \`id\` is the issue's identifier \(e.g., \`IRM\-42\`\). The caller supplies the partial update in \`input\`; only fields explicitly included are touched. We piggyback on save\_issue's upsert semantics — setting \`id\` on the args map routes the call to the update branch. The human\-readable identifier \(IRM\-42\) round\-trips with the on\-disk file shape \(issues/\<identifier\>.json\); Linear's tool also accepts UUIDs.
 
 <a name="Client.ListBounded"></a>
-### func \(\*Client\) [ListBounded](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/pull.go#L28-L32>)
+### func \(\*Client\) ListBounded
 
 ```go
 func (c *Client) ListBounded(ctx context.Context, resource Resource, opts PullOptions) ([]json.RawMessage, bool, error)
@@ -6756,35 +7310,31 @@ ListBounded fetches up to MaxRecords entries for the given resource, returning t
 Returned \`truncated == true\` means MaxRecords was reached before the underlying connection ran out of pages — the caller should emit a distinct log event rather than treating the pull as complete.
 
 <a name="IssueCreated"></a>
-## type [IssueCreated](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/push.go#L14-L19>)
+## type IssueCreated
 
-IssueCreated is the subset of the issueCreate mutation result the connector logs back to the operator. The full Linear response carries more fields, but identifier \+ url are what makes "we created IRM\-42" actionable in the audit trail.
+IssueCreated is the subset of the save\_issue tool result the connector logs back to the operator. The full Linear response carries more fields, but ID \+ URL are what makes "we created IRM\-42" actionable in the audit trail.
+
+Linear MCP uses the human\-readable \`IRM\-42\` form as the canonical id \(which is also the form \`save\_issue\` accepts on update\), so the connector reads \`id\` directly without a separate identifier field.
 
 ```go
 type IssueCreated struct {
-    ID         string `json:"id"`
-    Identifier string `json:"identifier"`
-    Title      string `json:"title"`
-    URL        string `json:"url"`
+    ID    string `json:"id"`
+    Title string `json:"title"`
+    URL   string `json:"url"`
 }
 ```
 
 <a name="IssueUpdated"></a>
-## type [IssueUpdated](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/patch.go#L13-L18>)
+## type IssueUpdated
 
-IssueUpdated mirrors IssueCreated — same audit\-friendly fields, returned from the issueUpdate mutation so callers can log what actually changed without a follow\-up read.
+IssueUpdated mirrors IssueCreated — same audit\-friendly fields, returned from the save\_issue tool's update path so callers can log what actually changed without a follow\-up read.
 
 ```go
-type IssueUpdated struct {
-    ID         string `json:"id"`
-    Identifier string `json:"identifier"`
-    Title      string `json:"title"`
-    URL        string `json:"url"`
-}
+type IssueUpdated = IssueCreated
 ```
 
 <a name="ParsedPath"></a>
-## type [ParsedPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/parse_path.go#L13-L24>)
+## type ParsedPath
 
 ParsedPath captures the resource \+ identifier referenced by a connector path. Mirrors the Stripe parser \(\`\<resource\>/\<id\>.json\`, \`\<resource\>/new\-\*.json\`\) so workflows that round\-trip the connector's pull output back through push behave consistently across vendors.
 
@@ -6804,7 +7354,7 @@ type ParsedPath struct {
 ```
 
 <a name="ParsePath"></a>
-### func [ParsePath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/parse_path.go#L36>)
+### func ParsePath
 
 ```go
 func ParsePath(rawPath string) (ParsedPath, error)
@@ -6820,7 +7370,7 @@ ParsePath recognizes four shapes:
 Returns an error for anything that doesn't match one of the above. Callers translate the error to a \`400\` \(push\) or "skip" \(push loop\) depending on context — the parser stays neutral.
 
 <a name="PullOptions"></a>
-## type [PullOptions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/pull.go#L15-L18>)
+## type PullOptions
 
 PullOptions narrows what a pull call returns. \`TeamKey\` is the optional \`IRM\`\-style team identifier that scopes issue / cycle pulls to one team; empty means workspace\-wide. \`MaxRecords\` caps per\-resource record counts the same way as Stripe's \`max\_records\_per\_resource\` setting — bounded snapshots are safer for OOM than truly unbounded ones.
 
@@ -6832,7 +7382,7 @@ type PullOptions struct {
 ```
 
 <a name="Resource"></a>
-## type [Resource](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/resources.go#L9-L20>)
+## type Resource
 
 Resource describes one Linear top\-level entity the connector knows how to interact with. Mirrors the resource table the Stripe connector uses so call sites stay structurally similar across connectors.
 
@@ -6852,7 +7402,7 @@ type Resource struct {
 ```
 
 <a name="FindResource"></a>
-### func [FindResource](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/resources.go#L47>)
+### func FindResource
 
 ```go
 func FindResource(name string) (Resource, error)
@@ -6861,7 +7411,7 @@ func FindResource(name string) (Resource, error)
 FindResource returns the Resource matching name \(without \`.json\` suffix\), or an error when the name isn't part of the known set. The error message lists the supported names to make typo diagnostics one log line.
 
 <a name="KnownResources"></a>
-### func [KnownResources](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/client/resources.go#L34>)
+### func KnownResources
 
 ```go
 func KnownResources() []Resource
@@ -6877,7 +7427,7 @@ import "irmin-connectors/connectors/linear/config"
 
 Package config declares Linear's DynamicField schema and the ConnectorDetails payload served from the /info endpoint.
 
-Auth is \*\*OAuth 2.1 with Dynamic Client Registration\*\* against Linear's MCP OAuth server \(https://mcp.linear.app\). Per the OAuth roadmap \(Phase 4\), this is the first real connector that exercises the DCR path end\-to\-end — there is no admin\-configured static OAuth app per environment, so the connector ships with no \`details\` form fields. The user clicks Connect, Core creates a per\-workspace OAuth client via DCR, the user approves the grant, and the connector authenticates every vendor call from that point on with a transparently\-refreshed bearer token resolved from Core at request time.
+Auth is OAuth 2.1 with Dynamic Client Registration against Linear's MCP OAuth server \(https://mcp.linear.app\). There is no admin\- configured static OAuth app per environment, so the connector ships with no \`details\` form fields: the user clicks Connect, Core creates a per\-workspace OAuth client via DCR, the user approves the grant, and every vendor call from that point on uses a transparently\- refreshed bearer token resolved from Core at request time.
 
 ## Index
 
@@ -6886,13 +7436,11 @@ Auth is \*\*OAuth 2.1 with Dynamic Client Registration\*\* against Linear's MCP 
 - [func GetOptionalFields\(\) \[\]string](<#GetOptionalFields>)
 - [func GetRequiredDetailsFields\(\) \[\]string](<#GetRequiredDetailsFields>)
 - [func GetRequiredFields\(\) \[\]string](<#GetRequiredFields>)
-- [func GetRequiredSettingsFields\(\) \[\]string](<#GetRequiredSettingsFields>)
 - [func GetSettingsFieldDefinitions\(\) map\[string\]irminmodels.DynamicField](<#GetSettingsFieldDefinitions>)
-- [func GetSettingsFields\(\) \[\]string](<#GetSettingsFields>)
 
 
 <a name="GetConnectorInfo"></a>
-## func [GetConnectorInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/config/config.go#L114>)
+## func GetConnectorInfo
 
 ```go
 func GetConnectorInfo() models.ConnectorDetails
@@ -6901,7 +7449,7 @@ func GetConnectorInfo() models.ConnectorDetails
 GetConnectorInfo returns the static connector metadata. The embedded ConnectionOAuthConfig is what makes the console render a Connect button on the Connection wizard — Core reads it through the registration call and the DynamicForm path on the frontend branches off \`connection\_oauth\_config \!= nil\`.
 
 <a name="GetDetailsFieldDefinitions"></a>
-## func [GetDetailsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/config/config.go#L31>)
+## func GetDetailsFieldDefinitions
 
 ```go
 func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -6912,7 +7460,7 @@ GetDetailsFieldDefinitions returns the connection details schema.
 Linear is OAuth\-backed so there are no user\-entered detail fields — the credential is the OAuth bearer token Core mints on behalf of the workspace, and the console renders a Connect button instead of a form. The empty map keeps the embed uniform with the static\- credential connectors and lets common helpers no\-op cleanly.
 
 <a name="GetOptionalFields"></a>
-## func [GetOptionalFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/config/config.go#L86>)
+## func GetOptionalFields
 
 ```go
 func GetOptionalFields() []string
@@ -6921,7 +7469,7 @@ func GetOptionalFields() []string
 GetOptionalFields returns optional field names from both maps.
 
 <a name="GetRequiredDetailsFields"></a>
-## func [GetRequiredDetailsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/config/config.go#L94>)
+## func GetRequiredDetailsFields
 
 ```go
 func GetRequiredDetailsFields() []string
@@ -6930,7 +7478,7 @@ func GetRequiredDetailsFields() []string
 GetRequiredDetailsFields returns only the required detail field names \(none today; reserved for future extensions\).
 
 <a name="GetRequiredFields"></a>
-## func [GetRequiredFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/config/config.go#L79>)
+## func GetRequiredFields
 
 ```go
 func GetRequiredFields() []string
@@ -6938,32 +7486,14 @@ func GetRequiredFields() []string
 
 GetRequiredFields returns the union of required detail and settings field names. Linear has no required fields today — OAuth supplies the credential and every setting defaults sensibly — so this returns an empty slice; the helper exists so the OperationConfigProvider contract \(GetOperationFormFields\) is met uniformly with sibling connectors.
 
-<a name="GetRequiredSettingsFields"></a>
-## func [GetRequiredSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/config/config.go#L105>)
-
-```go
-func GetRequiredSettingsFields() []string
-```
-
-GetRequiredSettingsFields returns only required settings field names \(none today\).
-
 <a name="GetSettingsFieldDefinitions"></a>
-## func [GetSettingsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/config/config.go#L37>)
+## func GetSettingsFieldDefinitions
 
 ```go
 func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
 ```
 
 GetSettingsFieldDefinitions returns the per\-Connection settings. Settings are user\-tunable knobs that don't carry auth material.
-
-<a name="GetSettingsFields"></a>
-## func [GetSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/config/config.go#L99>)
-
-```go
-func GetSettingsFields() []string
-```
-
-GetSettingsFields returns every settings field name.
 
 # linearcontrollers
 
@@ -6994,21 +7524,21 @@ Package linearcontrollers wires the Linear connector's HTTP handlers. The Contro
   - [func \(cs \*Controllers\) SubscribeToChanges\(c fiber.Ctx\) error](<#Controllers.SubscribeToChanges>)
   - [func \(cs \*Controllers\) TestConnection\(\_ fiber.Ctx, \_, \_ map\[string\]any\) \(bool, bool, bool, \[\]string\)](<#Controllers.TestConnection>)
   - [func \(cs \*Controllers\) UnsubscribeFromChanges\(c fiber.Ctx\) error](<#Controllers.UnsubscribeFromChanges>)
-  - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, \_, \_ map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
+  - [func \(cs \*Controllers\) ValidateFields\(\_ fiber.Ctx, \_, settings map\[string\]any\) \[\]string](<#Controllers.ValidateFields>)
   - [func \(cs \*Controllers\) ValidateSystemTokenMiddleware\(c fiber.Ctx\) error](<#Controllers.ValidateSystemTokenMiddleware>)
 - [type LinearPullProvider](<#LinearPullProvider>)
   - [func \(p \*LinearPullProvider\) GetAllFiles\(ctx context.Context, clientAny any, operation \*db.Operation\) \(\[\]string, \[\]\[\]byte, error\)](<#LinearPullProvider.GetAllFiles>)
   - [func \(p \*LinearPullProvider\) GetFileByPath\(ctx context.Context, clientAny any, operation \*db.Operation, rawPath string\) \(string, \[\]byte, error\)](<#LinearPullProvider.GetFileByPath>)
-  - [func \(p \*LinearPullProvider\) InitializeClient\(\_ context.Context, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#LinearPullProvider.InitializeClient>)
+  - [func \(p \*LinearPullProvider\) InitializeClient\(ctx context.Context, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#LinearPullProvider.InitializeClient>)
   - [func \(p \*LinearPullProvider\) ProgressHandler\(operation \*db.Operation\) common.ProgressHandler](<#LinearPullProvider.ProgressHandler>)
 - [type LinearPushProvider](<#LinearPushProvider>)
-  - [func \(p \*LinearPushProvider\) InitializeClient\(\_ context.Context, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#LinearPushProvider.InitializeClient>)
-  - [func \(p \*LinearPushProvider\) ProcessFiles\(ctx context.Context, clientAny any, operation \*db.Operation, files map\[string\]\[\]byte, \_ string\) error](<#LinearPushProvider.ProcessFiles>)
+  - [func \(p \*LinearPushProvider\) InitializeClient\(ctx context.Context, logger \*slog.Logger, operation \*db.Operation\) \(any, \*string, func\(\), error\)](<#LinearPushProvider.InitializeClient>)
+  - [func \(p \*LinearPushProvider\) ProcessFiles\(ctx context.Context, clientAny any, operation \*db.Operation, files map\[string\]\[\]byte, targetPath string\) error](<#LinearPushProvider.ProcessFiles>)
   - [func \(p \*LinearPushProvider\) ProgressHandler\(\_ \*db.Operation\) common.ProgressHandler](<#LinearPushProvider.ProgressHandler>)
 
 
 <a name="Controllers"></a>
-## type [Controllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/controllers.go#L20-L23>)
+## type Controllers
 
 Controllers holds the dependencies for every Linear handler. The composition mirrors the README example for OAuth\-backed connectors: embed common.Controllers for the base machinery \(DB, App, Logger, HandleConfigFields/HandleConfigValidation\), and embed common.OAuthConnector to pick up token resolution \+ /info OAuth stamping.
 
@@ -7020,7 +7550,7 @@ type Controllers struct {
 ```
 
 <a name="NewControllers"></a>
-### func [NewControllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/controllers.go#L31>)
+### func NewControllers
 
 ```go
 func NewControllers(app *models.ConnectorsApp) *Controllers
@@ -7029,7 +7559,7 @@ func NewControllers(app *models.ConnectorsApp) *Controllers
 NewControllers wires the Linear controller from the connector app. NewOAuthConnector reads IRMIN\_API\_BASE\_URL \+ IRMIN\_API\_TOKEN from the app's environment to build the underlying OAuthTokenClient, and pulls the connector's static OAuth config off config.GetConnectorInfo so the Connect button renders without a separate metadata fetch on the frontend.
 
 <a name="Controllers.BuildDetails"></a>
-### func \(\*Controllers\) [BuildDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationConfig.go#L18>)
+### func \(\*Controllers\) BuildDetails
 
 ```go
 func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
@@ -7038,7 +7568,7 @@ func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string
 BuildDetails implements common.OperationConfigProvider. Linear has no detail fields; the result is an empty map by construction because GetDetailsFieldDefinitions returns an empty map.
 
 <a name="Controllers.BuildSettings"></a>
-### func \(\*Controllers\) [BuildSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationConfig.go#L23>)
+### func \(\*Controllers\) BuildSettings
 
 ```go
 func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
@@ -7047,7 +7577,7 @@ func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]strin
 BuildSettings implements common.OperationConfigProvider.
 
 <a name="Controllers.ConfigFields"></a>
-### func \(\*Controllers\) [ConfigFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/configFields.go#L25>)
+### func \(\*Controllers\) ConfigFields
 
 ```go
 func (cs *Controllers) ConfigFields(c fiber.Ctx) error
@@ -7056,16 +7586,16 @@ func (cs *Controllers) ConfigFields(c fiber.Ctx) error
 ConfigFields godoc @Summary Get Linear connector configuration fields @Description Returns dynamic configuration field definitions for the Linear connector. The "details" key returns an empty map because Linear authenticates via OAuth; the "settings" key returns user\-tunable options like team\_key. @Tags linear @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /linear/configuration/\{key\}/fields \[post\]
 
 <a name="Controllers.ConfigValidate"></a>
-### func \(\*Controllers\) [ConfigValidate](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/configValidate.go#L24>)
+### func \(\*Controllers\) ConfigValidate
 
 ```go
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ```
 
-ConfigValidate godoc @Summary Validate Linear connector configuration @Description Validates the Linear Connection's settings \(e.g., team\_key shape, max\_records cap\). Linear authenticates via OAuth, so there are no credential fields to validate here — the OAuth flow's completion in Core is the actual auth check, surfaced through /v1/connections/:id/oauth/start. @Tags linear @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param settings\[team\_key\] formData string false "Optional Linear team key \(e.g., IRM\)" @Param settings\[max\_records\_per\_resource\] formData string false "Optional cap on records returned per pull" @Param settings\[api\_endpoint\] formData string false "Optional GraphQL endpoint override" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Validation result" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /linear/configuration/validate \[post\]
+ConfigValidate godoc @Summary Validate Linear connector configuration @Description Validates the Linear Connection's settings \(e.g., team\_key shape, max\_records cap\). Linear authenticates via OAuth, so there are no credential fields to validate here — the OAuth flow's completion in Core is the actual auth check, surfaced through /v1/connections/:id/oauth/start. @Tags linear @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param settings\[team\_key\] formData string false "Optional Linear team key \(e.g., IRM\)" @Param settings\[max\_records\_per\_resource\] formData string false "Optional cap on records returned per pull" @Param settings\[mcp\_endpoint\] formData string false "Optional MCP endpoint override" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Validation result" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /linear/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
-### func \(\*Controllers\) [DetailsPage](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/detailsPage.go#L19>)
+### func \(\*Controllers\) DetailsPage
 
 ```go
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error
@@ -7074,7 +7604,7 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
 DetailsPage godoc @Summary Get Linear connector details page @Description Renders an HTML page describing what the Linear connector does, what it supports, and how to set it up. Public — no authentication required. @Tags linear @Accept json @Produce text/html @Success 200 \{string\} string "Linear connector details page" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /linear/details \[get\]
 
 <a name="Controllers.EnsureOperationMiddleware"></a>
-### func \(\*Controllers\) [EnsureOperationMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/middlewares.go#L22>)
+### func \(\*Controllers\) EnsureOperationMiddleware
 
 ```go
 func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
@@ -7083,7 +7613,7 @@ func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
 EnsureOperationMiddleware upserts the Operation row from the \`details\[\]\` / \`settings\[\]\` form fields the SDK's StartOperation\* requests carry. Linear has no \`details\[\]\` fields \(OAuth supplies the credential\), but the middleware still runs so settings get captured uniformly across operations.
 
 <a name="Controllers.GetDynamicFields"></a>
-### func \(\*Controllers\) [GetDynamicFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/configFields.go#L32-L36>)
+### func \(\*Controllers\) GetDynamicFields
 
 ```go
 func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]string) (map[string]irminmodels.DynamicField, error)
@@ -7092,7 +7622,7 @@ func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]st
 GetDynamicFields implements common.ConfigFieldProvider. Returns the static schema for the requested key — Linear's config is fully declarative so the provider does no per\-request decisions.
 
 <a name="Controllers.GetOperationFormFields"></a>
-### func \(\*Controllers\) [GetOperationFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationConfig.go#L11>)
+### func \(\*Controllers\) GetOperationFormFields
 
 ```go
 func (cs *Controllers) GetOperationFormFields() ([]string, []string)
@@ -7101,7 +7631,7 @@ func (cs *Controllers) GetOperationFormFields() ([]string, []string)
 GetOperationFormFields implements common.OperationConfigProvider. Linear has no required fields \(OAuth supplies the credential and every setting defaults sensibly\), so the required slice is empty.
 
 <a name="Controllers.GetRequiredFormFields"></a>
-### func \(\*Controllers\) [GetRequiredFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/configValidate.go#L32>)
+### func \(\*Controllers\) GetRequiredFormFields
 
 ```go
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
@@ -7110,7 +7640,7 @@ func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
 GetRequiredFormFields implements common.ConfigValidationProvider. Returns no required fields — Linear is OAuth\-backed and every setting is optional. The optional list is the full settings shape so the form parser surfaces them on the validation response.
 
 <a name="Controllers.Info"></a>
-### func \(\*Controllers\) [Info](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/info.go#L21>)
+### func \(\*Controllers\) Info
 
 ```go
 func (cs *Controllers) Info(c fiber.Ctx) error
@@ -7119,24 +7649,24 @@ func (cs *Controllers) Info(c fiber.Ctx) error
 Info godoc @Summary Get Linear connector information @Description Returns connector metadata including capabilities, OAuth configuration, and dynamic field schema. The embedded ConnectionOAuthConfig is what tells the console to render a Connect\-with\-Linear button instead of a credential form. @Tags linear @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "Linear connector information" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /linear/info \[get\]
 
 <a name="Controllers.OperationPatch"></a>
-### func \(\*Controllers\) [OperationPatch](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationPatch.go#L56>)
+### func \(\*Controllers\) OperationPatch
 
 ```go
 func (cs *Controllers) OperationPatch(c fiber.Ctx) (retErr error)
 ```
 
-OperationPatch applies a JSON\-Patch document to Linear issues. The shape mirrors the Stripe patch handler: each patch op's \`path\` starts with the file path of a Linear record \(e.g., \`/issues/\<uuid\>.json/title\`\); the suffix is the field to touch. Operations targeting the same issue are coalesced into one issueUpdate mutation so Linear sees a single atomic write per issue rather than one mutation per field.
+OperationPatch applies a JSON\-Patch document to Linear issues. The shape mirrors the Stripe patch handler: each patch op's \`path\` starts with the file path of a Linear record \(e.g., \`/issues/\<uuid\>.json/title\`\); the suffix is the field to touch. Operations targeting the same issue are coalesced into one save\_issue tool call so Linear sees a single atomic write per issue rather than one call per field.
 
 Only \`add\`, \`replace\`, and \`remove\` are supported — Linear's update input is flat enough that JSON\-Patch's \`move\` / \`copy\` don't have well\-defined semantics, and silently approximating them would mask real bugs in the patch generator.
 
-The handler bypasses common.HandleOperationPatch because that helper's per\-op \`\(table, row, column\)\` model is built for SQL connectors and doesn't fit GraphQL inputs cleanly. Stripe makes the same choice; see stripe/controllers/operationPatch.go for the rationale.
+The handler bypasses common.HandleOperationPatch because that helper's per\-op \`\(table, row, column\)\` model is built for SQL connectors and doesn't fit Linear's flat MCP save\_issue input cleanly. Stripe makes the same choice; see stripe/controllers/operationPatch.go for the rationale.
 
 Note: \`\<id\>\` in the path must be the Linear UUID \(the \`id\` field from a pulled issue\), not the human\-readable identifier. The connector documents this on the patch endpoint so callers reading the OpenAPI know which to use.
 
-@Summary Apply JSON\-Patch operations to Linear issues @Description Translates a JSON\-Patch document into one issueUpdate mutation per targeted Linear issue. Only add/replace/remove are supported. The patch path must reference an issue file \(e.g., \`/issues/\<uuid\>.json/title\`\) where \`\<uuid\>\` is the Linear UUID, not the identifier \(IRM\-42\). @Tags linear @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param patches formData file true "JSON file containing a JSON\-Patch array" @Success 200 \{object\} fiber.Map "Patches applied successfully" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /linear/operation/patch \[post\]
+@Summary Apply JSON\-Patch operations to Linear issues @Description Translates a JSON\-Patch document into one save\_issue MCP tool call per targeted Linear issue. Only add/replace/remove are supported. The patch path must reference an issue file \(e.g., \`/issues/\<uuid\>.json/title\`\) where \`\<uuid\>\` is the Linear UUID, not the identifier \(IRM\-42\). @Tags linear @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param patches formData file true "JSON file containing a JSON\-Patch array" @Success 200 \{object\} fiber.Map "Patches applied successfully" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /linear/operation/patch \[post\]
 
 <a name="Controllers.OperationPull"></a>
-### func \(\*Controllers\) [OperationPull](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationPull.go#L292>)
+### func \(\*Controllers\) OperationPull
 
 ```go
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
@@ -7145,16 +7675,16 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error
 OperationPull godoc @Summary Pull data from Linear @Description Pulls Linear issues, projects, cycles, and teams as JSON files. The connection ID is captured from the request before the async worker starts so the worker can resolve OAuth tokens without a fiber.Ctx. If \`path\` is empty, every pull\-enabled resource is returned; a \`\<resource\>\` or \`\<resource\>.json\` path narrows the pull to a single resource. Single\-record paths are not yet supported. @Tags linear @Security SystemTokenAuth @Accept multipart/form\-data @Produce application/zip @Param path formData string false "Optional resource name \(e.g., 'issues'\)" @Success 200 \{file\} binary "ZIP archive of pulled JSON files" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 409 \{object\} fiber.Map "Operation already running" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /linear/operation/pull \[post\]
 
 <a name="Controllers.OperationPush"></a>
-### func \(\*Controllers\) [OperationPush](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationPush.go#L233>)
+### func \(\*Controllers\) OperationPush
 
 ```go
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
 ```
 
-OperationPush godoc @Summary Push data to Linear @Description Creates new Linear issues from JSON files in the uploaded ZIP. Files matching \`issues/new\-\*.json\` are turned into IssueCreate mutations; every other file is skipped with a log line. Each file's JSON must be a valid Linear IssueCreateInput; the \`teamKey\` setting on the Connection fills in the team if the file omits it. @Tags linear @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param file formData file true "ZIP containing JSON issue files \(issues/new\-\*.json\)" @Success 202 \{object\} fiber.Map "Async push job accepted \(\{job\_id, operation\_token\}\)" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 409 \{object\} fiber.Map "Operation already running" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /linear/operation/push \[post\]
+OperationPush godoc @Summary Push data to Linear @Description Creates new Linear issues from JSON files in the uploaded ZIP. Files matching \`issues/new\-\*.json\` are turned into IssueCreate mutations; every other file is skipped with a log line. Each file's JSON must be a valid Linear IssueCreateInput including a \`teamId\` UUID \(Linear's input type has no \`teamKey\` field — copy the UUID from a pulled issue's \`team.id\`\). @Tags linear @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param file formData file true "ZIP containing JSON issue files \(issues/new\-\*.json\)" @Success 202 \{object\} fiber.Map "Async push job accepted \(\{job\_id, operation\_token\}\)" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 409 \{object\} fiber.Map "Operation already running" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /linear/operation/push \[post\]
 
 <a name="Controllers.OperationSchemaGet"></a>
-### func \(\*Controllers\) [OperationSchemaGet](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationSchemaGet.go#L170>)
+### func \(\*Controllers\) OperationSchemaGet
 
 ```go
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
@@ -7163,7 +7693,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
 OperationSchemaGet godoc @Summary Get Linear operation schema @Description Returns an Irmin ObjectSchema describing the on\-disk file layout the Linear connector emits on pull and accepts on push/patch. @Tags linear @Security SystemTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push, patch\) @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /linear/operation/schema/\{operation\} \[post\]
 
 <a name="Controllers.SubscribeToChanges"></a>
-### func \(\*Controllers\) [SubscribeToChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationSchemaGet.go#L176>)
+### func \(\*Controllers\) SubscribeToChanges
 
 ```go
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
@@ -7172,7 +7702,7 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
 SubscribeToChanges is not supported.
 
 <a name="Controllers.TestConnection"></a>
-### func \(\*Controllers\) [TestConnection](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/configValidate.go#L54-L56>)
+### func \(\*Controllers\) TestConnection
 
 ```go
 func (cs *Controllers) TestConnection(_ fiber.Ctx, _, _ map[string]any) (bool, bool, bool, []string)
@@ -7183,7 +7713,7 @@ TestConnection implements common.ConfigValidationProvider. We cannot probe Linea
 canConnect=true / detailsValid=true / settingsValid=true reflects reality: the user has not asked us to validate anything we can reach from here. Returning false would block the UI from advancing past validation when nothing's actually wrong.
 
 <a name="Controllers.UnsubscribeFromChanges"></a>
-### func \(\*Controllers\) [UnsubscribeFromChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationSchemaGet.go#L183>)
+### func \(\*Controllers\) UnsubscribeFromChanges
 
 ```go
 func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
@@ -7192,16 +7722,16 @@ func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
 UnsubscribeFromChanges is not supported.
 
 <a name="Controllers.ValidateFields"></a>
-### func \(\*Controllers\) [ValidateFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/configValidate.go#L40>)
+### func \(\*Controllers\) ValidateFields
 
 ```go
-func (cs *Controllers) ValidateFields(_ fiber.Ctx, _, _ map[string]any) []string
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, _, settings map[string]any) []string
 ```
 
-ValidateFields implements common.ConfigValidationProvider. Performs structural validation of optional settings — the validation surface is intentionally narrow because the OAuth flow itself is the credential check.
+ValidateFields implements common.ConfigValidationProvider. Validates the optional \`mcp\_endpoint\` setting against the host allowlist at save\-time so a bad value surfaces in the console's validation pane rather than at first pull. The OAuth flow itself remains the credential check.
 
 <a name="Controllers.ValidateSystemTokenMiddleware"></a>
-### func \(\*Controllers\) [ValidateSystemTokenMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/middlewares.go#L13>)
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
 
 ```go
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
@@ -7210,7 +7740,7 @@ func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
 ValidateSystemTokenMiddleware verifies the inbound system token \(cross\-service auth from Core\) and stamps the connector info on the request locals so EnsureOperationMiddleware can pick it up.
 
 <a name="LinearPullProvider"></a>
-## type [LinearPullProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationPull.go#L26-L31>)
+## type LinearPullProvider
 
 LinearPullProvider implements common.PullOperationProvider. The connection ID is captured up\-front in OperationPull \(request goroutine\) so the worker can construct an OAuth\-wrapped HTTP client without a fiber.Ctx — see common/oauth\_async.go for the rationale.
 
@@ -7221,7 +7751,7 @@ type LinearPullProvider struct {
 ```
 
 <a name="LinearPullProvider.GetAllFiles"></a>
-### func \(\*LinearPullProvider\) [GetAllFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationPull.go#L62-L66>)
+### func \(\*LinearPullProvider\) GetAllFiles
 
 ```go
 func (p *LinearPullProvider) GetAllFiles(ctx context.Context, clientAny any, operation *db.Operation) ([]string, [][]byte, error)
@@ -7230,34 +7760,36 @@ func (p *LinearPullProvider) GetAllFiles(ctx context.Context, clientAny any, ope
 GetAllFiles pulls every pull\-enabled resource and returns one JSON array file per resource. Mirrors the Stripe shape so workflows that copy the same path pattern across connectors round\-trip uniformly.
 
 <a name="LinearPullProvider.GetFileByPath"></a>
-### func \(\*LinearPullProvider\) [GetFileByPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationPull.go#L99-L104>)
+### func \(\*LinearPullProvider\) GetFileByPath
 
 ```go
 func (p *LinearPullProvider) GetFileByPath(ctx context.Context, clientAny any, operation *db.Operation, rawPath string) (string, []byte, error)
 ```
 
-GetFileByPath supports whole\-resource pulls only in the first connector cut \(\`issues\`, \`issues.json\`, etc.\). Single\-record fetches like \`issues/IRM\-42.json\` are reserved for a follow\-up — implementing them properly requires a per\-vendor identifier\- to\-UUID lookup that doesn't materially advance the OAuth\-path proof Phase 4 is meant to deliver.
+GetFileByPath supports whole\-resource pulls \(\`issues\`, \`issues.json\`, etc.\). Single\-record fetches like \`issues/IRM\-42.json\` are out of scope: doing them right requires a per\-vendor identifier\-to\-UUID lookup that callers can satisfy by pulling the resource and filtering downstream.
 
 <a name="LinearPullProvider.InitializeClient"></a>
-### func \(\*LinearPullProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationPull.go#L46-L50>)
+### func \(\*LinearPullProvider\) InitializeClient
 
 ```go
-func (p *LinearPullProvider) InitializeClient(_ context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+func (p *LinearPullProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
 ```
 
-InitializeClient builds the GraphQL client for this operation. The HTTP client is wrapped by AsyncOAuthRoundTripper so every outbound call carries a fresh Linear bearer token resolved from Core, with a once\-on\-401 retry that asks Core to rotate.
+InitializeClient opens the MCP session for this operation. The session's HTTP transport is wrapped with the OAuth round\-tripper inside lib.NewMCPSession so every outbound MCP tool call carries a fresh Linear bearer token resolved from Core, with a once\-on\-401 retry path that asks Core to rotate.
+
+The returned cleanup func closes the MCP session — the operation runner is responsible for invoking it; this is the same lifecycle shape sftp uses \(Connect \+ Close on the same goroutine\).
 
 <a name="LinearPullProvider.ProgressHandler"></a>
-### func \(\*LinearPullProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationPull.go#L38>)
+### func \(\*LinearPullProvider\) ProgressHandler
 
 ```go
 func (p *LinearPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
 ```
 
-ProgressHandler emits per\-page events into the job's progress slice. Linear pulls can iterate hundreds of pages on large workspaces; the heartbeat from common.NewProgressHandlerWithContext keeps the operation log moving so the janitor doesn't false\- positive a live worker as stuck.
+ProgressHandler emits per\-page events into the job's progress slice. Hydrated with the worker's ctx so cancel signals reach the fan\-out and so events fired AFTER cancel/completion don't race the worker cleanup.
 
 <a name="LinearPushProvider"></a>
-## type [LinearPushProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationPush.go#L28-L33>)
+## type LinearPushProvider
 
 LinearPushProvider implements common.PushOperationProvider. The connection ID is captured up\-front in OperationPush; the worker then constructs an OAuth\-wrapped HTTP client around it.
 
@@ -7270,31 +7802,33 @@ type LinearPushProvider struct {
 ```
 
 <a name="LinearPushProvider.InitializeClient"></a>
-### func \(\*LinearPushProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationPush.go#L44-L48>)
+### func \(\*LinearPushProvider\) InitializeClient
 
 ```go
-func (p *LinearPushProvider) InitializeClient(_ context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
+func (p *LinearPushProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
 ```
 
-InitializeClient builds the OAuth\-wrapped GraphQL client.
+InitializeClient opens the OAuth\-wrapped MCP session for the push operation. Returns the session\-backed Client plus a cleanup func the runner will call when the operation completes.
 
 <a name="LinearPushProvider.ProcessFiles"></a>
-### func \(\*LinearPushProvider\) [ProcessFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationPush.go#L72-L78>)
+### func \(\*LinearPushProvider\) ProcessFiles
 
 ```go
-func (p *LinearPushProvider) ProcessFiles(ctx context.Context, clientAny any, operation *db.Operation, files map[string][]byte, _ string) error
+func (p *LinearPushProvider) ProcessFiles(ctx context.Context, clientAny any, operation *db.Operation, files map[string][]byte, targetPath string) error
 ```
 
 ProcessFiles iterates the ZIP and creates one Linear issue per \`issues/new\-\*.json\` file. Stops on the first hard error — Linear writes aren't transactional, so a partial run is harder to reason about than an abort.
 
+\`targetPath\` narrows the iteration to a single file \(exact match\) or a directory prefix \(anything ending in \`/\`\). Empty means "every file." This mirrors Stripe's selector semantics and is what callers retrying a single failed file rely on; without it, a retry of one new\-\*.json file would re\-create every issue in the archive.
+
 <a name="LinearPushProvider.ProgressHandler"></a>
-### func \(\*LinearPushProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/linear/controllers/operationPush.go#L39>)
+### func \(\*LinearPushProvider\) ProgressHandler
 
 ```go
 func (p *LinearPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
 ```
 
-ProgressHandler returns nil — Linear push is a per\-record GraphQL mutation loop and the volume per push is small \(typically one or two issues at a time\). The baseline heartbeat from the common push worker keeps the operation log moving.
+ProgressHandler returns nil — Linear push is a per\-record MCP tool mutation loop and the volume per push is small \(typically one or two issues at a time\). The baseline heartbeat from the common push worker keeps the operation log moving.
 
 # mysqlclient
 
@@ -7345,7 +7879,7 @@ const (
 ```
 
 <a name="RemoveAllChangeTracking"></a>
-## func [RemoveAllChangeTracking](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/triggers.go#L236>)
+## func RemoveAllChangeTracking
 
 ```go
 func RemoveAllChangeTracking(dbClient *MySQLClient) error
@@ -7354,7 +7888,7 @@ func RemoveAllChangeTracking(dbClient *MySQLClient) error
 RemoveAllChangeTracking removes all Irmin change tracking infrastructure.
 
 <a name="SetupChangeTracking"></a>
-## func [SetupChangeTracking](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/triggers.go#L10>)
+## func SetupChangeTracking
 
 ```go
 func SetupChangeTracking(dbClient *MySQLClient) error
@@ -7363,7 +7897,7 @@ func SetupChangeTracking(dbClient *MySQLClient) error
 SetupChangeTracking sets up MySQL triggers for change tracking on all tables.
 
 <a name="ChangeRecord"></a>
-## type [ChangeRecord](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L386-L390>)
+## type ChangeRecord
 
 ChangeRecord represents a detected change in MySQL.
 
@@ -7376,7 +7910,7 @@ type ChangeRecord struct {
 ```
 
 <a name="ColumnInfo"></a>
-## type [ColumnInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L214-L218>)
+## type ColumnInfo
 
 ColumnInfo holds metadata about a single column in a table.
 
@@ -7389,7 +7923,7 @@ type ColumnInfo struct {
 ```
 
 <a name="MySQLClient"></a>
-## type [MySQLClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L25-L32>)
+## type MySQLClient
 
 MySQLClient manages a sql.DB connection to MySQL. It may or may not be connected to a specific database, depending on how it's instantiated.
 
@@ -7400,7 +7934,7 @@ type MySQLClient struct {
 ```
 
 <a name="InitMySQLClient"></a>
-### func [InitMySQLClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/initMysqlClient.go#L12-L16>)
+### func InitMySQLClient
 
 ```go
 func InitMySQLClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (*MySQLClient, *string, error)
@@ -7409,7 +7943,7 @@ func InitMySQLClient(ctx context.Context, logger *slog.Logger, operation *db.Ope
 InitMySQLClient initializes a MySQLClient instance based on the data provided in the operation.
 
 <a name="NewMySQLClient"></a>
-### func [NewMySQLClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L37-L42>)
+### func NewMySQLClient
 
 ```go
 func NewMySQLClient(ctx context.Context, host string, port int, user, password, defaultDB string) (*MySQLClient, error)
@@ -7418,7 +7952,7 @@ func NewMySQLClient(ctx context.Context, host string, port int, user, password, 
 NewMySQLClient connects to MySQL without specifying a database. This is useful for listing available databases or validating credentials without "locking" into a specific dbName.
 
 <a name="MySQLClient.BeginTransaction"></a>
-### func \(\*MySQLClient\) [BeginTransaction](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L287>)
+### func \(\*MySQLClient\) BeginTransaction
 
 ```go
 func (mc *MySQLClient) BeginTransaction(ctx context.Context) (*Tx, error)
@@ -7427,7 +7961,7 @@ func (mc *MySQLClient) BeginTransaction(ctx context.Context) (*Tx, error)
 BeginTransaction begins a database transaction. Remember to call either .Commit\(\) or .Rollback\(\) on the returned Tx.
 
 <a name="MySQLClient.Close"></a>
-### func \(\*MySQLClient\) [Close](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L118>)
+### func \(\*MySQLClient\) Close
 
 ```go
 func (mc *MySQLClient) Close() error
@@ -7436,7 +7970,7 @@ func (mc *MySQLClient) Close() error
 Close frees resources used by the database connection.
 
 <a name="MySQLClient.Exec"></a>
-### func \(\*MySQLClient\) [Exec](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L172>)
+### func \(\*MySQLClient\) Exec
 
 ```go
 func (mc *MySQLClient) Exec(ctx context.Context, query string, args ...any) (sql.Result, error)
@@ -7445,7 +7979,7 @@ func (mc *MySQLClient) Exec(ctx context.Context, query string, args ...any) (sql
 Exec performs a statement \(INSERT/UPDATE/DELETE/DDL\) that doesn't return rows.
 
 <a name="MySQLClient.GetAvailableDatabases"></a>
-### func \(\*MySQLClient\) [GetAvailableDatabases](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L134>)
+### func \(\*MySQLClient\) GetAvailableDatabases
 
 ```go
 func (mc *MySQLClient) GetAvailableDatabases(ctx context.Context) ([]string, error)
@@ -7454,7 +7988,7 @@ func (mc *MySQLClient) GetAvailableDatabases(ctx context.Context) ([]string, err
 GetAvailableDatabases returns a list of databases, excluding system databases.
 
 <a name="MySQLClient.GetTableStructure"></a>
-### func \(\*MySQLClient\) [GetTableStructure](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L221>)
+### func \(\*MySQLClient\) GetTableStructure
 
 ```go
 func (mc *MySQLClient) GetTableStructure(ctx context.Context, tableName string) ([]ColumnInfo, error)
@@ -7463,7 +7997,7 @@ func (mc *MySQLClient) GetTableStructure(ctx context.Context, tableName string) 
 GetTableStructure returns a slice of ColumnInfo for the specified table.
 
 <a name="MySQLClient.GetTables"></a>
-### func \(\*MySQLClient\) [GetTables](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L185>)
+### func \(\*MySQLClient\) GetTables
 
 ```go
 func (mc *MySQLClient) GetTables(ctx context.Context) ([]string, error)
@@ -7472,7 +8006,7 @@ func (mc *MySQLClient) GetTables(ctx context.Context) ([]string, error)
 GetTables lists all table names in the current database. Must be invoked on a client that has a dbName selected \(via WithDatabase\).
 
 <a name="MySQLClient.GetTablesAndStructures"></a>
-### func \(\*MySQLClient\) [GetTablesAndStructures](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L257>)
+### func \(\*MySQLClient\) GetTablesAndStructures
 
 ```go
 func (mc *MySQLClient) GetTablesAndStructures(ctx context.Context) (map[string][]ColumnInfo, error)
@@ -7481,7 +8015,7 @@ func (mc *MySQLClient) GetTablesAndStructures(ctx context.Context) (map[string][
 GetTablesAndStructures returns a map of tableName \-\> slice of ColumnInfo for all tables in the current database.
 
 <a name="MySQLClient.Query"></a>
-### func \(\*MySQLClient\) [Query](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L164>)
+### func \(\*MySQLClient\) Query
 
 ```go
 func (mc *MySQLClient) Query(ctx context.Context, query string, args ...any) (*sql.Rows, error)
@@ -7490,7 +8024,7 @@ func (mc *MySQLClient) Query(ctx context.Context, query string, args ...any) (*s
 Query performs a generic query returning rows. Remember to close the returned \*sql.Rows when you're done with them.
 
 <a name="MySQLClient.StartBinlogListener"></a>
-### func \(\*MySQLClient\) [StartBinlogListener](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L332-L336>)
+### func \(\*MySQLClient\) StartBinlogListener
 
 ```go
 func (mc *MySQLClient) StartBinlogListener(ctx context.Context, logger *slog.Logger, onNotify func(payload string)) error
@@ -7499,7 +8033,7 @@ func (mc *MySQLClient) StartBinlogListener(ctx context.Context, logger *slog.Log
 StartBinlogListener sets up a polling\-based change listener for MySQL. This implementation uses MySQL's timestamp\-based change detection instead of binlog.
 
 <a name="MySQLClient.ValidateCredentials"></a>
-### func \(\*MySQLClient\) [ValidateCredentials](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L126>)
+### func \(\*MySQLClient\) ValidateCredentials
 
 ```go
 func (mc *MySQLClient) ValidateCredentials(ctx context.Context) error
@@ -7508,7 +8042,7 @@ func (mc *MySQLClient) ValidateCredentials(ctx context.Context) error
 ValidateCredentials pings the database server to ensure the connection is valid.
 
 <a name="MySQLClient.WithDatabase"></a>
-### func \(\*MySQLClient\) [WithDatabase](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L81>)
+### func \(\*MySQLClient\) WithDatabase
 
 ```go
 func (mc *MySQLClient) WithDatabase(ctx context.Context, dbName string) (*MySQLClient, error)
@@ -7517,7 +8051,7 @@ func (mc *MySQLClient) WithDatabase(ctx context.Context, dbName string) (*MySQLC
 WithDatabase creates a new client instance \*connected to a specific database\*. This is handy once you decide which database you want to use \(e.g. after listing them\).
 
 <a name="Tx"></a>
-## type [Tx](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L281-L283>)
+## type Tx
 
 Tx provides methods for executing queries within a MySQL transaction.
 
@@ -7528,7 +8062,7 @@ type Tx struct {
 ```
 
 <a name="Tx.Commit"></a>
-### func \(\*Tx\) [Commit](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L320>)
+### func \(\*Tx\) Commit
 
 ```go
 func (t *Tx) Commit() error
@@ -7537,7 +8071,7 @@ func (t *Tx) Commit() error
 Commit commits the transaction.
 
 <a name="Tx.Exec"></a>
-### func \(\*Tx\) [Exec](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L304>)
+### func \(\*Tx\) Exec
 
 ```go
 func (t *Tx) Exec(ctx context.Context, query string, args ...any) (sql.Result, error)
@@ -7546,7 +8080,7 @@ func (t *Tx) Exec(ctx context.Context, query string, args ...any) (sql.Result, e
 Exec executes a query that does not return rows \(e.g. INSERT/UPDATE/DELETE, DDL statements\). This will be run inside the current transaction context.
 
 <a name="Tx.Query"></a>
-### func \(\*Tx\) [Query](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L315>)
+### func \(\*Tx\) Query
 
 ```go
 func (t *Tx) Query(ctx context.Context, query string, args ...any) (*sql.Rows, error)
@@ -7555,7 +8089,7 @@ func (t *Tx) Query(ctx context.Context, query string, args ...any) (*sql.Rows, e
 Query executes a query that returns rows \(e.g. SELECT\). The caller is responsible for closing the returned \*sql.Rows.
 
 <a name="Tx.QueryRow"></a>
-### func \(\*Tx\) [QueryRow](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L309>)
+### func \(\*Tx\) QueryRow
 
 ```go
 func (t *Tx) QueryRow(ctx context.Context, query string, args ...any) *sql.Row
@@ -7564,7 +8098,7 @@ func (t *Tx) QueryRow(ctx context.Context, query string, args ...any) *sql.Row
 QueryRow returns a single row from the transaction context.
 
 <a name="Tx.Rollback"></a>
-### func \(\*Tx\) [Rollback](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/client/mysqlClient.go#L326>)
+### func \(\*Tx\) Rollback
 
 ```go
 func (t *Tx) Rollback() error
@@ -7604,7 +8138,7 @@ const (
 ```
 
 <a name="GetConnectorInfo"></a>
-## func [GetConnectorInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/config/config.go#L121>)
+## func GetConnectorInfo
 
 ```go
 func GetConnectorInfo() models.ConnectorDetails
@@ -7613,7 +8147,7 @@ func GetConnectorInfo() models.ConnectorDetails
 GetConnectorInfo returns the default connector information for MySQL.
 
 <a name="GetDetailsFieldDefinitions"></a>
-## func [GetDetailsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/config/config.go#L18>)
+## func GetDetailsFieldDefinitions
 
 ```go
 func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -7622,7 +8156,7 @@ func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
 GetDetailsFieldDefinitions returns all detail fields with their metadata.
 
 <a name="GetDetailsFields"></a>
-## func [GetDetailsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/config/config.go#L42>)
+## func GetDetailsFields
 
 ```go
 func GetDetailsFields() []string
@@ -7631,7 +8165,7 @@ func GetDetailsFields() []string
 GetDetailsFields returns the detail\-specific fields.
 
 <a name="GetOptionalFields"></a>
-## func [GetOptionalFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/config/config.go#L36>)
+## func GetOptionalFields
 
 ```go
 func GetOptionalFields() []string
@@ -7640,7 +8174,7 @@ func GetOptionalFields() []string
 GetOptionalFields returns the optional form fields for MySQL.
 
 <a name="GetRequiredDetailsFields"></a>
-## func [GetRequiredDetailsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/config/config.go#L48>)
+## func GetRequiredDetailsFields
 
 ```go
 func GetRequiredDetailsFields() []string
@@ -7649,7 +8183,7 @@ func GetRequiredDetailsFields() []string
 GetRequiredDetailsFields returns only the required detail\-specific fields.
 
 <a name="GetRequiredFields"></a>
-## func [GetRequiredFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/config/config.go#L30>)
+## func GetRequiredFields
 
 ```go
 func GetRequiredFields() []string
@@ -7658,7 +8192,7 @@ func GetRequiredFields() []string
 GetRequiredFields returns the mandatory form fields for MySQL.
 
 <a name="GetRequiredSettingsFields"></a>
-## func [GetRequiredSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/config/config.go#L60>)
+## func GetRequiredSettingsFields
 
 ```go
 func GetRequiredSettingsFields() []string
@@ -7667,7 +8201,7 @@ func GetRequiredSettingsFields() []string
 GetRequiredSettingsFields returns only the required settings\-specific fields.
 
 <a name="GetSettingsFieldDefinitions"></a>
-## func [GetSettingsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/config/config.go#L24>)
+## func GetSettingsFieldDefinitions
 
 ```go
 func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -7676,7 +8210,7 @@ func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
 GetSettingsFieldDefinitions returns static settings fields \(dynamic ones are handled in controllers\).
 
 <a name="GetSettingsFields"></a>
-## func [GetSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/config/config.go#L54>)
+## func GetSettingsFields
 
 ```go
 func GetSettingsFields() []string
@@ -7741,7 +8275,7 @@ const ConnectorName = "MySQL"
 ```
 
 <a name="Controllers"></a>
-## type [Controllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/controllers.go#L9-L11>)
+## type Controllers
 
 Controllers holds the dependencies for the MySQL connector controllers.
 
@@ -7752,7 +8286,7 @@ type Controllers struct {
 ```
 
 <a name="NewControllers"></a>
-### func [NewControllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/controllers.go#L14>)
+### func NewControllers
 
 ```go
 func NewControllers(app *models.ConnectorsApp) *Controllers
@@ -7761,7 +8295,7 @@ func NewControllers(app *models.ConnectorsApp) *Controllers
 NewControllers creates a new instance of controllers with the required dependencies.
 
 <a name="Controllers.BuildDetails"></a>
-### func \(\*Controllers\) [BuildDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationConfig.go#L14>)
+### func \(\*Controllers\) BuildDetails
 
 ```go
 func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
@@ -7770,7 +8304,7 @@ func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string
 BuildDetails implements the OperationConfigProvider interface.
 
 <a name="Controllers.BuildSettings"></a>
-### func \(\*Controllers\) [BuildSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationConfig.go#L19>)
+### func \(\*Controllers\) BuildSettings
 
 ```go
 func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
@@ -7779,7 +8313,7 @@ func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]strin
 BuildSettings implements the OperationConfigProvider interface.
 
 <a name="Controllers.ConfigFields"></a>
-### func \(\*Controllers\) [ConfigFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/configFields.go#L35>)
+### func \(\*Controllers\) ConfigFields
 
 ```go
 func (cs *Controllers) ConfigFields(c fiber.Ctx) error
@@ -7788,7 +8322,7 @@ func (cs *Controllers) ConfigFields(c fiber.Ctx) error
 ConfigFields godoc @Summary Get MySQL connector configuration fields @Description Get dynamic configuration fields for the MySQL connector based on the configuration key \(details or settings\). For settings, dynamically fetches available databases from the MySQL server. @Tags mysql @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Param details\[host\] formData string false "MySQL server hostname \(required for settings key to fetch databases\)" @Param details\[port\] formData integer false "MySQL server port \(required for settings key to fetch databases\)" @Param details\[username\] formData string false "Username \(required for settings key to fetch databases\)" @Param details\[password\] formData string false "Password \(required for settings key to fetch databases\)" @Param details\[default\_db\] formData string false "Default database \(required for settings key to fetch databases\)" @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key or missing connection details" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/configuration/\{key\}/fields \[post\]
 
 <a name="Controllers.ConfigValidate"></a>
-### func \(\*Controllers\) [ConfigValidate](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/configValidate.go#L30>)
+### func \(\*Controllers\) ConfigValidate
 
 ```go
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
@@ -7797,7 +8331,7 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ConfigValidate godoc @Summary Validate MySQL connector configuration @Description Validate MySQL connection details and settings by testing the actual connection to the MySQL server and specified database @Tags mysql @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[host\] formData string true "MySQL server hostname or IP address" @Param details\[port\] formData integer false "MySQL server port \(default: 3306\)" @Param details\[username\] formData string true "Username for MySQL authentication" @Param details\[password\] formData string true "Password for MySQL authentication" @Param details\[default\_db\] formData string false "Default database for initial connection" @Param settings\[database\] formData string false "Target database name to validate connection \(optional for details\-only validation\)" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
-### func \(\*Controllers\) [DetailsPage](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/detailsPage.go#L19>)
+### func \(\*Controllers\) DetailsPage
 
 ```go
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error
@@ -7806,7 +8340,7 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
 DetailsPage godoc @Summary Get MySQL connector details page @Description Get an HTML page with detailed information about the MySQL connector including capabilities, authentication methods, and usage examples @Tags mysql @Accept json @Produce text/html @Success 200 \{string\} string "MySQL connector details page" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/details \[get\]
 
 <a name="Controllers.EnsureOperationMiddleware"></a>
-### func \(\*Controllers\) [EnsureOperationMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/middlewares.go#L19>)
+### func \(\*Controllers\) EnsureOperationMiddleware
 
 ```go
 func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
@@ -7815,7 +8349,7 @@ func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
 EnsureOperationMiddleware upserts the Operation row from the \`details\[\]\` / \`settings\[\]\` form fields the SDK's StartOperation\* requests now carry. Registered as the second handler on every data route after ValidateSystemToken — see common/routes.go.
 
 <a name="Controllers.GetDynamicFields"></a>
-### func \(\*Controllers\) [GetDynamicFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/configFields.go#L40-L44>)
+### func \(\*Controllers\) GetDynamicFields
 
 ```go
 func (cs *Controllers) GetDynamicFields(c fiber.Ctx, key string, fields map[string]string) (map[string]irminmodels.DynamicField, error)
@@ -7824,7 +8358,7 @@ func (cs *Controllers) GetDynamicFields(c fiber.Ctx, key string, fields map[stri
 GetDynamicFields implements the ConfigFieldProvider interface.
 
 <a name="Controllers.GetOperationFormFields"></a>
-### func \(\*Controllers\) [GetOperationFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationConfig.go#L9>)
+### func \(\*Controllers\) GetOperationFormFields
 
 ```go
 func (cs *Controllers) GetOperationFormFields() ([]string, []string)
@@ -7833,7 +8367,7 @@ func (cs *Controllers) GetOperationFormFields() ([]string, []string)
 GetOperationFormFields implements the OperationConfigProvider interface.
 
 <a name="Controllers.GetRequiredFormFields"></a>
-### func \(\*Controllers\) [GetRequiredFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/configValidate.go#L37>)
+### func \(\*Controllers\) GetRequiredFormFields
 
 ```go
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
@@ -7842,7 +8376,7 @@ func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
 GetRequiredFormFields implements the ConfigValidationProvider interface. For validation, only required details fields are strictly required upfront. Settings fields are optional \- TestConnection will validate them if provided.
 
 <a name="Controllers.Info"></a>
-### func \(\*Controllers\) [Info](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/info.go#L21>)
+### func \(\*Controllers\) Info
 
 ```go
 func (cs *Controllers) Info(c fiber.Ctx) error
@@ -7851,7 +8385,7 @@ func (cs *Controllers) Info(c fiber.Ctx) error
 Info godoc @Summary Get MySQL connector information @Description Get detailed information about the MySQL connector including capabilities, configuration fields, and API endpoints @Tags mysql @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "MySQL connector information retrieved successfully" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/info \[get\]
 
 <a name="Controllers.OperationPatch"></a>
-### func \(\*Controllers\) [OperationPatch](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPatch.go#L82>)
+### func \(\*Controllers\) OperationPatch
 
 ```go
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
@@ -7860,7 +8394,7 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error
 OperationPatch godoc @Summary Patch data in MySQL database @Description Apply granular updates to MySQL database records using JSON patch operations @Tags mysql @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param patch formData file true "JSON patch file containing update operations" @Success 202 \{object\} irminmodels.StartOperationJobResponse "Patch job accepted; poll /operation/status/:job\_id" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or patch format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 409 \{object\} irminmodels.AlreadyRunningBody "Operation already running" @Failure 500 \{object\} irminmodels.JobErrorBody "Internal server error" @Router /mysql/operation/patch \[post\]
 
 <a name="Controllers.OperationPull"></a>
-### func \(\*Controllers\) [OperationPull](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPull.go#L301>)
+### func \(\*Controllers\) OperationPull
 
 ```go
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
@@ -7869,7 +8403,7 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error
 OperationPull godoc @Summary Pull data from MySQL database @Description Extract data from MySQL database tables using the operation token and specified path \(table name\) @Tags mysql @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param path formData string true "Table name to extract data from" @Success 200 \{object\} fiber.Map "Data pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or table name" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Table not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/operation/pull \[post\]
 
 <a name="Controllers.OperationPush"></a>
-### func \(\*Controllers\) [OperationPush](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPush.go#L143>)
+### func \(\*Controllers\) OperationPush
 
 ```go
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
@@ -7878,7 +8412,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error
 OperationPush godoc @Summary Push data to MySQL database @Description Insert data into MySQL database tables using the operation token and JSON file containing table data. Use the path parameter to specify a target table name. @Tags mysql @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param file formData file true "JSON file containing table data to insert" @Param path formData string false "Target table name \(e.g., customers\). If not specified, uses the filename from the uploaded file" @Success 202 \{object\} irminmodels.StartOperationJobResponse "Push job accepted; poll /operation/status/:job\_id" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 409 \{object\} irminmodels.AlreadyRunningBody "Operation already running" @Failure 500 \{object\} irminmodels.JobErrorBody "Internal server error" @Router /mysql/operation/push \[post\]
 
 <a name="Controllers.OperationSchemaGet"></a>
-### func \(\*Controllers\) [OperationSchemaGet](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationSchemaGet.go#L132>)
+### func \(\*Controllers\) OperationSchemaGet
 
 ```go
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
@@ -7887,7 +8421,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
 OperationSchemaGet godoc @Summary Get MySQL operation schema @Description Get the database schema for MySQL operations, returning an Irmin\-compatible ObjectSchema grouping each table as a JSON array based on the operation type \(pull or push\). Use the path query parameter to specify which database to analyze. @Tags mysql @Security SystemTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param path query string false "Database name to get schema for \(e.g., my\_database\)" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/operation/schema/\{operation\} \[post\]
 
 <a name="Controllers.SubscribeToChanges"></a>
-### func \(\*Controllers\) [SubscribeToChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/subscribeToChanges.go#L29>)
+### func \(\*Controllers\) SubscribeToChanges
 
 ```go
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
@@ -7896,7 +8430,7 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
 SubscribeToChanges godoc @Summary Subscribe to MySQL database changes @Description Set up real\-time monitoring of MySQL database changes using binary log tracking and webhook notifications @Tags mysql @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param webhook\_url formData string true "Webhook URL to receive change notifications" @Param webhook\_access\_token formData string true "Access token for webhook authentication" @Success 200 \{object\} db.Subscription "Subscription created successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid parameters" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/operation/subscribe \[post\]
 
 <a name="Controllers.TestConnection"></a>
-### func \(\*Controllers\) [TestConnection](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/configValidate.go#L64-L68>)
+### func \(\*Controllers\) TestConnection
 
 ```go
 func (cs *Controllers) TestConnection(ctx fiber.Ctx, details map[string]any, settings map[string]any) (bool, bool, bool, []string)
@@ -7905,7 +8439,7 @@ func (cs *Controllers) TestConnection(ctx fiber.Ctx, details map[string]any, set
 TestConnection implements the ConfigValidationProvider interface.
 
 <a name="Controllers.UnsubscribeFromChanges"></a>
-### func \(\*Controllers\) [UnsubscribeFromChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/unsubscribeFromChanges.go#L24>)
+### func \(\*Controllers\) UnsubscribeFromChanges
 
 ```go
 func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
@@ -7914,7 +8448,7 @@ func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
 UnsubscribeFromChanges godoc @Summary Unsubscribe from MySQL database changes @Description Stop monitoring MySQL database changes and remove the subscription @Tags mysql @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param subscription\_id formData string true "ID of the subscription to remove" @Success 200 \{object\} fiber.Map "Subscription removed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid parameters" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} fiber.Map "Forbidden \- subscription does not belong to this operation" @Failure 404 \{object\} fiber.Map "Subscription not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /mysql/operation/unsubscribe \[post\]
 
 <a name="Controllers.ValidateFields"></a>
-### func \(\*Controllers\) [ValidateFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/configValidate.go#L51>)
+### func \(\*Controllers\) ValidateFields
 
 ```go
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
@@ -7923,7 +8457,7 @@ func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map
 ValidateFields implements the ConfigValidationProvider interface.
 
 <a name="Controllers.ValidateSystemTokenMiddleware"></a>
-### func \(\*Controllers\) [ValidateSystemTokenMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/middlewares.go#L11>)
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
 
 ```go
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
@@ -7932,7 +8466,7 @@ func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
 ValidateSystemTokenMiddleware validates the system token.
 
 <a name="MySQLPatchProvider"></a>
-## type [MySQLPatchProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPatch.go#L19>)
+## type MySQLPatchProvider
 
 MySQLPatchProvider implements the PatchOperationProvider interface for MySQL.
 
@@ -7941,7 +8475,7 @@ type MySQLPatchProvider struct{}
 ```
 
 <a name="MySQLPatchProvider.ExecutePatchOperation"></a>
-### func \(\*MySQLPatchProvider\) [ExecutePatchOperation](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPatch.go#L42-L48>)
+### func \(\*MySQLPatchProvider\) ExecutePatchOperation
 
 ```go
 func (p *MySQLPatchProvider) ExecutePatchOperation(ctx context.Context, client any, op irminmodels.PatchOperation, tableName, rowIdentifier, columnName string, _, fromTable, fromRow, fromColumn string) error
@@ -7950,7 +8484,7 @@ func (p *MySQLPatchProvider) ExecutePatchOperation(ctx context.Context, client a
 ExecutePatchOperation executes a single patch operation within its own transaction.
 
 <a name="MySQLPatchProvider.InitializeClient"></a>
-### func \(\*MySQLPatchProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPatch.go#L22-L26>)
+### func \(\*MySQLPatchProvider\) InitializeClient
 
 ```go
 func (p *MySQLPatchProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, func(), error)
@@ -7959,7 +8493,7 @@ func (p *MySQLPatchProvider) InitializeClient(ctx context.Context, logger *slog.
 InitializeClient initializes the MySQL client for patch operations.
 
 <a name="MySQLPullProvider"></a>
-## type [MySQLPullProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPull.go#L19-L26>)
+## type MySQLPullProvider
 
 MySQLPullProvider implements the PullOperationProvider interface for MySQL.
 
@@ -7970,7 +8504,7 @@ type MySQLPullProvider struct {
 ```
 
 <a name="MySQLPullProvider.GetAllFiles"></a>
-### func \(\*MySQLPullProvider\) [GetAllFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPull.go#L93-L95>)
+### func \(\*MySQLPullProvider\) GetAllFiles
 
 ```go
 func (p *MySQLPullProvider) GetAllFiles(ctx context.Context, client any, operation *db.Operation) ([]string, [][]byte, error)
@@ -7979,7 +8513,7 @@ func (p *MySQLPullProvider) GetAllFiles(ctx context.Context, client any, operati
 GetAllFiles retrieves all tables as JSON files.
 
 <a name="MySQLPullProvider.GetFileByPath"></a>
-### func \(\*MySQLPullProvider\) [GetFileByPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPull.go#L166-L168>)
+### func \(\*MySQLPullProvider\) GetFileByPath
 
 ```go
 func (p *MySQLPullProvider) GetFileByPath(ctx context.Context, client any, operation *db.Operation, rawPath string) (string, []byte, error)
@@ -7988,7 +8522,7 @@ func (p *MySQLPullProvider) GetFileByPath(ctx context.Context, client any, opera
 GetFileByPath retrieves a specific table as a JSON file.
 
 <a name="MySQLPullProvider.InitializeClient"></a>
-### func \(\*MySQLPullProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPull.go#L67-L71>)
+### func \(\*MySQLPullProvider\) InitializeClient
 
 ```go
 func (p *MySQLPullProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -7997,7 +8531,7 @@ func (p *MySQLPullProvider) InitializeClient(ctx context.Context, logger *slog.L
 InitializeClient initializes the MySQL client for pull operations.
 
 <a name="MySQLPullProvider.ProgressHandler"></a>
-### func \(\*MySQLPullProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPull.go#L39>)
+### func \(\*MySQLPullProvider\) ProgressHandler
 
 ```go
 func (p *MySQLPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
@@ -8010,7 +8544,7 @@ Always returns a non\-nil handler. Nil\-safety lives one layer down in common.Lo
 Throttling lives in common.ThrottledQueryEmitter at the call site \(every queryProgressMinRows OR every queryProgressMinInterval\).
 
 <a name="MySQLPushProvider"></a>
-## type [MySQLPushProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPush.go#L25-L29>)
+## type MySQLPushProvider
 
 MySQLPushProvider implements the PushOperationProvider interface for MySQL.
 
@@ -8021,7 +8555,7 @@ type MySQLPushProvider struct {
 ```
 
 <a name="MySQLPushProvider.InitializeClient"></a>
-### func \(\*MySQLPushProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPush.go#L46-L50>)
+### func \(\*MySQLPushProvider\) InitializeClient
 
 ```go
 func (p *MySQLPushProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -8030,7 +8564,7 @@ func (p *MySQLPushProvider) InitializeClient(ctx context.Context, logger *slog.L
 InitializeClient initializes the MySQL client for push operations.
 
 <a name="MySQLPushProvider.ProcessFiles"></a>
-### func \(\*MySQLPushProvider\) [ProcessFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPush.go#L69-L75>)
+### func \(\*MySQLPushProvider\) ProcessFiles
 
 ```go
 func (p *MySQLPushProvider) ProcessFiles(ctx context.Context, client any, operation *db.Operation, files map[string][]byte, rawPath string) error
@@ -8039,7 +8573,7 @@ func (p *MySQLPushProvider) ProcessFiles(ctx context.Context, client any, operat
 ProcessFiles processes the extracted files and inserts them into MySQL tables.
 
 <a name="MySQLPushProvider.ProgressHandler"></a>
-### func \(\*MySQLPushProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationPush.go#L41>)
+### func \(\*MySQLPushProvider\) ProgressHandler
 
 ```go
 func (p *MySQLPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
@@ -8052,7 +8586,7 @@ Always returns a non\-nil handler. Nil\-safety lives one layer down in common.Lo
 Throttling lives in common.ThrottledQueryEmitter at the call site.
 
 <a name="MySQLSchemaProvider"></a>
-## type [MySQLSchemaProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationSchemaGet.go#L18>)
+## type MySQLSchemaProvider
 
 MySQLSchemaProvider implements the SchemaOperationProvider interface for MySQL databases.
 
@@ -8061,7 +8595,7 @@ type MySQLSchemaProvider struct{}
 ```
 
 <a name="MySQLSchemaProvider.GetSchema"></a>
-### func \(\*MySQLSchemaProvider\) [GetSchema](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationSchemaGet.go#L38-L43>)
+### func \(\*MySQLSchemaProvider\) GetSchema
 
 ```go
 func (p *MySQLSchemaProvider) GetSchema(c fiber.Ctx, client any, _ string, databaseName *string) (*irminmodels.ObjectSchema, error)
@@ -8070,7 +8604,7 @@ func (p *MySQLSchemaProvider) GetSchema(c fiber.Ctx, client any, _ string, datab
 GetSchema retrieves the MySQL database schema and returns an Irmin\-compatible ObjectSchema.
 
 <a name="MySQLSchemaProvider.GetSupportedOperationTypes"></a>
-### func \(\*MySQLSchemaProvider\) [GetSupportedOperationTypes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationSchemaGet.go#L113>)
+### func \(\*MySQLSchemaProvider\) GetSupportedOperationTypes
 
 ```go
 func (p *MySQLSchemaProvider) GetSupportedOperationTypes() []string
@@ -8079,7 +8613,7 @@ func (p *MySQLSchemaProvider) GetSupportedOperationTypes() []string
 GetSupportedOperationTypes returns the list of supported operation types for MySQL.
 
 <a name="MySQLSchemaProvider.InitializeClient"></a>
-### func \(\*MySQLSchemaProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/controllers/operationSchemaGet.go#L21-L25>)
+### func \(\*MySQLSchemaProvider\) InitializeClient
 
 ```go
 func (p *MySQLSchemaProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -8102,7 +8636,7 @@ import "irmin-connectors/connectors/mysql/models"
 
 
 <a name="ConnectionDetails"></a>
-## type [ConnectionDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/models/connectionDetails.go#L9-L15>)
+## type ConnectionDetails
 
 
 
@@ -8117,7 +8651,7 @@ type ConnectionDetails struct {
 ```
 
 <a name="NewConnectionDetailsFromMap"></a>
-### func [NewConnectionDetailsFromMap](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/models/connectionDetails.go#L18>)
+### func NewConnectionDetailsFromMap
 
 ```go
 func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, error)
@@ -8126,7 +8660,7 @@ func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, er
 NewConnectionDetailsFromMap creates a ConnectionDetails from a map\[string\]any.
 
 <a name="ConnectionSettings"></a>
-## type [ConnectionSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/models/connectionSettings.go#L8-L10>)
+## type ConnectionSettings
 
 
 
@@ -8137,7 +8671,7 @@ type ConnectionSettings struct {
 ```
 
 <a name="NewConnectionSettingsFromMap"></a>
-### func [NewConnectionSettingsFromMap](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/mysql/models/connectionSettings.go#L13>)
+### func NewConnectionSettingsFromMap
 
 ```go
 func NewConnectionSettingsFromMap(settings map[string]any) (*ConnectionSettings, error)
@@ -8190,7 +8724,7 @@ const (
 ```
 
 <a name="ValidateAPIKey"></a>
-## func [ValidateAPIKey](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L556>)
+## func ValidateAPIKey
 
 ```go
 func ValidateAPIKey(apiKey string) error
@@ -8199,7 +8733,7 @@ func ValidateAPIKey(apiKey string) error
 ValidateAPIKey tests the API key by listing available indexes. This validates that the API key is valid without requiring a specific index host.
 
 <a name="ValidateConnection"></a>
-## func [ValidateConnection](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L576>)
+## func ValidateConnection
 
 ```go
 func ValidateConnection(apiKey, host, namespace string) error
@@ -8208,7 +8742,7 @@ func ValidateConnection(apiKey, host, namespace string) error
 ValidateConnection tests the connection to a specific Pinecone index.
 
 <a name="EmbeddingRecord"></a>
-## type [EmbeddingRecord](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L64-L72>)
+## type EmbeddingRecord
 
 EmbeddingRecord represents the Irmin embedding format.
 
@@ -8225,7 +8759,7 @@ type EmbeddingRecord struct {
 ```
 
 <a name="PineconeClient"></a>
-## type [PineconeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L32-L46>)
+## type PineconeClient
 
 PineconeClient wraps the Pinecone SDK client for connector operations.
 
@@ -8236,7 +8770,7 @@ type PineconeClient struct {
 ```
 
 <a name="InitPineconeClient"></a>
-### func [InitPineconeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L88-L93>)
+### func InitPineconeClient
 
 ```go
 func InitPineconeClient(_ any, logger *slog.Logger, operation *db.Operation, opts ...PineconeOption) (*PineconeClient, *string, error)
@@ -8245,7 +8779,7 @@ func InitPineconeClient(_ any, logger *slog.Logger, operation *db.Operation, opt
 InitPineconeClient initializes a Pinecone client from operation configuration.
 
 <a name="PineconeClient.Close"></a>
-### func \(\*PineconeClient\) [Close](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L212>)
+### func \(\*PineconeClient\) Close
 
 ```go
 func (c *PineconeClient) Close() error
@@ -8254,7 +8788,7 @@ func (c *PineconeClient) Close() error
 Close releases resources held by the client.
 
 <a name="PineconeClient.Delete"></a>
-### func \(\*PineconeClient\) [Delete](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L530>)
+### func \(\*PineconeClient\) Delete
 
 ```go
 func (c *PineconeClient) Delete(ctx context.Context, ids []string) error
@@ -8263,7 +8797,7 @@ func (c *PineconeClient) Delete(ctx context.Context, ids []string) error
 Delete removes vectors from the Pinecone index by their IDs.
 
 <a name="PineconeClient.FetchAll"></a>
-### func \(\*PineconeClient\) [FetchAll](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L340>)
+### func \(\*PineconeClient\) FetchAll
 
 ```go
 func (c *PineconeClient) FetchAll(ctx context.Context) ([]EmbeddingRecord, error)
@@ -8272,7 +8806,7 @@ func (c *PineconeClient) FetchAll(ctx context.Context) ([]EmbeddingRecord, error
 FetchAll fetches all vectors from the index/namespace.
 
 <a name="PineconeClient.Search"></a>
-### func \(\*PineconeClient\) [Search](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L294>)
+### func \(\*PineconeClient\) Search
 
 ```go
 func (c *PineconeClient) Search(ctx context.Context, queryVector []float32, topK int) (*SearchResponse, error)
@@ -8281,7 +8815,7 @@ func (c *PineconeClient) Search(ctx context.Context, queryVector []float32, topK
 Search performs a similarity search using a query vector.
 
 <a name="PineconeClient.Upsert"></a>
-### func \(\*PineconeClient\) [Upsert](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L218>)
+### func \(\*PineconeClient\) Upsert
 
 ```go
 func (c *PineconeClient) Upsert(ctx context.Context, records []EmbeddingRecord) error
@@ -8290,7 +8824,7 @@ func (c *PineconeClient) Upsert(ctx context.Context, records []EmbeddingRecord) 
 Upsert inserts or updates vectors in the Pinecone index.
 
 <a name="PineconeClient.UpsertSingle"></a>
-### func \(\*PineconeClient\) [UpsertSingle](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L550>)
+### func \(\*PineconeClient\) UpsertSingle
 
 ```go
 func (c *PineconeClient) UpsertSingle(ctx context.Context, record EmbeddingRecord) error
@@ -8299,7 +8833,7 @@ func (c *PineconeClient) UpsertSingle(ctx context.Context, record EmbeddingRecor
 UpsertSingle inserts or updates a single vector in the Pinecone index. This is a convenience method for patch operations that operate on single records.
 
 <a name="PineconeOption"></a>
-## type [PineconeOption](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L52>)
+## type PineconeOption
 
 PineconeOption configures the PineconeClient at construction time. Mirrors the functional\-options shape Stripe uses \(connectors/stripe/client/client.go\) so connector authors can copy either as a reference.
 
@@ -8308,7 +8842,7 @@ type PineconeOption func(*PineconeClient)
 ```
 
 <a name="WithProgressHandler"></a>
-### func [WithProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L57>)
+### func WithProgressHandler
 
 ```go
 func WithProgressHandler(h common.ProgressHandler) PineconeOption
@@ -8317,7 +8851,7 @@ func WithProgressHandler(h common.ProgressHandler) PineconeOption
 WithProgressHandler installs an observability hook for the pagination \+ batching loops. Pass nil to disable \(same as the default\).
 
 <a name="SearchResponse"></a>
-## type [SearchResponse](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L82-L85>)
+## type SearchResponse
 
 SearchResponse represents the response from a search query.
 
@@ -8329,7 +8863,7 @@ type SearchResponse struct {
 ```
 
 <a name="SearchResult"></a>
-## type [SearchResult](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/client/client.go#L75-L79>)
+## type SearchResult
 
 SearchResult represents a single search match from Pinecone.
 
@@ -8361,7 +8895,7 @@ import "irmin-connectors/connectors/pinecone/config"
 
 
 <a name="GetConnectorInfo"></a>
-## func [GetConnectorInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/config/config.go#L90>)
+## func GetConnectorInfo
 
 ```go
 func GetConnectorInfo() models.ConnectorDetails
@@ -8370,7 +8904,7 @@ func GetConnectorInfo() models.ConnectorDetails
 GetConnectorInfo returns the default connector information for Pinecone.
 
 <a name="GetDetailsFieldDefinitions"></a>
-## func [GetDetailsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/config/config.go#L11>)
+## func GetDetailsFieldDefinitions
 
 ```go
 func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -8379,7 +8913,7 @@ func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
 GetDetailsFieldDefinitions returns all detail fields with their metadata.
 
 <a name="GetDetailsFields"></a>
-## func [GetDetailsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/config/config.go#L35>)
+## func GetDetailsFields
 
 ```go
 func GetDetailsFields() []string
@@ -8388,7 +8922,7 @@ func GetDetailsFields() []string
 GetDetailsFields returns the detail\-specific fields.
 
 <a name="GetOptionalFields"></a>
-## func [GetOptionalFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/config/config.go#L29>)
+## func GetOptionalFields
 
 ```go
 func GetOptionalFields() []string
@@ -8397,7 +8931,7 @@ func GetOptionalFields() []string
 GetOptionalFields returns the optional form fields for Pinecone.
 
 <a name="GetRequiredDetailsFields"></a>
-## func [GetRequiredDetailsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/config/config.go#L41>)
+## func GetRequiredDetailsFields
 
 ```go
 func GetRequiredDetailsFields() []string
@@ -8406,7 +8940,7 @@ func GetRequiredDetailsFields() []string
 GetRequiredDetailsFields returns only the required detail\-specific fields.
 
 <a name="GetRequiredFields"></a>
-## func [GetRequiredFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/config/config.go#L23>)
+## func GetRequiredFields
 
 ```go
 func GetRequiredFields() []string
@@ -8415,7 +8949,7 @@ func GetRequiredFields() []string
 GetRequiredFields returns the mandatory form fields for Pinecone.
 
 <a name="GetRequiredSettingsFields"></a>
-## func [GetRequiredSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/config/config.go#L53>)
+## func GetRequiredSettingsFields
 
 ```go
 func GetRequiredSettingsFields() []string
@@ -8424,7 +8958,7 @@ func GetRequiredSettingsFields() []string
 GetRequiredSettingsFields returns only the required settings\-specific fields.
 
 <a name="GetSettingsFieldDefinitions"></a>
-## func [GetSettingsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/config/config.go#L17>)
+## func GetSettingsFieldDefinitions
 
 ```go
 func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -8433,7 +8967,7 @@ func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
 GetSettingsFieldDefinitions returns settings fields.
 
 <a name="GetSettingsFields"></a>
-## func [GetSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/config/config.go#L47>)
+## func GetSettingsFields
 
 ```go
 func GetSettingsFields() []string
@@ -8486,7 +9020,7 @@ import "irmin-connectors/connectors/pinecone/controllers"
 
 
 <a name="Controllers"></a>
-## type [Controllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/controllers.go#L9-L11>)
+## type Controllers
 
 Controllers holds the dependencies for the Pinecone connector controllers.
 
@@ -8497,7 +9031,7 @@ type Controllers struct {
 ```
 
 <a name="NewControllers"></a>
-### func [NewControllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/controllers.go#L14>)
+### func NewControllers
 
 ```go
 func NewControllers(app *models.ConnectorsApp) *Controllers
@@ -8506,7 +9040,7 @@ func NewControllers(app *models.ConnectorsApp) *Controllers
 NewControllers creates a new instance of controllers with the required dependencies.
 
 <a name="Controllers.BuildDetails"></a>
-### func \(\*Controllers\) [BuildDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationConfig.go#L14>)
+### func \(\*Controllers\) BuildDetails
 
 ```go
 func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
@@ -8515,7 +9049,7 @@ func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string
 BuildDetails implements the OperationConfigProvider interface.
 
 <a name="Controllers.BuildSettings"></a>
-### func \(\*Controllers\) [BuildSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationConfig.go#L19>)
+### func \(\*Controllers\) BuildSettings
 
 ```go
 func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
@@ -8524,7 +9058,7 @@ func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]strin
 BuildSettings implements the OperationConfigProvider interface.
 
 <a name="Controllers.ConfigFields"></a>
-### func \(\*Controllers\) [ConfigFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/configFields.go#L25>)
+### func \(\*Controllers\) ConfigFields
 
 ```go
 func (cs *Controllers) ConfigFields(c fiber.Ctx) error
@@ -8533,7 +9067,7 @@ func (cs *Controllers) ConfigFields(c fiber.Ctx) error
 ConfigFields godoc @Summary Get Pinecone connector configuration fields @Description Get dynamic configuration fields for the Pinecone connector based on the configuration key \(details or settings\) @Tags pinecone @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/configuration/\{key\}/fields \[post\]
 
 <a name="Controllers.ConfigValidate"></a>
-### func \(\*Controllers\) [ConfigValidate](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/configValidate.go#L28>)
+### func \(\*Controllers\) ConfigValidate
 
 ```go
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
@@ -8542,7 +9076,7 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ConfigValidate godoc @Summary Validate Pinecone connector configuration @Description Validate Pinecone connection details and settings by testing the actual connection to the Pinecone index @Tags pinecone @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[api\_key\] formData string true "Pinecone API key" @Param settings\[host\] formData string false "Pinecone index host URL \(optional for details\-only validation\)" @Param settings\[namespace\] formData string false "Target namespace within the index" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
-### func \(\*Controllers\) [DetailsPage](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/detailsPage.go#L19>)
+### func \(\*Controllers\) DetailsPage
 
 ```go
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error
@@ -8551,7 +9085,7 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
 DetailsPage godoc @Summary Get Pinecone connector details page @Description Get an HTML page with detailed information about the Pinecone connector including capabilities, authentication methods, and usage examples @Tags pinecone @Accept json @Produce text/html @Success 200 \{string\} string "Pinecone connector details page" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/details \[get\]
 
 <a name="Controllers.EnsureOperationMiddleware"></a>
-### func \(\*Controllers\) [EnsureOperationMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/middlewares.go#L19>)
+### func \(\*Controllers\) EnsureOperationMiddleware
 
 ```go
 func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
@@ -8560,7 +9094,7 @@ func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
 EnsureOperationMiddleware upserts the Operation row from the \`details\[\]\` / \`settings\[\]\` form fields the SDK's StartOperation\* requests now carry. Registered as the second handler on every data route after ValidateSystemToken — see common/routes.go.
 
 <a name="Controllers.GetDynamicFields"></a>
-### func \(\*Controllers\) [GetDynamicFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/configFields.go#L30-L34>)
+### func \(\*Controllers\) GetDynamicFields
 
 ```go
 func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]string) (map[string]irminmodels.DynamicField, error)
@@ -8569,7 +9103,7 @@ func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]st
 GetDynamicFields implements the ConfigFieldProvider interface.
 
 <a name="Controllers.GetOperationFormFields"></a>
-### func \(\*Controllers\) [GetOperationFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationConfig.go#L9>)
+### func \(\*Controllers\) GetOperationFormFields
 
 ```go
 func (cs *Controllers) GetOperationFormFields() ([]string, []string)
@@ -8578,7 +9112,7 @@ func (cs *Controllers) GetOperationFormFields() ([]string, []string)
 GetOperationFormFields implements the OperationConfigProvider interface.
 
 <a name="Controllers.GetRequiredFormFields"></a>
-### func \(\*Controllers\) [GetRequiredFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/configValidate.go#L35>)
+### func \(\*Controllers\) GetRequiredFormFields
 
 ```go
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
@@ -8587,7 +9121,7 @@ func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
 GetRequiredFormFields implements the ConfigValidationProvider interface. For validation, only required details fields \(api\_key\) are strictly required upfront. Settings fields are optional \- TestConnection will validate them if provided.
 
 <a name="Controllers.Info"></a>
-### func \(\*Controllers\) [Info](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/info.go#L21>)
+### func \(\*Controllers\) Info
 
 ```go
 func (cs *Controllers) Info(c fiber.Ctx) error
@@ -8596,7 +9130,7 @@ func (cs *Controllers) Info(c fiber.Ctx) error
 Info godoc @Summary Get Pinecone connector information @Description Get detailed information about the Pinecone connector including capabilities, configuration fields, and API endpoints @Tags pinecone @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "Pinecone connector information retrieved successfully" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/info \[get\]
 
 <a name="Controllers.OperationPatch"></a>
-### func \(\*Controllers\) [OperationPatch](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPatch.go#L35>)
+### func \(\*Controllers\) OperationPatch
 
 ```go
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
@@ -8605,7 +9139,7 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error
 OperationPatch godoc @Summary Apply patch operations to Pinecone vectors @Description Apply JSON Patch operations to vectors in the Pinecone index. Supports add \(upsert\), remove \(delete\), and replace \(upsert\) operations. @Tags pinecone @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param patches formData file true "JSON file containing array of patch operations" @Success 200 \{object\} fiber.Map "Patch operations applied successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid patch format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/operation/patch \[post\]
 
 <a name="Controllers.OperationPull"></a>
-### func \(\*Controllers\) [OperationPull](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPull.go#L416>)
+### func \(\*Controllers\) OperationPull
 
 ```go
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
@@ -8614,7 +9148,7 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error
 OperationPull godoc @Summary Pull data from Pinecone @Description Pull vectors from Pinecone. If path is provided, performs a semantic search and returns JSON results. If path is empty, exports all vectors as a parquet file. @Tags pinecone @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param path formData string false "Query vector as JSON array for search, or empty for full export" @Success 200 \{object\} fiber.Map "Data pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/operation/pull \[post\]
 
 <a name="Controllers.OperationPush"></a>
-### func \(\*Controllers\) [OperationPush](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPush.go#L492>)
+### func \(\*Controllers\) OperationPush
 
 ```go
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
@@ -8623,7 +9157,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error
 OperationPush godoc @Summary Push data to Pinecone @Description Push embedding vectors from parquet files to Pinecone index @Tags pinecone @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param file formData file true "ZIP file containing parquet embedding files" @Param path formData string false "Target path \(not used for Pinecone\)" @Success 202 \{object\} irminmodels.StartOperationJobResponse "Push job accepted; poll /operation/status/:job\_id" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 409 \{object\} irminmodels.AlreadyRunningBody "Operation already running" @Failure 500 \{object\} irminmodels.JobErrorBody "Internal server error" @Router /pinecone/operation/push \[post\]
 
 <a name="Controllers.OperationSchemaGet"></a>
-### func \(\*Controllers\) [OperationSchemaGet](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationSchemaGet.go#L180>)
+### func \(\*Controllers\) OperationSchemaGet
 
 ```go
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
@@ -8632,7 +9166,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
 OperationSchemaGet godoc @Summary Get Pinecone operation schema @Description Get the schema for Pinecone operations, returning an Irmin\-compatible ObjectSchema @Tags pinecone @Security SystemTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /pinecone/operation/schema/\{operation\} \[post\]
 
 <a name="Controllers.SubscribeToChanges"></a>
-### func \(\*Controllers\) [SubscribeToChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPull.go#L434>)
+### func \(\*Controllers\) SubscribeToChanges
 
 ```go
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
@@ -8641,7 +9175,7 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
 SubscribeToChanges is not supported by Pinecone connector.
 
 <a name="Controllers.TestConnection"></a>
-### func \(\*Controllers\) [TestConnection](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/configValidate.go#L62-L66>)
+### func \(\*Controllers\) TestConnection
 
 ```go
 func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, settings map[string]any) (bool, bool, bool, []string)
@@ -8650,7 +9184,7 @@ func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, setti
 TestConnection implements the ConfigValidationProvider interface.
 
 <a name="Controllers.UnsubscribeFromChanges"></a>
-### func \(\*Controllers\) [UnsubscribeFromChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPull.go#L441>)
+### func \(\*Controllers\) UnsubscribeFromChanges
 
 ```go
 func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
@@ -8659,7 +9193,7 @@ func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
 UnsubscribeFromChanges is not supported by Pinecone connector.
 
 <a name="Controllers.ValidateFields"></a>
-### func \(\*Controllers\) [ValidateFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/configValidate.go#L49>)
+### func \(\*Controllers\) ValidateFields
 
 ```go
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
@@ -8668,7 +9202,7 @@ func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map
 ValidateFields implements the ConfigValidationProvider interface.
 
 <a name="Controllers.ValidateSystemTokenMiddleware"></a>
-### func \(\*Controllers\) [ValidateSystemTokenMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/middlewares.go#L11>)
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
 
 ```go
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
@@ -8677,7 +9211,7 @@ func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
 ValidateSystemTokenMiddleware validates the system token.
 
 <a name="PineconePullProvider"></a>
-## type [PineconePullProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPull.go#L22-L29>)
+## type PineconePullProvider
 
 PineconePullProvider implements the PullOperationProvider interface for Pinecone.
 
@@ -8688,7 +9222,7 @@ type PineconePullProvider struct {
 ```
 
 <a name="PineconePullProvider.GetAllFiles"></a>
-### func \(\*PineconePullProvider\) [GetAllFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPull.go#L86-L88>)
+### func \(\*PineconePullProvider\) GetAllFiles
 
 ```go
 func (p *PineconePullProvider) GetAllFiles(ctx context.Context, client any, operation *db.Operation) ([]string, [][]byte, error)
@@ -8697,7 +9231,7 @@ func (p *PineconePullProvider) GetAllFiles(ctx context.Context, client any, oper
 GetAllFiles retrieves all vectors from Pinecone as a parquet file.
 
 <a name="PineconePullProvider.GetFileByPath"></a>
-### func \(\*PineconePullProvider\) [GetFileByPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPull.go#L141-L143>)
+### func \(\*PineconePullProvider\) GetFileByPath
 
 ```go
 func (p *PineconePullProvider) GetFileByPath(ctx context.Context, client any, operation *db.Operation, rawPath string) (string, []byte, error)
@@ -8706,7 +9240,7 @@ func (p *PineconePullProvider) GetFileByPath(ctx context.Context, client any, op
 GetFileByPath handles both search \(path = query\) and fetch operations.
 
 <a name="PineconePullProvider.InitializeClient"></a>
-### func \(\*PineconePullProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPull.go#L58-L62>)
+### func \(\*PineconePullProvider\) InitializeClient
 
 ```go
 func (p *PineconePullProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -8715,7 +9249,7 @@ func (p *PineconePullProvider) InitializeClient(ctx context.Context, logger *slo
 InitializeClient initializes the Pinecone client for pull operations.
 
 <a name="PineconePullProvider.ProgressHandler"></a>
-### func \(\*PineconePullProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPull.go#L42>)
+### func \(\*PineconePullProvider\) ProgressHandler
 
 ```go
 func (p *PineconePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
@@ -8728,7 +9262,7 @@ Always returns a non\-nil handler. Nil\-safety lives one layer down in common.Lo
 Throttling lives in common.LogOperationProgress \(every 5 pages\).
 
 <a name="PineconePushProvider"></a>
-## type [PineconePushProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPush.go#L23-L27>)
+## type PineconePushProvider
 
 PineconePushProvider implements the PushOperationProvider interface for Pinecone.
 
@@ -8739,7 +9273,7 @@ type PineconePushProvider struct {
 ```
 
 <a name="PineconePushProvider.InitializeClient"></a>
-### func \(\*PineconePushProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPush.go#L52-L56>)
+### func \(\*PineconePushProvider\) InitializeClient
 
 ```go
 func (p *PineconePushProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -8748,7 +9282,7 @@ func (p *PineconePushProvider) InitializeClient(ctx context.Context, logger *slo
 InitializeClient initializes the Pinecone client for push operations.
 
 <a name="PineconePushProvider.ProcessFiles"></a>
-### func \(\*PineconePushProvider\) [ProcessFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPush.go#L82-L88>)
+### func \(\*PineconePushProvider\) ProcessFiles
 
 ```go
 func (p *PineconePushProvider) ProcessFiles(ctx context.Context, client any, operation *db.Operation, files map[string][]byte, _ string) error
@@ -8757,7 +9291,7 @@ func (p *PineconePushProvider) ProcessFiles(ctx context.Context, client any, ope
 ProcessFiles processes the extracted files and upserts them to Pinecone.
 
 <a name="PineconePushProvider.ProgressHandler"></a>
-### func \(\*PineconePushProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationPush.go#L39>)
+### func \(\*PineconePushProvider\) ProgressHandler
 
 ```go
 func (p *PineconePushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
@@ -8770,7 +9304,7 @@ Always returns a non\-nil handler. Nil\-safety lives one layer down in common.Lo
 Throttling lives in common.LogOperationProgress \(every 10th batch\).
 
 <a name="PineconeSchemaProvider"></a>
-## type [PineconeSchemaProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationSchemaGet.go#L16>)
+## type PineconeSchemaProvider
 
 PineconeSchemaProvider implements the SchemaOperationProvider interface for Pinecone.
 
@@ -8779,7 +9313,7 @@ type PineconeSchemaProvider struct{}
 ```
 
 <a name="PineconeSchemaProvider.GetSchema"></a>
-### func \(\*PineconeSchemaProvider\) [GetSchema](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationSchemaGet.go#L39-L44>)
+### func \(\*PineconeSchemaProvider\) GetSchema
 
 ```go
 func (p *PineconeSchemaProvider) GetSchema(_ fiber.Ctx, _ any, operationType string, namespace *string) (*irminmodels.ObjectSchema, error)
@@ -8788,7 +9322,7 @@ func (p *PineconeSchemaProvider) GetSchema(_ fiber.Ctx, _ any, operationType str
 GetSchema retrieves the Pinecone schema and returns an Irmin\-compatible ObjectSchema.
 
 <a name="PineconeSchemaProvider.GetSupportedOperationTypes"></a>
-### func \(\*PineconeSchemaProvider\) [GetSupportedOperationTypes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationSchemaGet.go#L162>)
+### func \(\*PineconeSchemaProvider\) GetSupportedOperationTypes
 
 ```go
 func (p *PineconeSchemaProvider) GetSupportedOperationTypes() []string
@@ -8797,7 +9331,7 @@ func (p *PineconeSchemaProvider) GetSupportedOperationTypes() []string
 GetSupportedOperationTypes returns the list of supported operation types for Pinecone.
 
 <a name="PineconeSchemaProvider.InitializeClient"></a>
-### func \(\*PineconeSchemaProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/controllers/operationSchemaGet.go#L19-L23>)
+### func \(\*PineconeSchemaProvider\) InitializeClient
 
 ```go
 func (p *PineconeSchemaProvider) InitializeClient(_ fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -8820,7 +9354,7 @@ import "irmin-connectors/connectors/pinecone/models"
 
 
 <a name="ConnectionDetails"></a>
-## type [ConnectionDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/models/connectionDetails.go#L9-L11>)
+## type ConnectionDetails
 
 ConnectionDetails holds the sensitive authentication information for Pinecone.
 
@@ -8831,7 +9365,7 @@ type ConnectionDetails struct {
 ```
 
 <a name="NewConnectionDetailsFromMap"></a>
-### func [NewConnectionDetailsFromMap](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/models/connectionDetails.go#L14>)
+### func NewConnectionDetailsFromMap
 
 ```go
 func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, error)
@@ -8840,7 +9374,7 @@ func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, er
 NewConnectionDetailsFromMap creates a ConnectionDetails from a map\[string\]any.
 
 <a name="ConnectionSettings"></a>
-## type [ConnectionSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/models/connectionSettings.go#L9-L12>)
+## type ConnectionSettings
 
 ConnectionSettings holds the configuration for a Pinecone connection.
 
@@ -8852,7 +9386,7 @@ type ConnectionSettings struct {
 ```
 
 <a name="NewConnectionSettingsFromMap"></a>
-### func [NewConnectionSettingsFromMap](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/pinecone/models/connectionSettings.go#L15>)
+### func NewConnectionSettingsFromMap
 
 ```go
 func NewConnectionSettingsFromMap(settings map[string]any) (*ConnectionSettings, error)
@@ -8893,7 +9427,7 @@ import "irmin-connectors/connectors/postgres/client"
 
 
 <a name="SetupNotifications"></a>
-## func [SetupNotifications](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/listener.go#L15>)
+## func SetupNotifications
 
 ```go
 func SetupNotifications(dbClient *PostgresClient) error
@@ -8902,7 +9436,7 @@ func SetupNotifications(dbClient *PostgresClient) error
 
 
 <a name="ColumnInfo"></a>
-## type [ColumnInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L236-L240>)
+## type ColumnInfo
 
 ColumnInfo holds metadata about a single column in a table.
 
@@ -8915,7 +9449,7 @@ type ColumnInfo struct {
 ```
 
 <a name="PostgresClient"></a>
-## type [PostgresClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L16-L25>)
+## type PostgresClient
 
 PostgresClient manages a pgxpool.Pool connection to Postgres. It may or may not be connected to a specific database, depending on how it's instantiated.
 
@@ -8926,7 +9460,7 @@ type PostgresClient struct {
 ```
 
 <a name="InitPostgresClient"></a>
-### func [InitPostgresClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/initPostgresClient.go#L12-L16>)
+### func InitPostgresClient
 
 ```go
 func InitPostgresClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (*PostgresClient, *string, error)
@@ -8935,7 +9469,7 @@ func InitPostgresClient(ctx context.Context, logger *slog.Logger, operation *db.
 InitPostgresClient initializes a PostgresClient instance based on the data provided in the operation.
 
 <a name="NewPostgresClient"></a>
-### func [NewPostgresClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L30-L37>)
+### func NewPostgresClient
 
 ```go
 func NewPostgresClient(ctx context.Context, host string, port int, user, password, defaultDB string, sslMode bool, channelBinding string) (*PostgresClient, error)
@@ -8944,7 +9478,7 @@ func NewPostgresClient(ctx context.Context, host string, port int, user, passwor
 NewPostgresClient connects to Postgres without specifying a database. This is useful for listing available databases or validating credentials without "locking" into a specific dbName.
 
 <a name="PostgresClient.BeginTransaction"></a>
-### func \(\*PostgresClient\) [BeginTransaction](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L312>)
+### func \(\*PostgresClient\) BeginTransaction
 
 ```go
 func (pc *PostgresClient) BeginTransaction(ctx context.Context) (*Tx, error)
@@ -8953,7 +9487,7 @@ func (pc *PostgresClient) BeginTransaction(ctx context.Context) (*Tx, error)
 BeginTransaction acquires a connection from the pool and begins a database transaction. Remember to call either .Commit\(\) or .Rollback\(\) on the returned Tx to release the connection.
 
 <a name="PostgresClient.Close"></a>
-### func \(\*PostgresClient\) [Close](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L133>)
+### func \(\*PostgresClient\) Close
 
 ```go
 func (pc *PostgresClient) Close()
@@ -8962,7 +9496,7 @@ func (pc *PostgresClient) Close()
 Close frees resources used by the connection pool.
 
 <a name="PostgresClient.Exec"></a>
-### func \(\*PostgresClient\) [Exec](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L190>)
+### func \(\*PostgresClient\) Exec
 
 ```go
 func (pc *PostgresClient) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
@@ -8971,7 +9505,7 @@ func (pc *PostgresClient) Exec(ctx context.Context, sql string, args ...any) (pg
 Exec performs a statement \(INSERT/UPDATE/DELETE/DDL\) that doesn't return rows.
 
 <a name="PostgresClient.GetAvailableDatabases"></a>
-### func \(\*PostgresClient\) [GetAvailableDatabases](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L148>)
+### func \(\*PostgresClient\) GetAvailableDatabases
 
 ```go
 func (pc *PostgresClient) GetAvailableDatabases(ctx context.Context) ([]string, error)
@@ -8980,7 +9514,7 @@ func (pc *PostgresClient) GetAvailableDatabases(ctx context.Context) ([]string, 
 GetAvailableDatabases returns a list of non\-template databases, excluding 'postgres' as well.
 
 <a name="PostgresClient.GetTableStructure"></a>
-### func \(\*PostgresClient\) [GetTableStructure](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L243>)
+### func \(\*PostgresClient\) GetTableStructure
 
 ```go
 func (pc *PostgresClient) GetTableStructure(ctx context.Context, tableName string) ([]ColumnInfo, error)
@@ -8989,7 +9523,7 @@ func (pc *PostgresClient) GetTableStructure(ctx context.Context, tableName strin
 GetTableStructure returns a slice of ColumnInfo for the specified table.
 
 <a name="PostgresClient.GetTables"></a>
-### func \(\*PostgresClient\) [GetTables](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L204>)
+### func \(\*PostgresClient\) GetTables
 
 ```go
 func (pc *PostgresClient) GetTables(ctx context.Context) ([]string, error)
@@ -8998,7 +9532,7 @@ func (pc *PostgresClient) GetTables(ctx context.Context) ([]string, error)
 GetTables lists all table names in the 'public' schema of the current database. Must be invoked on a client that has a dbName selected \(via WithDatabase\).
 
 <a name="PostgresClient.GetTablesAndStructures"></a>
-### func \(\*PostgresClient\) [GetTablesAndStructures](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L279>)
+### func \(\*PostgresClient\) GetTablesAndStructures
 
 ```go
 func (pc *PostgresClient) GetTablesAndStructures(ctx context.Context) (map[string][]ColumnInfo, error)
@@ -9007,7 +9541,7 @@ func (pc *PostgresClient) GetTablesAndStructures(ctx context.Context) (map[strin
 GetTablesAndStructures returns a map of tableName \-\> slice of ColumnInfo for all tables in the 'public' schema.
 
 <a name="PostgresClient.Query"></a>
-### func \(\*PostgresClient\) [Query](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L182>)
+### func \(\*PostgresClient\) Query
 
 ```go
 func (pc *PostgresClient) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
@@ -9016,7 +9550,7 @@ func (pc *PostgresClient) Query(ctx context.Context, sql string, args ...any) (p
 Query performs a generic query returning rows. Remember to close the returned pgx.Rows when you're done with them.
 
 <a name="PostgresClient.StartNotificationListener"></a>
-### func \(\*PostgresClient\) [StartNotificationListener](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L369-L374>)
+### func \(\*PostgresClient\) StartNotificationListener
 
 ```go
 func (pc *PostgresClient) StartNotificationListener(ctx context.Context, logger *slog.Logger, channelName string, onNotify func(payload string)) error
@@ -9025,7 +9559,7 @@ func (pc *PostgresClient) StartNotificationListener(ctx context.Context, logger 
 StartNotificationListener sets up a LISTEN on the given channel, then loops on WaitForNotification and calls onNotify\(payload\) when a notification arrives.
 
 <a name="PostgresClient.ValidateCredentials"></a>
-### func \(\*PostgresClient\) [ValidateCredentials](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L140>)
+### func \(\*PostgresClient\) ValidateCredentials
 
 ```go
 func (pc *PostgresClient) ValidateCredentials(ctx context.Context) error
@@ -9034,7 +9568,7 @@ func (pc *PostgresClient) ValidateCredentials(ctx context.Context) error
 ValidateCredentials pings the database server to ensure the connection is valid.
 
 <a name="PostgresClient.WithDatabase"></a>
-### func \(\*PostgresClient\) [WithDatabase](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L89>)
+### func \(\*PostgresClient\) WithDatabase
 
 ```go
 func (pc *PostgresClient) WithDatabase(ctx context.Context, dbName string) (*PostgresClient, error)
@@ -9043,7 +9577,7 @@ func (pc *PostgresClient) WithDatabase(ctx context.Context, dbName string) (*Pos
 WithDatabase creates a new client instance \*connected to a specific database\*. This is handy once you decide which database you want to use \(e.g. after listing them\).
 
 <a name="Tx"></a>
-## type [Tx](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L305-L308>)
+## type Tx
 
 Tx provides methods for executing queries within a PostgreSQL transaction. It wraps a pgx.Tx and also stores the pool connection so that it can be released on Commit or Rollback.
 
@@ -9054,7 +9588,7 @@ type Tx struct {
 ```
 
 <a name="Tx.Commit"></a>
-### func \(\*Tx\) [Commit](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L353>)
+### func \(\*Tx\) Commit
 
 ```go
 func (t *Tx) Commit(ctx context.Context) error
@@ -9063,7 +9597,7 @@ func (t *Tx) Commit(ctx context.Context) error
 Commit commits the transaction and releases the underlying connection to the pool.
 
 <a name="Tx.Exec"></a>
-### func \(\*Tx\) [Exec](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L336>)
+### func \(\*Tx\) Exec
 
 ```go
 func (t *Tx) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandTag, error)
@@ -9072,7 +9606,7 @@ func (t *Tx) Exec(ctx context.Context, sql string, args ...any) (pgconn.CommandT
 Exec executes a query that does not return rows \(e.g. INSERT/UPDATE/DELETE, DDL statements\). This will be run inside the current transaction context.
 
 <a name="Tx.Query"></a>
-### func \(\*Tx\) [Query](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L348>)
+### func \(\*Tx\) Query
 
 ```go
 func (t *Tx) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
@@ -9081,7 +9615,7 @@ func (t *Tx) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, erro
 Query executes a query that returns rows \(e.g. SELECT\). The caller is responsible for closing the returned pgx.Rows.
 
 <a name="Tx.QueryRow"></a>
-### func \(\*Tx\) [QueryRow](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L342>)
+### func \(\*Tx\) QueryRow
 
 ```go
 func (t *Tx) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
@@ -9090,7 +9624,7 @@ func (t *Tx) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row
 QueryRow returns a single row from the transaction context, a convenience wrapper around pgxTx.QueryRow.
 
 <a name="Tx.Rollback"></a>
-### func \(\*Tx\) [Rollback](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/client/postgresClient.go#L361>)
+### func \(\*Tx\) Rollback
 
 ```go
 func (t *Tx) Rollback(ctx context.Context) error
@@ -9130,7 +9664,7 @@ const (
 ```
 
 <a name="GetConnectorInfo"></a>
-## func [GetConnectorInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/config/config.go#L143>)
+## func GetConnectorInfo
 
 ```go
 func GetConnectorInfo() models.ConnectorDetails
@@ -9139,7 +9673,7 @@ func GetConnectorInfo() models.ConnectorDetails
 GetConnectorInfo returns the default connector information for PostgreSQL.
 
 <a name="GetDetailsFieldDefinitions"></a>
-## func [GetDetailsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/config/config.go#L18>)
+## func GetDetailsFieldDefinitions
 
 ```go
 func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -9148,7 +9682,7 @@ func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
 GetDetailsFieldDefinitions returns all detail fields with their metadata.
 
 <a name="GetDetailsFields"></a>
-## func [GetDetailsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/config/config.go#L42>)
+## func GetDetailsFields
 
 ```go
 func GetDetailsFields() []string
@@ -9157,7 +9691,7 @@ func GetDetailsFields() []string
 GetDetailsFields returns the detail\-specific fields.
 
 <a name="GetOptionalFields"></a>
-## func [GetOptionalFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/config/config.go#L36>)
+## func GetOptionalFields
 
 ```go
 func GetOptionalFields() []string
@@ -9166,7 +9700,7 @@ func GetOptionalFields() []string
 GetOptionalFields returns the optional form fields for PostgreSQL.
 
 <a name="GetRequiredDetailsFields"></a>
-## func [GetRequiredDetailsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/config/config.go#L48>)
+## func GetRequiredDetailsFields
 
 ```go
 func GetRequiredDetailsFields() []string
@@ -9175,7 +9709,7 @@ func GetRequiredDetailsFields() []string
 GetRequiredDetailsFields returns only the required detail\-specific fields.
 
 <a name="GetRequiredFields"></a>
-## func [GetRequiredFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/config/config.go#L30>)
+## func GetRequiredFields
 
 ```go
 func GetRequiredFields() []string
@@ -9184,7 +9718,7 @@ func GetRequiredFields() []string
 GetRequiredFields returns the mandatory form fields for PostgreSQL.
 
 <a name="GetRequiredSettingsFields"></a>
-## func [GetRequiredSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/config/config.go#L60>)
+## func GetRequiredSettingsFields
 
 ```go
 func GetRequiredSettingsFields() []string
@@ -9193,7 +9727,7 @@ func GetRequiredSettingsFields() []string
 GetRequiredSettingsFields returns only the required settings\-specific fields.
 
 <a name="GetSettingsFieldDefinitions"></a>
-## func [GetSettingsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/config/config.go#L24>)
+## func GetSettingsFieldDefinitions
 
 ```go
 func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -9202,7 +9736,7 @@ func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
 GetSettingsFieldDefinitions returns static settings fields \(dynamic ones are handled in controllers\).
 
 <a name="GetSettingsFields"></a>
-## func [GetSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/config/config.go#L54>)
+## func GetSettingsFields
 
 ```go
 func GetSettingsFields() []string
@@ -9267,7 +9801,7 @@ const ConnectorName = "PostgreSQL"
 ```
 
 <a name="Controllers"></a>
-## type [Controllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/controllers.go#L9-L11>)
+## type Controllers
 
 Controllers holds the dependencies for the PostgreSQL connector controllers.
 
@@ -9278,7 +9812,7 @@ type Controllers struct {
 ```
 
 <a name="NewControllers"></a>
-### func [NewControllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/controllers.go#L14>)
+### func NewControllers
 
 ```go
 func NewControllers(app *models.ConnectorsApp) *Controllers
@@ -9287,7 +9821,7 @@ func NewControllers(app *models.ConnectorsApp) *Controllers
 NewControllers creates a new instance of controllers with the required dependencies.
 
 <a name="Controllers.BuildDetails"></a>
-### func \(\*Controllers\) [BuildDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationConfig.go#L14>)
+### func \(\*Controllers\) BuildDetails
 
 ```go
 func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
@@ -9296,7 +9830,7 @@ func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string
 BuildDetails implements the OperationConfigProvider interface.
 
 <a name="Controllers.BuildSettings"></a>
-### func \(\*Controllers\) [BuildSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationConfig.go#L19>)
+### func \(\*Controllers\) BuildSettings
 
 ```go
 func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
@@ -9305,7 +9839,7 @@ func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]strin
 BuildSettings implements the OperationConfigProvider interface.
 
 <a name="Controllers.ConfigFields"></a>
-### func \(\*Controllers\) [ConfigFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/configFields.go#L37>)
+### func \(\*Controllers\) ConfigFields
 
 ```go
 func (cs *Controllers) ConfigFields(c fiber.Ctx) error
@@ -9314,7 +9848,7 @@ func (cs *Controllers) ConfigFields(c fiber.Ctx) error
 ConfigFields godoc @Summary Get PostgreSQL connector configuration fields @Description Get dynamic configuration fields for the PostgreSQL connector based on the configuration key \(details or settings\). For settings, dynamically fetches available databases from the PostgreSQL server. @Tags postgres @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Param details\[host\] formData string false "PostgreSQL server hostname \(required for settings key to fetch databases\)" @Param details\[port\] formData integer false "PostgreSQL server port \(required for settings key to fetch databases\)" @Param details\[username\] formData string false "Username \(required for settings key to fetch databases\)" @Param details\[password\] formData string false "Password \(required for settings key to fetch databases\)" @Param details\[default\_db\] formData string false "Default database \(required for settings key to fetch databases\)" @Param details\[ssl\_mode\] formData boolean false "SSL mode enabled \(required for settings key to fetch databases\)" @Param details\[channel\_binding\] formData string false "Channel binding mode for SCRAM authentication \(disable, prefer, require\)" @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key or missing connection details" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/configuration/\{key\}/fields \[post\]
 
 <a name="Controllers.ConfigValidate"></a>
-### func \(\*Controllers\) [ConfigValidate](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/configValidate.go#L32>)
+### func \(\*Controllers\) ConfigValidate
 
 ```go
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
@@ -9323,7 +9857,7 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ConfigValidate godoc @Summary Validate PostgreSQL connector configuration @Description Validate PostgreSQL connection details and settings by testing the actual connection to the PostgreSQL server and specified database @Tags postgres @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[host\] formData string true "PostgreSQL server hostname or IP address" @Param details\[port\] formData integer false "PostgreSQL server port \(default: 5432\)" @Param details\[username\] formData string true "Username for PostgreSQL authentication" @Param details\[password\] formData string true "Password for PostgreSQL authentication" @Param details\[default\_db\] formData string false "Default database for initial connection" @Param details\[ssl\_mode\] formData boolean false "Enable SSL mode for secure connections" @Param details\[channel\_binding\] formData string false "Channel binding mode for SCRAM authentication \(disable, prefer, require\)" @Param settings\[database\] formData string false "Target database name to validate connection \(optional for details\-only validation\)" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
-### func \(\*Controllers\) [DetailsPage](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/detailsPage.go#L19>)
+### func \(\*Controllers\) DetailsPage
 
 ```go
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error
@@ -9332,7 +9866,7 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
 DetailsPage godoc @Summary Get PostgreSQL connector details page @Description Get an HTML page with detailed information about the PostgreSQL connector including capabilities, authentication methods, and usage examples @Tags postgres @Accept json @Produce text/html @Success 200 \{string\} string "PostgreSQL connector details page" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/details \[get\]
 
 <a name="Controllers.EnsureOperationMiddleware"></a>
-### func \(\*Controllers\) [EnsureOperationMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/middlewares.go#L19>)
+### func \(\*Controllers\) EnsureOperationMiddleware
 
 ```go
 func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
@@ -9341,7 +9875,7 @@ func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
 EnsureOperationMiddleware upserts the Operation row from the \`details\[\]\` / \`settings\[\]\` form fields the SDK's StartOperation\* requests now carry. Registered as the second handler on every data route after ValidateSystemToken — see common/routes.go.
 
 <a name="Controllers.GetDynamicFields"></a>
-### func \(\*Controllers\) [GetDynamicFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/configFields.go#L42-L46>)
+### func \(\*Controllers\) GetDynamicFields
 
 ```go
 func (cs *Controllers) GetDynamicFields(c fiber.Ctx, key string, fields map[string]string) (map[string]irminmodels.DynamicField, error)
@@ -9350,7 +9884,7 @@ func (cs *Controllers) GetDynamicFields(c fiber.Ctx, key string, fields map[stri
 GetDynamicFields implements the ConfigFieldProvider interface.
 
 <a name="Controllers.GetOperationFormFields"></a>
-### func \(\*Controllers\) [GetOperationFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationConfig.go#L9>)
+### func \(\*Controllers\) GetOperationFormFields
 
 ```go
 func (cs *Controllers) GetOperationFormFields() ([]string, []string)
@@ -9359,7 +9893,7 @@ func (cs *Controllers) GetOperationFormFields() ([]string, []string)
 GetOperationFormFields implements the OperationConfigProvider interface.
 
 <a name="Controllers.GetRequiredFormFields"></a>
-### func \(\*Controllers\) [GetRequiredFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/configValidate.go#L39>)
+### func \(\*Controllers\) GetRequiredFormFields
 
 ```go
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
@@ -9368,7 +9902,7 @@ func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
 GetRequiredFormFields implements the ConfigValidationProvider interface. For validation, only required details fields are strictly required upfront. Settings fields are optional \- TestConnection will validate them if provided.
 
 <a name="Controllers.Info"></a>
-### func \(\*Controllers\) [Info](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/info.go#L21>)
+### func \(\*Controllers\) Info
 
 ```go
 func (cs *Controllers) Info(c fiber.Ctx) error
@@ -9377,7 +9911,7 @@ func (cs *Controllers) Info(c fiber.Ctx) error
 Info godoc @Summary Get PostgreSQL connector information @Description Get detailed information about the PostgreSQL connector including capabilities, configuration fields, and API endpoints @Tags postgres @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "PostgreSQL connector information retrieved successfully" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/info \[get\]
 
 <a name="Controllers.OperationPatch"></a>
-### func \(\*Controllers\) [OperationPatch](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPatch.go#L139>)
+### func \(\*Controllers\) OperationPatch
 
 ```go
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
@@ -9386,7 +9920,7 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error
 OperationPatch godoc @Summary Patch data in PostgreSQL database @Description Apply granular updates to PostgreSQL database records using JSON patch operations @Tags postgres @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param patch formData file true "JSON patch file containing update operations" @Success 202 \{object\} irminmodels.StartOperationJobResponse "Patch job accepted; poll /operation/status/:job\_id" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or patch format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 409 \{object\} irminmodels.AlreadyRunningBody "Operation already running" @Failure 500 \{object\} irminmodels.JobErrorBody "Internal server error" @Router /postgres/operation/patch \[post\]
 
 <a name="Controllers.OperationPull"></a>
-### func \(\*Controllers\) [OperationPull](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPull.go#L292>)
+### func \(\*Controllers\) OperationPull
 
 ```go
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
@@ -9395,7 +9929,7 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error
 OperationPull godoc @Summary Pull data from PostgreSQL database @Description Extract data from PostgreSQL database tables using the operation token and specified path \(table name\) @Tags postgres @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param path formData string true "Table name to extract data from" @Success 200 \{object\} fiber.Map "Data pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or table name" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Table not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/operation/pull \[post\]
 
 <a name="Controllers.OperationPush"></a>
-### func \(\*Controllers\) [OperationPush](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPush.go#L142>)
+### func \(\*Controllers\) OperationPush
 
 ```go
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
@@ -9404,7 +9938,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error
 OperationPush godoc @Summary Push data to PostgreSQL database @Description Insert data into PostgreSQL database tables using the operation token and JSON file containing table data. Use the path parameter to specify a target table name. @Tags postgres @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param file formData file true "JSON file containing table data to insert" @Param path formData string false "Target table name \(e.g., customers\). If not specified, uses the filename from the uploaded file" @Success 202 \{object\} irminmodels.StartOperationJobResponse "Push job accepted; poll /operation/status/:job\_id" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 409 \{object\} irminmodels.AlreadyRunningBody "Operation already running" @Failure 500 \{object\} irminmodels.JobErrorBody "Internal server error" @Router /postgres/operation/push \[post\]
 
 <a name="Controllers.OperationSchemaGet"></a>
-### func \(\*Controllers\) [OperationSchemaGet](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationSchemaGet.go#L130>)
+### func \(\*Controllers\) OperationSchemaGet
 
 ```go
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
@@ -9413,7 +9947,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
 OperationSchemaGet godoc @Summary Get PostgreSQL operation schema @Description Get the database schema for PostgreSQL operations, returning an Irmin\-compatible ObjectSchema grouping each table as a JSON array based on the operation type \(pull or push\). Use the path query parameter to specify which database to analyze. @Tags postgres @Security SystemTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param path query string false "Database name to get schema for \(e.g., my\_database\)" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/operation/schema/\{operation\} \[post\]
 
 <a name="Controllers.SubscribeToChanges"></a>
-### func \(\*Controllers\) [SubscribeToChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/subscribeToChanges.go#L29>)
+### func \(\*Controllers\) SubscribeToChanges
 
 ```go
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
@@ -9422,7 +9956,7 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
 SubscribeToChanges godoc @Summary Subscribe to PostgreSQL database changes @Description Set up real\-time monitoring of PostgreSQL database changes using notification triggers and webhook notifications @Tags postgres @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param webhook\_url formData string true "Webhook URL to receive change notifications" @Param webhook\_access\_token formData string true "Access token for webhook authentication" @Success 200 \{object\} db.Subscription "Subscription created successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid parameters" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/operation/subscribe \[post\]
 
 <a name="Controllers.TestConnection"></a>
-### func \(\*Controllers\) [TestConnection](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/configValidate.go#L66-L70>)
+### func \(\*Controllers\) TestConnection
 
 ```go
 func (cs *Controllers) TestConnection(ctx fiber.Ctx, details map[string]any, settings map[string]any) (bool, bool, bool, []string)
@@ -9431,7 +9965,7 @@ func (cs *Controllers) TestConnection(ctx fiber.Ctx, details map[string]any, set
 TestConnection implements the ConfigValidationProvider interface.
 
 <a name="Controllers.UnsubscribeFromChanges"></a>
-### func \(\*Controllers\) [UnsubscribeFromChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/unsubscribeFromChanges.go#L24>)
+### func \(\*Controllers\) UnsubscribeFromChanges
 
 ```go
 func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
@@ -9440,7 +9974,7 @@ func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
 UnsubscribeFromChanges godoc @Summary Unsubscribe from PostgreSQL database changes @Description Stop monitoring PostgreSQL database changes and remove the subscription @Tags postgres @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param subscription\_id formData string true "ID of the subscription to remove" @Success 200 \{object\} fiber.Map "Subscription removed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid parameters" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} fiber.Map "Forbidden \- subscription does not belong to this operation" @Failure 404 \{object\} fiber.Map "Subscription not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /postgres/operation/unsubscribe \[post\]
 
 <a name="Controllers.ValidateFields"></a>
-### func \(\*Controllers\) [ValidateFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/configValidate.go#L53>)
+### func \(\*Controllers\) ValidateFields
 
 ```go
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
@@ -9449,7 +9983,7 @@ func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map
 ValidateFields implements the ConfigValidationProvider interface.
 
 <a name="Controllers.ValidateSystemTokenMiddleware"></a>
-### func \(\*Controllers\) [ValidateSystemTokenMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/middlewares.go#L11>)
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
 
 ```go
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
@@ -9458,7 +9992,7 @@ func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
 ValidateSystemTokenMiddleware validates the system token.
 
 <a name="PostgreSQLSchemaProvider"></a>
-## type [PostgreSQLSchemaProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationSchemaGet.go#L18>)
+## type PostgreSQLSchemaProvider
 
 PostgreSQLSchemaProvider implements the SchemaOperationProvider interface for PostgreSQL databases.
 
@@ -9467,7 +10001,7 @@ type PostgreSQLSchemaProvider struct{}
 ```
 
 <a name="PostgreSQLSchemaProvider.GetSchema"></a>
-### func \(\*PostgreSQLSchemaProvider\) [GetSchema](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationSchemaGet.go#L36-L41>)
+### func \(\*PostgreSQLSchemaProvider\) GetSchema
 
 ```go
 func (p *PostgreSQLSchemaProvider) GetSchema(c fiber.Ctx, client any, _ string, databaseName *string) (*irminmodels.ObjectSchema, error)
@@ -9476,7 +10010,7 @@ func (p *PostgreSQLSchemaProvider) GetSchema(c fiber.Ctx, client any, _ string, 
 GetSchema retrieves the PostgreSQL database schema and returns an Irmin\-compatible ObjectSchema.
 
 <a name="PostgreSQLSchemaProvider.GetSupportedOperationTypes"></a>
-### func \(\*PostgreSQLSchemaProvider\) [GetSupportedOperationTypes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationSchemaGet.go#L111>)
+### func \(\*PostgreSQLSchemaProvider\) GetSupportedOperationTypes
 
 ```go
 func (p *PostgreSQLSchemaProvider) GetSupportedOperationTypes() []string
@@ -9485,7 +10019,7 @@ func (p *PostgreSQLSchemaProvider) GetSupportedOperationTypes() []string
 GetSupportedOperationTypes returns the list of supported operation types for PostgreSQL.
 
 <a name="PostgreSQLSchemaProvider.InitializeClient"></a>
-### func \(\*PostgreSQLSchemaProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationSchemaGet.go#L21-L25>)
+### func \(\*PostgreSQLSchemaProvider\) InitializeClient
 
 ```go
 func (p *PostgreSQLSchemaProvider) InitializeClient(c fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -9494,7 +10028,7 @@ func (p *PostgreSQLSchemaProvider) InitializeClient(c fiber.Ctx, logger *slog.Lo
 InitializeClient initializes the PostgreSQL client for schema operations.
 
 <a name="PostgresPatchProvider"></a>
-## type [PostgresPatchProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPatch.go#L19>)
+## type PostgresPatchProvider
 
 PostgresPatchProvider implements the PatchOperationProvider interface for PostgreSQL.
 
@@ -9503,7 +10037,7 @@ type PostgresPatchProvider struct{}
 ```
 
 <a name="PostgresPatchProvider.ExecutePatchOperation"></a>
-### func \(\*PostgresPatchProvider\) [ExecutePatchOperation](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPatch.go#L40-L46>)
+### func \(\*PostgresPatchProvider\) ExecutePatchOperation
 
 ```go
 func (p *PostgresPatchProvider) ExecutePatchOperation(ctx context.Context, client any, op irminmodels.PatchOperation, tableName, rowIdentifier, columnName string, _, fromTable, fromRow, fromColumn string) error
@@ -9512,7 +10046,7 @@ func (p *PostgresPatchProvider) ExecutePatchOperation(ctx context.Context, clien
 ExecutePatchOperation executes a single patch operation within its own transaction.
 
 <a name="PostgresPatchProvider.InitializeClient"></a>
-### func \(\*PostgresPatchProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPatch.go#L22-L26>)
+### func \(\*PostgresPatchProvider\) InitializeClient
 
 ```go
 func (p *PostgresPatchProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, func(), error)
@@ -9521,7 +10055,7 @@ func (p *PostgresPatchProvider) InitializeClient(ctx context.Context, logger *sl
 InitializeClient initializes the PostgreSQL client for patch operations.
 
 <a name="PostgresPullProvider"></a>
-## type [PostgresPullProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPull.go#L19-L26>)
+## type PostgresPullProvider
 
 PostgresPullProvider implements the PullOperationProvider interface for PostgreSQL.
 
@@ -9532,7 +10066,7 @@ type PostgresPullProvider struct {
 ```
 
 <a name="PostgresPullProvider.GetAllFiles"></a>
-### func \(\*PostgresPullProvider\) [GetAllFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPull.go#L97-L99>)
+### func \(\*PostgresPullProvider\) GetAllFiles
 
 ```go
 func (p *PostgresPullProvider) GetAllFiles(ctx context.Context, client any, operation *db.Operation) ([]string, [][]byte, error)
@@ -9541,7 +10075,7 @@ func (p *PostgresPullProvider) GetAllFiles(ctx context.Context, client any, oper
 GetAllFiles retrieves all tables as JSON files.
 
 <a name="PostgresPullProvider.GetFileByPath"></a>
-### func \(\*PostgresPullProvider\) [GetFileByPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPull.go#L170-L172>)
+### func \(\*PostgresPullProvider\) GetFileByPath
 
 ```go
 func (p *PostgresPullProvider) GetFileByPath(ctx context.Context, client any, operation *db.Operation, rawPath string) (string, []byte, error)
@@ -9550,7 +10084,7 @@ func (p *PostgresPullProvider) GetFileByPath(ctx context.Context, client any, op
 GetFileByPath retrieves a specific table as a JSON file.
 
 <a name="PostgresPullProvider.InitializeClient"></a>
-### func \(\*PostgresPullProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPull.go#L73-L77>)
+### func \(\*PostgresPullProvider\) InitializeClient
 
 ```go
 func (p *PostgresPullProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -9559,7 +10093,7 @@ func (p *PostgresPullProvider) InitializeClient(ctx context.Context, logger *slo
 InitializeClient initializes the PostgreSQL client for pull operations.
 
 <a name="PostgresPullProvider.ProgressHandler"></a>
-### func \(\*PostgresPullProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPull.go#L42>)
+### func \(\*PostgresPullProvider\) ProgressHandler
 
 ```go
 func (p *PostgresPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
@@ -9572,7 +10106,7 @@ Always returns a non\-nil handler. Nil\-safety lives one layer down in common.Lo
 Throttling lives in common.ThrottledQueryEmitter at the call site \(every 1000 rows OR every 5s\) — Query is unthrottled in LogOperationProgress so callers control their own granularity, since "every page" doesn't translate cleanly to row scans.
 
 <a name="PostgresPushProvider"></a>
-## type [PostgresPushProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPush.go#L25-L29>)
+## type PostgresPushProvider
 
 PostgresPushProvider implements the PushOperationProvider interface for PostgreSQL.
 
@@ -9583,7 +10117,7 @@ type PostgresPushProvider struct {
 ```
 
 <a name="PostgresPushProvider.InitializeClient"></a>
-### func \(\*PostgresPushProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPush.go#L47-L51>)
+### func \(\*PostgresPushProvider\) InitializeClient
 
 ```go
 func (p *PostgresPushProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -9592,7 +10126,7 @@ func (p *PostgresPushProvider) InitializeClient(ctx context.Context, logger *slo
 InitializeClient initializes the PostgreSQL client for push operations.
 
 <a name="PostgresPushProvider.ProcessFiles"></a>
-### func \(\*PostgresPushProvider\) [ProcessFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPush.go#L68-L74>)
+### func \(\*PostgresPushProvider\) ProcessFiles
 
 ```go
 func (p *PostgresPushProvider) ProcessFiles(ctx context.Context, client any, operation *db.Operation, files map[string][]byte, rawPath string) error
@@ -9601,7 +10135,7 @@ func (p *PostgresPushProvider) ProcessFiles(ctx context.Context, client any, ope
 ProcessFiles processes the extracted files and inserts them into PostgreSQL tables.
 
 <a name="PostgresPushProvider.ProgressHandler"></a>
-### func \(\*PostgresPushProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/controllers/operationPush.go#L42>)
+### func \(\*PostgresPushProvider\) ProgressHandler
 
 ```go
 func (p *PostgresPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
@@ -9628,7 +10162,7 @@ import "irmin-connectors/connectors/postgres/models"
 
 
 <a name="ConnectionDetails"></a>
-## type [ConnectionDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/models/connectionDetails.go#L9-L17>)
+## type ConnectionDetails
 
 
 
@@ -9645,7 +10179,7 @@ type ConnectionDetails struct {
 ```
 
 <a name="NewConnectionDetailsFromMap"></a>
-### func [NewConnectionDetailsFromMap](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/models/connectionDetails.go#L20>)
+### func NewConnectionDetailsFromMap
 
 ```go
 func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, error)
@@ -9654,7 +10188,7 @@ func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, er
 NewConnectionDetailsFromMap creates a ConnectionDetails from a map\[string\]any.
 
 <a name="ConnectionSettings"></a>
-## type [ConnectionSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/models/connectionSettings.go#L8-L10>)
+## type ConnectionSettings
 
 
 
@@ -9665,7 +10199,7 @@ type ConnectionSettings struct {
 ```
 
 <a name="NewConnectionSettingsFromMap"></a>
-### func [NewConnectionSettingsFromMap](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/postgres/models/connectionSettings.go#L13>)
+### func NewConnectionSettingsFromMap
 
 ```go
 func NewConnectionSettingsFromMap(settings map[string]any) (*ConnectionSettings, error)
@@ -9790,7 +10324,7 @@ const (
 ```
 
 <a name="FormatFileSize"></a>
-## func [FormatFileSize](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/security.go#L245>)
+## func FormatFileSize
 
 ```go
 func FormatFileSize(bytes int64) string
@@ -9799,7 +10333,7 @@ func FormatFileSize(bytes int64) string
 FormatFileSize formats file size in human\-readable format.
 
 <a name="IsTextFile"></a>
-## func [IsTextFile](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/security.go#L229>)
+## func IsTextFile
 
 ```go
 func IsTextFile(filename string) bool
@@ -9808,7 +10342,7 @@ func IsTextFile(filename string) bool
 IsTextFile determines if a file is likely a text file based on its extension.
 
 <a name="SanitizePath"></a>
-## func [SanitizePath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/security.go#L199>)
+## func SanitizePath
 
 ```go
 func SanitizePath(path string) string
@@ -9817,7 +10351,7 @@ func SanitizePath(path string) string
 SanitizePath sanitizes a file path by removing dangerous elements.
 
 <a name="ConnectionConfig"></a>
-## type [ConnectionConfig](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L62-L71>)
+## type ConnectionConfig
 
 ConnectionConfig holds the configuration for SFTP connections.
 
@@ -9835,7 +10369,7 @@ type ConnectionConfig struct {
 ```
 
 <a name="FileInfo"></a>
-## type [FileInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L32-L41>)
+## type FileInfo
 
 FileInfo represents information about a remote file or directory.
 
@@ -9853,7 +10387,7 @@ type FileInfo struct {
 ```
 
 <a name="MetricsCollector"></a>
-## type [MetricsCollector](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L26-L30>)
+## type MetricsCollector
 
 MetricsCollector collects and aggregates SFTP operation metrics.
 
@@ -9864,7 +10398,7 @@ type MetricsCollector struct {
 ```
 
 <a name="NewMetricsCollector"></a>
-### func [NewMetricsCollector](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L45>)
+### func NewMetricsCollector
 
 ```go
 func NewMetricsCollector() *MetricsCollector
@@ -9873,7 +10407,7 @@ func NewMetricsCollector() *MetricsCollector
 NewMetricsCollector creates a new metrics collector.
 
 <a name="MetricsCollector.ClearMetrics"></a>
-### func \(\*MetricsCollector\) [ClearMetrics](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L119>)
+### func \(\*MetricsCollector\) ClearMetrics
 
 ```go
 func (mc *MetricsCollector) ClearMetrics()
@@ -9882,7 +10416,7 @@ func (mc *MetricsCollector) ClearMetrics()
 ClearMetrics clears all collected metrics.
 
 <a name="MetricsCollector.GetRecentOperations"></a>
-### func \(\*MetricsCollector\) [GetRecentOperations](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L100>)
+### func \(\*MetricsCollector\) GetRecentOperations
 
 ```go
 func (mc *MetricsCollector) GetRecentOperations(limit int) []OperationMetrics
@@ -9891,7 +10425,7 @@ func (mc *MetricsCollector) GetRecentOperations(limit int) []OperationMetrics
 GetRecentOperations returns the most recent operations.
 
 <a name="MetricsCollector.GetSummary"></a>
-### func \(\*MetricsCollector\) [GetSummary](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L93>)
+### func \(\*MetricsCollector\) GetSummary
 
 ```go
 func (mc *MetricsCollector) GetSummary() OperationSummary
@@ -9900,7 +10434,7 @@ func (mc *MetricsCollector) GetSummary() OperationSummary
 GetSummary returns the current operation summary.
 
 <a name="MetricsCollector.RecordOperation"></a>
-### func \(\*MetricsCollector\) [RecordOperation](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L53>)
+### func \(\*MetricsCollector\) RecordOperation
 
 ```go
 func (mc *MetricsCollector) RecordOperation(metrics OperationMetrics)
@@ -9909,7 +10443,7 @@ func (mc *MetricsCollector) RecordOperation(metrics OperationMetrics)
 RecordOperation records metrics for a completed operation.
 
 <a name="OperationMetrics"></a>
-## type [OperationMetrics](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L14-L23>)
+## type OperationMetrics
 
 OperationMetrics tracks metrics for SFTP operations.
 
@@ -9927,7 +10461,7 @@ type OperationMetrics struct {
 ```
 
 <a name="OperationSummary"></a>
-## type [OperationSummary](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L33-L42>)
+## type OperationSummary
 
 OperationSummary provides aggregated statistics.
 
@@ -9945,7 +10479,7 @@ type OperationSummary struct {
 ```
 
 <a name="PerformanceTracker"></a>
-## type [PerformanceTracker](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L128-L135>)
+## type PerformanceTracker
 
 PerformanceTracker tracks performance for individual operations.
 
@@ -9956,7 +10490,7 @@ type PerformanceTracker struct {
 ```
 
 <a name="NewPerformanceTracker"></a>
-### func [NewPerformanceTracker](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L138>)
+### func NewPerformanceTracker
 
 ```go
 func NewPerformanceTracker(operation string, collector *MetricsCollector) *PerformanceTracker
@@ -9965,7 +10499,7 @@ func NewPerformanceTracker(operation string, collector *MetricsCollector) *Perfo
 NewPerformanceTracker creates a new performance tracker.
 
 <a name="PerformanceTracker.AddBytes"></a>
-### func \(\*PerformanceTracker\) [AddBytes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L147>)
+### func \(\*PerformanceTracker\) AddBytes
 
 ```go
 func (pt *PerformanceTracker) AddBytes(bytes int64)
@@ -9974,7 +10508,7 @@ func (pt *PerformanceTracker) AddBytes(bytes int64)
 AddBytes adds to the bytes transferred count.
 
 <a name="PerformanceTracker.AddFiles"></a>
-### func \(\*PerformanceTracker\) [AddFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L152>)
+### func \(\*PerformanceTracker\) AddFiles
 
 ```go
 func (pt *PerformanceTracker) AddFiles(count int)
@@ -9983,7 +10517,7 @@ func (pt *PerformanceTracker) AddFiles(count int)
 AddFiles adds to the files processed count.
 
 <a name="PerformanceTracker.AddRetry"></a>
-### func \(\*PerformanceTracker\) [AddRetry](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L157>)
+### func \(\*PerformanceTracker\) AddRetry
 
 ```go
 func (pt *PerformanceTracker) AddRetry()
@@ -9992,7 +10526,7 @@ func (pt *PerformanceTracker) AddRetry()
 AddRetry increments the retry count.
 
 <a name="PerformanceTracker.Finish"></a>
-### func \(\*PerformanceTracker\) [Finish](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L162>)
+### func \(\*PerformanceTracker\) Finish
 
 ```go
 func (pt *PerformanceTracker) Finish(success bool, errorMessage string)
@@ -10001,7 +10535,7 @@ func (pt *PerformanceTracker) Finish(success bool, errorMessage string)
 Finish completes the tracking and records the metrics.
 
 <a name="RetryConfig"></a>
-## type [RetryConfig](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L74-L80>)
+## type RetryConfig
 
 RetryConfig holds retry configuration for SFTP operations.
 
@@ -10016,7 +10550,7 @@ type RetryConfig struct {
 ```
 
 <a name="DefaultRetryConfig"></a>
-### func [DefaultRetryConfig](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L83>)
+### func DefaultRetryConfig
 
 ```go
 func DefaultRetryConfig() *RetryConfig
@@ -10025,7 +10559,7 @@ func DefaultRetryConfig() *RetryConfig
 DefaultRetryConfig returns default retry configuration.
 
 <a name="SecurityConfig"></a>
-## type [SecurityConfig](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/security.go#L24-L33>)
+## type SecurityConfig
 
 SecurityConfig holds security configuration for SFTP operations.
 
@@ -10043,7 +10577,7 @@ type SecurityConfig struct {
 ```
 
 <a name="DefaultSecurityConfig"></a>
-### func [DefaultSecurityConfig](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/security.go#L36>)
+### func DefaultSecurityConfig
 
 ```go
 func DefaultSecurityConfig() *SecurityConfig
@@ -10052,7 +10586,7 @@ func DefaultSecurityConfig() *SecurityConfig
 DefaultSecurityConfig returns default security configuration.
 
 <a name="SecurityConfig.ValidateFileName"></a>
-### func \(\*SecurityConfig\) [ValidateFileName](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/security.go#L94>)
+### func \(\*SecurityConfig\) ValidateFileName
 
 ```go
 func (sc *SecurityConfig) ValidateFileName(filename string) error
@@ -10061,7 +10595,7 @@ func (sc *SecurityConfig) ValidateFileName(filename string) error
 ValidateFileName validates a filename for security issues.
 
 <a name="SecurityConfig.ValidateFileSize"></a>
-### func \(\*SecurityConfig\) [ValidateFileSize](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/security.go#L173>)
+### func \(\*SecurityConfig\) ValidateFileSize
 
 ```go
 func (sc *SecurityConfig) ValidateFileSize(size int64) error
@@ -10070,7 +10604,7 @@ func (sc *SecurityConfig) ValidateFileSize(size int64) error
 ValidateFileSize validates file size against limits.
 
 <a name="SecurityConfig.ValidatePath"></a>
-### func \(\*SecurityConfig\) [ValidatePath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/security.go#L53>)
+### func \(\*SecurityConfig\) ValidatePath
 
 ```go
 func (sc *SecurityConfig) ValidatePath(path string) error
@@ -10079,7 +10613,7 @@ func (sc *SecurityConfig) ValidatePath(path string) error
 ValidatePath validates a file path for security issues.
 
 <a name="SecurityConfig.ValidateTransferSize"></a>
-### func \(\*SecurityConfig\) [ValidateTransferSize](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/security.go#L186>)
+### func \(\*SecurityConfig\) ValidateTransferSize
 
 ```go
 func (sc *SecurityConfig) ValidateTransferSize(totalSize int64, fileCount int) error
@@ -10088,7 +10622,7 @@ func (sc *SecurityConfig) ValidateTransferSize(totalSize int64, fileCount int) e
 ValidateTransferSize validates total transfer size.
 
 <a name="SftpClient"></a>
-## type [SftpClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L44-L59>)
+## type SftpClient
 
 SftpClient represents an SFTP client connection.
 
@@ -10099,7 +10633,7 @@ type SftpClient struct {
 ```
 
 <a name="InitSftpClient"></a>
-### func [InitSftpClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/initSftpClient.go#L18-L22>)
+### func InitSftpClient
 
 ```go
 func InitSftpClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (*SftpClient, error)
@@ -10108,7 +10642,7 @@ func InitSftpClient(ctx context.Context, logger *slog.Logger, operation *db.Oper
 InitSftpClient initializes an SftpClient instance based on the data provided in the operation.
 
 <a name="NewSftpClient"></a>
-### func [NewSftpClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L100>)
+### func NewSftpClient
 
 ```go
 func NewSftpClient(config *ConnectionConfig) (*SftpClient, error)
@@ -10117,7 +10651,7 @@ func NewSftpClient(config *ConnectionConfig) (*SftpClient, error)
 NewSftpClient creates a new SFTP client instance.
 
 <a name="NewSftpClientWithSecurity"></a>
-### func [NewSftpClientWithSecurity](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L110-L114>)
+### func NewSftpClientWithSecurity
 
 ```go
 func NewSftpClientWithSecurity(config *ConnectionConfig, securityConfig *SecurityConfig, retryConfig *RetryConfig) (*SftpClient, error)
@@ -10126,7 +10660,7 @@ func NewSftpClientWithSecurity(config *ConnectionConfig, securityConfig *Securit
 NewSftpClientWithSecurity creates a new SFTP client instance with custom security config.
 
 <a name="SftpClient.Close"></a>
-### func \(\*SftpClient\) [Close](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L238>)
+### func \(\*SftpClient\) Close
 
 ```go
 func (c *SftpClient) Close() error
@@ -10135,7 +10669,7 @@ func (c *SftpClient) Close() error
 Close closes the SFTP and SSH connections.
 
 <a name="SftpClient.Connect"></a>
-### func \(\*SftpClient\) [Connect](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L187>)
+### func \(\*SftpClient\) Connect
 
 ```go
 func (c *SftpClient) Connect() error
@@ -10144,7 +10678,7 @@ func (c *SftpClient) Connect() error
 Connect establishes an SFTP connection to the server with retry logic.
 
 <a name="SftpClient.CreateDirectory"></a>
-### func \(\*SftpClient\) [CreateDirectory](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L442>)
+### func \(\*SftpClient\) CreateDirectory
 
 ```go
 func (c *SftpClient) CreateDirectory(path string) error
@@ -10153,7 +10687,7 @@ func (c *SftpClient) CreateDirectory(path string) error
 CreateDirectory creates a directory on the remote server.
 
 <a name="SftpClient.DeleteFile"></a>
-### func \(\*SftpClient\) [DeleteFile](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L593>)
+### func \(\*SftpClient\) DeleteFile
 
 ```go
 func (c *SftpClient) DeleteFile(remotePath string) error
@@ -10162,7 +10696,7 @@ func (c *SftpClient) DeleteFile(remotePath string) error
 DeleteFile deletes a file from the remote server.
 
 <a name="SftpClient.DownloadDirectory"></a>
-### func \(\*SftpClient\) [DownloadDirectory](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L642>)
+### func \(\*SftpClient\) DownloadDirectory
 
 ```go
 func (c *SftpClient) DownloadDirectory(remotePath string) (map[string][]byte, error)
@@ -10171,7 +10705,7 @@ func (c *SftpClient) DownloadDirectory(remotePath string) (map[string][]byte, er
 DownloadDirectory downloads all files in a directory recursively.
 
 <a name="SftpClient.DownloadFile"></a>
-### func \(\*SftpClient\) [DownloadFile](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L489>)
+### func \(\*SftpClient\) DownloadFile
 
 ```go
 func (c *SftpClient) DownloadFile(remotePath string) ([]byte, error)
@@ -10180,7 +10714,7 @@ func (c *SftpClient) DownloadFile(remotePath string) ([]byte, error)
 DownloadFile downloads a single file from the remote server.
 
 <a name="SftpClient.GetFileInfo"></a>
-### func \(\*SftpClient\) [GetFileInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L618>)
+### func \(\*SftpClient\) GetFileInfo
 
 ```go
 func (c *SftpClient) GetFileInfo(remotePath string) (*FileInfo, error)
@@ -10189,7 +10723,7 @@ func (c *SftpClient) GetFileInfo(remotePath string) (*FileInfo, error)
 GetFileInfo retrieves information about a remote file or directory.
 
 <a name="SftpClient.GetMetrics"></a>
-### func \(\*SftpClient\) [GetMetrics](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L182>)
+### func \(\*SftpClient\) GetMetrics
 
 ```go
 func (c *SftpClient) GetMetrics() *MetricsCollector
@@ -10198,7 +10732,7 @@ func (c *SftpClient) GetMetrics() *MetricsCollector
 GetMetrics returns the metrics collector for this client.
 
 <a name="SftpClient.ListDirectory"></a>
-### func \(\*SftpClient\) [ListDirectory](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L398>)
+### func \(\*SftpClient\) ListDirectory
 
 ```go
 func (c *SftpClient) ListDirectory(path string) ([]FileInfo, error)
@@ -10207,7 +10741,7 @@ func (c *SftpClient) ListDirectory(path string) ([]FileInfo, error)
 ListDirectory lists files and directories in the specified remote path.
 
 <a name="SftpClient.RemoveDirectory"></a>
-### func \(\*SftpClient\) [RemoveDirectory](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L464>)
+### func \(\*SftpClient\) RemoveDirectory
 
 ```go
 func (c *SftpClient) RemoveDirectory(path string) error
@@ -10216,7 +10750,7 @@ func (c *SftpClient) RemoveDirectory(path string) error
 RemoveDirectory removes a directory from the remote server.
 
 <a name="SftpClient.SetProgressHandler"></a>
-### func \(\*SftpClient\) [SetProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L136>)
+### func \(\*SftpClient\) SetProgressHandler
 
 ```go
 func (c *SftpClient) SetProgressHandler(h common.ProgressHandler)
@@ -10225,7 +10759,7 @@ func (c *SftpClient) SetProgressHandler(h common.ProgressHandler)
 SetProgressHandler installs an observability hook for the per\-file transfer \+ retry loops. Pass nil to disable. Picked over the functional\-options pattern used in Stripe / Pinecone clients because SFTP's NewSftpClient signature is shared with multiple callers and adding a variadic option there would ripple wider than the one\-line setter.
 
 <a name="SftpClient.TestConnection"></a>
-### func \(\*SftpClient\) [TestConnection](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L803>)
+### func \(\*SftpClient\) TestConnection
 
 ```go
 func (c *SftpClient) TestConnection() error
@@ -10234,7 +10768,7 @@ func (c *SftpClient) TestConnection() error
 TestConnection tests the SFTP connection without performing operations.
 
 <a name="SftpClient.UploadDirectory"></a>
-### func \(\*SftpClient\) [UploadDirectory](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L694>)
+### func \(\*SftpClient\) UploadDirectory
 
 ```go
 func (c *SftpClient) UploadDirectory(files map[string][]byte, remotePath string) error
@@ -10243,7 +10777,7 @@ func (c *SftpClient) UploadDirectory(files map[string][]byte, remotePath string)
 UploadDirectory uploads multiple files maintaining directory structure.
 
 <a name="SftpClient.UploadDirectoryContext"></a>
-### func \(\*SftpClient\) [UploadDirectoryContext](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L699>)
+### func \(\*SftpClient\) UploadDirectoryContext
 
 ```go
 func (c *SftpClient) UploadDirectoryContext(ctx context.Context, files map[string][]byte, remotePath string) error
@@ -10252,7 +10786,7 @@ func (c *SftpClient) UploadDirectoryContext(ctx context.Context, files map[strin
 UploadDirectoryContext uploads multiple files maintaining directory structure and aborts when ctx is cancelled.
 
 <a name="SftpClient.UploadFile"></a>
-### func \(\*SftpClient\) [UploadFile](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L539>)
+### func \(\*SftpClient\) UploadFile
 
 ```go
 func (c *SftpClient) UploadFile(localData []byte, remotePath string) error
@@ -10261,7 +10795,7 @@ func (c *SftpClient) UploadFile(localData []byte, remotePath string) error
 UploadFile uploads a single file to the remote server.
 
 <a name="SftpClient.UploadFileContext"></a>
-### func \(\*SftpClient\) [UploadFileContext](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/sftpClient.go#L544>)
+### func \(\*SftpClient\) UploadFileContext
 
 ```go
 func (c *SftpClient) UploadFileContext(ctx context.Context, localData []byte, remotePath string) error
@@ -10270,7 +10804,7 @@ func (c *SftpClient) UploadFileContext(ctx context.Context, localData []byte, re
 UploadFileContext uploads a single file to the remote server and aborts when ctx is cancelled.
 
 <a name="TransferSpeedCalculator"></a>
-## type [TransferSpeedCalculator](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L182-L185>)
+## type TransferSpeedCalculator
 
 TransferSpeedCalculator calculates transfer speeds.
 
@@ -10281,7 +10815,7 @@ type TransferSpeedCalculator struct {
 ```
 
 <a name="NewTransferSpeedCalculator"></a>
-### func [NewTransferSpeedCalculator](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L188>)
+### func NewTransferSpeedCalculator
 
 ```go
 func NewTransferSpeedCalculator() *TransferSpeedCalculator
@@ -10290,7 +10824,7 @@ func NewTransferSpeedCalculator() *TransferSpeedCalculator
 NewTransferSpeedCalculator creates a new speed calculator.
 
 <a name="TransferSpeedCalculator.AddBytes"></a>
-### func \(\*TransferSpeedCalculator\) [AddBytes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L195>)
+### func \(\*TransferSpeedCalculator\) AddBytes
 
 ```go
 func (tsc *TransferSpeedCalculator) AddBytes(bytes int64)
@@ -10299,7 +10833,7 @@ func (tsc *TransferSpeedCalculator) AddBytes(bytes int64)
 AddBytes adds bytes to the transfer count.
 
 <a name="TransferSpeedCalculator.GetAverageSpeed"></a>
-### func \(\*TransferSpeedCalculator\) [GetAverageSpeed](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L209>)
+### func \(\*TransferSpeedCalculator\) GetAverageSpeed
 
 ```go
 func (tsc *TransferSpeedCalculator) GetAverageSpeed() float64
@@ -10308,7 +10842,7 @@ func (tsc *TransferSpeedCalculator) GetAverageSpeed() float64
 GetAverageSpeed returns the average transfer speed over the entire duration.
 
 <a name="TransferSpeedCalculator.GetCurrentSpeed"></a>
-### func \(\*TransferSpeedCalculator\) [GetCurrentSpeed](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L200>)
+### func \(\*TransferSpeedCalculator\) GetCurrentSpeed
 
 ```go
 func (tsc *TransferSpeedCalculator) GetCurrentSpeed() float64
@@ -10317,7 +10851,7 @@ func (tsc *TransferSpeedCalculator) GetCurrentSpeed() float64
 GetCurrentSpeed returns the current transfer speed in bytes per second.
 
 <a name="TransferSpeedCalculator.GetElapsedTime"></a>
-### func \(\*TransferSpeedCalculator\) [GetElapsedTime](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L225>)
+### func \(\*TransferSpeedCalculator\) GetElapsedTime
 
 ```go
 func (tsc *TransferSpeedCalculator) GetElapsedTime() time.Duration
@@ -10326,7 +10860,7 @@ func (tsc *TransferSpeedCalculator) GetElapsedTime() time.Duration
 GetElapsedTime returns the elapsed time since tracking started.
 
 <a name="TransferSpeedCalculator.GetFormattedSpeed"></a>
-### func \(\*TransferSpeedCalculator\) [GetFormattedSpeed](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L214>)
+### func \(\*TransferSpeedCalculator\) GetFormattedSpeed
 
 ```go
 func (tsc *TransferSpeedCalculator) GetFormattedSpeed() string
@@ -10335,7 +10869,7 @@ func (tsc *TransferSpeedCalculator) GetFormattedSpeed() string
 GetFormattedSpeed returns the current speed in human\-readable format.
 
 <a name="TransferSpeedCalculator.GetTotalBytes"></a>
-### func \(\*TransferSpeedCalculator\) [GetTotalBytes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/client/monitoring.go#L220>)
+### func \(\*TransferSpeedCalculator\) GetTotalBytes
 
 ```go
 func (tsc *TransferSpeedCalculator) GetTotalBytes() int64
@@ -10379,7 +10913,7 @@ const (
 ```
 
 <a name="GetConnectorInfo"></a>
-## func [GetConnectorInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/config/config.go#L180>)
+## func GetConnectorInfo
 
 ```go
 func GetConnectorInfo() models.ConnectorDetails
@@ -10388,7 +10922,7 @@ func GetConnectorInfo() models.ConnectorDetails
 GetConnectorInfo returns the connector information for SFTP.
 
 <a name="GetDetailsFieldDefinitions"></a>
-## func [GetDetailsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/config/config.go#L23>)
+## func GetDetailsFieldDefinitions
 
 ```go
 func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -10397,7 +10931,7 @@ func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
 GetDetailsFieldDefinitions returns all detail fields with their metadata.
 
 <a name="GetDetailsFields"></a>
-## func [GetDetailsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/config/config.go#L47>)
+## func GetDetailsFields
 
 ```go
 func GetDetailsFields() []string
@@ -10406,7 +10940,7 @@ func GetDetailsFields() []string
 GetDetailsFields returns the detail\-specific fields.
 
 <a name="GetOptionalFields"></a>
-## func [GetOptionalFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/config/config.go#L41>)
+## func GetOptionalFields
 
 ```go
 func GetOptionalFields() []string
@@ -10415,7 +10949,7 @@ func GetOptionalFields() []string
 GetOptionalFields returns the optional form fields for SFTP.
 
 <a name="GetRequiredFields"></a>
-## func [GetRequiredFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/config/config.go#L35>)
+## func GetRequiredFields
 
 ```go
 func GetRequiredFields() []string
@@ -10424,7 +10958,7 @@ func GetRequiredFields() []string
 GetRequiredFields returns the mandatory form fields for SFTP.
 
 <a name="GetSettingsFieldDefinitions"></a>
-## func [GetSettingsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/config/config.go#L29>)
+## func GetSettingsFieldDefinitions
 
 ```go
 func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -10433,7 +10967,7 @@ func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
 GetSettingsFieldDefinitions returns all settings fields with their metadata.
 
 <a name="GetSettingsFields"></a>
-## func [GetSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/config/config.go#L53>)
+## func GetSettingsFields
 
 ```go
 func GetSettingsFields() []string
@@ -10513,7 +11047,7 @@ const (
 ```
 
 <a name="Controllers"></a>
-## type [Controllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/controllers.go#L9-L11>)
+## type Controllers
 
 Controllers holds the dependencies for the SFTP connector controllers.
 
@@ -10524,7 +11058,7 @@ type Controllers struct {
 ```
 
 <a name="NewControllers"></a>
-### func [NewControllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/controllers.go#L14>)
+### func NewControllers
 
 ```go
 func NewControllers(app *models.ConnectorsApp) *Controllers
@@ -10533,7 +11067,7 @@ func NewControllers(app *models.ConnectorsApp) *Controllers
 NewControllers creates a new instance of controllers with the required dependencies.
 
 <a name="Controllers.BuildDetails"></a>
-### func \(\*Controllers\) [BuildDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationConfig.go#L14>)
+### func \(\*Controllers\) BuildDetails
 
 ```go
 func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
@@ -10542,7 +11076,7 @@ func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string
 BuildDetails implements the OperationConfigProvider interface.
 
 <a name="Controllers.BuildSettings"></a>
-### func \(\*Controllers\) [BuildSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationConfig.go#L19>)
+### func \(\*Controllers\) BuildSettings
 
 ```go
 func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
@@ -10551,7 +11085,7 @@ func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]strin
 BuildSettings implements the OperationConfigProvider interface.
 
 <a name="Controllers.ConfigFields"></a>
-### func \(\*Controllers\) [ConfigFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/configFields.go#L25>)
+### func \(\*Controllers\) ConfigFields
 
 ```go
 func (cs *Controllers) ConfigFields(c fiber.Ctx) error
@@ -10560,7 +11094,7 @@ func (cs *Controllers) ConfigFields(c fiber.Ctx) error
 ConfigFields godoc @Summary Get SFTP connector configuration fields @Description Get dynamic configuration fields for the SFTP connector based on the configuration key \(details or settings\) @Tags sftp @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/configuration/\{key\}/fields \[post\]
 
 <a name="Controllers.ConfigValidate"></a>
-### func \(\*Controllers\) [ConfigValidate](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/configValidate.go#L36>)
+### func \(\*Controllers\) ConfigValidate
 
 ```go
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
@@ -10569,7 +11103,7 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ConfigValidate godoc @Summary Validate SFTP connector configuration @Description Validate SFTP connection settings and credentials by testing the actual connection @Tags sftp @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[host\] formData string true "SFTP server hostname or IP address" @Param details\[port\] formData integer false "SFTP server port \(default: 22\)" @Param details\[username\] formData string true "Username for SFTP authentication" @Param details\[password\] formData string false "Password for SFTP authentication \(if not using private key\)" @Param details\[private\_key\] formData string false "Private key for SFTP authentication \(if not using password\)" @Param details\[private\_key\_passphrase\] formData string false "Passphrase for encrypted private key" @Param details\[host\_key\_fingerprint\] formData string false "Expected host key fingerprint for security verification" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
-### func \(\*Controllers\) [DetailsPage](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/detailsPage.go#L19>)
+### func \(\*Controllers\) DetailsPage
 
 ```go
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error
@@ -10578,7 +11112,7 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
 DetailsPage godoc @Summary Get SFTP connector details page @Description Get an HTML page with detailed information about the SFTP connector including capabilities, authentication methods, and usage examples @Tags sftp @Accept json @Produce text/html @Success 200 \{string\} string "SFTP connector details page" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/details \[get\]
 
 <a name="Controllers.EnsureOperationMiddleware"></a>
-### func \(\*Controllers\) [EnsureOperationMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/middlewares.go#L19>)
+### func \(\*Controllers\) EnsureOperationMiddleware
 
 ```go
 func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
@@ -10587,7 +11121,7 @@ func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
 EnsureOperationMiddleware upserts the Operation row from the \`details\[\]\` / \`settings\[\]\` form fields the SDK's StartOperation\* requests now carry. Registered as the second handler on every data route after ValidateSystemToken — see common/routes.go.
 
 <a name="Controllers.GetDynamicFields"></a>
-### func \(\*Controllers\) [GetDynamicFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/configFields.go#L30-L34>)
+### func \(\*Controllers\) GetDynamicFields
 
 ```go
 func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]string) (map[string]irminmodels.DynamicField, error)
@@ -10596,7 +11130,7 @@ func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]st
 GetDynamicFields implements the ConfigFieldProvider interface.
 
 <a name="Controllers.GetOperationFormFields"></a>
-### func \(\*Controllers\) [GetOperationFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationConfig.go#L9>)
+### func \(\*Controllers\) GetOperationFormFields
 
 ```go
 func (cs *Controllers) GetOperationFormFields() ([]string, []string)
@@ -10605,7 +11139,7 @@ func (cs *Controllers) GetOperationFormFields() ([]string, []string)
 GetOperationFormFields implements the OperationConfigProvider interface.
 
 <a name="Controllers.GetRequiredFormFields"></a>
-### func \(\*Controllers\) [GetRequiredFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/configValidate.go#L41>)
+### func \(\*Controllers\) GetRequiredFormFields
 
 ```go
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
@@ -10614,7 +11148,7 @@ func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
 GetRequiredFormFields implements the ConfigValidationProvider interface.
 
 <a name="Controllers.Info"></a>
-### func \(\*Controllers\) [Info](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/info.go#L21>)
+### func \(\*Controllers\) Info
 
 ```go
 func (cs *Controllers) Info(c fiber.Ctx) error
@@ -10623,7 +11157,7 @@ func (cs *Controllers) Info(c fiber.Ctx) error
 Info godoc @Summary Get SFTP connector information @Description Get detailed information about the SFTP connector including capabilities, configuration fields, and API endpoints @Tags sftp @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "SFTP connector information retrieved successfully" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/info \[get\]
 
 <a name="Controllers.OperationPatch"></a>
-### func \(\*Controllers\) [OperationPatch](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationPatch.go#L34>)
+### func \(\*Controllers\) OperationPatch
 
 ```go
 func (cs *Controllers) OperationPatch(c fiber.Ctx) error
@@ -10632,7 +11166,7 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error
 OperationPatch godoc @Summary Apply patch operations to SFTP files @Description Apply JSON Patch operations to files on the SFTP server. Supports add \(upload\), remove \(delete\), replace \(overwrite\), move, and copy operations. @Tags sftp @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param patches formData file true "JSON file containing array of patch operations" @Success 200 \{object\} fiber.Map "Patch operations applied successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid patch format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/operation/patch \[post\]
 
 <a name="Controllers.OperationPull"></a>
-### func \(\*Controllers\) [OperationPull](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationPull.go#L319>)
+### func \(\*Controllers\) OperationPull
 
 ```go
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
@@ -10641,7 +11175,7 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error
 OperationPull godoc @Summary Pull files from SFTP server @Description Download files from an SFTP server using the operation token and specified path @Tags sftp @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param path formData string true "Path to file or directory on SFTP server to download" @Success 200 \{object\} fiber.Map "Files pulled successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or path" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "File or directory not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/operation/pull \[post\]
 
 <a name="Controllers.OperationPush"></a>
-### func \(\*Controllers\) [OperationPush](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationPush.go#L167>)
+### func \(\*Controllers\) OperationPush
 
 ```go
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
@@ -10650,7 +11184,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error
 OperationPush godoc @Summary Push files to SFTP server @Description Upload files to an SFTP server using the operation token and file data @Tags sftp @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param file formData file true "File to upload to SFTP server" @Param path formData string false "Target path on SFTP server \(defaults to root directory\)" @Success 200 \{object\} fiber.Map "File uploaded successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/operation/push \[post\]
 
 <a name="Controllers.OperationSchemaGet"></a>
-### func \(\*Controllers\) [OperationSchemaGet](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationSchemaGet.go#L456>)
+### func \(\*Controllers\) OperationSchemaGet
 
 ```go
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
@@ -10659,7 +11193,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
 OperationSchemaGet godoc @Summary Get SFTP operation schema @Description Get the schema and directory structure for SFTP file operations based on the operation type \(pull or push\). Use the path query parameter to navigate to specific files or directories on the SFTP server. @Tags sftp @Security SystemTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push\) @Param path query string false "Path to file or directory to get schema for \(e.g., /data/customers.csv or /reports/\)" @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation type or token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/operation/schema/\{operation\} \[post\]
 
 <a name="Controllers.SubscribeToChanges"></a>
-### func \(\*Controllers\) [SubscribeToChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/unsupportedOperations.go#L18>)
+### func \(\*Controllers\) SubscribeToChanges
 
 ```go
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
@@ -10668,7 +11202,7 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
 SubscribeToChanges godoc @Summary Subscribe to changes \(not supported\) @Description SFTP connector does not support real\-time subscriptions as SFTP is a file transfer protocol without webhook capabilities @Tags sftp @Security SystemTokenAuth @Accept json @Produce json @Param webhook formData string true "Webhook URL \(not supported for SFTP\)" @Success 501 \{object\} fiber.Map "Not implemented \- SFTP does not support subscriptions" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /sftp/operation/subscribe \[post\]
 
 <a name="Controllers.TestConnection"></a>
-### func \(\*Controllers\) [TestConnection](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/configValidate.go#L59-L63>)
+### func \(\*Controllers\) TestConnection
 
 ```go
 func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, settings map[string]any) (bool, bool, bool, []string)
@@ -10677,7 +11211,7 @@ func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, setti
 TestConnection implements the ConfigValidationProvider interface.
 
 <a name="Controllers.UnsubscribeFromChanges"></a>
-### func \(\*Controllers\) [UnsubscribeFromChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/unsupportedOperations.go#L35>)
+### func \(\*Controllers\) UnsubscribeFromChanges
 
 ```go
 func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
@@ -10686,7 +11220,7 @@ func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
 UnsubscribeFromChanges godoc @Summary Unsubscribe from changes \(not supported\) @Description SFTP connector does not support real\-time subscriptions as SFTP is a file transfer protocol without webhook capabilities @Tags sftp @Security SystemTokenAuth @Accept json @Produce json @Param subscription\_id formData string true "Subscription ID \(not supported for SFTP\)" @Success 501 \{object\} fiber.Map "Not implemented \- SFTP does not support subscriptions" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Router /sftp/operation/unsubscribe \[post\]
 
 <a name="Controllers.ValidateFields"></a>
-### func \(\*Controllers\) [ValidateFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/configValidate.go#L46>)
+### func \(\*Controllers\) ValidateFields
 
 ```go
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
@@ -10695,7 +11229,7 @@ func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map
 ValidateFields implements the ConfigValidationProvider interface.
 
 <a name="Controllers.ValidateSystemTokenMiddleware"></a>
-### func \(\*Controllers\) [ValidateSystemTokenMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/middlewares.go#L11>)
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
 
 ```go
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
@@ -10704,7 +11238,7 @@ func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
 ValidateSystemTokenMiddleware validates the system token for SFTP connector endpoints.
 
 <a name="SFTPPullProvider"></a>
-## type [SFTPPullProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationPull.go#L17-L23>)
+## type SFTPPullProvider
 
 SFTPPullProvider implements the PullOperationProvider interface for SFTP.
 
@@ -10715,7 +11249,7 @@ type SFTPPullProvider struct {
 ```
 
 <a name="SFTPPullProvider.GetAllFiles"></a>
-### func \(\*SFTPPullProvider\) [GetAllFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationPull.go#L75-L77>)
+### func \(\*SFTPPullProvider\) GetAllFiles
 
 ```go
 func (p *SFTPPullProvider) GetAllFiles(_ context.Context, client any, operation *db.Operation) ([]string, [][]byte, error)
@@ -10724,7 +11258,7 @@ func (p *SFTPPullProvider) GetAllFiles(_ context.Context, client any, operation 
 GetAllFiles downloads all files from the root directory.
 
 <a name="SFTPPullProvider.GetFileByPath"></a>
-### func \(\*SFTPPullProvider\) [GetFileByPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationPull.go#L105-L107>)
+### func \(\*SFTPPullProvider\) GetFileByPath
 
 ```go
 func (p *SFTPPullProvider) GetFileByPath(_ context.Context, client any, operation *db.Operation, rawPath string) (string, []byte, error)
@@ -10733,7 +11267,7 @@ func (p *SFTPPullProvider) GetFileByPath(_ context.Context, client any, operatio
 GetFileByPath downloads a specific file by path.
 
 <a name="SFTPPullProvider.InitializeClient"></a>
-### func \(\*SFTPPullProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationPull.go#L42-L46>)
+### func \(\*SFTPPullProvider\) InitializeClient
 
 ```go
 func (p *SFTPPullProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -10742,7 +11276,7 @@ func (p *SFTPPullProvider) InitializeClient(ctx context.Context, logger *slog.Lo
 InitializeClient initializes the SFTP client for pull operations.
 
 <a name="SFTPPullProvider.ProgressHandler"></a>
-### func \(\*SFTPPullProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationPull.go#L37>)
+### func \(\*SFTPPullProvider\) ProgressHandler
 
 ```go
 func (p *SFTPPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
@@ -10755,7 +11289,7 @@ Always returns a non\-nil handler. Nil\-safety lives one layer down in common.Lo
 File events fire per file \(caller\-throttled — one file = one emission\); rate\-limit events fire per retry attempt.
 
 <a name="SFTPPushProvider"></a>
-## type [SFTPPushProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationPush.go#L16-L19>)
+## type SFTPPushProvider
 
 SFTPPushProvider implements the PushOperationProvider interface for SFTP.
 
@@ -10766,7 +11300,7 @@ type SFTPPushProvider struct {
 ```
 
 <a name="SFTPPushProvider.InitializeClient"></a>
-### func \(\*SFTPPushProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationPush.go#L34-L38>)
+### func \(\*SFTPPushProvider\) InitializeClient
 
 ```go
 func (p *SFTPPushProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -10775,7 +11309,7 @@ func (p *SFTPPushProvider) InitializeClient(ctx context.Context, logger *slog.Lo
 InitializeClient initializes the SFTP client for push operations.
 
 <a name="SFTPPushProvider.ProcessFiles"></a>
-### func \(\*SFTPPushProvider\) [ProcessFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationPush.go#L65-L71>)
+### func \(\*SFTPPushProvider\) ProcessFiles
 
 ```go
 func (p *SFTPPushProvider) ProcessFiles(ctx context.Context, client any, operation *db.Operation, files map[string][]byte, rawPath string) error
@@ -10784,7 +11318,7 @@ func (p *SFTPPushProvider) ProcessFiles(ctx context.Context, client any, operati
 ProcessFiles processes the extracted files and uploads them to the SFTP server.
 
 <a name="SFTPPushProvider.ProgressHandler"></a>
-### func \(\*SFTPPushProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationPush.go#L29>)
+### func \(\*SFTPPushProvider\) ProgressHandler
 
 ```go
 func (p *SFTPPushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
@@ -10795,7 +11329,7 @@ ProgressHandler returns the per\-file observability callback the SFTP client fir
 Always returns a non\-nil handler. Nil\-safety lives one layer down in common.LogOperationProgress.
 
 <a name="SFTPSchemaProvider"></a>
-## type [SFTPSchemaProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationSchemaGet.go#L36-L40>)
+## type SFTPSchemaProvider
 
 SFTPSchemaProvider implements the SchemaOperationProvider interface for SFTP file operations.
 
@@ -10808,7 +11342,7 @@ type SFTPSchemaProvider struct {
 ```
 
 <a name="SFTPSchemaProvider.GetSchema"></a>
-### func \(\*SFTPSchemaProvider\) [GetSchema](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationSchemaGet.go#L114-L119>)
+### func \(\*SFTPSchemaProvider\) GetSchema
 
 ```go
 func (p *SFTPSchemaProvider) GetSchema(ctx fiber.Ctx, client any, operationType string, remotePath *string) (*irminmodels.ObjectSchema, error)
@@ -10817,7 +11351,7 @@ func (p *SFTPSchemaProvider) GetSchema(ctx fiber.Ctx, client any, operationType 
 GetSchema returns schema information for SFTP file operations.
 
 <a name="SFTPSchemaProvider.GetSupportedOperationTypes"></a>
-### func \(\*SFTPSchemaProvider\) [GetSupportedOperationTypes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationSchemaGet.go#L131>)
+### func \(\*SFTPSchemaProvider\) GetSupportedOperationTypes
 
 ```go
 func (p *SFTPSchemaProvider) GetSupportedOperationTypes() []string
@@ -10826,7 +11360,7 @@ func (p *SFTPSchemaProvider) GetSupportedOperationTypes() []string
 GetSupportedOperationTypes returns the list of supported operation types for SFTP.
 
 <a name="SFTPSchemaProvider.InitializeClient"></a>
-### func \(\*SFTPSchemaProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/controllers/operationSchemaGet.go#L43-L47>)
+### func \(\*SFTPSchemaProvider\) InitializeClient
 
 ```go
 func (p *SFTPSchemaProvider) InitializeClient(ctx fiber.Ctx, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -10861,7 +11395,7 @@ const (
 ```
 
 <a name="ConnectionDetails"></a>
-## type [ConnectionDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/models/connectionDetails.go#L9-L17>)
+## type ConnectionDetails
 
 
 
@@ -10878,7 +11412,7 @@ type ConnectionDetails struct {
 ```
 
 <a name="NewConnectionDetailsFromMap"></a>
-### func [NewConnectionDetailsFromMap](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/models/connectionDetails.go#L20>)
+### func NewConnectionDetailsFromMap
 
 ```go
 func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, error)
@@ -10887,7 +11421,7 @@ func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, er
 NewConnectionDetailsFromMap creates a ConnectionDetails from a map\[string\]any.
 
 <a name="ConnectionSettings"></a>
-## type [ConnectionSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/models/connectionSettings.go#L10-L17>)
+## type ConnectionSettings
 
 
 
@@ -10903,7 +11437,7 @@ type ConnectionSettings struct {
 ```
 
 <a name="NewConnectionSettingsFromMap"></a>
-### func [NewConnectionSettingsFromMap](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/sftp/models/connectionSettings.go#L20>)
+### func NewConnectionSettingsFromMap
 
 ```go
 func NewConnectionSettingsFromMap(settings map[string]any) (*ConnectionSettings, error)
@@ -11001,7 +11535,7 @@ var ErrEmptyJSONInput = errors.New(
 ```
 
 <a name="ExtractID"></a>
-## func [ExtractID](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L713>)
+## func ExtractID
 
 ```go
 func ExtractID(raw json.RawMessage) (string, error)
@@ -11010,7 +11544,7 @@ func ExtractID(raw json.RawMessage) (string, error)
 ExtractID plucks the \`id\` field out of a Stripe record. Returns the id and nil on success, "" and a descriptive error when the record can't be parsed or has no id — so pagination loops don't silently terminate on malformed data. Used by the pagination loop to build the \`starting\_after\` cursor and by operation\-log emitters to record the id Stripe assigned on create. Returns "" if the record is malformed \(which also terminates the pagination loop safely\).
 
 <a name="IsAuthError"></a>
-## func [IsAuthError](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L740>)
+## func IsAuthError
 
 ```go
 func IsAuthError(err error) bool
@@ -11019,7 +11553,7 @@ func IsAuthError(err error) bool
 IsAuthError reports whether err is a Stripe 401/403 response. The config\-validation path uses this to render a "bad API key" message distinct from generic failure.
 
 <a name="JSONToForm"></a>
-## func [JSONToForm](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/form.go#L43>)
+## func JSONToForm
 
 ```go
 func JSONToForm(input []byte) (url.Values, error)
@@ -11038,7 +11572,7 @@ Rules:
 Keys are emitted in sorted order so the same input always produces the same form string — load\-bearing for our deterministic Idempotency\-Key derivation \(sha256 of the form body\).
 
 <a name="APIError"></a>
-## type [APIError](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L82-L89>)
+## type APIError
 
 APIError is the Stripe error envelope \(\`\{"error": \{...\}\}\`\). We surface the fields verbatim so callers can pass them through to operation logs — users expect to see Stripe's original message.
 
@@ -11054,7 +11588,7 @@ type APIError struct {
 ```
 
 <a name="APIError.Error"></a>
-### func \(\*APIError\) [Error](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L93>)
+### func \(\*APIError\) Error
 
 ```go
 func (e *APIError) Error() string
@@ -11063,7 +11597,7 @@ func (e *APIError) Error() string
 Error satisfies the \`error\` interface. Format keeps the Stripe type \+ code prefix so log lines are greppable.
 
 <a name="Client"></a>
-## type [Client](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L106-L118>)
+## type Client
 
 Client is the Stripe HTTP client. One instance per operation is fine — no internal caching, just configured transport \+ headers.
 
@@ -11074,7 +11608,7 @@ type Client struct {
 ```
 
 <a name="InitFromOperation"></a>
-### func [InitFromOperation](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/init.go#L22-L26>)
+### func InitFromOperation
 
 ```go
 func InitFromOperation(_ *slog.Logger, operation *db.Operation, opts ...Option) (*Client, *stripemodels.ConnectionDetails, *stripemodels.ConnectionSettings, error)
@@ -11085,7 +11619,7 @@ InitFromOperation builds a Stripe Client from the persisted Connection details \
 The logger argument is accepted for parity with other connectors even though the client itself is logger\-free — operation logging lives in the controllers. Extra Options let controllers attach observability hooks \(notably WithProgressHandler\) without every caller having to re\-parse the connection details.
 
 <a name="NewClient"></a>
-### func [NewClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L150>)
+### func NewClient
 
 ```go
 func NewClient(apiKey, apiVersion string, opts ...Option) *Client
@@ -11094,7 +11628,7 @@ func NewClient(apiKey, apiVersion string, opts ...Option) *Client
 NewClient constructs a Stripe HTTP client. apiKey must be a secret or restricted key \(caller validated via stripemodels.ConnectionDetails\); apiVersion is the pinned Stripe\-Version.
 
 <a name="Client.Create"></a>
-### func \(\*Client\) [Create](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L355-L359>)
+### func \(\*Client\) Create
 
 ```go
 func (c *Client) Create(ctx context.Context, resourcePath, scope string, form url.Values) (json.RawMessage, error)
@@ -11111,7 +11645,7 @@ sha256(form.Encode() || 0x00 || scope || 0x00 || apiVersion)
 This means \(a\) whitespace / key\-order changes in the source file don't change the key \(callers pass file contents through JSONToForm which normalizes both\), \(b\) two different source files can share content and still produce distinct keys via their \`scope\`, and \(c\) bumping Stripe\-Version invalidates cached responses so users don't get the old version's response shape back.
 
 <a name="Client.GetByID"></a>
-### func \(\*Client\) [GetByID](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L428-L431>)
+### func \(\*Client\) GetByID
 
 ```go
 func (c *Client) GetByID(ctx context.Context, resourcePath, id string) (json.RawMessage, error)
@@ -11120,7 +11654,7 @@ func (c *Client) GetByID(ctx context.Context, resourcePath, id string) (json.Raw
 GetByID fetches a single resource record at \`/v1/\<resource\>/\<id\>\`. Returns the raw record JSON — callers pass the body straight through to the branch.
 
 <a name="Client.List"></a>
-### func \(\*Client\) [List](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L182-L187>)
+### func \(\*Client\) List
 
 ```go
 func (c *Client) List(ctx context.Context, resourcePath string, startingAfter string, extra url.Values) (*ListPage, error)
@@ -11129,7 +11663,7 @@ func (c *Client) List(ctx context.Context, resourcePath string, startingAfter st
 List fetches a single page of a list endpoint. Higher\-level helpers \(e.g., ListAll\) loop over this until HasMore is false. The \`extra\` map lets callers pass resource\-specific filters — the standard \`limit\` and \`starting\_after\` are stamped automatically.
 
 <a name="Client.ListAll"></a>
-### func \(\*Client\) [ListAll](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L243-L247>)
+### func \(\*Client\) ListAll
 
 ```go
 func (c *Client) ListAll(ctx context.Context, resourcePath string, extra url.Values) ([]json.RawMessage, error)
@@ -11138,7 +11672,7 @@ func (c *Client) ListAll(ctx context.Context, resourcePath string, extra url.Val
 ListAll pages through the entire list and returns every record. Use for small\-to\-medium resource sets; very large accounts should use ListBounded with a cap to avoid loading everything in memory.
 
 <a name="Client.ListBounded"></a>
-### func \(\*Client\) [ListBounded](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L260-L265>)
+### func \(\*Client\) ListBounded
 
 ```go
 func (c *Client) ListBounded(ctx context.Context, resourcePath string, extra url.Values, maxRecords int) ([]json.RawMessage, bool, error)
@@ -11149,7 +11683,7 @@ ListBounded pages through the list but stops once \`maxRecords\` records have be
 Irmin's pull path uses this so a merchant with millions of Stripe records can cap per\-resource memory via the \`max\_records\_per\_resource\` setting instead of OOM'ing the connector.
 
 <a name="Client.Ping"></a>
-### func \(\*Client\) [Ping](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L453>)
+### func \(\*Client\) Ping
 
 ```go
 func (c *Client) Ping(ctx context.Context) error
@@ -11158,7 +11692,7 @@ func (c *Client) Ping(ctx context.Context) error
 Ping calls a lightweight endpoint that requires a valid API key. /v1/balance is accessible with every Stripe API key \(including narrowly\-scoped restricted keys that only have write access on a specific resource\) — unlike /v1/charges?limit=1 which requires Read on Charges and falsely fails a write\-only key at config\- validation time. The endpoint is idempotent, has no side effects, and returns a small fixed response.
 
 <a name="Client.Update"></a>
-### func \(\*Client\) [Update](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L386-L390>)
+### func \(\*Client\) Update
 
 ```go
 func (c *Client) Update(ctx context.Context, resourcePath, id, scope string, form url.Values) (json.RawMessage, error)
@@ -11169,7 +11703,7 @@ Update posts a form\-encoded body to an existing resource. Stripe uses POST \(no
 Idempotency key is scoped identically to Create; see that doc for the composition.
 
 <a name="ListPage"></a>
-## type [ListPage](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L166-L170>)
+## type ListPage
 
 ListPage is a single page of a list response. \`HasMore\` drives the outer pagination loop; \`NextCursor\` is the last element's id, which Stripe expects as the \`starting\_after\` param on the next call.
 
@@ -11182,7 +11716,7 @@ type ListPage struct {
 ```
 
 <a name="Option"></a>
-## type [Option](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L121>)
+## type Option
 
 Option configures the Client at construction time.
 
@@ -11191,7 +11725,7 @@ type Option func(*Client)
 ```
 
 <a name="WithBaseURL"></a>
-### func [WithBaseURL](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L125>)
+### func WithBaseURL
 
 ```go
 func WithBaseURL(baseURL string) Option
@@ -11200,7 +11734,7 @@ func WithBaseURL(baseURL string) Option
 WithBaseURL overrides the API base URL. Tests pass an httptest server URL here; production callers use the default.
 
 <a name="WithHTTPClient"></a>
-### func [WithHTTPClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L133>)
+### func WithHTTPClient
 
 ```go
 func WithHTTPClient(hc *http.Client) Option
@@ -11209,7 +11743,7 @@ func WithHTTPClient(hc *http.Client) Option
 WithHTTPClient overrides the underlying http.Client. Tests set a custom transport here to assert on outbound headers.
 
 <a name="WithProgressHandler"></a>
-### func [WithProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/client.go#L141>)
+### func WithProgressHandler
 
 ```go
 func WithProgressHandler(h common.ProgressHandler) Option
@@ -11218,7 +11752,7 @@ func WithProgressHandler(h common.ProgressHandler) Option
 WithProgressHandler installs an observability hook for pagination \+ retry loops. Pass nil to disable \(same as the default\).
 
 <a name="ParsedPath"></a>
-## type [ParsedPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/resources.go#L95-L103>)
+## type ParsedPath
 
 ParsedPath is the decoded view of a branch path targeting a specific resource record. operationPush \+ operationPatch use it to decide whether a write is a Create \(id empty, filename starts with "new\-"\) or an Update \(id present\).
 
@@ -11235,7 +11769,7 @@ type ParsedPath struct {
 ```
 
 <a name="ParsePath"></a>
-### func [ParsePath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/resources.go#L110>)
+### func ParsePath
 
 ```go
 func ParsePath(path string) (ParsedPath, error)
@@ -11244,7 +11778,7 @@ func ParsePath(path string) (ParsedPath, error)
 ParsePath decodes a branch path like \`customers/cus\_abc123.json\` or \`customers/new\-alice.json\` into its ParsedPath form. The trailing \`.json\` is required so that the schema matches what pull produces \(pull emits parquet snapshots, but push/patch operate on JSON records authored by the user — the extension disambiguates\).
 
 <a name="Resource"></a>
-## type [Resource](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/resources.go#L16-L30>)
+## type Resource
 
 Resource describes one Stripe resource this connector knows about — its REST path under /v1, its directory\-name on the branch, and what capabilities Irmin exposes for it.
 
@@ -11269,7 +11803,7 @@ type Resource struct {
 ```
 
 <a name="FindResource"></a>
-### func [FindResource](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/resources.go#L73>)
+### func FindResource
 
 ```go
 func FindResource(name string) (Resource, error)
@@ -11278,7 +11812,7 @@ func FindResource(name string) (Resource, error)
 FindResource returns the Resource with the given branch name, or an error naming every known resource so users get a useful message when they target a typo.
 
 <a name="KnownResources"></a>
-### func [KnownResources](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/client/resources.go#L53>)
+### func KnownResources
 
 ```go
 func KnownResources() []Resource
@@ -11321,7 +11855,7 @@ const DefaultAPIVersion = "2026-03-25.dahlia"
 ```
 
 <a name="GetConnectorInfo"></a>
-## func [GetConnectorInfo](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/config/config.go#L126>)
+## func GetConnectorInfo
 
 ```go
 func GetConnectorInfo() models.ConnectorDetails
@@ -11330,7 +11864,7 @@ func GetConnectorInfo() models.ConnectorDetails
 GetConnectorInfo returns the default connector information for Stripe.
 
 <a name="GetDetailsFieldDefinitions"></a>
-## func [GetDetailsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/config/config.go#L28>)
+## func GetDetailsFieldDefinitions
 
 ```go
 func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -11339,7 +11873,7 @@ func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
 GetDetailsFieldDefinitions returns all detail fields with their metadata.
 
 <a name="GetDetailsFields"></a>
-## func [GetDetailsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/config/config.go#L52>)
+## func GetDetailsFields
 
 ```go
 func GetDetailsFields() []string
@@ -11348,7 +11882,7 @@ func GetDetailsFields() []string
 GetDetailsFields returns the detail\-specific fields.
 
 <a name="GetOptionalFields"></a>
-## func [GetOptionalFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/config/config.go#L46>)
+## func GetOptionalFields
 
 ```go
 func GetOptionalFields() []string
@@ -11357,7 +11891,7 @@ func GetOptionalFields() []string
 GetOptionalFields returns the optional form fields for Stripe.
 
 <a name="GetRequiredDetailsFields"></a>
-## func [GetRequiredDetailsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/config/config.go#L58>)
+## func GetRequiredDetailsFields
 
 ```go
 func GetRequiredDetailsFields() []string
@@ -11366,7 +11900,7 @@ func GetRequiredDetailsFields() []string
 GetRequiredDetailsFields returns only the required detail\-specific fields.
 
 <a name="GetRequiredFields"></a>
-## func [GetRequiredFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/config/config.go#L40>)
+## func GetRequiredFields
 
 ```go
 func GetRequiredFields() []string
@@ -11375,7 +11909,7 @@ func GetRequiredFields() []string
 GetRequiredFields returns the mandatory form fields for Stripe.
 
 <a name="GetRequiredSettingsFields"></a>
-## func [GetRequiredSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/config/config.go#L70>)
+## func GetRequiredSettingsFields
 
 ```go
 func GetRequiredSettingsFields() []string
@@ -11384,7 +11918,7 @@ func GetRequiredSettingsFields() []string
 GetRequiredSettingsFields returns only the required settings\-specific fields.
 
 <a name="GetSettingsFieldDefinitions"></a>
-## func [GetSettingsFieldDefinitions](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/config/config.go#L34>)
+## func GetSettingsFieldDefinitions
 
 ```go
 func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
@@ -11393,7 +11927,7 @@ func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
 GetSettingsFieldDefinitions returns settings fields.
 
 <a name="GetSettingsFields"></a>
-## func [GetSettingsFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/config/config.go#L64>)
+## func GetSettingsFields
 
 ```go
 func GetSettingsFields() []string
@@ -11448,7 +11982,7 @@ Package stripecontrollers holds the HTTP handlers for every connector endpoint. 
 
 
 <a name="Controllers"></a>
-## type [Controllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/controllers.go#L16-L18>)
+## type Controllers
 
 Controllers holds the dependencies for the Stripe connector controllers. Single struct — no OAuth helpers to embed since Stripe ships with API\-key auth.
 
@@ -11459,7 +11993,7 @@ type Controllers struct {
 ```
 
 <a name="NewControllers"></a>
-### func [NewControllers](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/controllers.go#L21>)
+### func NewControllers
 
 ```go
 func NewControllers(app *models.ConnectorsApp) *Controllers
@@ -11468,7 +12002,7 @@ func NewControllers(app *models.ConnectorsApp) *Controllers
 NewControllers creates a new instance of controllers with the required dependencies.
 
 <a name="Controllers.BuildDetails"></a>
-### func \(\*Controllers\) [BuildDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationConfig.go#L14>)
+### func \(\*Controllers\) BuildDetails
 
 ```go
 func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
@@ -11477,7 +12011,7 @@ func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string
 BuildDetails implements the OperationConfigProvider interface.
 
 <a name="Controllers.BuildSettings"></a>
-### func \(\*Controllers\) [BuildSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationConfig.go#L19>)
+### func \(\*Controllers\) BuildSettings
 
 ```go
 func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
@@ -11486,7 +12020,7 @@ func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]strin
 BuildSettings implements the OperationConfigProvider interface.
 
 <a name="Controllers.ConfigFields"></a>
-### func \(\*Controllers\) [ConfigFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/configFields.go#L25>)
+### func \(\*Controllers\) ConfigFields
 
 ```go
 func (cs *Controllers) ConfigFields(c fiber.Ctx) error
@@ -11495,7 +12029,7 @@ func (cs *Controllers) ConfigFields(c fiber.Ctx) error
 ConfigFields godoc @Summary Get Stripe connector configuration fields @Description Get dynamic configuration fields for the Stripe connector based on the configuration key \(details or settings\) @Tags stripe @Security SystemTokenAuth @Accept json @Accept multipart/form\-data @Produce json @Param key path string true "Configuration key" Enums\(details, settings\) @Success 200 \{object\} map\[string\]irminmodels.DynamicField "Configuration fields retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration key" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/configuration/\{key\}/fields \[post\]
 
 <a name="Controllers.ConfigValidate"></a>
-### func \(\*Controllers\) [ConfigValidate](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/configValidate.go#L28>)
+### func \(\*Controllers\) ConfigValidate
 
 ```go
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
@@ -11504,7 +12038,7 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ConfigValidate godoc @Summary Validate Stripe connector configuration @Description Validate Stripe connection details by making a lightweight test call to the Stripe API \(/v1/charges?limit=1\) @Tags stripe @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[api\_key\] formData string true "Stripe restricted or secret API key" @Param settings\[api\_version\] formData string false "Pinned Stripe\-Version header" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
-### func \(\*Controllers\) [DetailsPage](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/detailsPage.go#L19>)
+### func \(\*Controllers\) DetailsPage
 
 ```go
 func (cs *Controllers) DetailsPage(c fiber.Ctx) error
@@ -11513,7 +12047,7 @@ func (cs *Controllers) DetailsPage(c fiber.Ctx) error
 DetailsPage godoc @Summary Get Stripe connector details page @Description Get an HTML page with detailed information about the Stripe connector including capabilities, authentication methods, and usage examples @Tags stripe @Accept json @Produce text/html @Success 200 \{string\} string "Stripe connector details page" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/details \[get\]
 
 <a name="Controllers.EnsureOperationMiddleware"></a>
-### func \(\*Controllers\) [EnsureOperationMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/middlewares.go#L19>)
+### func \(\*Controllers\) EnsureOperationMiddleware
 
 ```go
 func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
@@ -11522,7 +12056,7 @@ func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
 EnsureOperationMiddleware upserts the Operation row from the \`details\[\]\` / \`settings\[\]\` form fields the SDK's StartOperation\* requests now carry. Registered as the second handler on every data route after ValidateSystemToken — see common/routes.go.
 
 <a name="Controllers.GetDynamicFields"></a>
-### func \(\*Controllers\) [GetDynamicFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/configFields.go#L30-L34>)
+### func \(\*Controllers\) GetDynamicFields
 
 ```go
 func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]string) (map[string]irminmodels.DynamicField, error)
@@ -11531,7 +12065,7 @@ func (cs *Controllers) GetDynamicFields(_ fiber.Ctx, key string, _ map[string]st
 GetDynamicFields implements the ConfigFieldProvider interface.
 
 <a name="Controllers.GetOperationFormFields"></a>
-### func \(\*Controllers\) [GetOperationFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationConfig.go#L9>)
+### func \(\*Controllers\) GetOperationFormFields
 
 ```go
 func (cs *Controllers) GetOperationFormFields() ([]string, []string)
@@ -11540,7 +12074,7 @@ func (cs *Controllers) GetOperationFormFields() ([]string, []string)
 GetOperationFormFields implements the OperationConfigProvider interface.
 
 <a name="Controllers.GetRequiredFormFields"></a>
-### func \(\*Controllers\) [GetRequiredFormFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/configValidate.go#L35>)
+### func \(\*Controllers\) GetRequiredFormFields
 
 ```go
 func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
@@ -11549,7 +12083,7 @@ func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
 GetRequiredFormFields implements the ConfigValidationProvider interface. Only api\_key is strictly required for validation — the api\_version setting is optional and resolves to a default.
 
 <a name="Controllers.Info"></a>
-### func \(\*Controllers\) [Info](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/info.go#L21>)
+### func \(\*Controllers\) Info
 
 ```go
 func (cs *Controllers) Info(c fiber.Ctx) error
@@ -11558,7 +12092,7 @@ func (cs *Controllers) Info(c fiber.Ctx) error
 Info godoc @Summary Get Stripe connector information @Description Get detailed information about the Stripe connector including capabilities, configuration fields, and API endpoints @Tags stripe @Security SystemTokenAuth @Accept json @Produce json @Success 200 \{object\} models.ConnectorDetails "Stripe connector information retrieved successfully" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/info \[get\]
 
 <a name="Controllers.OperationPatch"></a>
-### func \(\*Controllers\) [OperationPatch](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationPatch.go#L47>)
+### func \(\*Controllers\) OperationPatch
 
 ```go
 func (cs *Controllers) OperationPatch(c fiber.Ctx) (retErr error)
@@ -11573,7 +12107,7 @@ Multiple patch ops targeting the same resource are coalesced into a single Strip
 @Summary Apply JSON\-Patch operations to Stripe resources @Description Translate a JSON\-Patch document into one partial\-update call per targeted Stripe resource. Only add / replace / remove are supported; move and copy are rejected because Stripe's fields aren't structurally rearrangeable. @Tags stripe @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param patches formData file true "JSON file containing a JSON\-Patch array" @Success 200 \{object\} fiber.Map "Patches applied successfully" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/operation/patch \[post\]
 
 <a name="Controllers.OperationPull"></a>
-### func \(\*Controllers\) [OperationPull](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationPull.go#L369>)
+### func \(\*Controllers\) OperationPull
 
 ```go
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
@@ -11582,7 +12116,7 @@ func (cs *Controllers) OperationPull(c fiber.Ctx) error
 OperationPull godoc @Summary Pull data from Stripe @Description Pull Stripe resources \(customers, charges, subscriptions, invoices, payouts\) as JSON files. If path is empty, every pull\-enabled resource is returned. Response is a ZIP archive of the resulting files. @Tags stripe @Security SystemTokenAuth @Accept multipart/form\-data @Produce application/zip @Param path formData string false "Optional resource name \(e.g., 'customers'\) or \`resource/id\` for single\-record pull" @Success 200 \{file\} binary "ZIP archive of pulled JSON files \(one per resource\)" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 409 \{object\} fiber.Map "Operation already running" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/operation/pull \[post\]
 
 <a name="Controllers.OperationPush"></a>
-### func \(\*Controllers\) [OperationPush](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationPush.go#L410>)
+### func \(\*Controllers\) OperationPush
 
 ```go
 func (cs *Controllers) OperationPush(c fiber.Ctx) error
@@ -11591,7 +12125,7 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error
 OperationPush godoc @Summary Push data to Stripe @Description Push JSON records to Stripe. Files under \`\<resource\>/new\-\*.json\` create new records; files under \`\<resource\>/\<id\>.json\` update existing ones. Supported resources: customers, invoices, products, prices. @Tags stripe @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param file formData file true "ZIP containing JSON resource files" @Param path formData string false "Optional target path selector \(file or directory prefix like \`customers/\`\)" @Success 200 \{object\} fiber.Map "Data pushed successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid operation token or file format" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 409 \{object\} fiber.Map "Operation already running" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/operation/push \[post\]
 
 <a name="Controllers.OperationSchemaGet"></a>
-### func \(\*Controllers\) [OperationSchemaGet](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationSchemaGet.go#L1097>)
+### func \(\*Controllers\) OperationSchemaGet
 
 ```go
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
@@ -11600,7 +12134,7 @@ func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
 OperationSchemaGet godoc @Summary Get Stripe operation schema @Description Get the schema for Stripe pull / push / patch operations as an Irmin\-compatible ObjectSchema. @Tags stripe @Security SystemTokenAuth @Accept json @Produce json @Param operation path string true "Operation type" Enums\(pull, push, patch\) @Success 200 \{object\} irminmodels.ObjectSchema "Operation schema retrieved successfully" @Failure 400 \{object\} fiber.Map "Bad request" @Failure 401 \{object\} fiber.Map "Unauthorized" @Failure 404 \{object\} fiber.Map "Operation not found" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /stripe/operation/schema/\{operation\} \[post\]
 
 <a name="Controllers.SubscribeToChanges"></a>
-### func \(\*Controllers\) [SubscribeToChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationSchemaGet.go#L1103>)
+### func \(\*Controllers\) SubscribeToChanges
 
 ```go
 func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
@@ -11609,7 +12143,7 @@ func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
 SubscribeToChanges is not supported by the Stripe connector.
 
 <a name="Controllers.TestConnection"></a>
-### func \(\*Controllers\) [TestConnection](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/configValidate.go#L53-L57>)
+### func \(\*Controllers\) TestConnection
 
 ```go
 func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, settings map[string]any) (bool, bool, bool, []string)
@@ -11618,7 +12152,7 @@ func (cs *Controllers) TestConnection(_ fiber.Ctx, details map[string]any, setti
 TestConnection implements the ConfigValidationProvider interface. Constructs a live Stripe client from the provided details \+ settings and pings /v1/charges?limit=1 \(Stripe's documented auth probe\).
 
 <a name="Controllers.UnsubscribeFromChanges"></a>
-### func \(\*Controllers\) [UnsubscribeFromChanges](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationSchemaGet.go#L1110>)
+### func \(\*Controllers\) UnsubscribeFromChanges
 
 ```go
 func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
@@ -11627,7 +12161,7 @@ func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
 UnsubscribeFromChanges is not supported by the Stripe connector.
 
 <a name="Controllers.ValidateFields"></a>
-### func \(\*Controllers\) [ValidateFields](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/configValidate.go#L42>)
+### func \(\*Controllers\) ValidateFields
 
 ```go
 func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map[string]any) []string
@@ -11636,7 +12170,7 @@ func (cs *Controllers) ValidateFields(_ fiber.Ctx, details map[string]any, _ map
 ValidateFields implements the ConfigValidationProvider interface. Checks structural validity of the provided details without hitting Stripe. TestConnection below does the live round\-trip.
 
 <a name="Controllers.ValidateSystemTokenMiddleware"></a>
-### func \(\*Controllers\) [ValidateSystemTokenMiddleware](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/middlewares.go#L11>)
+### func \(\*Controllers\) ValidateSystemTokenMiddleware
 
 ```go
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
@@ -11645,7 +12179,7 @@ func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
 ValidateSystemTokenMiddleware validates the system token.
 
 <a name="StripePullProvider"></a>
-## type [StripePullProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationPull.go#L26-L35>)
+## type StripePullProvider
 
 StripePullProvider is the connector\-side implementation of common.PullOperationProvider. Each pull emits one \`\<resource\>.json\` file per configured resource type — a plain JSON array of the records Stripe returned, in Stripe's wire shape, no reshaping. Downstream Irmin queries can ingest this with DuckDB when a columnar view is desired.
 
@@ -11656,7 +12190,7 @@ type StripePullProvider struct {
 ```
 
 <a name="StripePullProvider.GetAllFiles"></a>
-### func \(\*StripePullProvider\) [GetAllFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationPull.go#L86-L88>)
+### func \(\*StripePullProvider\) GetAllFiles
 
 ```go
 func (p *StripePullProvider) GetAllFiles(ctx context.Context, clientAny any, operation *db.Operation) ([]string, [][]byte, error)
@@ -11665,7 +12199,7 @@ func (p *StripePullProvider) GetAllFiles(ctx context.Context, clientAny any, ope
 GetAllFiles lists every pull\-enabled resource and returns one JSON file per resource. One Stripe rate\-limit charge per resource page \(100 records\). \`max\_records\_per\_resource\` on the Connection caps per\-resource size so a million\-record Stripe account doesn't OOM the connector.
 
 <a name="StripePullProvider.GetFileByPath"></a>
-### func \(\*StripePullProvider\) [GetFileByPath](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationPull.go#L129-L131>)
+### func \(\*StripePullProvider\) GetFileByPath
 
 ```go
 func (p *StripePullProvider) GetFileByPath(ctx context.Context, clientAny any, operation *db.Operation, rawPath string) (string, []byte, error)
@@ -11681,7 +12215,7 @@ The \`.json\` suffix is accepted on whole\-resource pulls because that's the fil
 Empty path is rejected — HandleOperationPull dispatches to GetAllFiles in that case, so reaching the provider with an empty path is a programming error.
 
 <a name="StripePullProvider.InitializeClient"></a>
-### func \(\*StripePullProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationPull.go#L60-L64>)
+### func \(\*StripePullProvider\) InitializeClient
 
 ```go
 func (p *StripePullProvider) InitializeClient(ctx context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -11690,7 +12224,7 @@ func (p *StripePullProvider) InitializeClient(ctx context.Context, logger *slog.
 InitializeClient builds the Stripe client for this operation and installs the progress handler so long\-running pulls surface per\-page and rate\-limit events into the workflow log stream.
 
 <a name="StripePullProvider.ProgressHandler"></a>
-### func \(\*StripePullProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationPull.go#L53>)
+### func \(\*StripePullProvider\) ProgressHandler
 
 ```go
 func (p *StripePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
@@ -11703,7 +12237,7 @@ Always returns a non\-nil handler. Nil\-safety lives one layer down in common.Lo
 Throttling lives in common.LogOperationProgress \(every 5 pages, rate\-limit unthrottled\), so this method emits every event the client fires and lets the common helper decide what surfaces.
 
 <a name="StripePushProvider"></a>
-## type [StripePushProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationPush.go#L23-L26>)
+## type StripePushProvider
 
 StripePushProvider is the connector\-side implementation of common.PushOperationProvider. It walks the uploaded ZIP, decides create\-vs\-update per file path, and posts each record to Stripe's REST API with a deterministic Idempotency\-Key.
 
@@ -11714,7 +12248,7 @@ type StripePushProvider struct {
 ```
 
 <a name="StripePushProvider.InitializeClient"></a>
-### func \(\*StripePushProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationPush.go#L39-L43>)
+### func \(\*StripePushProvider\) InitializeClient
 
 ```go
 func (p *StripePushProvider) InitializeClient(_ context.Context, logger *slog.Logger, operation *db.Operation) (any, *string, func(), error)
@@ -11723,7 +12257,7 @@ func (p *StripePushProvider) InitializeClient(_ context.Context, logger *slog.Lo
 InitializeClient constructs the Stripe client from the Operation's stored details \+ settings.
 
 <a name="StripePushProvider.ProcessFiles"></a>
-### func \(\*StripePushProvider\) [ProcessFiles](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationPush.go#L75-L81>)
+### func \(\*StripePushProvider\) ProcessFiles
 
 ```go
 func (p *StripePushProvider) ProcessFiles(ctx context.Context, clientAny any, operation *db.Operation, files map[string][]byte, targetPath string) error
@@ -11734,7 +12268,7 @@ ProcessFiles iterates every file in the uploaded ZIP and dispatches each one to 
 Emits a "push\_summary" operation log event at the end \(or on abort\) with per\-bucket counts, so downstream observability doesn't have to infer completion from the generic "Push operation completed" line from the common package.
 
 <a name="StripePushProvider.ProgressHandler"></a>
-### func \(\*StripePushProvider\) [ProgressHandler](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationPush.go#L33>)
+### func \(\*StripePushProvider\) ProgressHandler
 
 ```go
 func (p *StripePushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
@@ -11743,7 +12277,7 @@ func (p *StripePushProvider) ProgressHandler(_ *db.Operation) common.ProgressHan
 ProgressHandler returns nil today — Stripe push is a per\-record REST POST loop, and Phase 3 of the progress\-events rollout will thread per\-batch progress \(ProgressKindBatch\) through it. Until then, the baseline heartbeat from the common push handler covers the gap.
 
 <a name="StripeSchemaProvider"></a>
-## type [StripeSchemaProvider](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationSchemaGet.go#L29>)
+## type StripeSchemaProvider
 
 StripeSchemaProvider advertises the branch\-layout the connector produces on pull and the paths it accepts on push/patch. Each resource gets a dedicated JSON\-Schema describing the fields Stripe's create/update endpoints accept, matching the official API reference. Stripe records can carry even more fields on response than we enumerate — \`additionalProperties: true\` keeps the schema permissive so Stripe\-Version bumps don't invalidate pulled snapshots or rejected push files.
 
@@ -11752,7 +12286,7 @@ type StripeSchemaProvider struct{}
 ```
 
 <a name="StripeSchemaProvider.GetSchema"></a>
-### func \(\*StripeSchemaProvider\) [GetSchema](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationSchemaGet.go#L44-L49>)
+### func \(\*StripeSchemaProvider\) GetSchema
 
 ```go
 func (p *StripeSchemaProvider) GetSchema(_ fiber.Ctx, _ any, operationType string, _ *string) (*irminmodels.ObjectSchema, error)
@@ -11761,7 +12295,7 @@ func (p *StripeSchemaProvider) GetSchema(_ fiber.Ctx, _ any, operationType strin
 GetSchema returns an Irmin ObjectSchema describing the emitted pull files and the accepted push paths.
 
 <a name="StripeSchemaProvider.GetSupportedOperationTypes"></a>
-### func \(\*StripeSchemaProvider\) [GetSupportedOperationTypes](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationSchemaGet.go#L109>)
+### func \(\*StripeSchemaProvider\) GetSupportedOperationTypes
 
 ```go
 func (p *StripeSchemaProvider) GetSupportedOperationTypes() []string
@@ -11770,7 +12304,7 @@ func (p *StripeSchemaProvider) GetSupportedOperationTypes() []string
 GetSupportedOperationTypes returns the list of supported operation types.
 
 <a name="StripeSchemaProvider.InitializeClient"></a>
-### func \(\*StripeSchemaProvider\) [InitializeClient](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/controllers/operationSchemaGet.go#L34-L38>)
+### func \(\*StripeSchemaProvider\) InitializeClient
 
 ```go
 func (p *StripeSchemaProvider) InitializeClient(_ fiber.Ctx, _ *slog.Logger, _ *db.Operation) (any, *string, func(), error)
@@ -11796,7 +12330,7 @@ Package stripemodels holds the Stripe\-specific typed views of the Connection's 
 
 
 <a name="ConnectionDetails"></a>
-## type [ConnectionDetails](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/models/connectionDetails.go#L15-L17>)
+## type ConnectionDetails
 
 ConnectionDetails holds the sensitive authentication information for Stripe.
 
@@ -11807,7 +12341,7 @@ type ConnectionDetails struct {
 ```
 
 <a name="NewConnectionDetailsFromMap"></a>
-### func [NewConnectionDetailsFromMap](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/models/connectionDetails.go#L20>)
+### func NewConnectionDetailsFromMap
 
 ```go
 func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, error)
@@ -11816,7 +12350,7 @@ func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, er
 NewConnectionDetailsFromMap creates a ConnectionDetails from a map\[string\]any.
 
 <a name="ConnectionSettings"></a>
-## type [ConnectionSettings](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/models/connectionSettings.go#L11-L17>)
+## type ConnectionSettings
 
 ConnectionSettings holds the configuration for a Stripe connection.
 
@@ -11831,7 +12365,7 @@ type ConnectionSettings struct {
 ```
 
 <a name="NewConnectionSettingsFromMap"></a>
-### func [NewConnectionSettingsFromMap](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/models/connectionSettings.go#L25>)
+### func NewConnectionSettingsFromMap
 
 ```go
 func NewConnectionSettingsFromMap(settings map[string]any) (*ConnectionSettings, error)
@@ -11842,7 +12376,7 @@ NewConnectionSettingsFromMap creates a ConnectionSettings from a map\[string\]an
 Settings are optional for Stripe — an empty map is valid and resolves to the default API version. Returning \(\*ConnectionSettings, nil\) for the empty case \(rather than erroring\) matches the pattern used by other connectors with all\-optional settings.
 
 <a name="ConnectionSettings.ResolvedAPIVersion"></a>
-### func \(\*ConnectionSettings\) [ResolvedAPIVersion](<https://github.com/IrminData/irmin-connectors/blob/main/connectors/stripe/models/connectionSettings.go#L35>)
+### func \(\*ConnectionSettings\) ResolvedAPIVersion
 
 ```go
 func (cs *ConnectionSettings) ResolvedAPIVersion() string

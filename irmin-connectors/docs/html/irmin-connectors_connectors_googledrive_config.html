@@ -1,0 +1,85 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/googledrive/config</title></head><body>
+<h1>Package irmin-connectors/connectors/googledrive/config</h1>
+<pre>
+package config // import "irmin-connectors/connectors/googledrive/config"
+
+Package config declares Google Drive's DynamicField schema and the
+ConnectorDetails payload served from the /info endpoint.
+
+Auth is OAuth 2.0 + PKCE as a static-client connector (no RFC 7591 Dynamic
+Client Registration — Google does not support DCR). An admin must register
+one OAuth app per environment in Google Cloud Console; the resulting
+client_id/client_secret are stored in Core's connection_oauth_clients table as a
+global (workspace_id = NULL) row.
+
+Users only see a "Connect with Google" button — they never touch Google Cloud
+Console.
+
+Google's OAuth has two quirks the flow must handle:
+  - Refresh tokens in testing mode expire after 7 days (production mode
+    issues indefinite refresh tokens). The scheduled refresh path handles this
+    transparently.
+  - The consent screen must be set to "External" (or "Internal" for Google
+    Workspace domains) and published, or refresh tokens expire after 7 days
+    regardless of mode.
+
+CONSTANTS
+
+const (
+	// AuthorizationURL is where the user-agent goes to approve the grant.
+	AuthorizationURL = "https://accounts.google.com/o/oauth2/auth"
+
+	// TokenURL exchanges authorization codes and refresh tokens.
+	TokenURL = "https://oauth2.googleapis.com/token" //nolint:gosec // OAuth endpoint URL, not a credential
+
+	// RevocationURL is where Core POSTs the token on disconnect.
+	RevocationURL = "https://oauth2.googleapis.com/revoke"
+
+	// Google Drive API base URL.
+	APIBaseURL = "https://www.googleapis.com"
+
+	// DefaultMaxRecords is the default cap on files pulled per operation.
+	DefaultMaxRecords = "100000"
+)
+    OAuth constants for Google's endpoints.
+
+
+FUNCTIONS
+
+func DefaultScopes() []string
+    DefaultScopes returns the OAuth scopes the connector requests.
+    drive.readonly is sufficient for pulling file metadata + contents.
+    drive.file is needed for push (creating app-owned files). drive provides
+    full access (read/write all files). Returned as a fresh slice each call
+    (lint disallows package-level slices).
+
+func GetConnectorInfo() models.ConnectorDetails
+    GetConnectorInfo returns the static connector metadata.
+
+    The ConnectionOAuthConfig block (without DCREndpoint) tells Core to use the
+    global admin-configured connection_oauth_clients row for this connector —
+    Google does not support Dynamic Client Registration.
+
+func GetDetailsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetDetailsFieldDefinitions returns the connection details schema.
+
+    Google Drive is OAuth-backed so there are no user-entered detail fields
+    — the credential is the OAuth bearer token Core mints on behalf of the
+    workspace. The empty map keeps the embed uniform.
+
+func GetOptionalFields() []string
+    GetOptionalFields returns optional field names from both maps.
+
+func GetRequiredDetailsFields() []string
+    GetRequiredDetailsFields returns only the required detail field names.
+
+func GetRequiredFields() []string
+    GetRequiredFields returns the union of required detail and settings field
+    names.
+
+func GetSettingsFieldDefinitions() map[string]irminmodels.DynamicField
+    GetSettingsFieldDefinitions returns the per-Connection settings.
+
+</pre>
+</body></html>

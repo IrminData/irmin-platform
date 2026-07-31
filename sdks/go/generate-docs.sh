@@ -110,7 +110,7 @@ echo "Writing index: ${INDEX_FILE}"
   title="${MOD_PATH:-Go} documentation"
   echo "<title>${title}</title>"
   echo "<h1>${title}</h1>"
-  echo "<p>Generated on $(date -u '+%Y-%m-%d %H:%M UTC')</p>"
+  echo "<p>Generated from source; do not edit directly.</p>"
   echo "<ul>"
   for entry in "${HTML_ENTRIES[@]}"; do
     pkg="${entry%%|*}"

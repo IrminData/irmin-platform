@@ -73,6 +73,28 @@ func (fc *FakeCore) LastServedToken() string
 func (fc *FakeCore) LazyCalls() int
     LazyCalls returns the number of non-force access-token fetches served.
 
+type FakeMCPServer struct {
+	// Has unexported fields.
+}
+    FakeMCPServer is an in-memory MCP server with registerable tool callbacks.
+    The zero value is not useful; call NewFakeMCPServer.
+
+func NewFakeMCPServer(t *testing.T) *FakeMCPServer
+    NewFakeMCPServer stands up an in-memory MCP server connected to a matching
+    client session via mcp.NewInMemoryTransports. The session is closed
+    automatically via t.Cleanup so tests don't leak goroutines.
+
+func (f *FakeMCPServer) OnTool(name string, handler MCPToolHandler)
+    OnTool registers a handler for the given MCP tool name. Calling OnTool a
+    second time for the same name registers another handler — the SDK invokes
+    whichever one matches at dispatch time, so test code is expected to set up
+    its expectations once and not re-register.
+
+func (f *FakeMCPServer) Session() *mcp.ClientSession
+    Session returns the live MCP client session connected to the
+    fixture. Callers wrap it in a connector-specific client (e.g.,
+    linearclient.NewWithSession) and exercise that.
+
 type FakeVendor struct {
 	Server *httptest.Server
 
@@ -115,6 +137,12 @@ func (fv *FakeVendor) SetHandler(h http.HandlerFunc)
 func (fv *FakeVendor) URL() string
     URL returns the vendor's root URL. Tests use this as the base for any
     vendor-bound request they drive through the round-tripper.
+
+type MCPToolHandler func(args map[string]any) (json.RawMessage, error)
+    MCPToolHandler is the callback shape registered via OnTool. It receives the
+    args map verbatim and returns the JSON document the tool should emit (which
+    the SDK wraps in a TextContent block) or an error to surface as IsError=true
+    on the result.
 
 </pre>
 </body></html>

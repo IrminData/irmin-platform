@@ -4,10 +4,14 @@
 <pre>
 package linearclient // import "irmin-connectors/connectors/linear/client"
 
-Package linearclient is a small GraphQL client for Linear's public API.
-It is intentionally not a full Linear SDK — only the queries and mutations the
-Irmin connector needs (pull issues / projects / cycles / teams; create + update
-issues) are implemented inline.
+Package linearclient is a small MCP client for Linear's official MCP server
+(https://mcp.linear.app/mcp). It is intentionally not a full Linear SDK — only
+the tool calls the Irmin connector needs (pull issues / projects / cycles /
+teams; create + update issues) are implemented. Auth is OAuth 2.1 via DCR +
+PKCE; tokens are bound to the mcp.linear.app resource per Linear's RFC 9728
+metadata.
+
+MCP OAuth endpoints. See client.go for the package-level overview.
 
 CONSTANTS
 
@@ -30,12 +34,9 @@ const (
 	// /token endpoint accepts the RFC 7009 revoke shape.
 	RevocationURL = "https://mcp.linear.app/token"
 )
-    Linear MCP OAuth 2.1 endpoints. Confirmed against the live
-    `https://mcp.linear.app/.well-known/oauth-authorization-server` discovery
-    document on 2026-04-26. RFC 7591 Dynamic Client Registration is supported
-    via the registration endpoint, which is what makes Linear the right pick for
-    the first OAuth connector — per the OAuth roadmap, Phase 4 exists to prove
-    the DCR path end-to-end.
+    Linear MCP OAuth 2.1 endpoints, confirmed against
+    https://mcp.linear.app/.well-known/oauth-authorization-server. RFC 7591
+    Dynamic Client Registration is supported via DCREndpoint.
 
 const (
 	ResourceIssues   = "issues"
@@ -46,160 +47,11 @@ const (
     Known resource slugs. Defined as constants so external callers (config
     schemas, tests) reference them by name rather than literals.
 
-const CyclesQuery = `
-query IrminCycles($first: Int!, $after: String) {
-  cycles(first: $first, after: $after) {
-    nodes {
-      id
-      number
-      name
-      description
-      startsAt
-      endsAt
-      completedAt
-      progress
-      issueCountHistory
-      completedIssueCountHistory
-      team { id key name }
-      createdAt
-      updatedAt
-    }
-    pageInfo { endCursor hasNextPage }
-  }
-}
-`
-    CyclesQuery fetches a page of cycles (sprints). The team field is always
-    included so the resulting JSON is self-describing without needing a separate
-    join against teams.json.
-
-const DefaultGraphQLEndpoint = "https://api.linear.app/graphql"
-    DefaultGraphQLEndpoint is Linear's GraphQL HTTPS endpoint. Tests override
-    this via the `api_endpoint` setting on the Connection so they can point at
-    an httptest fixture without touching this file.
-
-const IssueCreateMutation = `
-mutation IrminIssueCreate($input: IssueCreateInput!) {
-  issueCreate(input: $input) {
-    success
-    issue {
-      id
-      identifier
-      title
-      url
-    }
-  }
-}
-`
-    IssueCreateMutation creates a new issue from an `IssueCreateInput`.
-    The mutation returns the created issue so the connector can write the new
-    identifier (e.g., `IRM-42`) back into the operation log without a follow-up
-    read.
-
-const IssueUpdateMutation = `
-mutation IrminIssueUpdate($id: String!, $input: IssueUpdateInput!) {
-  issueUpdate(id: $id, input: $input) {
-    success
-    issue {
-      id
-      identifier
-      title
-      url
-    }
-  }
-}
-`
-    IssueUpdateMutation updates an existing issue by ID. Only the fields
-    explicitly set in `$input` are touched — Linear's mutation follows
-    partial-update semantics, which matches JSON-Patch's `replace` op cleanly.
-
-const IssuesQuery = `
-query IrminIssues($first: Int!, $after: String, $filter: IssueFilter) {
-  issues(first: $first, after: $after, filter: $filter) {
-    nodes {
-      id
-      identifier
-      title
-      description
-      priority
-      estimate
-      state { id name type }
-      assignee { id name email }
-      creator { id name email }
-      team { id key name }
-      project { id name }
-      cycle { id number startsAt endsAt }
-      labels { nodes { id name color } }
-      url
-      branchName
-      createdAt
-      updatedAt
-      startedAt
-      completedAt
-      canceledAt
-      dueDate
-      sortOrder
-      subIssueSortOrder
-      parent { id identifier }
-    }
-    pageInfo { endCursor hasNextPage }
-  }
-}
-`
-    IssuesQuery fetches a page of issues. The optional `$filter` variable is a
-    Linear `IssueFilter`; we set it server-side from the `team_key` connection
-    setting when present so a workspace-wide pull degenerates cleanly to
-    "everything you can read."
-
-const ProjectsQuery = `
-query IrminProjects($first: Int!, $after: String) {
-  projects(first: $first, after: $after) {
-    nodes {
-      id
-      name
-      slugId
-      description
-      state
-      progress
-      startDate
-      targetDate
-      startedAt
-      completedAt
-      canceledAt
-      url
-      teams { nodes { id key name } }
-      lead { id name email }
-      createdAt
-      updatedAt
-    }
-    pageInfo { endCursor hasNextPage }
-  }
-}
-`
-    ProjectsQuery fetches a page of projects. Project membership of teams is
-    included because it is the most useful join key for downstream queries.
-
-const TeamsQuery = `
-query IrminTeams($first: Int!, $after: String) {
-  teams(first: $first, after: $after) {
-    nodes {
-      id
-      key
-      name
-      description
-      color
-      icon
-      private
-      timezone
-      createdAt
-      updatedAt
-    }
-    pageInfo { endCursor hasNextPage }
-  }
-}
-`
-    TeamsQuery fetches a page of teams. Linear typically has a small number of
-    teams per workspace; pagination is implemented for correctness even though
-    most workspaces fit on a single page.
+const DefaultMCPEndpoint = "https://mcp.linear.app/mcp"
+    DefaultMCPEndpoint is Linear's MCP server (Streamable HTTP). Tokens
+    issued at TokenURL are bound to this resource per Linear's RFC 9728
+    oauth-protected-resource document. Tests override via the `mcp_endpoint`
+    setting on the Connection.
 
 
 FUNCTIONS
@@ -211,66 +63,120 @@ func DefaultScopes() []string
     Returned as a fresh slice each call (lint disallows package-level slice
     variables) — callers may store the result.
 
+func ResolveEndpoint(setting string) (string, error)
+    ResolveEndpoint validates a user-supplied `mcp_endpoint` setting against the
+    allowlist and returns the URL the MCP client should dial. An empty setting
+    resolves to DefaultMCPEndpoint.
+
+    Why an allowlist: a workspace member with connection-edit rights could
+    otherwise point the endpoint at an attacker-controlled URL and exfiltrate
+    the OAuth bearer. The allowlist closes that vector while preserving
+    overrides for self-hosted Linear MCP deployments and integration tests.
+
+    Allowed hosts:
+      - Anything ending in `linear.app` (Linear's production MCP host
+        mcp.linear.app and any future regional subdomains).
+      - Loopback (127.0.0.0/8, ::1, `localhost`) — only when
+        LINEAR_ALLOW_LOOPBACK_ENDPOINT=true. Production builds reject loopback
+        so a sidecar service can't receive the bearer.
+      - Suffixes listed in the LINEAR_ALLOWED_API_HOSTS env var.
+
+    Scheme must be http or https; http is accepted only behind the loopback gate
+    (httptest fixtures, local dev).
+
 
 TYPES
 
 type Client struct {
-	// HTTPClient drives the actual HTTP round-trip. In production it
-	// is wrapped by common.WrapHTTPClientForJob so every request
-	// carries a fresh OAuth bearer token; in tests it is a plain
-	// http.DefaultClient pointed at an httptest server.
-	HTTPClient *http.Client
-
-	// Endpoint is the GraphQL URL. Defaults to DefaultGraphQLEndpoint
-	// when New is called with an empty string.
-	Endpoint string
+	// Session is the live MCP client session. CallTool calls flow
+	// through here. Tests substitute a session connected to an
+	// in-process MCP stub (commontest/mcp_fixture.go).
+	Session *mcp.ClientSession
 }
-    Client is a thin GraphQL client for Linear. It does no resource- specific
-    shaping itself — every public method that touches the vendor returns
-    `json.RawMessage`, which downstream code emits verbatim into pull files or
-    logs. Avoiding intermediate Go structs means a Linear API change adding a
-    field cannot silently drop data from a pulled snapshot.
+    Client wraps a live MCP client session against Linear's MCP server.
+    One Client per connector operation — sessions are not designed to be
+    reused across handler invocations because the underlying transport holds a
+    long-lived HTTP/SSE connection. Callers construct a Client via OpenSession
+    (production) or NewWithSession (tests), and MUST invoke the returned cleanup
+    func when done.
 
-func New(httpClient *http.Client, endpoint string) *Client
-    New constructs a Client. Pass nil for httpClient to use http.DefaultClient
-    (only safe in tests; production handlers must supply the OAuth-wrapped
-    client).
+    All public methods return JSON via `json.RawMessage` so the on-disk pull
+    file format passes Linear's payload through verbatim — a Linear API
+    change adding a field cannot silently drop data from a snapshot, and the
+    post-processing pipeline (DuckDB ingest, schema validation) stays decoupled
+    from the wire shape.
 
-func (c *Client) Do(
+func NewWithSession(session *mcp.ClientSession) *Client
+    NewWithSession constructs a Client around an already-connected MCP session.
+    Used by tests that wire a stub server directly via the SDK's in-memory or
+    httptest transport.
+
+func OpenSession(
 	ctx context.Context,
-	query string,
-	variables map[string]any,
+	endpoint string,
+	tokenClient *lib.OAuthTokenClient,
+	connectionID uint,
+	httpClient *http.Client,
+	logger *slog.Logger,
+) (*Client, func(), error)
+    OpenSession is the production constructor. It dials Linear's MCP server
+    using the connection's OAuth token (refreshed transparently by the
+    round-tripper inside lib.NewMCPSession) and returns a Client plus a cleanup
+    func.
+
+    endpoint is typically DefaultMCPEndpoint; tests override it to point at a
+    local httptest stub.
+
+    httpClient is the base HTTP transport (typically http.DefaultClient).
+    It is wrapped with the OAuth round-tripper before being handed to the MCP
+    transport, so the same auth + force-refresh path that other connectors use
+    also covers MCP tool calls.
+
+    logger receives the round-tripper's diagnostic Warn events (e.g., vendor
+    401-after-refresh body snippets). Pass the connector's job- scoped logger so
+    the events land in the operation log; nil falls back to slog.Default().
+
+func (c *Client) CallTool(
+	ctx context.Context,
+	name string,
+	args map[string]any,
 ) (json.RawMessage, error)
-    Do issues one GraphQL operation and returns the raw `data` block.
-    Vendor-side errors (HTTP 4xx/5xx) become Go errors with the body preview
-    included for log diagnosis; in-band GraphQL errors (HTTP 200 + non-empty
-    `errors` array) become a wrapped error too — Linear sometimes returns 200
-    with `errors` for permission-denied or rate-limited operations.
+    CallTool invokes an MCP tool by name and returns the inner JSON payload.
+    Linear's tools all return a single TextContent block whose text is a JSON
+    document — typically `{"&lt;resource&gt;": [...], "hasNextPage": bool, "cursor":
+    "..."}`.
+
+    Error cases:
+      - Tool returned IsError=true: the message from the first text block is
+        wrapped as a Go error so the caller surfaces a meaningful log.
+      - No content blocks: caller passed a tool name the server doesn't support,
+        or the server is misbehaving — bubbled up as an error.
+      - Content[0] not text: future-proofing; Linear may add typed embedded
+        resources for some tools, in which case this client needs to be
+        extended.
 
 func (c *Client) IssueCreate(
 	ctx context.Context,
 	input map[string]any,
 ) (*IssueCreated, error)
-    IssueCreate runs the IssueCreateMutation. `input` is the IssueCreateInput
-    payload Linear documents — passed straight through without re-typing
-    because Linear's input type evolves faster than a Go struct should track.
-    The handler is responsible for ensuring required fields (`teamId`, `title`)
-    are present; missing fields surface as a Linear graphql error and bubble
-    back through Client.Do.
+    IssueCreate creates a new Linear issue via the save_issue MCP tool. `input`
+    is the argument map the tool documents — typically `{"title": "...", "team":
+    "&lt;id-or-name&gt;", ...}`. Required fields (title, team) are the caller's
+    responsibility; missing fields surface as an MCP tool error and bubble back
+    through Client.CallTool.
 
 func (c *Client) IssueUpdate(
 	ctx context.Context,
 	id string,
 	input map[string]any,
 ) (*IssueUpdated, error)
-    IssueUpdate runs the IssueUpdateMutation. `id` is Linear's UUID (the
-    `id` field on issues, not the human-readable identifier like `IRM-42`).
-    The mutation accepts the identifier in some Linear versions; we use the UUID
-    for forward-compatibility with the public schema.
-
-    `input` is the partial IssueUpdateInput — only fields explicitly included
-    are touched. Empty input is rejected up front so a patch that resolves to no
-    changes doesn't silently log "update succeeded" against an empty mutation.
+    IssueUpdate updates an existing Linear issue via the save_issue MCP tool.
+    `id` is the issue's identifier (e.g., `IRM-42`). The caller supplies the
+    partial update in `input`; only fields explicitly included are touched.
+    We piggyback on save_issue's upsert semantics — setting `id` on the args
+    map routes the call to the update branch. The human-readable identifier
+    (IRM-42) round-trips with the on-disk file shape (issues/&lt;identifier&gt;.json);
+    Linear's tool also accepts UUIDs.
 
 func (c *Client) ListBounded(
 	ctx context.Context,
@@ -285,25 +191,22 @@ func (c *Client) ListBounded(
     log event rather than treating the pull as complete.
 
 type IssueCreated struct {
-	ID         string `json:"id"`
-	Identifier string `json:"identifier"`
-	Title      string `json:"title"`
-	URL        string `json:"url"`
+	ID    string `json:"id"`
+	Title string `json:"title"`
+	URL   string `json:"url"`
 }
-    IssueCreated is the subset of the issueCreate mutation result the connector
-    logs back to the operator. The full Linear response carries more fields,
-    but identifier + url are what makes "we created IRM-42" actionable in the
-    audit trail.
+    IssueCreated is the subset of the save_issue tool result the connector logs
+    back to the operator. The full Linear response carries more fields, but ID +
+    URL are what makes "we created IRM-42" actionable in the audit trail.
 
-type IssueUpdated struct {
-	ID         string `json:"id"`
-	Identifier string `json:"identifier"`
-	Title      string `json:"title"`
-	URL        string `json:"url"`
-}
+    Linear MCP uses the human-readable `IRM-42` form as the canonical id (which
+    is also the form `save_issue` accepts on update), so the connector reads
+    `id` directly without a separate identifier field.
+
+type IssueUpdated = IssueCreated
     IssueUpdated mirrors IssueCreated — same audit-friendly fields, returned
-    from the issueUpdate mutation so callers can log what actually changed
-    without a follow-up read.
+    from the save_issue tool's update path so callers can log what actually
+    changed without a follow-up read.
 
 type ParsedPath struct {
 	Resource Resource

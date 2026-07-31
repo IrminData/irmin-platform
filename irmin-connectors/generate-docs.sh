@@ -210,7 +210,7 @@ echo "Writing index: ${INDEX_FILE}"
   echo "  a{color:#0369a1}"
   echo "</style>"
   echo "<h1>${title}</h1>"
-  echo "<p>Generated on $(date -u '+%Y-%m-%d %H:%M UTC')</p>"
+  echo "<p>Generated from source; do not edit directly.</p>"
   if [[ "${#GUIDE_ENTRIES[@]}" -gt 0 ]]; then
     echo "<h2>Guides</h2>"
     echo "<p>Hand-written explainers and how-tos — read these first.</p>"

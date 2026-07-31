@@ -494,6 +494,412 @@
                 }
             }
         },
+        "/googledrive/configuration/validate": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Validates the provided configuration fields for the Google Drive connector.",
+                "consumes": [
+                    "application/json",
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "googledrive"
+                ],
+                "summary": "Validate Google Drive connector configuration",
+                "responses": {
+                    "200": {
+                        "description": "Validation result",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/googledrive/configuration/{key}/fields": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Returns dynamic configuration field definitions for the Google Drive connector. The \"details\" key returns an empty map because Google Drive authenticates via OAuth; the \"settings\" key returns user-tunable options like scope and max_records_per_resource.",
+                "consumes": [
+                    "application/json",
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "googledrive"
+                ],
+                "summary": "Get Google Drive connector configuration fields",
+                "parameters": [
+                    {
+                        "enum": [
+                            "details",
+                            "settings"
+                        ],
+                        "type": "string",
+                        "description": "Configuration key",
+                        "name": "key",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Configuration fields",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "$ref": "#/definitions/irminmodels.DynamicField"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/googledrive/details": {
+            "get": {
+                "description": "Renders an HTML page describing what the Google Drive connector does, what it supports, and how to set it up. Public — no authentication required.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "text/html"
+                ],
+                "tags": [
+                    "googledrive"
+                ],
+                "summary": "Get Google Drive connector details page",
+                "responses": {
+                    "200": {
+                        "description": "Google Drive connector details page",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/googledrive/info": {
+            "get": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Returns connector metadata including capabilities, OAuth configuration, and dynamic field schema. The embedded ConnectionOAuthConfig tells the console to render a Connect-with-Google button instead of a credential form.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "googledrive"
+                ],
+                "summary": "Get Google Drive connector information",
+                "responses": {
+                    "200": {
+                        "description": "Google Drive connector information",
+                        "schema": {
+                            "$ref": "#/definitions/models.ConnectorDetails"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/googledrive/operation/patch": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Google Drive connector does not support patch operations.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "googledrive"
+                ],
+                "summary": "Google Drive connector does not support patch operations",
+                "responses": {
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "501": {
+                        "description": "Not implemented - Google Drive does not support patch",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/googledrive/operation/pull": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Starts an asynchronous pull job that fetches file metadata from Google Drive as a JSON file. The connection ID is captured from the request before the async worker starts so the worker can resolve OAuth tokens without a fiber.Ctx.",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/zip"
+                ],
+                "tags": [
+                    "googledrive"
+                ],
+                "summary": "Pull files from Google Drive",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "What to pull. Empty or 'files' / 'files.json' returns metadata for every accessible file as files.json. A Drive file ID downloads that single file. A Drive folder ID walks the folder (recursive per connection settings) and returns files.json plus one blob per downloaded file at files/\u003cdriveId\u003e-\u003csafeName\u003e.\u003cext\u003e.",
+                        "name": "path",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Pull job started",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "428": {
+                        "description": "OAuth not connected",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/googledrive/operation/push": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Upload files to the connected user's Google Drive as new files. The uploaded ZIP contents are created as individual Drive files under the optional path (treated as a folder hierarchy created on the fly).",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "googledrive"
+                ],
+                "summary": "Push files to Google Drive",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "ZIP file containing files to push to Google Drive",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Target folder path in Google Drive (e.g., '/Irmin/backup' — created if missing)",
+                        "name": "path",
+                        "in": "formData"
+                    }
+                ],
+                "responses": {
+                    "202": {
+                        "description": "Push job started",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "428": {
+                        "description": "OAuth not connected",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
+        "/googledrive/operation/schema/{operation}": {
+            "post": {
+                "security": [
+                    {
+                        "SystemTokenAuth": []
+                    }
+                ],
+                "description": "Returns the schema describing what files a pull operation produces and what a push operation accepts. The schema is path-aware: an empty path returns the legacy files.json catalogue alongside the user's My Drive root; a Drive folder ID returns that folder's direct children; a Drive file ID returns a single leaf.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "googledrive"
+                ],
+                "summary": "Get Google Drive operation schema",
+                "parameters": [
+                    {
+                        "enum": [
+                            "pull",
+                            "push"
+                        ],
+                        "type": "string",
+                        "description": "Operation type",
+                        "name": "operation",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Drive resource to inspect. Empty / 'files' / 'files.json' returns the legacy metadata catalogue; 'root' returns My Drive's top level; any Drive folder/file ID is resolved via files.get.",
+                        "name": "path",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Operation schema",
+                        "schema": {
+                            "$ref": "#/definitions/irminmodels.ObjectSchema"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad request",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal server error",
+                        "schema": {
+                            "$ref": "#/definitions/fiber.Map"
+                        }
+                    }
+                }
+            }
+        },
         "/http/configuration/validate": {
             "post": {
                 "security": [

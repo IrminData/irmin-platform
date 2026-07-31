@@ -60,8 +60,8 @@ func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
     @Accept multipart/form-data @Produce json @Param settings[team_key]
     formData string false "Optional Linear team key (e.g., IRM)" @Param
     settings[max_records_per_resource] formData string false "Optional cap
-    on records returned per pull" @Param settings[api_endpoint] formData
-    string false "Optional GraphQL endpoint override" @Success 200 {object}
+    on records returned per pull" @Param settings[mcp_endpoint] formData
+    string false "Optional MCP endpoint override" @Success 200 {object}
     irminmodels.ConnectorConfigurationValidationResult "Validation result"
     @Failure 400 {object} fiber.Map "Bad request" @Failure 401 {object}
     fiber.Map "Unauthorized" @Failure 500 {object} fiber.Map "Internal server
@@ -116,8 +116,8 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) (retErr error)
     mirrors the Stripe patch handler: each patch op's `path` starts with the
     file path of a Linear record (e.g., `/issues/&lt;uuid&gt;.json/title`); the suffix
     is the field to touch. Operations targeting the same issue are coalesced
-    into one issueUpdate mutation so Linear sees a single atomic write per issue
-    rather than one mutation per field.
+    into one save_issue tool call so Linear sees a single atomic write per issue
+    rather than one call per field.
 
     Only `add`, `replace`, and `remove` are supported — Linear's update input
     is flat enough that JSON-Patch's `move` / `copy` don't have well-defined
@@ -125,25 +125,25 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) (retErr error)
     generator.
 
     The handler bypasses common.HandleOperationPatch because that helper's
-    per-op `(table, row, column)` model is built for SQL connectors and
-    doesn't fit GraphQL inputs cleanly. Stripe makes the same choice; see
-    stripe/controllers/operationPatch.go for the rationale.
+    per-op `(table, row, column)` model is built for SQL connectors and doesn't
+    fit Linear's flat MCP save_issue input cleanly. Stripe makes the same
+    choice; see stripe/controllers/operationPatch.go for the rationale.
 
     Note: `&lt;id&gt;` in the path must be the Linear UUID (the `id` field from a
     pulled issue), not the human-readable identifier. The connector documents
     this on the patch endpoint so callers reading the OpenAPI know which to use.
 
     @Summary Apply JSON-Patch operations to Linear issues @Description
-    Translates a JSON-Patch document into one issueUpdate mutation per targeted
-    Linear issue. Only add/replace/remove are supported. The patch path must
-    reference an issue file (e.g., `/issues/&lt;uuid&gt;.json/title`) where `&lt;uuid&gt;`
-    is the Linear UUID, not the identifier (IRM-42). @Tags linear @Security
-    SystemTokenAuth @Accept multipart/form-data @Produce json @Param patches
-    formData file true "JSON file containing a JSON-Patch array" @Success 200
-    {object} fiber.Map "Patches applied successfully" @Failure 400 {object}
-    fiber.Map "Bad request" @Failure 401 {object} fiber.Map "Unauthorized"
-    @Failure 500 {object} fiber.Map "Internal server error" @Router
-    /linear/operation/patch [post]
+    Translates a JSON-Patch document into one save_issue MCP tool call per
+    targeted Linear issue. Only add/replace/remove are supported. The patch
+    path must reference an issue file (e.g., `/issues/&lt;uuid&gt;.json/title`)
+    where `&lt;uuid&gt;` is the Linear UUID, not the identifier (IRM-42). @Tags
+    linear @Security SystemTokenAuth @Accept multipart/form-data @Produce json
+    @Param patches formData file true "JSON file containing a JSON-Patch array"
+    @Success 200 {object} fiber.Map "Patches applied successfully" @Failure
+    400 {object} fiber.Map "Bad request" @Failure 401 {object} fiber.Map
+    "Unauthorized" @Failure 500 {object} fiber.Map "Internal server error"
+    @Router /linear/operation/patch [post]
 
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
     OperationPull godoc @Summary Pull data from Linear @Description Pulls
@@ -166,16 +166,16 @@ func (cs *Controllers) OperationPush(c fiber.Ctx) error
     new Linear issues from JSON files in the uploaded ZIP. Files matching
     `issues/new-*.json` are turned into IssueCreate mutations; every other
     file is skipped with a log line. Each file's JSON must be a valid Linear
-    IssueCreateInput; the `teamKey` setting on the Connection fills in the
-    team if the file omits it. @Tags linear @Security SystemTokenAuth @Accept
-    multipart/form-data @Produce json @Param file formData file true "ZIP
-    containing JSON issue files (issues/new-*.json)" @Success 202 {object}
-    fiber.Map "Async push job accepted ({job_id, operation_token})" @Failure
-    400 {object} fiber.Map "Bad request" @Failure 401 {object} fiber.Map
-    "Unauthorized" @Failure 404 {object} fiber.Map "Operation not found"
-    @Failure 409 {object} fiber.Map "Operation already running" @Failure 500
-    {object} fiber.Map "Internal server error" @Router /linear/operation/push
-    [post]
+    IssueCreateInput including a `teamId` UUID (Linear's input type has
+    no `teamKey` field — copy the UUID from a pulled issue's `team.id`).
+    @Tags linear @Security SystemTokenAuth @Accept multipart/form-data
+    @Produce json @Param file formData file true "ZIP containing JSON issue
+    files (issues/new-*.json)" @Success 202 {object} fiber.Map "Async push
+    job accepted ({job_id, operation_token})" @Failure 400 {object} fiber.Map
+    "Bad request" @Failure 401 {object} fiber.Map "Unauthorized" @Failure 404
+    {object} fiber.Map "Operation not found" @Failure 409 {object} fiber.Map
+    "Operation already running" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /linear/operation/push [post]
 
 func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
     OperationSchemaGet godoc @Summary Get Linear operation schema @Description
@@ -208,10 +208,11 @@ func (cs *Controllers) TestConnection(
 func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
     UnsubscribeFromChanges is not supported.
 
-func (cs *Controllers) ValidateFields(_ fiber.Ctx, _, _ map[string]any) []string
-    ValidateFields implements common.ConfigValidationProvider. Performs
-    structural validation of optional settings — the validation surface is
-    intentionally narrow because the OAuth flow itself is the credential check.
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, _, settings map[string]any) []string
+    ValidateFields implements common.ConfigValidationProvider. Validates the
+    optional `mcp_endpoint` setting against the host allowlist at save-time so
+    a bad value surfaces in the console's validation pane rather than at first
+    pull. The OAuth flow itself remains the credential check.
 
 func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
     ValidateSystemTokenMiddleware verifies the inbound system token
@@ -241,27 +242,30 @@ func (p *LinearPullProvider) GetFileByPath(
 	operation *db.Operation,
 	rawPath string,
 ) (string, []byte, error)
-    GetFileByPath supports whole-resource pulls only in the first connector
-    cut (`issues`, `issues.json`, etc.). Single-record fetches like
-    `issues/IRM-42.json` are reserved for a follow-up — implementing them
-    properly requires a per-vendor identifier- to-UUID lookup that doesn't
-    materially advance the OAuth-path proof Phase 4 is meant to deliver.
+    GetFileByPath supports whole-resource pulls (`issues`, `issues.json`, etc.).
+    Single-record fetches like `issues/IRM-42.json` are out of scope: doing
+    them right requires a per-vendor identifier-to-UUID lookup that callers can
+    satisfy by pulling the resource and filtering downstream.
 
 func (p *LinearPullProvider) InitializeClient(
-	_ context.Context,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)
-    InitializeClient builds the GraphQL client for this operation. The HTTP
-    client is wrapped by AsyncOAuthRoundTripper so every outbound call carries a
-    fresh Linear bearer token resolved from Core, with a once-on-401 retry that
-    asks Core to rotate.
+    InitializeClient opens the MCP session for this operation. The
+    session's HTTP transport is wrapped with the OAuth round-tripper inside
+    lib.NewMCPSession so every outbound MCP tool call carries a fresh Linear
+    bearer token resolved from Core, with a once-on-401 retry path that asks
+    Core to rotate.
+
+    The returned cleanup func closes the MCP session — the operation runner
+    is responsible for invoking it; this is the same lifecycle shape sftp uses
+    (Connect + Close on the same goroutine).
 
 func (p *LinearPullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
-    ProgressHandler emits per-page events into the job's progress slice. Linear
-    pulls can iterate hundreds of pages on large workspaces; the heartbeat from
-    common.NewProgressHandlerWithContext keeps the operation log moving so the
-    janitor doesn't false- positive a live worker as stuck.
+    ProgressHandler emits per-page events into the job's progress slice.
+    Hydrated with the worker's ctx so cancel signals reach the fan-out and so
+    events fired AFTER cancel/completion don't race the worker cleanup.
 
 type LinearPushProvider struct {
 	// Has unexported fields.
@@ -275,26 +279,34 @@ type LinearPushProvider struct {
     pull's contents being re-pushed) doesn't fail the whole operation.
 
 func (p *LinearPushProvider) InitializeClient(
-	_ context.Context,
+	ctx context.Context,
 	logger *slog.Logger,
 	operation *db.Operation,
 ) (any, *string, func(), error)
-    InitializeClient builds the OAuth-wrapped GraphQL client.
+    InitializeClient opens the OAuth-wrapped MCP session for the push operation.
+    Returns the session-backed Client plus a cleanup func the runner will call
+    when the operation completes.
 
 func (p *LinearPushProvider) ProcessFiles(
 	ctx context.Context,
 	clientAny any,
 	operation *db.Operation,
 	files map[string][]byte,
-	_ string,
+	targetPath string,
 ) error
     ProcessFiles iterates the ZIP and creates one Linear issue per
     `issues/new-*.json` file. Stops on the first hard error — Linear writes
     aren't transactional, so a partial run is harder to reason about than an
     abort.
 
+    `targetPath` narrows the iteration to a single file (exact match) or a
+    directory prefix (anything ending in `/`). Empty means "every file." This
+    mirrors Stripe's selector semantics and is what callers retrying a single
+    failed file rely on; without it, a retry of one new-*.json file would
+    re-create every issue in the archive.
+
 func (p *LinearPushProvider) ProgressHandler(_ *db.Operation) common.ProgressHandler
-    ProgressHandler returns nil — Linear push is a per-record GraphQL mutation
+    ProgressHandler returns nil — Linear push is a per-record MCP tool mutation
     loop and the volume per push is small (typically one or two issues at
     a time). The baseline heartbeat from the common push worker keeps the
     operation log moving.

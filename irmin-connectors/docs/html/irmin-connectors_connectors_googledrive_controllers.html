@@ -1,0 +1,275 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-connectors/connectors/googledrive/controllers</title></head><body>
+<h1>Package irmin-connectors/connectors/googledrive/controllers</h1>
+<pre>
+package googledrivecontrollers // import "irmin-connectors/connectors/googledrive/controllers"
+
+Package googledrivecontrollers wires the Google Drive connector's HTTP handlers.
+The Controllers struct embeds *common.OAuthConnector so every method inherits
+the shared OAuth machinery (token resolution, sentinel-to-HTTP mapping, /info
+OAuth-config stamping) alongside *common.Controllers for the per-connector base
+routes.
+
+Google Drive is a static-client OAuth connector: an admin registers one
+OAuth app per environment in Google Cloud Console, and the resulting client
+credentials live in Core's connection_oauth_clients table (workspace_id = NULL,
+global). No DCR.
+
+TYPES
+
+type Controllers struct {
+	*common.Controllers
+	*common.OAuthConnector
+}
+    Controllers holds the dependencies for every Google Drive handler.
+
+func NewControllers(app *models.ConnectorsApp) *Controllers
+    NewControllers wires the Google Drive controller from the connector app.
+
+func (cs *Controllers) BuildDetails(fields map[string]string) (map[string]string, error)
+    BuildDetails implements common.OperationConfigProvider. Google Drive
+    has no detail fields; the result is an empty map by construction because
+    GetDetailsFieldDefinitions returns an empty map.
+
+func (cs *Controllers) BuildSettings(fields map[string]string) (map[string]string, error)
+    BuildSettings implements common.OperationConfigProvider.
+
+func (cs *Controllers) ConfigFields(c fiber.Ctx) error
+    ConfigFields godoc @Summary Get Google Drive connector configuration fields
+    @Description Returns dynamic configuration field definitions for the Google
+    Drive connector. The "details" key returns an empty map because Google
+    Drive authenticates via OAuth; the "settings" key returns user-tunable
+    options like scope and max_records_per_resource. @Tags googledrive @Security
+    SystemTokenAuth @Accept json @Accept multipart/form-data @Produce json
+    @Param key path string true "Configuration key" Enums(details, settings)
+    @Success 200 {object} map[string]irminmodels.DynamicField "Configuration
+    fields" @Failure 400 {object} fiber.Map "Bad request" @Failure 401 {object}
+    fiber.Map "Unauthorized" @Failure 500 {object} fiber.Map "Internal server
+    error" @Router /googledrive/configuration/{key}/fields [post]
+
+func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
+    ConfigValidate godoc @Summary Validate Google Drive connector configuration
+    @Description Validates the provided configuration fields for the
+    Google Drive connector. @Tags googledrive @Security SystemTokenAuth
+    @Accept json @Accept multipart/form-data @Produce json @Success 200
+    {object} map[string]any "Validation result" @Failure 400 {object}
+    fiber.Map "Bad request" @Failure 401 {object} fiber.Map "Unauthorized"
+    @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /googledrive/configuration/validate [post]
+
+func (cs *Controllers) DetailsPage(c fiber.Ctx) error
+    DetailsPage godoc @Summary Get Google Drive connector details page
+    @Description Renders an HTML page describing what the Google Drive connector
+    does, what it supports, and how to set it up. Public — no authentication
+    required. @Tags googledrive @Accept json @Produce text/html @Success 200
+    {string} string "Google Drive connector details page" @Failure 500 {object}
+    fiber.Map "Internal server error" @Router /googledrive/details [get]
+
+func (cs *Controllers) EnsureOperationMiddleware(c fiber.Ctx) error
+    EnsureOperationMiddleware upserts the Operation row from the `details[]` /
+    `settings[]` form fields the SDK's StartOperation* requests carry. Google
+    Drive has no `details[]` fields (OAuth supplies the credential), but the
+    middleware still runs so settings get captured uniformly across operations.
+
+func (cs *Controllers) GetDynamicFields(
+	_ fiber.Ctx,
+	key string,
+	_ map[string]string,
+) (map[string]irminmodels.DynamicField, error)
+    GetDynamicFields implements common.ConfigFieldProvider. Returns the static
+    schema for the requested key — Google Drive's config is fully declarative so
+    the provider does no per-request decisions.
+
+func (cs *Controllers) GetOperationFormFields() ([]string, []string)
+    GetOperationFormFields implements common.OperationConfigProvider.
+    Google Drive has no required detail fields (OAuth supplies the credential),
+    but has optional settings (scope, max_records_per_resource).
+
+func (cs *Controllers) GetRequiredFormFields() ([]string, []string)
+    GetRequiredFormFields implements common.ConfigValidationProvider. Google
+    Drive is OAuth-backed and every setting is optional.
+
+func (cs *Controllers) Info(c fiber.Ctx) error
+    Info godoc @Summary Get Google Drive connector information @Description
+    Returns connector metadata including capabilities, OAuth configuration,
+    and dynamic field schema. The embedded ConnectionOAuthConfig tells the
+    console to render a Connect-with-Google button instead of a credential form.
+    @Tags googledrive @Security SystemTokenAuth @Accept json @Produce json
+    @Success 200 {object} models.ConnectorDetails "Google Drive connector
+    information" @Failure 401 {object} fiber.Map "Unauthorized" @Failure 500
+    {object} fiber.Map "Internal server error" @Router /googledrive/info [get]
+
+func (cs *Controllers) OperationPatch(c fiber.Ctx) error
+    OperationPatch godoc @Summary Google Drive connector does not support
+    patch operations @Description Google Drive connector does not support
+    patch operations. @Tags googledrive @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce json @Success 501 {object} fiber.Map "Not
+    implemented - Google Drive does not support patch" @Failure 401 {object}
+    fiber.Map "Unauthorized" @Router /googledrive/operation/patch [post]
+
+func (cs *Controllers) OperationPull(c fiber.Ctx) error
+    OperationPull godoc @Summary Pull files from Google Drive @Description
+    Starts an asynchronous pull job that fetches file metadata from Google
+    Drive as a JSON file. The connection ID is captured from the request
+    before the async worker starts so the worker can resolve OAuth tokens
+    without a fiber.Ctx. @Tags googledrive @Security SystemTokenAuth @Accept
+    multipart/form-data @Produce application/zip @Param path formData string
+    false "What to pull. Empty or 'files' / 'files.json' returns metadata
+    for every accessible file as files.json. A Drive file ID downloads that
+    single file. A Drive folder ID walks the folder (recursive per connection
+    settings) and returns files.json plus one blob per downloaded file at
+    files/&lt;driveId&gt;-&lt;safeName&gt;.&lt;ext&gt;." @Success 202 {object} fiber.Map "Pull
+    job started" @Failure 400 {object} fiber.Map "Bad request" @Failure 401
+    {object} fiber.Map "Unauthorized" @Failure 428 {object} fiber.Map "OAuth not
+    connected" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /googledrive/operation/pull [post]
+
+func (cs *Controllers) OperationPush(c fiber.Ctx) error
+    OperationPush godoc @Summary Push files to Google Drive @Description Upload
+    files to the connected user's Google Drive as new files. The uploaded ZIP
+    contents are created as individual Drive files under the optional path
+    (treated as a folder hierarchy created on the fly). @Tags googledrive
+    @Security SystemTokenAuth @Accept multipart/form-data @Produce json @Param
+    file formData file true "ZIP file containing files to push to Google Drive"
+    @Param path formData string false "Target folder path in Google Drive (e.g.,
+    '/Irmin/backup' — created if missing)" @Success 202 {object} fiber.Map "Push
+    job started" @Failure 400 {object} fiber.Map "Bad request" @Failure 401
+    {object} fiber.Map "Unauthorized" @Failure 428 {object} fiber.Map "OAuth not
+    connected" @Failure 500 {object} fiber.Map "Internal server error" @Router
+    /googledrive/operation/push [post]
+
+func (cs *Controllers) OperationSchemaGet(c fiber.Ctx) error
+    OperationSchemaGet godoc @Summary Get Google Drive operation schema
+    @Description Returns the schema describing what files a pull operation
+    produces and what a push operation accepts. The schema is path-aware: an
+    empty path returns the legacy files.json catalogue alongside the user's My
+    Drive root; a Drive folder ID returns that folder's direct children; a Drive
+    file ID returns a single leaf. @Tags googledrive @Security SystemTokenAuth
+    @Accept json @Produce json @Param operation path string true "Operation
+    type" Enums(pull,push) @Param path query string false "Drive resource
+    to inspect. Empty / 'files' / 'files.json' returns the legacy metadata
+    catalogue; 'root' returns My Drive's top level; any Drive folder/file ID
+    is resolved via files.get." @Success 200 {object} irminmodels.ObjectSchema
+    "Operation schema" @Failure 400 {object} fiber.Map "Bad request" @Failure
+    401 {object} fiber.Map "Unauthorized" @Failure 500 {object} fiber.Map
+    "Internal server error" @Router /googledrive/operation/schema/{operation}
+    [post]
+
+func (cs *Controllers) SubscribeToChanges(c fiber.Ctx) error
+    SubscribeToChanges is not supported.
+
+func (cs *Controllers) TestConnection(
+	_ fiber.Ctx, _, _ map[string]any,
+) (bool, bool, bool, []string)
+    TestConnection implements common.ConfigValidationProvider. We cannot probe
+    Google Drive here because no bearer token is available (the OAuth flow lives
+    on Core, not on connectors), so we report success unconditionally.
+
+func (cs *Controllers) UnsubscribeFromChanges(c fiber.Ctx) error
+    UnsubscribeFromChanges is not supported.
+
+func (cs *Controllers) ValidateFields(_ fiber.Ctx, _, settings map[string]any) []string
+    ValidateFields implements common.ConfigValidationProvider. Each setting
+    is optional; we only flag invalid non-empty values so empty defaults fall
+    through to runtime fallbacks.
+
+func (cs *Controllers) ValidateSystemTokenMiddleware(c fiber.Ctx) error
+    ValidateSystemTokenMiddleware verifies the inbound system token
+    (cross-service auth from Core) and stamps the connector info on the request
+    locals so EnsureOperationMiddleware can pick it up.
+
+type GoogleDrivePullProvider struct {
+	// Has unexported fields.
+}
+    GoogleDrivePullProvider implements common.PullOperationProvider.
+
+func (p *GoogleDrivePullProvider) GetAllFiles(
+	ctx context.Context,
+	clientAny any,
+	operation *db.Operation,
+) ([]string, [][]byte, error)
+    GetAllFiles is the legacy metadata-only pull entry point. It fetches file
+    metadata across the user's authorised Drive and returns it as a single
+    files.json blob. Content download, recursive folder walks, and Google-native
+    format export are handled by GetFilesByPath when a non-empty path is
+    supplied; this method preserves the original behaviour for the empty-path
+    case so existing workflows are unaffected.
+
+func (p *GoogleDrivePullProvider) GetFileByPath(
+	ctx context.Context,
+	clientAny any,
+	operation *db.Operation,
+	rawPath string,
+) (string, []byte, error)
+    GetFileByPath delegates to GetFilesByPath and returns the single (path,
+    blob) result. The framework now prefers GetFilesByPath when a provider
+    implements PullByPathMultiProvider, so this method only fires if a future
+    framework change calls it explicitly.
+
+    If GetFilesByPath produces more than one entry (a folder pull), we error
+    rather than silently returning the first blob and dropping the rest — losing
+    data without telling the user is the worst failure mode for a sync workflow.
+
+func (p *GoogleDrivePullProvider) GetFilesByPath(
+	ctx context.Context,
+	clientAny any,
+	operation *db.Operation,
+	rawPath string,
+) ([]string, [][]byte, error)
+    GetFilesByPath implements common.PullByPathMultiProvider. The path semantics
+    are:
+
+      - "" / "files" / "files.json" — metadata-only legacy pull. Identical to
+        the empty-path GetAllFiles output. Kept for back-compat with existing
+        workflows.
+      - any other string — treated as a Drive ID. files.get resolves it;
+        folders are walked (respecting the recursive setting and per-file
+        filters), regular files are downloaded directly. Drive folder paths like
+        "/Backup/Reports" are out of scope for v1; the framework's schema picker
+        passes Drive IDs, not paths.
+
+func (p *GoogleDrivePullProvider) InitializeClient(
+	ctx context.Context,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient creates the Google Drive API client. The OAuth bearer
+    token is resolved transparently by the round-tripper embedded in the HTTP
+    transport via WrapHTTPClient.
+
+    The returned cleanup func is a no-op — the HTTP client has no persistent
+    connection to close.
+
+func (p *GoogleDrivePullProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler emits per-page events.
+
+type GoogleDrivePushProvider struct {
+	// Has unexported fields.
+}
+    GoogleDrivePushProvider implements common.PushOperationProvider for Google
+    Drive. Files from the uploaded ZIP are pushed to the connected user's Drive
+    as new Drive files using the multipart upload API.
+
+func (p *GoogleDrivePushProvider) InitializeClient(
+	ctx context.Context,
+	logger *slog.Logger,
+	operation *db.Operation,
+) (any, *string, func(), error)
+    InitializeClient creates the OAuth-wrapped HTTP client for Drive API calls.
+
+func (p *GoogleDrivePushProvider) ProcessFiles(
+	ctx context.Context,
+	clientAny any,
+	operation *db.Operation,
+	files map[string][]byte,
+	rawPath string,
+) error
+    ProcessFiles uploads each file from the push ZIP to Google Drive. rawPath
+    is treated as a folder path — files are created under the resolved folder
+    hierarchy (created if missing).
+
+func (p *GoogleDrivePushProvider) ProgressHandler(operation *db.Operation) common.ProgressHandler
+    ProgressHandler emits per-file events.
+
+</pre>
+</body></html>

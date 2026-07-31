@@ -301,6 +301,60 @@ row and proceeds; no orphan client rows accumulate on our side.
 (One orphan vendor-side registration may linger — background cleanup
 concern, not flow-blocking.)
 
+## Decision matrix: which OAuth path to pick
+
+When building a new OAuth-backed connector, use this decision tree:
+
+```
+Does the vendor have a Dynamic Client Registration endpoint
+(RFC 7591, typically POST /oauth/register)?
+├─ YES → DCR path
+│        • Set DCREndpoint in ConnectionOAuthConfig
+│        • Core auto-registers per workspace on first use
+│        • Zero operator setup
+│        • Example: Linear (mcp.linear.app/register),
+│          Intercom, Sentry, Monday.com
+│
+└─ NO → Static client path
+         • Omit DCREndpoint from ConnectionOAuthConfig
+         • Admin registers one app in the vendor's developer portal
+         • Client credentials stored in connection_oauth_clients
+           (workspace_id = NULL, global)
+         • Example: Google Drive (Google Cloud Console),
+           Stripe Connect (Stripe Dashboard)
+
+If the vendor doesn't support OAuth at all:
+  → API-key path (no ConnectionOAuthConfig)
+  • Static credentials via details DynamicFields
+  • Example: Stripe (restricted API keys), Postgres, MySQL
+```
+
+### Quick-reference table
+
+| Question | DCR | Static client | API key |
+|---|---|---|---|
+| Vendor has `/oauth/register`? | ✅ Yes | ❌ No | N/A |
+| Operator setup needed? | ❌ None | ✅ Register app once | ✅ Generate key once |
+| Client credentials stored? | Per-workspace, via DCR | Global, in DB | Per-Connection, in details |
+| Connector code difference? | Set `DCREndpoint` | Omit `DCREndpoint` | No `ConnectionOAuthConfig` |
+| Wire protocol? | OAuth 2.0 + PKCE | OAuth 2.0 + PKCE | Static bearer / basic auth |
+| Console UI? | Connect button | Connect button | Credential form |
+
+### How to tell if a vendor supports DCR
+
+1. Check the vendor's OAuth documentation for "Dynamic Client Registration" or "RFC 7591"
+2. Look for a `POST /oauth/register` or `POST /v1/oauth/register` endpoint
+3. Check the vendor's `.well-known/oauth-authorization-server` for a `registration_endpoint` field
+4. If the vendor is MCP-compatible, they almost certainly support DCR (Linear, Intercom, Sentry all do)
+
+### Common pitfalls
+
+- **Google does NOT support DCR.** You must use the static-client path with Google Cloud Console registration. See the [Google Drive connector README](../connectors/googledrive/README.md) for the full setup walkthrough.
+- **Stripe Connect does NOT support DCR.** Stripe shipped as an API-key connector instead because the ops overhead of a static OAuth app didn't exercise the DCR path we wanted to prove.
+- **Refresh token lifetime differs by vendor state.** Google's test-mode OAuth issues refresh tokens that expire after 7 days. Published apps with a verified consent screen get indefinite refresh tokens. Always document this per vendor.
+- **Scope changes force re-authorisation.** If you add a new scope to an existing connector, every user must re-authorise. Prefer the narrowest scope that meets the connector's needs.
+- **PKCE is mandatory.** Core refuses to run a flow when `PKCE: false`. Every new connector must set `PKCE: true`.
+
 ## How to build a new OAuth connector
 
 Walk-through using a fictional `Acme` vendor. The pattern is the same

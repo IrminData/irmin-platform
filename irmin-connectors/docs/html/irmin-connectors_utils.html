@@ -120,6 +120,33 @@ func JoinURL(baseURL, path string) string
     URL concatenation) - https://example.com//path (double slashes) -
     https://example.compath (missing slash)
 
+func NormalizeCoreBaseURL(coreBaseURL string) string
+    NormalizeCoreBaseURL trims a trailing slash from coreBaseURL and,
+    if the remaining suffix is `/api` or `/api/v1`, strips that too. Used by
+    the env loader so a misconfigured IRMIN_API_BASE_URL does not silently break
+    downstream URL construction.
+
+    Why this exists: the contract is that callers append the path they need. The
+    OAuth token client wants `IRMIN_API_BASE_URL + "/api/v1/system/oauth/...`;
+    the SDK wants `IRMIN_API_BASE_URL + "/api"` already baked in. A reader of
+    our docs can easily fold the `/api` prefix into the env value because the
+    redirect-URI guidance reads `{IRMIN_API_BASE_URL}/api/v1/oauth/callback`,
+    and once it's in the env value, a previously-working SDK call with shape
+    `BaseURL + "/v1/..."` produces `/api/api/v1/...` and Core 404s. By stripping
+    at env-load time, we make the env value canonical (host, no path) and let
+    each caller append the prefix they need:
+
+      - SDK callers: Env.SDKBaseURL() → host + "/api"
+      - OAuth token client: Env.APIBaseURL → host (it appends /api/v1/...
+        itself)
+
+    Genuine path-prefixed deployments (e.g. a reverse-proxy-mounted Core at
+    /irmin-core) are NOT stripped because they don't end in /api or /api/v1.
+
+    Also exported so the OAuth token client can normalize independently — it's
+    expected to be used as a public construction helper by anyone wiring up Core
+    access tokens, not just code that reads from our env loader.
+
 func ParseFormFields(c fiber.Ctx, required, optional []string) (map[string]string, error)
     ParseFormFields parses the form data from a Fiber context and checks for
     required and optional fields.
@@ -172,7 +199,7 @@ type ConnectorsEnv struct {
 	CorsEnabled              bool   // Whether CORS is enabled
 	CorsOrigins              string // Origins allowed to access the connectors server
 	UniversalConnectorAPIKey string // Universal API Key for all connectors.
-	APIBaseURL               string // Base URL of the Irmin Core API
+	APIBaseURL               string // APIBaseURL is the canonical Core base URL — host only, no path
 	APIToken                 string // Token to authenticate system requests to the Irmin Core API
 	DatabaseConnectionString string // Connection string for the database
 	// Sentry — SENTRY_ORG / SENTRY_PROJECT / SENTRY_AUTH_TOKEN are read
@@ -190,6 +217,19 @@ func LoadEnv() (*ConnectorsEnv, error)
     LoadEnv loads environment variables from the .env file in the project root,
     sets default values for required system variables if not present, and
     returns a ConnectorsEnv struct with the loaded environment variables.
+
+func (e *ConnectorsEnv) SDKBaseURL() string
+    SDKBaseURL returns the Core base URL formatted for the irmin-sdk-go
+    `api.NewClient` constructor, which expects a base of the form
+    `https://host/api` (the SDK's endpoint constants are `/v1/...` and the
+    Request method does a literal string concat). Callers that POST to system
+    endpoints directly (the OAuth token client) use APIBaseURL instead because
+    those callers append the full `/api/v1/...` path.
+
+    Keeping the conversion here means env value normalization stays in one place
+    — APIBaseURL is canonical, and any "this caller needs a different shape"
+    knowledge lives next to the env definition rather than scattered across SDK
+    callsites.
 
 </pre>
 </body></html>

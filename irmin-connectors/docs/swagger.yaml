@@ -1146,6 +1146,288 @@ paths:
       summary: Firecrawl connector does not support webhook subscriptions
       tags:
       - firecrawl
+  /googledrive/configuration/{key}/fields:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Returns dynamic configuration field definitions for the Google
+        Drive connector. The "details" key returns an empty map because Google Drive
+        authenticates via OAuth; the "settings" key returns user-tunable options like
+        scope and max_records_per_resource.
+      parameters:
+      - description: Configuration key
+        enum:
+        - details
+        - settings
+        in: path
+        name: key
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Configuration fields
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/irminmodels.DynamicField'
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get Google Drive connector configuration fields
+      tags:
+      - googledrive
+  /googledrive/configuration/validate:
+    post:
+      consumes:
+      - application/json
+      - multipart/form-data
+      description: Validates the provided configuration fields for the Google Drive
+        connector.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Validation result
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Validate Google Drive connector configuration
+      tags:
+      - googledrive
+  /googledrive/details:
+    get:
+      consumes:
+      - application/json
+      description: Renders an HTML page describing what the Google Drive connector
+        does, what it supports, and how to set it up. Public — no authentication required.
+      produces:
+      - text/html
+      responses:
+        "200":
+          description: Google Drive connector details page
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      summary: Get Google Drive connector details page
+      tags:
+      - googledrive
+  /googledrive/info:
+    get:
+      consumes:
+      - application/json
+      description: Returns connector metadata including capabilities, OAuth configuration,
+        and dynamic field schema. The embedded ConnectionOAuthConfig tells the console
+        to render a Connect-with-Google button instead of a credential form.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Google Drive connector information
+          schema:
+            $ref: '#/definitions/models.ConnectorDetails'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get Google Drive connector information
+      tags:
+      - googledrive
+  /googledrive/operation/patch:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Google Drive connector does not support patch operations.
+      produces:
+      - application/json
+      responses:
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "501":
+          description: Not implemented - Google Drive does not support patch
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Google Drive connector does not support patch operations
+      tags:
+      - googledrive
+  /googledrive/operation/pull:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Starts an asynchronous pull job that fetches file metadata from
+        Google Drive as a JSON file. The connection ID is captured from the request
+        before the async worker starts so the worker can resolve OAuth tokens without
+        a fiber.Ctx.
+      parameters:
+      - description: What to pull. Empty or 'files' / 'files.json' returns metadata
+          for every accessible file as files.json. A Drive file ID downloads that
+          single file. A Drive folder ID walks the folder (recursive per connection
+          settings) and returns files.json plus one blob per downloaded file at files/<driveId>-<safeName>.<ext>.
+        in: formData
+        name: path
+        type: string
+      produces:
+      - application/zip
+      responses:
+        "202":
+          description: Pull job started
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "428":
+          description: OAuth not connected
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Pull files from Google Drive
+      tags:
+      - googledrive
+  /googledrive/operation/push:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Upload files to the connected user's Google Drive as new files.
+        The uploaded ZIP contents are created as individual Drive files under the
+        optional path (treated as a folder hierarchy created on the fly).
+      parameters:
+      - description: ZIP file containing files to push to Google Drive
+        in: formData
+        name: file
+        required: true
+        type: file
+      - description: Target folder path in Google Drive (e.g., '/Irmin/backup' — created
+          if missing)
+        in: formData
+        name: path
+        type: string
+      produces:
+      - application/json
+      responses:
+        "202":
+          description: Push job started
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "428":
+          description: OAuth not connected
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Push files to Google Drive
+      tags:
+      - googledrive
+  /googledrive/operation/schema/{operation}:
+    post:
+      consumes:
+      - application/json
+      description: 'Returns the schema describing what files a pull operation produces
+        and what a push operation accepts. The schema is path-aware: an empty path
+        returns the legacy files.json catalogue alongside the user''s My Drive root;
+        a Drive folder ID returns that folder''s direct children; a Drive file ID
+        returns a single leaf.'
+      parameters:
+      - description: Operation type
+        enum:
+        - pull
+        - push
+        in: path
+        name: operation
+        required: true
+        type: string
+      - description: Drive resource to inspect. Empty / 'files' / 'files.json' returns
+          the legacy metadata catalogue; 'root' returns My Drive's top level; any
+          Drive folder/file ID is resolved via files.get.
+        in: query
+        name: path
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Operation schema
+          schema:
+            $ref: '#/definitions/irminmodels.ObjectSchema'
+        "400":
+          description: Bad request
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/fiber.Map'
+        "500":
+          description: Internal server error
+          schema:
+            $ref: '#/definitions/fiber.Map'
+      security:
+      - SystemTokenAuth: []
+      summary: Get Google Drive operation schema
+      tags:
+      - googledrive
   /http/configuration/{key}/fields:
     post:
       consumes:

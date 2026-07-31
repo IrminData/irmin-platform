@@ -90,6 +90,14 @@ var (
     Sentinel errors for the small set of failure modes connector handlers need
     to distinguish. Anything else is returned as a wrapped error.
 
+var ErrMCPMissingDeps = errors.New(
+	"mcp: token client and connection id are required",
+)
+    ErrMCPMissingDeps is returned when NewMCPSession is called with a nil token
+    client or zero connectionID. Mirrors AsyncOAuthRoundTripper's fail-closed
+    behaviour — better to error early than to send unauth'd requests to a vendor
+    MCP server.
+
 
 FUNCTIONS
 
@@ -99,6 +107,43 @@ func ConnectionIDFromRequestHeader(getHeader func(string) string) (uint, error)
     fiber.Ctx.Get-shaped function, so this helper works for both the fiber.Ctx
     and http.Request paths without forcing a direct Fiber dependency in every
     connector.
+
+func NewMCPSession(
+	ctx context.Context,
+	endpoint string,
+	tokenClient *OAuthTokenClient,
+	connectionID uint,
+	httpClient *http.Client,
+	logger *slog.Logger,
+) (*mcp.ClientSession, func(), error)
+    NewMCPSession constructs a live MCP client session against the given
+    endpoint, using the OAuth token client to authenticate and refresh tokens
+    transparently. The returned cleanup func MUST be called when the caller is
+    done with the session — it closes the underlying transport and releases any
+    standalone-SSE connection.
+
+    httpClient is the base transport (typically http.DefaultClient). When nil,
+    http.DefaultClient is used. The OAuth round-tripper wraps this base,
+    so callers that need custom timeouts or proxies should pass a pre-configured
+    client here rather than mutating http.DefaultTransport.
+
+    connectionID identifies which Connection's token to fetch — same contract as
+    AsyncOAuthRoundTripper.ConnectionID.
+
+    logger is used for diagnostic Warn-level events from the round- tripper
+    (e.g., second-401-after-refresh body snippet). When nil, slog.Default()
+    is used. Tests typically pass slog.New with a discard handler to keep test
+    output quiet.
+
+    Lifecycle:
+
+     1. NewMCPSession opens the streamable HTTP connection and runs the MCP
+        `initialize` handshake (latency: one round-trip).
+     2. Caller invokes ListTools / CallTool on the returned session.
+     3. Caller invokes the cleanup func, which closes the session.
+
+    Errors during initialize bubble up unwrapped so the caller can distinguish
+    auth (401 → vendor_error) from transport (DNS / TLS).
 
 func UpdateConnectorInDB(
 	d *db.Database,
@@ -148,6 +193,11 @@ func NewOAuthTokenClient(coreBaseURL, systemToken string) *OAuthTokenClient
     Callers that need custom retries, TLS config, or proxy handling can assign
     .HTTPClient after construction.
 
+    The provided coreBaseURL is normalized via utils.NormalizeCoreBaseURL so a
+    `/api[/v1]`-suffixed value still produces correct paths. This duplicates the
+    normalization done at env-load time so direct callers (tests, third-party
+    uses) get the same behavior as the env-loader path.
+
 func (c *OAuthTokenClient) FetchVendorAccessToken(
 	ctx context.Context,
 	connectionID uint,
@@ -181,8 +231,20 @@ type VendorAccessToken struct {
 
 func (t *VendorAccessToken) AuthorizationHeader() string
     AuthorizationHeader returns the exact value a connector should set on
-    outbound vendor requests, e.g. "Bearer ya29...". Uses "Bearer" when the
-    vendor omitted token_type, matching OAuth 2.0 §5.1 convention.
+    outbound vendor requests, e.g. "Bearer ya29...".
+
+    We canonicalise any case-variant of "bearer" to the spec-grammar form
+    "Bearer". RFC 6750 §2.1's ABNF uses the literal token "Bearer" with
+    a capital B, and while §1.2 says the scheme should be parsed case-
+    insensitively (per HTTP/1.1 norms), some resource servers — Linear's MCP
+    server included — reject the lowercase form with `invalid_token: Missing or
+    invalid access token`. The vendor's /token response often returns "bearer"
+    lowercase (RFC 6749 §5.1 shows it lowercase in the example), so we cannot
+    assume the stored type is already normalised. Empty token_type also defaults
+    to "Bearer" matching OAuth 2.0 §5.1 convention.
+
+    Non-bearer schemes (theoretical; we don't currently support any vendor using
+    MAC, DPoP, etc.) are preserved verbatim.
 
 </pre>
 </body></html>
