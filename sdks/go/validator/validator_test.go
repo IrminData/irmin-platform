@@ -5,10 +5,10 @@ import (
 	"testing"
 	"time"
 
-	coreapi "github.com/IrminData/irmin-sdk-go/api"
-	models "github.com/IrminData/irmin-sdk-go/models"
-	sqids "github.com/IrminData/irmin-sdk-go/sqids"
-	validator "github.com/IrminData/irmin-sdk-go/validator"
+	coreapi "github.com/IrminData/irmin-platform/sdks/go/api"
+	models "github.com/IrminData/irmin-platform/sdks/go/models"
+	sqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
+	validator "github.com/IrminData/irmin-platform/sdks/go/validator"
 )
 
 func TestValidator_ValidateUser(t *testing.T) {
@@ -377,7 +377,7 @@ func TestValidator_RequestValidation(t *testing.T) {
 		}
 	})
 
-	t.Run("TransferConnectionOwnershipRequest - With SQID validation in core-api", func(t *testing.T) {
+	t.Run("TransferConnectionOwnershipRequest - With SQID validation in API client", func(t *testing.T) {
 		// Core-api request structs DO have SQID validation tags
 		req := coreapi.TransferConnectionOwnershipRequest{
 			NewOwnerID: "invalid_user_sqid", // This WILL trigger SQID validation

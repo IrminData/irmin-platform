@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"net/url"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // CallSystemWebhook calls the system webhook endpoint.

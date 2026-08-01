@@ -4,7 +4,7 @@ import (
 	"context"
 	"net/http"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // ConnectorInfo holds metadata about a connector returned from the

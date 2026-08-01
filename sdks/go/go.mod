@@ -1,4 +1,4 @@
-module github.com/IrminData/irmin-sdk-go
+module github.com/IrminData/irmin-platform/sdks/go
 
 go 1.25.0
 

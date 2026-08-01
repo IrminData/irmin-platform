@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"net/url"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // GetSchema fetches the schema the connector exposes for a specific

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/IrminData/irmin-sdk-go/connectorsclient"
+	"github.com/IrminData/irmin-platform/sdks/go/connectorsclient"
 )
 
 type roundTripFunc func(*http.Request) (*http.Response, error)

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // Search performs a workspace-wide search using the provided filters.

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"time"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // OperationJob is a handle to an async operation the caller started
