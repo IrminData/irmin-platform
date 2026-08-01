@@ -8,10 +8,10 @@ GEMINI.md are aliases of this file.
 Irmin Platform is one Git repository containing independently buildable and
 deployable projects:
 
-- irmin/: Core API in Go
-- irmin-ai/: AI runtime in TypeScript
-- irmin-console/: Next.js console in TypeScript
-- irmin-connectors/: connector runtime in Go
+- core/: Core API in Go
+- ai/: AI runtime in TypeScript
+- console/: Next.js console in TypeScript
+- connectors/: connector runtime in Go
 - sdks/go/: public Go SDK
 
 Future SDKs belong under sdks/<language>/.
@@ -55,22 +55,22 @@ and has known imported cache invalidation failures recorded in TODO.md.
 
 ## Project routing
 
-### irmin/
+### core/
 
-Read irmin/AGENTS.md. Use Go 1.25+, Fiber, GORM, structured slog logging, and
+Read core/AGENTS.md. Use Go 1.25+, Fiber, GORM, structured slog logging, and
 the project golangci-lint configuration.
 
-### irmin-ai/
+### ai/
 
-Read irmin-ai/AGENTS.md. Use Node.js 24+, TypeScript strict mode, Fastify,
+Read ai/AGENTS.md. Use Node.js 24+, TypeScript strict mode, Fastify,
 LangChain, Drizzle, and Qdrant conventions already established there.
 
-### irmin-console/
+### console/
 
-Read irmin-console/AGENTS.md and irmin-console/DESIGN.md before UI work. Preserve
+Read console/AGENTS.md and console/DESIGN.md before UI work. Preserve
 Next.js, React, accessibility, localization, and design-system conventions.
 
-### irmin-connectors/
+### connectors/
 
 Use Go 1.25+, Fiber, GORM, structured logging, and the local golangci-lint
 configuration. Connector contracts shared with Core belong in sdks/go/.

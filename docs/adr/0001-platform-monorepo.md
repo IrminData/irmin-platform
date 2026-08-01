@@ -5,6 +5,8 @@
 
 The standalone Go SDK distribution decision in this record is superseded by
 [ADR 0002](0002-monorepo-sdk-releases.md).
+The original imported project directory names are superseded by
+[ADR 0003](0003-semantic-project-directories.md).
 
 ## Context
 
@@ -20,10 +22,10 @@ repository.
 
 Use IrminData/irmin-platform as the canonical development repository for:
 
-- irmin/
-- irmin-ai/
-- irmin-console/
-- irmin-connectors/
+- core/
+- ai/
+- console/
+- connectors/
 - sdks/go/
 
 Preserve each approved source default-branch history under its destination

@@ -1,7 +1,7 @@
 * @timborovkov
 
-/irmin/ @timborovkov
-/irmin-ai/ @timborovkov
-/irmin-console/ @timborovkov
-/irmin-connectors/ @timborovkov
+/core/ @timborovkov
+/ai/ @timborovkov
+/console/ @timborovkov
+/connectors/ @timborovkov
 /sdks/ @timborovkov

@@ -12,10 +12,10 @@ changes can be reviewed, tested, and shipped as one Git change.
 
 | Path | Runtime | Purpose |
 | --- | --- | --- |
-| irmin/ | Go | Core API, repositories, workflows, analytics, and MCP |
-| irmin-ai/ | TypeScript | AI agents, embeddings, retrieval, and model integrations |
-| irmin-console/ | TypeScript | Next.js management console |
-| irmin-connectors/ | Go | Connector execution and external data integrations |
+| core/ | Go | Core API, repositories, workflows, analytics, and MCP |
+| ai/ | TypeScript | AI agents, embeddings, retrieval, and model integrations |
+| console/ | TypeScript | Next.js management console |
+| connectors/ | Go | Connector execution and external data integrations |
 | sdks/go/ | Go | Public Go client and shared connector models |
 
 Future language SDKs belong under sdks/<language>/ and should keep their own
@@ -37,21 +37,21 @@ configuration, and detailed agent instructions where applicable.
 The Go workspace resolves Core and Connectors against the local Go SDK without
 changing their published module dependencies:
 
-    go work use ./irmin ./irmin-connectors ./sdks/go
+    go work use ./core ./connectors ./sdks/go
     go test -timeout 2m ./sdks/go/...
 
 Node applications deliberately retain independent lockfiles:
 
-    cd irmin-ai && pnpm install
-    cd ../irmin-console && pnpm install
+    cd ai && pnpm install
+    cd ../console && pnpm install
 
 Environment files are local to each project. Copy the relevant example and
 never commit populated environment files:
 
-    cp irmin/.env.example irmin/.env
-    cp irmin-ai/.env.example irmin-ai/.env
-    cp irmin-console/.env.example irmin-console/.env
-    cp irmin-connectors/.env.example irmin-connectors/.env
+    cp core/.env.example core/.env
+    cp ai/.env.example ai/.env
+    cp console/.env.example console/.env
+    cp connectors/.env.example connectors/.env
 
 Existing deployments and runtime configuration remain project-specific. See
 the README in each project before running or deploying it.

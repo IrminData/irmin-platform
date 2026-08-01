@@ -3,24 +3,24 @@
 validate: test-go lint-go validate-ai validate-console
 
 test-go:
-	go test -timeout 2m ./irmin-connectors/... ./sdks/go/...
+	go test -timeout 2m ./connectors/... ./sdks/go/...
 
 test-core:
-	cd irmin && go test -timeout 2m ./...
+	cd core && go test -timeout 2m ./...
 
 lint-go:
-	cd irmin && golangci-lint run
-	cd irmin-connectors && golangci-lint run
+	cd core && golangci-lint run
+	cd connectors && golangci-lint run
 	cd sdks/go && golangci-lint run
 
 validate-ai:
-	cd irmin-ai && pnpm typecheck
-	cd irmin-ai && pnpm exec prettier --check "src/**/*.ts"
-	cd irmin-ai && pnpm lint
-	cd irmin-ai && pnpm knip
+	cd ai && pnpm typecheck
+	cd ai && pnpm exec prettier --check "src/**/*.ts"
+	cd ai && pnpm lint
+	cd ai && pnpm knip
 
 validate-console:
-	cd irmin-console && pnpm typecheck
-	cd irmin-console && pnpm format
-	cd irmin-console && pnpm lint
-	cd irmin-console && pnpm knip
+	cd console && pnpm typecheck
+	cd console && pnpm format
+	cd console && pnpm lint
+	cd console && pnpm knip
