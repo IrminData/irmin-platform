@@ -41,4 +41,5 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm format
       - run: pnpm lint
+      - run: pnpm test:dict
       - run: pnpm knip

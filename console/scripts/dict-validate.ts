@@ -15,6 +15,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
+import { serializeDictionaryValue } from './dict-format';
+
 // Configuration
 const SRC_DIR = path.resolve(__dirname, '../src');
 const DICT_DIR = path.resolve(SRC_DIR, 'lib/dict');
@@ -386,10 +388,10 @@ function fixParityIssues(
     const parts = key.split('.');
     const parentKey = parts.slice(0, -1).join('.');
     const leafKey = parts[parts.length - 1];
-    const escapedValue = enValue.replace(/'/g, "\\'");
+    const serializedValue = serializeDictionaryValue(enValue);
 
     // Log what needs to be added manually
-    console.log(`  Add to ${parentKey}: ${leafKey}: '${escapedValue}'`);
+    console.log(`  Add to ${parentKey}: ${leafKey}: ${serializedValue}`);
   }
 
   console.log(

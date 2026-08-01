@@ -23,4 +23,5 @@ validate-console:
 	cd console && pnpm typecheck
 	cd console && pnpm format
 	cd console && pnpm lint
+	cd console && pnpm test:dict
 	cd console && pnpm knip

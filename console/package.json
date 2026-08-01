@@ -13,7 +13,7 @@
     "dev:no-https": "next dev",
     "build": "pnpm docs && next build",
     "start": "next start",
-    "validate": "tsc --noEmit && prettier --write . && eslint --fix . && knip",
+    "validate": "tsc --noEmit && prettier --write . && eslint --fix . && pnpm test:dict && knip",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint --fix .",
@@ -30,6 +30,7 @@
     "dict:validate": "tsx scripts/dict-validate.ts",
     "dict:fix": "tsx scripts/dict-validate.ts --fix",
     "dict:report": "tsx scripts/dict-validate.ts --json",
+    "test:dict": "tsx --test scripts/dict-format.test.ts",
     "prepare": "husky"
   },
   "dependencies": {
