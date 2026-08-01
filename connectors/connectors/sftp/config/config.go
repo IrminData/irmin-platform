@@ -105,8 +105,8 @@ func initializeFieldDefinitions() (map[string]irminmodels.DynamicField, map[stri
 		"host_key_fingerprint": {
 			Type:     "text",
 			Label:    "Host Key Fingerprint",
-			HelpText: "Expected SSH host key fingerprint for verification (optional)",
-			Required: false,
+			HelpText: "Expected SHA256 SSH host key fingerprint for verification",
+			Required: true,
 			Example:  "SHA256:...",
 		},
 	}

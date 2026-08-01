@@ -67,7 +67,7 @@ All data operations use ZIP archives to maintain consistency with other Irmin co
 | `password` | string | No* | Password for authentication | - |
 | `private_key` | string | No* | SSH private key content | - |
 | `private_key_passphrase` | string | No | Passphrase for encrypted private key | - |
-| `host_key_fingerprint` | string | No | Expected SSH host key fingerprint | - |
+| `host_key_fingerprint` | string | Yes | Expected SHA256 SSH host key fingerprint | - |
 
 *Either `password` or `private_key` must be provided for authentication.
 

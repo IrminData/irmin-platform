@@ -2,8 +2,6 @@ package sftpclient
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"io"
@@ -307,22 +305,17 @@ func (c *SftpClient) setupHostKeyVerification(config *ssh.ClientConfig) error {
 		return errors.New("SSH config cannot be nil")
 	}
 
-	if c.config.HostKeyFingerprint != "" {
-		// Use provided fingerprint for verification
-		config.HostKeyCallback = c.verifyHostKeyFingerprint
-	} else {
-		// Accept any host key (less secure, but sometimes necessary for automation)
-		// #nosec G106 - This is intentionally insecure when no fingerprint is provided
-		config.HostKeyCallback = ssh.InsecureIgnoreHostKey()
+	if c.config.HostKeyFingerprint == "" {
+		return errors.New("host key fingerprint is required")
 	}
+
+	config.HostKeyCallback = c.verifyHostKeyFingerprint
 	return nil
 }
 
 // verifyHostKeyFingerprint verifies the host key against the expected fingerprint.
 func (c *SftpClient) verifyHostKeyFingerprint(_ string, _ net.Addr, key ssh.PublicKey) error {
-	// Calculate SHA256 fingerprint of the host key
-	hash := sha256.Sum256(key.Marshal())
-	fingerprint := "SHA256:" + base64.StdEncoding.EncodeToString(hash[:])
+	fingerprint := ssh.FingerprintSHA256(key)
 
 	// Compare with expected fingerprint
 	if fingerprint != c.config.HostKeyFingerprint {

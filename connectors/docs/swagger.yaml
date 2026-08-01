@@ -3376,6 +3376,7 @@ paths:
       - description: Expected host key fingerprint for security verification
         in: formData
         name: details[host_key_fingerprint]
+        required: true
         type: string
       produces:
       - application/json

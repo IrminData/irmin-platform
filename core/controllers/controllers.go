@@ -102,7 +102,6 @@ func (api *APIControllers) validateResponseSnapshot(data []byte) {
 	if responseCopy.Data != nil {
 		if dataValidationErr := api.validator.ValidateDynamic(responseCopy.Data); dataValidationErr.HasErrors() {
 			api.Logger.Error("Response data validation failed", "errors", dataValidationErr.GetFieldErrors())
-			api.Logger.Info("Invalid response data", "data", string(data))
 			return
 		}
 	}
@@ -110,7 +109,6 @@ func (api *APIControllers) validateResponseSnapshot(data []byte) {
 	// Validate the response object itself
 	if responseValidationErr := api.validator.ValidateEnhanced(responseCopy); responseValidationErr.HasErrors() {
 		api.Logger.Error("Response validation failed", "errors", responseValidationErr.RawErrors)
-		api.Logger.Info("Invalid response", "data", string(data))
 	}
 }
 

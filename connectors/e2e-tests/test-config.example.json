@@ -72,7 +72,7 @@
         "password": "your-password",
         "private_key": "",
         "private_key_passphrase": "",
-        "host_key_fingerprint": ""
+        "host_key_fingerprint": "SHA256:replace-with-server-host-key-fingerprint"
       },
       "settings": {
         "remote_path": "/home/user/data",

@@ -27,7 +27,7 @@ const (
 // @Param details[password] formData string false "Password for SFTP authentication (if not using private key)"
 // @Param details[private_key] formData string false "Private key for SFTP authentication (if not using password)"
 // @Param details[private_key_passphrase] formData string false "Passphrase for encrypted private key"
-// @Param details[host_key_fingerprint] formData string false "Expected host key fingerprint for security verification"
+// @Param details[host_key_fingerprint] formData string true "Expected host key fingerprint for security verification"
 // @Success 200 {object} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result"
 // @Failure 400 {object} fiber.Map "Bad request - invalid configuration data"
 // @Failure 401 {object} fiber.Map "Unauthorized - invalid or missing authentication"

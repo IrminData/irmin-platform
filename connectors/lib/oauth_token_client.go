@@ -310,7 +310,7 @@ func ConnectionIDFromRequestHeader(getHeader func(string) string) (uint, error) 
 	if raw == "" {
 		return 0, ErrMissingConnectionHeader
 	}
-	parsed, parseErr := strconv.ParseUint(raw, 10, 64)
+	parsed, parseErr := strconv.ParseUint(raw, 10, strconv.IntSize)
 	if parseErr != nil || parsed == 0 {
 		return 0, ErrMissingConnectionHeader
 	}

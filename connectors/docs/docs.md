@@ -10351,7 +10351,7 @@ func SanitizePath(path string) string
 SanitizePath sanitizes a file path by removing dangerous elements.
 
 <a name="ConnectionConfig"></a>
-## type [ConnectionConfig](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L62-L71>)
+## type [ConnectionConfig](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L60-L69>)
 
 ConnectionConfig holds the configuration for SFTP connections.
 
@@ -10369,7 +10369,7 @@ type ConnectionConfig struct {
 ```
 
 <a name="FileInfo"></a>
-## type [FileInfo](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L32-L41>)
+## type [FileInfo](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L30-L39>)
 
 FileInfo represents information about a remote file or directory.
 
@@ -10535,7 +10535,7 @@ func (pt *PerformanceTracker) Finish(success bool, errorMessage string)
 Finish completes the tracking and records the metrics.
 
 <a name="RetryConfig"></a>
-## type [RetryConfig](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L74-L80>)
+## type [RetryConfig](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L72-L78>)
 
 RetryConfig holds retry configuration for SFTP operations.
 
@@ -10550,7 +10550,7 @@ type RetryConfig struct {
 ```
 
 <a name="DefaultRetryConfig"></a>
-### func [DefaultRetryConfig](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L83>)
+### func [DefaultRetryConfig](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L81>)
 
 ```go
 func DefaultRetryConfig() *RetryConfig
@@ -10622,7 +10622,7 @@ func (sc *SecurityConfig) ValidateTransferSize(totalSize int64, fileCount int) e
 ValidateTransferSize validates total transfer size.
 
 <a name="SftpClient"></a>
-## type [SftpClient](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L44-L59>)
+## type [SftpClient](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L42-L57>)
 
 SftpClient represents an SFTP client connection.
 
@@ -10642,7 +10642,7 @@ func InitSftpClient(ctx context.Context, logger *slog.Logger, operation *db.Oper
 InitSftpClient initializes an SftpClient instance based on the data provided in the operation.
 
 <a name="NewSftpClient"></a>
-### func [NewSftpClient](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L100>)
+### func [NewSftpClient](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L98>)
 
 ```go
 func NewSftpClient(config *ConnectionConfig) (*SftpClient, error)
@@ -10651,7 +10651,7 @@ func NewSftpClient(config *ConnectionConfig) (*SftpClient, error)
 NewSftpClient creates a new SFTP client instance.
 
 <a name="NewSftpClientWithSecurity"></a>
-### func [NewSftpClientWithSecurity](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L110-L114>)
+### func [NewSftpClientWithSecurity](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L108-L112>)
 
 ```go
 func NewSftpClientWithSecurity(config *ConnectionConfig, securityConfig *SecurityConfig, retryConfig *RetryConfig) (*SftpClient, error)
@@ -10660,7 +10660,7 @@ func NewSftpClientWithSecurity(config *ConnectionConfig, securityConfig *Securit
 NewSftpClientWithSecurity creates a new SFTP client instance with custom security config.
 
 <a name="SftpClient.Close"></a>
-### func \(\*SftpClient\) [Close](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L238>)
+### func \(\*SftpClient\) [Close](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L236>)
 
 ```go
 func (c *SftpClient) Close() error
@@ -10669,7 +10669,7 @@ func (c *SftpClient) Close() error
 Close closes the SFTP and SSH connections.
 
 <a name="SftpClient.Connect"></a>
-### func \(\*SftpClient\) [Connect](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L187>)
+### func \(\*SftpClient\) [Connect](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L185>)
 
 ```go
 func (c *SftpClient) Connect() error
@@ -10678,7 +10678,7 @@ func (c *SftpClient) Connect() error
 Connect establishes an SFTP connection to the server with retry logic.
 
 <a name="SftpClient.CreateDirectory"></a>
-### func \(\*SftpClient\) [CreateDirectory](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L442>)
+### func \(\*SftpClient\) [CreateDirectory](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L435>)
 
 ```go
 func (c *SftpClient) CreateDirectory(path string) error
@@ -10687,7 +10687,7 @@ func (c *SftpClient) CreateDirectory(path string) error
 CreateDirectory creates a directory on the remote server.
 
 <a name="SftpClient.DeleteFile"></a>
-### func \(\*SftpClient\) [DeleteFile](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L593>)
+### func \(\*SftpClient\) [DeleteFile](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L586>)
 
 ```go
 func (c *SftpClient) DeleteFile(remotePath string) error
@@ -10696,7 +10696,7 @@ func (c *SftpClient) DeleteFile(remotePath string) error
 DeleteFile deletes a file from the remote server.
 
 <a name="SftpClient.DownloadDirectory"></a>
-### func \(\*SftpClient\) [DownloadDirectory](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L642>)
+### func \(\*SftpClient\) [DownloadDirectory](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L635>)
 
 ```go
 func (c *SftpClient) DownloadDirectory(remotePath string) (map[string][]byte, error)
@@ -10705,7 +10705,7 @@ func (c *SftpClient) DownloadDirectory(remotePath string) (map[string][]byte, er
 DownloadDirectory downloads all files in a directory recursively.
 
 <a name="SftpClient.DownloadFile"></a>
-### func \(\*SftpClient\) [DownloadFile](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L489>)
+### func \(\*SftpClient\) [DownloadFile](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L482>)
 
 ```go
 func (c *SftpClient) DownloadFile(remotePath string) ([]byte, error)
@@ -10714,7 +10714,7 @@ func (c *SftpClient) DownloadFile(remotePath string) ([]byte, error)
 DownloadFile downloads a single file from the remote server.
 
 <a name="SftpClient.GetFileInfo"></a>
-### func \(\*SftpClient\) [GetFileInfo](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L618>)
+### func \(\*SftpClient\) [GetFileInfo](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L611>)
 
 ```go
 func (c *SftpClient) GetFileInfo(remotePath string) (*FileInfo, error)
@@ -10723,7 +10723,7 @@ func (c *SftpClient) GetFileInfo(remotePath string) (*FileInfo, error)
 GetFileInfo retrieves information about a remote file or directory.
 
 <a name="SftpClient.GetMetrics"></a>
-### func \(\*SftpClient\) [GetMetrics](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L182>)
+### func \(\*SftpClient\) [GetMetrics](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L180>)
 
 ```go
 func (c *SftpClient) GetMetrics() *MetricsCollector
@@ -10732,7 +10732,7 @@ func (c *SftpClient) GetMetrics() *MetricsCollector
 GetMetrics returns the metrics collector for this client.
 
 <a name="SftpClient.ListDirectory"></a>
-### func \(\*SftpClient\) [ListDirectory](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L398>)
+### func \(\*SftpClient\) [ListDirectory](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L391>)
 
 ```go
 func (c *SftpClient) ListDirectory(path string) ([]FileInfo, error)
@@ -10741,7 +10741,7 @@ func (c *SftpClient) ListDirectory(path string) ([]FileInfo, error)
 ListDirectory lists files and directories in the specified remote path.
 
 <a name="SftpClient.RemoveDirectory"></a>
-### func \(\*SftpClient\) [RemoveDirectory](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L464>)
+### func \(\*SftpClient\) [RemoveDirectory](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L457>)
 
 ```go
 func (c *SftpClient) RemoveDirectory(path string) error
@@ -10750,7 +10750,7 @@ func (c *SftpClient) RemoveDirectory(path string) error
 RemoveDirectory removes a directory from the remote server.
 
 <a name="SftpClient.SetProgressHandler"></a>
-### func \(\*SftpClient\) [SetProgressHandler](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L136>)
+### func \(\*SftpClient\) [SetProgressHandler](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L134>)
 
 ```go
 func (c *SftpClient) SetProgressHandler(h common.ProgressHandler)
@@ -10759,7 +10759,7 @@ func (c *SftpClient) SetProgressHandler(h common.ProgressHandler)
 SetProgressHandler installs an observability hook for the per\-file transfer \+ retry loops. Pass nil to disable. Picked over the functional\-options pattern used in Stripe / Pinecone clients because SFTP's NewSftpClient signature is shared with multiple callers and adding a variadic option there would ripple wider than the one\-line setter.
 
 <a name="SftpClient.TestConnection"></a>
-### func \(\*SftpClient\) [TestConnection](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L803>)
+### func \(\*SftpClient\) [TestConnection](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L796>)
 
 ```go
 func (c *SftpClient) TestConnection() error
@@ -10768,7 +10768,7 @@ func (c *SftpClient) TestConnection() error
 TestConnection tests the SFTP connection without performing operations.
 
 <a name="SftpClient.UploadDirectory"></a>
-### func \(\*SftpClient\) [UploadDirectory](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L694>)
+### func \(\*SftpClient\) [UploadDirectory](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L687>)
 
 ```go
 func (c *SftpClient) UploadDirectory(files map[string][]byte, remotePath string) error
@@ -10777,7 +10777,7 @@ func (c *SftpClient) UploadDirectory(files map[string][]byte, remotePath string)
 UploadDirectory uploads multiple files maintaining directory structure.
 
 <a name="SftpClient.UploadDirectoryContext"></a>
-### func \(\*SftpClient\) [UploadDirectoryContext](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L699>)
+### func \(\*SftpClient\) [UploadDirectoryContext](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L692>)
 
 ```go
 func (c *SftpClient) UploadDirectoryContext(ctx context.Context, files map[string][]byte, remotePath string) error
@@ -10786,7 +10786,7 @@ func (c *SftpClient) UploadDirectoryContext(ctx context.Context, files map[strin
 UploadDirectoryContext uploads multiple files maintaining directory structure and aborts when ctx is cancelled.
 
 <a name="SftpClient.UploadFile"></a>
-### func \(\*SftpClient\) [UploadFile](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L539>)
+### func \(\*SftpClient\) [UploadFile](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L532>)
 
 ```go
 func (c *SftpClient) UploadFile(localData []byte, remotePath string) error
@@ -10795,7 +10795,7 @@ func (c *SftpClient) UploadFile(localData []byte, remotePath string) error
 UploadFile uploads a single file to the remote server.
 
 <a name="SftpClient.UploadFileContext"></a>
-### func \(\*SftpClient\) [UploadFileContext](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L544>)
+### func \(\*SftpClient\) [UploadFileContext](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/client/sftpClient.go#L537>)
 
 ```go
 func (c *SftpClient) UploadFileContext(ctx context.Context, localData []byte, remotePath string) error
@@ -11100,7 +11100,7 @@ ConfigFields godoc @Summary Get SFTP connector configuration fields @Description
 func (cs *Controllers) ConfigValidate(c fiber.Ctx) error
 ```
 
-ConfigValidate godoc @Summary Validate SFTP connector configuration @Description Validate SFTP connection settings and credentials by testing the actual connection @Tags sftp @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[host\] formData string true "SFTP server hostname or IP address" @Param details\[port\] formData integer false "SFTP server port \(default: 22\)" @Param details\[username\] formData string true "Username for SFTP authentication" @Param details\[password\] formData string false "Password for SFTP authentication \(if not using private key\)" @Param details\[private\_key\] formData string false "Private key for SFTP authentication \(if not using password\)" @Param details\[private\_key\_passphrase\] formData string false "Passphrase for encrypted private key" @Param details\[host\_key\_fingerprint\] formData string false "Expected host key fingerprint for security verification" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/configuration/validate \[post\]
+ConfigValidate godoc @Summary Validate SFTP connector configuration @Description Validate SFTP connection settings and credentials by testing the actual connection @Tags sftp @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param details\[host\] formData string true "SFTP server hostname or IP address" @Param details\[port\] formData integer false "SFTP server port \(default: 22\)" @Param details\[username\] formData string true "Username for SFTP authentication" @Param details\[password\] formData string false "Password for SFTP authentication \(if not using private key\)" @Param details\[private\_key\] formData string false "Private key for SFTP authentication \(if not using password\)" @Param details\[private\_key\_passphrase\] formData string false "Passphrase for encrypted private key" @Param details\[host\_key\_fingerprint\] formData string true "Expected host key fingerprint for security verification" @Success 200 \{object\} irminmodels.ConnectorConfigurationValidationResult "Configuration validation result" @Failure 400 \{object\} fiber.Map "Bad request \- invalid configuration data" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /sftp/configuration/validate \[post\]
 
 <a name="Controllers.DetailsPage"></a>
 ### func \(\*Controllers\) [DetailsPage](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/sftp/controllers/detailsPage.go#L19>)

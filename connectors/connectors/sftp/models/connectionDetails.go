@@ -38,6 +38,9 @@ func NewConnectionDetailsFromMap(details map[string]any) (*ConnectionDetails, er
 	if cd.Port <= 0 {
 		return nil, errors.New("port must be greater than 0")
 	}
+	if cd.HostKeyFingerprint == "" {
+		return nil, errors.New("host_key_fingerprint is required")
+	}
 
 	// Validate authentication method
 	if cd.Password == "" && cd.PrivateKey == "" {

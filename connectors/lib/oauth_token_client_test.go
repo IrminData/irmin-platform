@@ -238,6 +238,7 @@ func TestConnectionIDFromRequestHeader(t *testing.T) {
 		{"zero rejected", "0", 0, true},
 		{"not a number", "abc", 0, true},
 		{"negative", "-1", 0, true},
+		{"larger than uint64", "18446744073709551616", 0, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

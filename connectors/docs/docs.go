@@ -3747,7 +3747,8 @@ const docTemplate = `{
                         "type": "string",
                         "description": "Expected host key fingerprint for security verification",
                         "name": "details[host_key_fingerprint]",
-                        "in": "formData"
+                        "in": "formData",
+                        "required": true
                     }
                 ],
                 "responses": {
