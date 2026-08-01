@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"irmin-api/db"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
 )
 
 func FormatTemplateResponse(

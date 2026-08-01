@@ -19,9 +19,9 @@ import (
 	"irmin-api/lakefs"
 	"irmin-api/utils"
 
-	"github.com/IrminData/irmin-sdk-go/connectorsclient"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	"github.com/IrminData/irmin-platform/sdks/go/connectorsclient"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/google/uuid"
 	"gorm.io/gorm"

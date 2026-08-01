@@ -19,8 +19,8 @@ import { useLocale } from '@/context/LocaleContext';
  * schema, and SDK all use that term. The UI was renamed (tab labels
  * become "Catalog" + "Lineage", route became `/catalog/*`, dashboard
  * button became "Catalog & Lineage") but the internal naming was kept
- * deliberately to preserve cross-repo consistency with `irmin`,
- * `irmin-sdk-go`, and `irmin-core`. Don't rename the component or folder
+ * deliberately to preserve consistency with `irmin`, `sdks/go`, and Core.
+ * Don't rename the component or folder
  * to match the URL unless you're doing a coordinated backend rename.
  */
 export default function DocumentationLayoutWrapper({

@@ -3,13 +3,13 @@ package utils
 import (
 	"encoding/base64"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 // IsBinaryContentType checks if the given content type indicates binary data.
 // Returns true if the content type should be treated as binary.
-// It delegates to the unified MIME utility in irmin-sdk-go.
+// It delegates to the unified MIME utility in the Go SDK.
 func IsBinaryContentType(contentType *string) bool {
 	if contentType == nil || *contentType == "" {
 		return false

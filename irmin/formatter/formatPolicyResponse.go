@@ -5,8 +5,8 @@ import (
 	"irmin-api/db"
 	"irmin-api/lib"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
 )
 
 // FormatPolicyResponse formats a single policy into an API response.

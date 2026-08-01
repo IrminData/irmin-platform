@@ -13,7 +13,7 @@ import (
 	"strings"
 	"testing"
 
-	sdkmodels "github.com/IrminData/irmin-sdk-go/models"
+	sdkmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	"github.com/gofiber/fiber/v3"
 	"gorm.io/gorm"
 )

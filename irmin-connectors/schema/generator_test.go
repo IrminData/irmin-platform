@@ -5,7 +5,7 @@ import (
 	"log/slog"
 	"testing"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 func TestNewGenerator(t *testing.T) {

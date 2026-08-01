@@ -18,8 +18,8 @@ import (
 	"strings"
 	"time"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 
 	// duckdbdriver is the upstream Go driver we depend on transitively
 	// through irmin-api/duckdb. scanRow needs its Map / Decimal / UUID

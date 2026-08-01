@@ -649,7 +649,7 @@ FindOperationByConfigHashTx retrieves an Operation record matching the connector
 
 OperationJob is the GORM\-mapped persistence record for an asynchronous connector operation job \(e.g., a long\-running pull\).
 
-The wire\-facing SDK type lives in github.com/IrminData/irmin\-sdk\-go/models.OperationJob — fields here mirror that shape but add the bookkeeping columns \(Progress JSON, ResultPath, Error\) that the server side needs and the SDK client does not. The connector service converts between the two at the HTTP boundary.
+The wire\-facing SDK type lives in github.com/IrminData/irmin\-platform/sdks/go/models.OperationJob — fields here mirror that shape but add the bookkeeping columns \(Progress JSON, ResultPath, Error\) that the server side needs and the SDK client does not. The connector service converts between the two at the HTTP boundary.
 
 ```go
 type OperationJob struct {
@@ -1843,7 +1843,7 @@ HashJSONFields generates a deterministic hash from JSON fields \(Details and Set
 func IsBinaryContentType(contentType *string) bool
 ```
 
-IsBinaryContentType checks if the given content type indicates binary data. Returns true if the content type should be treated as binary. It delegates to the unified MIME utility in irmin\-sdk\-go.
+IsBinaryContentType checks if the given content type indicates binary data. Returns true if the content type should be treated as binary. It delegates to the unified MIME utility in the Go SDK.
 
 <a name="JoinURL"></a>
 ## func JoinURL
@@ -1962,7 +1962,7 @@ LoadEnv loads environment variables from the .env file in the project root, sets
 func (e *ConnectorsEnv) SDKBaseURL() string
 ```
 
-SDKBaseURL returns the Core base URL formatted for the irmin\-sdk\-go \`api.NewClient\` constructor, which expects a base of the form \`https://host/api\` \(the SDK's endpoint constants are \`/v1/...\` and the Request method does a literal string concat\). Callers that POST to system endpoints directly \(the OAuth token client\) use APIBaseURL instead because those callers append the full \`/api/v1/...\` path.
+SDKBaseURL returns the Core base URL formatted for the Go SDK \`api.NewClient\` constructor, which expects a base of the form \`https://host/api\` \(the SDK's endpoint constants are \`/v1/...\` and the Request method does a literal string concat\). Callers that POST to system endpoints directly \(the OAuth token client\) use APIBaseURL instead because those callers append the full \`/api/v1/...\` path.
 
 Keeping the conversion here means env value normalization stays in one place — APIBaseURL is canonical, and any "this caller needs a different shape" knowledge lives next to the env definition rather than scattered across SDK callsites.
 

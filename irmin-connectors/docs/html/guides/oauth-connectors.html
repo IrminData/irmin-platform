@@ -383,7 +383,7 @@ package config
 import (
     "irmin-connectors/models"
 
-    irminmodels "github.com/IrminData/irmin-sdk-go/models"
+    irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 func GetConnectorInfo() models.ConnectorDetails {
@@ -403,7 +403,7 @@ func GetConnectorInfo() models.ConnectorDetails {
 }
 ```
 
-Field semantics live in `irmin-sdk-go/models/oauth_config.go`. Two
+Field semantics live in `sdks/go/models/oauth_config.go`. Two
 non-obvious points:
 - `PKCE` must be `true`. Core refuses to run a flow when false.
 - `Scopes` should be least-privilege. Adding a scope later forces

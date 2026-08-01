@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	sdkprogress "github.com/IrminData/irmin-sdk-go/observability"
+	sdkprogress "github.com/IrminData/irmin-platform/sdks/go/observability"
 )
 
 // jobProgressKey is the context key used by the async-pull worker to
@@ -45,7 +45,7 @@ func jobProgressFromContext(ctx context.Context) func(sdkprogress.ProgressEvent)
 }
 
 // ProgressEvent / ProgressHandler / ProgressKind* are now canonical
-// in irmin-sdk-go/observability so every Irmin service (Core
+// in sdks/go/observability so every Irmin service (Core
 // orchestrator, AI agents) and external connector authors building
 // against the SDK reach the same vocabulary. The aliases below keep
 // the in-repo import path (`common.ProgressEvent`, etc.) working
@@ -55,7 +55,7 @@ func jobProgressFromContext(ctx context.Context) func(sdkprogress.ProgressEvent)
 //
 // New code should prefer the SDK import directly:
 //
-//	import sdkprogress "github.com/IrminData/irmin-sdk-go/observability"
+//	import sdkprogress "github.com/IrminData/irmin-platform/sdks/go/observability"
 //
 // These aliases stay as the backward-compat seam.
 

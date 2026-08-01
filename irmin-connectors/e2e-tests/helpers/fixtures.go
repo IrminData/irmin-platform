@@ -10,7 +10,7 @@ import (
 
 	connectorsclient "irmin-connectors/e2e-tests/connectors-client"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // CreateTestFile creates a temporary test file with the given content.

@@ -13,7 +13,7 @@ import (
 	"net/http"
 	"time"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 func main() {

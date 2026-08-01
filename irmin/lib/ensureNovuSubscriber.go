@@ -6,7 +6,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/utils"
 
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
 	novugo "github.com/novuhq/novu-go"
 	"github.com/novuhq/novu-go/models/components"
 )

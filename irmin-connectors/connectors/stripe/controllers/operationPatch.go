@@ -13,7 +13,7 @@ import (
 	stripeclient "irmin-connectors/connectors/stripe/client"
 	"irmin-connectors/db"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	"github.com/gofiber/fiber/v3"
 )
 

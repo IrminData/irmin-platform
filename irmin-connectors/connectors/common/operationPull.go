@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	sdkmodels "github.com/IrminData/irmin-sdk-go/models"
-	sdkprogress "github.com/IrminData/irmin-sdk-go/observability"
+	sdkmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	sdkprogress "github.com/IrminData/irmin-platform/sdks/go/observability"
 	"github.com/gofiber/fiber/v3"
 )
 

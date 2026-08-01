@@ -1,7 +1,7 @@
 filippo.io/edwards25519 v1.2.0 h1:crnVqOiS4jqYleHd9vaKZ+HKtHfllngJIiOpNpoJsjo=
 filippo.io/edwards25519 v1.2.0/go.mod h1:xzAOLCNug/yB62zG1bQ8uziwrIqIuxhctzJT18Q77mc=
-github.com/IrminData/irmin-sdk-go v0.0.0-20260426170712-a6e3f701e6f5 h1:2jiGUMWIK5mshsmxWmLiSLbMDmaPzPBj+O6dIWQEHZA=
-github.com/IrminData/irmin-sdk-go v0.0.0-20260426170712-a6e3f701e6f5/go.mod h1:bSQCC0pLSLEbQqF57+UfHHpY6MXnOgOYeY+n4KvHUH8=
+github.com/IrminData/irmin-platform/sdks/go v0.1.0 h1:getD3E6kg681gC3G2WzKIkVbXJOOS+VHZB6zs9z1sZI=
+github.com/IrminData/irmin-platform/sdks/go v0.1.0/go.mod h1:7gegkrjqvu5WJG1irUfV/gzncSjq+fK0WBNtIX5gPI4=
 github.com/KyleBanks/depth v1.2.1 h1:5h8fQADFrWtarTdtDudMmGsC7GPbOAu6RVB3ffsVFHc=
 github.com/KyleBanks/depth v1.2.1/go.mod h1:jzSb9d0L43HxTQfT+oSA1EEp2q+ne2uh6XgeJcm8brE=
 github.com/RaveNoX/go-jsoncommentstrip v1.0.0/go.mod h1:78ihd09MekBnJnxpICcwzCMzGrKSKYe4AqU6PDYYpjk=

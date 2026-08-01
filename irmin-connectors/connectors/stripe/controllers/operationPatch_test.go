@@ -11,7 +11,7 @@ import (
 	"irmin-connectors/connectors/common"
 	"irmin-connectors/db"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 func TestJSONPointerToFormKey(t *testing.T) {
@@ -259,7 +259,7 @@ func TestApplySingleOp_NullValueOnArrayIndexRejected(t *testing.T) {
 	}
 }
 
-// TestPatchOperation_ShapeSanity pins the irmin-sdk-go types we depend
+// TestPatchOperation_ShapeSanity pins the Go SDK types we depend
 // on — a signal test so the patch controller stays in sync with the
 // SDK's JSON tag names and value pointer shape.
 func TestPatchOperation_ShapeSanity(t *testing.T) {

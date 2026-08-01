@@ -9,7 +9,7 @@ import (
 
 	"irmin-api/utils"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // Re-export SDK types for convenience.

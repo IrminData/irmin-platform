@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v3"
 	"github.com/robfig/cron/v3"

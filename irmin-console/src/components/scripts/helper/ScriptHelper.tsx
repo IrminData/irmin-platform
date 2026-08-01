@@ -182,7 +182,7 @@ export default function ScriptHelper({
                     {dict.scriptHelper.poweredBy}
                   </h3>
                   <a
-                    href='https://github.com/IrminData/irmin-sdk-go'
+                    href='https://github.com/IrminData/irmin-platform/tree/main/sdks/go'
                     target='_blank'
                     rel='noopener noreferrer'
                     className={`
@@ -244,8 +244,8 @@ import (
 \t"context"
 \t"log"
 
-\tirmincore "github.com/IrminData/irmin-sdk-go/api"
-\tirminutils "github.com/IrminData/irmin-sdk-go/utils"
+\tirmincore "github.com/IrminData/irmin-platform/sdks/go/api"
+\tirminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 func main() {

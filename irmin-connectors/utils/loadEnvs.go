@@ -29,7 +29,7 @@ type ConnectorsEnv struct {
 	SentryTracesSampleRate float64 // Sentry traces sample rate (default 0.1)
 }
 
-// SDKBaseURL returns the Core base URL formatted for the irmin-sdk-go
+// SDKBaseURL returns the Core base URL formatted for the Go SDK
 // `api.NewClient` constructor, which expects a base of the form
 // `https://host/api` (the SDK's endpoint constants are `/v1/...` and the
 // Request method does a literal string concat). Callers that POST to

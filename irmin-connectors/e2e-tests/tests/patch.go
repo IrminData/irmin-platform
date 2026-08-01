@@ -6,7 +6,7 @@ import (
 
 	"irmin-connectors/e2e-tests/helpers"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // TestPatch tests the patch capability of a connector.

@@ -6,7 +6,7 @@ import (
 
 	"irmin-api/engine/validation"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	"github.com/zeebo/assert"
 )
 

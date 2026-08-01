@@ -93,11 +93,13 @@ before changing a project.
 The Go SDK is published directly from `sdks/go/` as
 `github.com/IrminData/irmin-platform/sdks/go`. Install the current release with:
 
-    go get github.com/IrminData/irmin-platform/sdks/go@v0.1.0
+    go get github.com/IrminData/irmin-platform/sdks/go/api@v0.1.0
 
-Because it is a nested Go module, repository tags use the directory-prefixed
-form `sdks/go/vX.Y.Z`. Future language SDKs use their own directory, module
-metadata, compatibility policy, and tag namespace. See
+Install the package you use (`api`, `models`, `connectorsclient`, `duckdb`, and
+so on) so Go also records its transitive dependencies. Because the SDK is a
+nested Go module, repository tags use the directory-prefixed form
+`sdks/go/vX.Y.Z`. Future language SDKs use their own directory, module metadata,
+compatibility policy, and tag namespace. See
 [docs/releasing-go-sdk.md](docs/releasing-go-sdk.md) for the release process.
 
 ## Contributing and security

@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 
 	"github.com/IrminData/irmin-e2e-tests/config"
 	"github.com/IrminData/irmin-e2e-tests/runner"

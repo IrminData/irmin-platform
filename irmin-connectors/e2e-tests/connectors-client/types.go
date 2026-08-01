@@ -1,7 +1,7 @@
 package connectorsclient
 
 import (
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // ConnectorInfo holds metadata about a connector returned from the connector's /info endpoint.

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strconv"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // GarbageCollectionSettings represents the garbage collection configuration.

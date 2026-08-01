@@ -10,8 +10,8 @@ import { analyticsService } from '@/services/analytics';
 // Configuration for Irmin SDK documentation URLs
 const IRMIN_SDK_URLS = [
   // IRMIN Go-lang SDK docs
-  'https://raw.githubusercontent.com/IrminData/irmin-sdk-go/refs/heads/development/README.md',
-  'https://raw.githubusercontent.com/IrminData/irmin-sdk-go/refs/heads/development/docs/docs.md',
+  'https://raw.githubusercontent.com/IrminData/irmin-platform/refs/heads/main/sdks/go/README.md',
+  'https://raw.githubusercontent.com/IrminData/irmin-platform/refs/heads/main/sdks/go/docs/docs.md',
 ];
 
 // Configuration for DuckDB SQL documentation URLs

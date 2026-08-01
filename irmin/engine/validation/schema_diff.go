@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // CompareSchemas compares two ObjectSchemas and returns a detailed diff.

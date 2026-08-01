@@ -358,11 +358,12 @@ const (
     DockerImagePython = "python:3.11"
     DockerImageNode   = "node:24"
 
-    SnapshotGoDefault = "irmin-go-1.25-sdk-v1"
+    SnapshotGoDefault = "irmin-go-1.25-sdk-v2"
 
     SandboxWorkDir = "/workspace"
 
     LatestGoVersion = "1.25.0"
+    GoSDKVersion    = "v0.1.0"
 
     RuntimeTypePython = "python"
     RuntimeTypeGo     = "go"

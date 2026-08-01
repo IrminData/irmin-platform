@@ -6,8 +6,8 @@ import (
 	"irmin-api/db"
 	"slices"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
 )
 
 // getWorkflowable retrieves the appropriate workflowable based on the workflow type.

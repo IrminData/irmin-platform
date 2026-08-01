@@ -12,8 +12,8 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/services"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 	"github.com/gofiber/fiber/v3"
 	adaptor "github.com/gofiber/fiber/v3/middleware/adaptor"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"

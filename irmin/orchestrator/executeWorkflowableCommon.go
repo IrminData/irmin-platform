@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	"github.com/IrminData/irmin-sdk-go/observability"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	"github.com/IrminData/irmin-platform/sdks/go/observability"
 )
 
 // workflowOperation represents the type of workflow operation.

@@ -2,22 +2,20 @@
 
 ## Repository follow-up
 
-- [ ] Complete a legal and licensing review of the root ELv2 license and the
-  Go SDK's retained MIT license.
+- [ ] Complete a legal review of ELv2 licensing across the repository.
 - [x] Publish the repository after a full-history secret scan and critical
   dependency remediation.
 - [x] Enable private vulnerability reporting and appropriate repository
   rulesets.
 - [ ] Reconnect deployment providers only after the monorepo pipelines are
   validated.
-- [ ] Archive standalone repositories only after an explicit later decision.
+- [ ] Archive the five migrated standalone repositories after consumer cutover.
 
 ## SDK releases
 
 - [ ] Define the language-neutral SDK compatibility and release policy.
-- [ ] Add a history-preserving sdks/go subtree mirror to
-  IrminData/irmin-sdk-go.
-- [ ] Define namespaced monorepo tags for every language SDK.
+- [x] Publish the Go SDK from `sdks/go/` at `v0.1.0`.
+- [x] Define namespaced monorepo tags for every language SDK.
 - [ ] Add SDK templates only when the second language SDK is started.
 
 ## Tooling

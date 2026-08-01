@@ -4,7 +4,7 @@ import (
 	"math"
 	"strconv"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // paginationParams is a struct that contains the pagination parameters.

@@ -7,7 +7,7 @@ import (
 	"irmin-api/lib"
 	"irmin-api/permissions"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	"gorm.io/gorm"
 )
 

@@ -240,9 +240,8 @@ func (s *ComputeSandbox) installRuntimeSDK(
 
 	// Install SDK packages
 	packages := []string{
-		"github.com/IrminData/irmin-sdk-go",
-		"github.com/IrminData/irmin-sdk-go/api",
-		"github.com/IrminData/irmin-sdk-go/utils",
+		"github.com/IrminData/irmin-platform/sdks/go/api@" + GoSDKVersion,
+		"github.com/IrminData/irmin-platform/sdks/go/utils@" + GoSDKVersion,
 	}
 
 	for _, pkg := range packages {

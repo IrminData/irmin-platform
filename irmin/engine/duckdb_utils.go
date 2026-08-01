@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 // getReadOptions determines the appropriate DuckDB read options for the file format.

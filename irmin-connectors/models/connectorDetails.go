@@ -1,6 +1,6 @@
 package models
 
-import irminmodels "github.com/IrminData/irmin-sdk-go/models"
+import irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 
 type ConnectorDetails struct {
 	Name             string                            `json:"name"              example:"MySQL Database Connector"`

@@ -12,7 +12,7 @@ import (
 	"log"
 	"strings"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 // Record represents the structure of your data.

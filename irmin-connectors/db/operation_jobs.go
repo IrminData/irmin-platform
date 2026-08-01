@@ -11,7 +11,7 @@ import (
 // asynchronous connector operation job (e.g., a long-running pull).
 //
 // The wire-facing SDK type lives in
-// github.com/IrminData/irmin-sdk-go/models.OperationJob — fields here
+// github.com/IrminData/irmin-platform/sdks/go/models.OperationJob — fields here
 // mirror that shape but add the bookkeeping columns (Progress JSON,
 // ResultPath, Error) that the server side needs and the SDK client
 // does not. The connector service converts between the two at the

@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 //go:embed queries/*.sql

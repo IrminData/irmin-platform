@@ -15,7 +15,7 @@ import (
 	pineconeclient "irmin-connectors/connectors/pinecone/client"
 	"irmin-connectors/db"
 
-	"github.com/IrminData/irmin-sdk-go/duckdb"
+	"github.com/IrminData/irmin-platform/sdks/go/duckdb"
 	"github.com/gofiber/fiber/v3"
 )
 

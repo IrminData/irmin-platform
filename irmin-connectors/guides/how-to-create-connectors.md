@@ -373,7 +373,7 @@ to triage.
 Every long-running connector loop — paginated HTTP, retry/backoff,
 chunked upload, SQL row scan, multi-file SFTP transfer — needs
 per-iteration emission. The vocabulary lives in the SDK at
-[`github.com/IrminData/irmin-sdk-go/observability`](https://github.com/IrminData/irmin-sdk-go/tree/main/observability)
+[`github.com/IrminData/irmin-platform/sdks/go/observability`](https://github.com/IrminData/irmin-platform/tree/main/sdks/go/observability)
 so every Irmin service (connectors, Core orchestrator, AI agents)
 and external connector authors reach the same shapes. Inside this
 repo, [`connectors/common/progress.go`](../connectors/common/progress.go)
@@ -597,7 +597,7 @@ In your connector's Info handler, populate the optional
 
 ```go
 // connectors/your-connector/info.go
-import irminmodels "github.com/IrminData/irmin-sdk-go/models"
+import irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 
 func getConnectorInfo() models.ConnectorDetails {
     return models.ConnectorDetails{
@@ -617,7 +617,7 @@ func getConnectorInfo() models.ConnectorDetails {
 }
 ```
 
-**Field semantics** (full definitions in `irmin-sdk-go/models/oauth_config.go`):
+**Field semantics** (full definitions in `sdks/go/models/oauth_config.go`):
 
 - `Provider`: short canonical identifier, e.g. `"hubspot"`. Used in
   logs and error messages.
@@ -819,4 +819,3 @@ connector is static-credential or OAuth-backed.
 - [`connectors/common/README.md`](../connectors/common/README.md) —
   full API reference for `OAuthConnector`, `WrapHTTPClient`, and
   `commontest`
-

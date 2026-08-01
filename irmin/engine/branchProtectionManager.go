@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"irmin-api/lakefs"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // BranchProtectionManager handles branch protection and renaming operations.

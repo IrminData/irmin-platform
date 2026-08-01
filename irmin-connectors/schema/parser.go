@@ -3,7 +3,7 @@ package schema
 import (
 	"strings"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // parseField constructs a Field recursively from its name, type and required flag.

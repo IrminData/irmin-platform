@@ -10,7 +10,7 @@ import (
 	"irmin-api/lib/crypto"
 	"irmin-api/orchestrator"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	"github.com/zeebo/assert"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"

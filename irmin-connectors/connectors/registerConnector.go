@@ -10,8 +10,8 @@ import (
 	"log/slog"
 	"strings"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 const defaultTokenLength = 32
@@ -156,7 +156,6 @@ func tryUpdateConnector(
 		"connector_id", newConnector.ID,
 		"connector_name", connectorName,
 		"connector_url", connectorURL,
-		"connector_token", token,
 	)
 	return newConnector, nil
 }

@@ -247,7 +247,7 @@ sys.exit(1)
 }
 
 // ---------------------------------------------------------------------------
-// Go SDK integration (irmin-sdk-go utilities)
+// Go SDK integration
 // ---------------------------------------------------------------------------
 
 func TestExecuteGoSDKIntegration(t *testing.T) {
@@ -272,8 +272,8 @@ import (
 	"log"
 	"strings"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 func main() {

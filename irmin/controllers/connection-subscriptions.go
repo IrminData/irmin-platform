@@ -9,9 +9,9 @@ import (
 	"irmin-api/locales"
 	"irmin-api/services"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
 	"github.com/gofiber/fiber/v3"
 )
 

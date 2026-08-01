@@ -16,7 +16,10 @@ No 3rd party packages are allowed. Only the standard library and the Irmin SDK a
 
 The Irmin SDK is available to be used in the scripts, with packages like `irmincore` and `irminutils`.
 
-The SDK is published as a package, and can be installed with `go get github.com/IrminData/irmin-sdk-go`. To learn more about the SDK, please refer to the [SDK documentation](https://github.com/IrminData/irmin-sdk-go).
+The SDK is published as packages, such as
+`go get github.com/IrminData/irmin-platform/sdks/go/api@v0.1.0`. See the
+[SDK documentation](https://github.com/IrminData/irmin-platform/tree/main/sdks/go)
+for the full package list.
 
 The SDK provides utilities to interact with the Irmin API, to get the input files, send the results back to the caller, and common utilities for working with data.
 
@@ -25,15 +28,15 @@ The SDK, through the Irmin API, provides access read, write and create repositor
 ```go
 import (
 	"context"
-	
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 func main() {
 	// Create a context for API calls.
 	ctx := context.Background()
-	
+
 	// Parse command line flags for API key and URL.
 	apiURL, apiKey, getAPIFromFlagsErr := irminutils.GetAPIFromFlags()
 	if getAPIFromFlagsErr != nil {
@@ -45,14 +48,14 @@ func main() {
 
 	// Example API call with context.
 	// workspaces, _, err := client.ListWorkspaces(ctx)
-	
+
 	// ...
-} 
+}
 ```
 
 ## Script input
 
-The scripts can receive input files from repositories in the workspace to be processed. 
+The scripts can receive input files from repositories in the workspace to be processed.
 
 When the script is executed independently from a workflow, the input files need to be manually specified as an array of repositories, paths, and refs.
 
@@ -60,19 +63,19 @@ When the script is executed as part of an `action` workflow, the input files are
 
 ```json
 {
-    "inputFiles": [
-        {
-            "workspace": "workspace-slug",
-            "repository": "repository-slug",
-            "ref": "main", // branch, tag, or commit hash
-            "path": "path/to/file.txt"
-        }
-    ]
+  "inputFiles": [
+    {
+      "workspace": "workspace-slug",
+      "repository": "repository-slug",
+      "ref": "main", // branch, tag, or commit hash
+      "path": "path/to/file.txt"
+    }
+  ]
 }
 ```
 
 When the script is executed as part of a `pipeline` workflow, the result of the previous step is available as input files, if there are any.
- 
+
 `irminutils.ListInputFiles() ([]string, error)` returns a list of input file names which have been passed to the script.
 
 `irminutils.GetInputFile(inputFile string) ([]byte, error)` returns the content of the input file. The input file is the name of the file, which is returned by `ListInputFiles()`.
@@ -93,7 +96,7 @@ if getInputFileErr != nil {
 
 ## Script output
 
-The scripts can return results to the caller. 
+The scripts can return results to the caller.
 
 When the script is executed independently from a workflow, the output will be shown to the user, but not saved anywhere. This is useful for debugging and testing.
 
@@ -115,18 +118,22 @@ if sendComputeResultErr != nil {
 Both queries (SQL) and scripts (Go) can be used in action workflows and pipeline stages. They handle inputs and outputs similarly:
 
 ### Input Handling
+
 - **Scripts**: Use `irminutils.ListInputFiles()` and `irminutils.GetInputFile(filename)`
 - **Queries**: Input files automatically loaded as virtual tables (e.g., `/data/sales.csv` → `data_sales_csv`)
 
 ### Output Handling
+
 - **Scripts**: Use `irminutils.SendComputeResult(content, filename)` to create result files
 - **Queries**: Results automatically exported as `query_results.csv` (or can use `COPY TO` for custom naming)
 
 ### When to Use Each
+
 - **Use Queries (SQL)** for: Data transformations, filtering, joins, aggregations, analytics
 - **Use Scripts (Go)** for: Complex logic, API calls, custom file processing, non-tabular operations
 
 Both can:
+
 - Accept input files from repositories or previous pipeline stages
 - Save results to repositories
 - Pass results to subsequent pipeline stages
@@ -143,8 +150,8 @@ import (
 	"encoding/json"
 	"log"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 const (
@@ -157,7 +164,7 @@ const (
 func main() {
 	// Create a context for API calls.
 	ctx := context.Background()
-	
+
 	// Parse command line flags for API key and URL.
 	apiURL, apiKey, getAPIFromFlagsErr := irminutils.GetAPIFromFlags()
 	if getAPIFromFlagsErr != nil {

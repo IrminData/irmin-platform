@@ -9,7 +9,7 @@ import (
 	"irmin-api/engine"
 	"irmin-api/utils"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // CollectObjectFiles recursively collects all file contents from an object tree into a map.

@@ -5,7 +5,7 @@ import (
 
 	"irmin-connectors/e2e-tests/helpers"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // TestSchema tests the schema retrieval for all supported operation types.

@@ -3,7 +3,7 @@ package connectorjobs
 import (
 	"irmin-api/db"
 
-	"github.com/IrminData/irmin-sdk-go/connectorsclient"
+	"github.com/IrminData/irmin-platform/sdks/go/connectorsclient"
 )
 
 // NewConnectorClient builds a connectorsclient.Client targeting the

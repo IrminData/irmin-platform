@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 // ReadOptions represents the configuration for reading a file with DuckDB.

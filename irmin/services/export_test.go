@@ -6,7 +6,7 @@ import (
 	"irmin-api/utils"
 	"log/slog"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // This file exports internal functions for testing purposes.

@@ -8,8 +8,8 @@ import (
 	"irmin-api/db"
 	"time"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"

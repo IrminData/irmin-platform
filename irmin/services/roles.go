@@ -4,7 +4,7 @@ import (
 	"context"
 	"irmin-api/formatter"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 func (api *APIServices) ListRoles(c context.Context) ([]irminmodels.Role, error) {
