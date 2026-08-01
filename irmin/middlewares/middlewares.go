@@ -9,8 +9,8 @@ import (
 	"irmin-api/utils"
 	"log/slog"
 
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
-	irminvalidator "github.com/IrminData/irmin-sdk-go/validator"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
+	irminvalidator "github.com/IrminData/irmin-platform/sdks/go/validator"
 	"github.com/gofiber/fiber/v3"
 )
 

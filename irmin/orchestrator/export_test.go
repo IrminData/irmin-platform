@@ -5,7 +5,7 @@ import (
 	"irmin-api/embeddings"
 	"irmin-api/engine"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // This file exports internal functions for testing purposes.

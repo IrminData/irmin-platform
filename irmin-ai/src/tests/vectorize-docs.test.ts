@@ -20,8 +20,8 @@ import {
 // Test configuration
 const TEST_COLLECTION_NAME = 'vectorize-docs-test-collection';
 const TEST_URLS = [
-  'https://raw.githubusercontent.com/IrminData/irmin-sdk-go/refs/heads/development/docs/docs.md',
-  'https://raw.githubusercontent.com/IrminData/irmin-sdk-go/refs/heads/development/README.md',
+  'https://raw.githubusercontent.com/IrminData/irmin-platform/refs/heads/main/sdks/go/docs/docs.md',
+  'https://raw.githubusercontent.com/IrminData/irmin-platform/refs/heads/main/sdks/go/README.md',
 ];
 
 // Test local file paths

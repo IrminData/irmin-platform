@@ -13,9 +13,9 @@ import (
 	"irmin-connectors/connectors/http/config"
 	"irmin-connectors/db"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 	"github.com/gofiber/fiber/v3"
 )
 

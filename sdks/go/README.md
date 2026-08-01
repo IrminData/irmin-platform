@@ -10,9 +10,11 @@ The SDK is a nested Go module in the Irmin platform monorepo. Install a
 released version with:
 
 ```bash
-go get github.com/IrminData/irmin-platform/sdks/go@v0.1.0
+go get github.com/IrminData/irmin-platform/sdks/go/api@v0.1.0
 ```
 
+Install the package you use so Go records its transitive dependencies; replace
+`api` with `models`, `connectorsclient`, `duckdb`, or another package as needed.
 The module path is `github.com/IrminData/irmin-platform/sdks/go`. Repository
 tags include the module directory prefix, for example `sdks/go/v0.1.0`; Go
 users still request the ordinary semantic version `v0.1.0`.

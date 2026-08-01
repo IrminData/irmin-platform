@@ -5,8 +5,8 @@ import (
 	"irmin-api/db"
 	"time"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
 )
 
 func FormatInviteResponse(invite *db.Invite, sqidManager *irminsqids.SQIDManager) (*irminmodels.Invite, error) {

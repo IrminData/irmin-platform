@@ -7,8 +7,8 @@ import (
 	"irmin-api/duckdb"
 	"strings"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 // FieldMappingResult represents the result of applying field mappings,

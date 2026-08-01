@@ -98,9 +98,8 @@ func SeedSnapshots(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Logg
 		Workdir(SandboxWorkDir).
 		Run("go mod init sandbox").
 		Run(fmt.Sprintf("go mod edit -go=%s", LatestGoVersion)).
-		Run("go get github.com/IrminData/irmin-sdk-go").
-		Run("go get github.com/IrminData/irmin-sdk-go/api").
-		Run("go get github.com/IrminData/irmin-sdk-go/utils")
+		Run(fmt.Sprintf("go get github.com/IrminData/irmin-platform/sdks/go/api@%s", GoSDKVersion)).
+		Run(fmt.Sprintf("go get github.com/IrminData/irmin-platform/sdks/go/utils@%s", GoSDKVersion))
 
 	snapshot, logChan, err := dc.client.Snapshot.Create(ctx, &types.CreateSnapshotParams{
 		Name:  name,

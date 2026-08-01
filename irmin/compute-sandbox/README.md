@@ -212,7 +212,7 @@ print("<RESULT_FILE_WRITTEN>output.json</RESULT_FILE_WRITTEN>")
 package main
 
 import (
-    "github.com/IrminData/irmin-sdk-go/api"
+    "github.com/IrminData/irmin-platform/sdks/go/api"
 )
 
 func main() {

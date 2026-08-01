@@ -1,7 +1,7 @@
 package validation
 
 import (
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // CheckSchemaCompatibility compares a data schema against a target connector schema.

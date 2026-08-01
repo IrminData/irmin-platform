@@ -7,9 +7,9 @@ import (
 	"irmin-api/db"
 	"irmin-api/services/connectionoauth"
 
-	"github.com/IrminData/irmin-sdk-go/connectorsclient"
+	"github.com/IrminData/irmin-platform/sdks/go/connectorsclient"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // connectorsClientOAuthConfigProvider is the production ConfigProvider.

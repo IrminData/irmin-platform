@@ -30,7 +30,7 @@ module to include its repository-relative directory.
    temp_dir="$(mktemp -d)"
    cd "$temp_dir"
    go mod init example.com/irmin-sdk-check
-   go get github.com/IrminData/irmin-platform/sdks/go@v0.1.0
+   go get github.com/IrminData/irmin-platform/sdks/go/api@v0.1.0
    go list -m github.com/IrminData/irmin-platform/sdks/go
    ```
 

@@ -13,7 +13,7 @@ import (
 	"irmin-connectors/db"
 	"irmin-connectors/lib"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	"github.com/gofiber/fiber/v3"
 	"golang.org/x/sync/errgroup"
 )

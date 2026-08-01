@@ -7,7 +7,7 @@ import (
 	"irmin-api/db"
 	sentryutil "irmin-api/sentry"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 type WorkerEventTopic string

@@ -3,7 +3,7 @@ package engine
 import (
 	"strings"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // schemaVersion is the current version of the schema generation logic

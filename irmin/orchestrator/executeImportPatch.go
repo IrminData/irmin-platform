@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"irmin-api/db"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // performPatchImport applies patches from the trigger payload to the repository.

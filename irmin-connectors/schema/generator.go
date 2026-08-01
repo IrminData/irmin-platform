@@ -8,9 +8,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/IrminData/irmin-sdk-go/duckdb"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	"github.com/IrminData/irmin-platform/sdks/go/duckdb"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 const (

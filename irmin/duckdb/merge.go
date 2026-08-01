@@ -8,7 +8,7 @@ import (
 	"os"
 	"strings"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 // MergeStrategy defines how to handle conflicts when merging data.

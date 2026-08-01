@@ -58,7 +58,8 @@ This is also useful for any future connector that wants to expose a deep hierarc
 The connector and core are already wired:
 
 - Connector `GetSchema(ctx, client, operationType, path)` accepts the path argument and dispatches on it (Phase 1).
-- Core's framework forwards `?path=<value>` to the connector via `irmin-sdk-go/connectorsclient/schema.go` (URL-encoded once, otherwise verbatim).
+- Core's framework forwards `?path=<value>` to the connector via
+  `sdks/go/connectorsclient/schema.go` (URL-encoded once, otherwise verbatim).
 
 ## UX details worth getting right
 

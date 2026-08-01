@@ -6,7 +6,7 @@ import (
 
 	connectorsclient "irmin-connectors/e2e-tests/connectors-client"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // TestError represents a test assertion failure.

@@ -289,7 +289,7 @@ package scenarios
 
 import (
     "context"
-    irmincore "github.com/IrminData/irmin-sdk-go/api"
+    irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
     "github.com/IrminData/irmin-e2e-tests/config"
     "github.com/IrminData/irmin-e2e-tests/runner"
 )

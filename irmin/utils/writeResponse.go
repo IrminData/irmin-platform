@@ -3,7 +3,7 @@ package utils
 import (
 	"github.com/gofiber/fiber/v3"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 func WriteResponse(c fiber.Ctx, status int, response irminmodels.IrminAPIResponse) error {

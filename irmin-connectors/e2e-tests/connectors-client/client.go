@@ -20,7 +20,7 @@ import (
 	"strings"
 	"time"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 const DefaultConnectorTimeout = 30 * time.Second

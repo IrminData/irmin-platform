@@ -10,8 +10,8 @@ import (
 	"irmin-api/db"
 	"strings"
 
-	"github.com/IrminData/irmin-sdk-go/connectorsclient"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"github.com/IrminData/irmin-platform/sdks/go/connectorsclient"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // findPatchFileInTriggerEvent checks if trigger_event.json contains patches.

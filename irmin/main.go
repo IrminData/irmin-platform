@@ -52,7 +52,7 @@ import (
 	"syscall"
 	"time"
 
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
 	"github.com/gofiber/fiber/v3"
 	"github.com/gofiber/fiber/v3/middleware/compress"
 	"github.com/gofiber/fiber/v3/middleware/cors"

@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 	"github.com/zeebo/assert"
 	"gorm.io/gorm"
 )

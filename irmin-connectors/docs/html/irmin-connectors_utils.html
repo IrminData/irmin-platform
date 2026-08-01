@@ -110,7 +110,7 @@ func HashJSONFields(details, settings []byte) (string, error)
 func IsBinaryContentType(contentType *string) bool
     IsBinaryContentType checks if the given content type indicates binary data.
     Returns true if the content type should be treated as binary. It delegates
-    to the unified MIME utility in irmin-sdk-go.
+    to the unified MIME utility in the Go SDK.
 
 func JoinURL(baseURL, path string) string
     JoinURL properly joins a base URL with a path, handling absolute URLs and
@@ -219,7 +219,7 @@ func LoadEnv() (*ConnectorsEnv, error)
     returns a ConnectorsEnv struct with the loaded environment variables.
 
 func (e *ConnectorsEnv) SDKBaseURL() string
-    SDKBaseURL returns the Core base URL formatted for the irmin-sdk-go
+    SDKBaseURL returns the Core base URL formatted for the Go SDK
     `api.NewClient` constructor, which expects a base of the form
     `https://host/api` (the SDK's endpoint constants are `/v1/...` and the
     Request method does a literal string concat). Callers that POST to system

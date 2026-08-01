@@ -15,7 +15,7 @@ import (
 	linearclient "irmin-connectors/connectors/linear/client"
 	"irmin-connectors/models"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // GetDetailsFieldDefinitions returns the connection details schema.

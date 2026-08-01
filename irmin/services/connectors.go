@@ -6,10 +6,10 @@ import (
 	"irmin-api/db"
 	"irmin-api/utils"
 
-	"github.com/IrminData/irmin-sdk-go/connectorsclient"
+	"github.com/IrminData/irmin-platform/sdks/go/connectorsclient"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	"gorm.io/gorm"
 )
 

@@ -11,7 +11,7 @@ import (
 	"irmin-api/controllers"
 	"irmin-api/engine/validation"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	"github.com/gofiber/fiber/v3"
 	"github.com/zeebo/assert"
 )

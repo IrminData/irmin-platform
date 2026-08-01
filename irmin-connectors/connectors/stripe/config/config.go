@@ -14,7 +14,7 @@ import (
 	"irmin-connectors/connectors/common"
 	"irmin-connectors/models"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // DefaultAPIVersion pins the Stripe API version Irmin stamps on every

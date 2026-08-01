@@ -19,7 +19,7 @@ import (
 	"irmin-connectors/db"
 	"log/slog"
 
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 // HTTPClient represents an HTTP client for making requests.

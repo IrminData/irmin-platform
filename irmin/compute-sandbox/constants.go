@@ -20,7 +20,7 @@ const (
 	// contents change (base image, baked SDK version, etc.) so old and new
 	// workflows do not collide mid-deploy. Re-seed with `-seed-snapshots`.
 
-	SnapshotGoDefault = "irmin-go-1.25-sdk-v1"
+	SnapshotGoDefault = "irmin-go-1.25-sdk-v2"
 
 	// Workspace directory inside Daytona sandbox.
 
@@ -29,6 +29,7 @@ const (
 	// Runtime versions.
 
 	LatestGoVersion = "1.25.0"
+	GoSDKVersion    = "v0.1.0"
 
 	// Runtime types.
 

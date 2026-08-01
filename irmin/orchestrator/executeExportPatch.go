@@ -8,8 +8,8 @@ import (
 	"irmin-api/connectorjobs"
 	"irmin-api/db"
 
-	"github.com/IrminData/irmin-sdk-go/connectorsclient"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	"github.com/IrminData/irmin-platform/sdks/go/connectorsclient"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // performPatchExport sends patches from the trigger payload to the connection.

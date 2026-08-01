@@ -8,8 +8,8 @@ import (
 	"encoding/json"
 	"log"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
-	irminutils "github.com/IrminData/irmin-sdk-go/utils"
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
+	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 )
 
 const (

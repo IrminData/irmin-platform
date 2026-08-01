@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	"github.com/zeebo/assert"
 )
 

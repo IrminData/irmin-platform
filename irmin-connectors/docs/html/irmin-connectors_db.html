@@ -399,10 +399,10 @@ type OperationJob struct {
     connector operation job (e.g., a long-running pull).
 
     The wire-facing SDK type lives in
-    github.com/IrminData/irmin-sdk-go/models.OperationJob — fields here mirror
-    that shape but add the bookkeeping columns (Progress JSON, ResultPath,
-    Error) that the server side needs and the SDK client does not. The connector
-    service converts between the two at the HTTP boundary.
+    github.com/IrminData/irmin-platform/sdks/go/models.OperationJob — fields
+    here mirror that shape but add the bookkeeping columns (Progress JSON,
+    ResultPath, Error) that the server side needs and the SDK client does not.
+    The connector service converts between the two at the HTTP boundary.
 
 func (OperationJob) TableName() string
     TableName pins the GORM-derived table name so future renames of the Go type

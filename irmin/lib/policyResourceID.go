@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"irmin-api/db"
 
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
 )
 
 // DecodePolicyResourceID decodes a SQID based on the resource type for policy resources.

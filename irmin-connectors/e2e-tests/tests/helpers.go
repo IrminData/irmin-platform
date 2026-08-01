@@ -1,7 +1,7 @@
 package tests
 
 import (
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // HasCapability checks if a connector has a specific capability.

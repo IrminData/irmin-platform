@@ -1,7 +1,7 @@
 package formatter
 
 import (
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
 )
 
 // FormatIndexResponse is a generic helper function to format index responses.

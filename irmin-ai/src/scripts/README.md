@@ -13,10 +13,11 @@ Fetches documentation from remote sources and local markdown files, chunks the c
 The script performs two vectorization passes:
 
 **Pass 1: `irmin-docs` collection**
+
 - Collection name: `irmin-docs`
 - Remote URLs:
-  - `https://raw.githubusercontent.com/IrminData/irmin-sdk-go/refs/heads/development/README.md`
-  - `https://raw.githubusercontent.com/IrminData/irmin-sdk-go/refs/heads/development/docs/docs.md`
+  - `https://raw.githubusercontent.com/IrminData/irmin-platform/refs/heads/main/sdks/go/README.md`
+  - `https://raw.githubusercontent.com/IrminData/irmin-platform/refs/heads/main/sdks/go/docs/docs.md`
 - Local files:
   - `llm-docs/concepts.md`
   - `llm-docs/workflows.md`
@@ -26,11 +27,13 @@ The script performs two vectorization passes:
   - `llm-docs/sql.md`
 
 **Pass 2: `duckdb-sql-syntax-docs` collection**
+
 - Collection name: `duckdb-sql-syntax-docs`
 - Remote URLs: DuckDB SQL documentation (query syntax, statements, data types)
 - Local files: None
 
 **Common settings for both passes:**
+
 - Chunk size: 700 characters
 - Chunk overlap: 200 characters
 - Max concurrent fetches: 3
@@ -39,12 +42,14 @@ The script performs two vectorization passes:
 **Execution methods**
 
 1. **API (system scope)**
+
    ```bash
    curl -X POST http://localhost:3000/api/system/scripts/vectorize-docs \
      -H "Authorization: Bearer <system-token>"
    ```
 
 2. **Programmatic**
+
    ```typescript
    import { vectorizeDocsScript } from '@/scripts';
 
@@ -53,6 +58,7 @@ The script performs two vectorization passes:
    ```
 
 3. **Custom configuration**
+
    ```typescript
    import { VectorizeDocsScript } from '@/scripts/vectorize-docs';
 
@@ -70,6 +76,7 @@ The script performs two vectorization passes:
    ```
 
 **Response shape**
+
 ```json
 {
   "success": true,
@@ -115,6 +122,7 @@ Switch to append mode by setting `replaceMode: false` when constructing `Vectori
 ## Analytics
 
 Every execution logs events via `analyticsService`:
+
 - `vector_store_created` / `vector_store_connection`
 - `documents_indexed`, `documents_deleted`
 - `script_vectorize_docs`

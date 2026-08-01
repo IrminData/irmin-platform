@@ -12,9 +12,9 @@ import (
 
 	"irmin-api/connectorjobs"
 
-	"github.com/IrminData/irmin-sdk-go/connectorsclient"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	"github.com/IrminData/irmin-sdk-go/observability"
+	"github.com/IrminData/irmin-platform/sdks/go/connectorsclient"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	"github.com/IrminData/irmin-platform/sdks/go/observability"
 )
 
 func TestRunCompletesJob(t *testing.T) {

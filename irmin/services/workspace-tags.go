@@ -8,8 +8,8 @@ import (
 	"irmin-api/permissions"
 	"irmin-api/utils"
 
-	irmincore "github.com/IrminData/irmin-sdk-go/api"
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	"gorm.io/gorm"
 )
 

@@ -13,7 +13,7 @@ import (
 
 	sandbox "irmin-api/compute-sandbox"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 const (

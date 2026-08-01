@@ -11,9 +11,9 @@ import (
 	"irmin-api/utils"
 	"log/slog"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
-	irminsqids "github.com/IrminData/irmin-sdk-go/sqids"
-	irminvalidator "github.com/IrminData/irmin-sdk-go/validator"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
+	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
+	irminvalidator "github.com/IrminData/irmin-platform/sdks/go/validator"
 	"github.com/gofiber/fiber/v3"
 )
 

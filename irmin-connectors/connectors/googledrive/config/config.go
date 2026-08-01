@@ -23,7 +23,7 @@ import (
 	"irmin-connectors/connectors/common"
 	"irmin-connectors/models"
 
-	irminmodels "github.com/IrminData/irmin-sdk-go/models"
+	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 )
 
 // OAuth constants for Google's endpoints.
