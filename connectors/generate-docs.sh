@@ -236,7 +236,11 @@ echo "Writing index: ${INDEX_FILE}"
 } > "${INDEX_FILE}"
 
 echo "Generating Markdown reference (gomarkdoc) -> ${MD_FILE}"
-"$GOMARKDOC_CMD" ${GOMARKDOC_FLAGS:-} ./... > "${MD_FILE}"
+"$GOMARKDOC_CMD" \
+  --repository.url "${GOMARKDOC_REPOSITORY_URL:-https://github.com/IrminData/irmin-platform}" \
+  --repository.default-branch "${GOMARKDOC_DEFAULT_BRANCH:-main}" \
+  --repository.path "${GOMARKDOC_REPOSITORY_PATH:-/connectors}" \
+  ${GOMARKDOC_FLAGS:-} ./... > "${MD_FILE}"
 
 echo "Generating Swagger API documentation (swag) -> ${SWAGGER_DIR}"
 # Ensure Go module is in a clean state for swagger generation
