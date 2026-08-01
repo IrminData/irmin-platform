@@ -551,16 +551,9 @@ func (s *BillingService) polarPost(ctx context.Context, path string, body []byte
 		respBody, _ := io.ReadAll(resp.Body)
 		_ = resp.Body.Close()
 
-		// Log key prefix for debugging auth failures without exposing the full secret
-		const keyPrefixLen = 12
-		keyPrefix := s.env.PolarAPIKey
-		if len(keyPrefix) > keyPrefixLen {
-			keyPrefix = keyPrefix[:keyPrefixLen] + "..."
-		}
 		s.logger.ErrorContext(ctx, "Polar API error",
 			"path", path,
 			"status", resp.StatusCode,
-			"key_prefix", keyPrefix,
 		)
 
 		return nil, fmt.Errorf(

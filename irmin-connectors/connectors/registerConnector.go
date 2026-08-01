@@ -156,7 +156,6 @@ func tryUpdateConnector(
 		"connector_id", newConnector.ID,
 		"connector_name", connectorName,
 		"connector_url", connectorURL,
-		"connector_token", token,
 	)
 	return newConnector, nil
 }
