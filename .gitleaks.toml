@@ -1,0 +1,4 @@
+title = "Irmin Platform Gitleaks Configuration"
+
+[extend]
+useDefault = true

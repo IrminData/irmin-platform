@@ -1,10 +1,13 @@
 version: 2
 
 updates:
+  # Version-update PRs are paused during the monorepo cutover follow-up.
+  # Security-update PRs remain enabled and are exempt from this limit.
   - package-ecosystem: github-actions
     directory: /
     schedule:
       interval: monthly
+    open-pull-requests-limit: 0
     target-branch: main
     groups:
       all:
@@ -14,6 +17,7 @@ updates:
     directory: /core
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
     target-branch: main
     groups:
       all:
@@ -23,6 +27,7 @@ updates:
     directory: /connectors
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
     target-branch: main
     groups:
       all:
@@ -32,6 +37,7 @@ updates:
     directory: /sdks/go
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
     target-branch: main
     groups:
       all:
@@ -41,10 +47,12 @@ updates:
     directory: /ai
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
     target-branch: main
 
   - package-ecosystem: npm
     directory: /console
     schedule:
       interval: weekly
+    open-pull-requests-limit: 0
     target-branch: main
