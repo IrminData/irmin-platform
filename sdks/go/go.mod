@@ -2,7 +2,7 @@ module github.com/IrminData/irmin-platform/sdks/go
 
 go 1.25.0
 
-require github.com/gabriel-vasile/mimetype v1.4.13
+require github.com/gabriel-vasile/mimetype v1.4.15
 
 require (
 	github.com/apache/arrow-go/v18 v18.6.0 // indirect
@@ -24,10 +24,10 @@ require (
 )
 
 require (
-	github.com/go-playground/validator/v10 v10.30.2
+	github.com/go-playground/validator/v10 v10.30.3
 	github.com/marcboeker/go-duckdb v1.8.5
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/sqids/sqids-go v0.4.1
 	github.com/teambition/rrule-go v1.8.2
-	github.com/zeebo/assert v1.3.0
+	github.com/zeebo/assert v1.3.1
 )
