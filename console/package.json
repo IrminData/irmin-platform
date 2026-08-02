@@ -168,7 +168,7 @@
       "@codemirror/state": "6.5.4",
       "@codemirror/lang-javascript": "6.2.4",
       "@codemirror/lang-markdown": "6.4.0",
-      "@codemirror/lang-sql": "6.9.1",
+      "@codemirror/lang-sql": "6.10.0",
       "seroval": "1.5.3"
     },
     "onlyBuiltDependencies": [
