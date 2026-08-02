@@ -9,7 +9,9 @@
   rulesets.
 - [x] Reconnect the Railway services after validating the monorepo pipelines
   and apply semantic root and watch paths.
-- [ ] Archive the five migrated standalone repositories after consumer cutover.
+- [x] Archive the five migrated standalone repositories after consumer cutover.
+- [ ] Review and remediate the deferred Dependabot security and dependency
+  updates as a dedicated, tested batch, then re-enable version-update PRs.
 
 ## SDK releases
 

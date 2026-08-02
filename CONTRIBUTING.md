@@ -37,6 +37,15 @@ documented in each project README.
 Tests should exercise observable behavior, meaningful errors, permissions,
 data changes, or rendered output. Avoid tests that only restate mocks.
 
+Before pushing, scan the complete repository history for secrets:
+
+    gitleaks git . --config .gitleaks.toml --redact --no-banner
+
+CI runs the same full-history scan on pull requests, pushes to main, and a
+weekly schedule. Historical false positives must be reviewed before adding a
+fingerprint-specific entry to `.gitleaksignore`; do not add broad path or rule
+exclusions.
+
 ## Pull requests
 
 - Keep each pull request focused on one coherent outcome.
