@@ -7,8 +7,8 @@
   dependency remediation.
 - [x] Enable private vulnerability reporting and appropriate repository
   rulesets.
-- [ ] Reconnect deployment providers only after the monorepo pipelines are
-  validated.
+- [x] Reconnect the Railway services after validating the monorepo pipelines
+  and apply semantic root and watch paths.
 - [ ] Archive the five migrated standalone repositories after consumer cutover.
 
 ## SDK releases
@@ -24,5 +24,5 @@
   cache invalidation failures, and add the hermetic Core suite to default CI.
 - [ ] Decide whether the two Node projects should eventually share a root pnpm
   lockfile and task runner; preserve independent lockfiles until then.
-- [ ] Add deployment path filters after current provider integrations are
+- [x] Add deployment path filters after current provider integrations are
   inventoried.
