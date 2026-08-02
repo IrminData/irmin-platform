@@ -84,7 +84,7 @@
     "harden-react-markdown": "^1.1.8",
     "katex": "^0.16.28",
     "markdown-to-jsx": "^9.8.1",
-    "next": "16.2.6",
+    "next": "16.2.11",
     "next-themes": "^0.4.6",
     "posthog-js": "^1.376.0",
     "react": "19.2.6",
