@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   pull_request:
     paths:
-      - "irmin/**"
-      - "irmin-connectors/**"
+      - "core/**"
+      - "connectors/**"
       - "sdks/go/**"
       - "go.work"
       - "Makefile"
@@ -13,8 +13,8 @@ on:
   push:
     branches: [main]
     paths:
-      - "irmin/**"
-      - "irmin-connectors/**"
+      - "core/**"
+      - "connectors/**"
       - "sdks/go/**"
       - "go.work"
       - "Makefile"
@@ -36,7 +36,7 @@ jobs:
       matrix:
         include:
           - name: Connectors
-            module: irmin-connectors
+            module: connectors
           - name: Go SDK
             module: sdks/go
     steps:
@@ -56,11 +56,11 @@ jobs:
       matrix:
         include:
           - name: Core
-            module: irmin
+            module: core
             version: v2.4.0
             timeout: 10m
           - name: Connectors
-            module: irmin-connectors
+            module: connectors
             version: v2.6.1
             timeout: 5m
           - name: Go SDK

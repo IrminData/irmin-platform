@@ -18,11 +18,11 @@ For an isolated cross-project checkout:
 
 Install dependencies only for the projects you are changing:
 
-    cd irmin && go mod download
-    cd ../irmin-connectors && go mod download
+    cd core && go mod download
+    cd ../connectors && go mod download
     cd ../sdks/go && go mod download
-    cd ../../irmin-ai && pnpm install --frozen-lockfile
-    cd ../irmin-console && pnpm install --frozen-lockfile
+    cd ../../ai && pnpm install --frozen-lockfile
+    cd ../console && pnpm install --frozen-lockfile
 
 The root go.work makes the local Go SDK available to Core and Connectors. Do not
 add local replace directives to committed go.mod files.

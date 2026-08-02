@@ -11,7 +11,7 @@ updates:
         patterns: ["*"]
 
   - package-ecosystem: gomod
-    directory: /irmin
+    directory: /core
     schedule:
       interval: weekly
     target-branch: main
@@ -20,7 +20,7 @@ updates:
         patterns: ["*"]
 
   - package-ecosystem: gomod
-    directory: /irmin-connectors
+    directory: /connectors
     schedule:
       interval: weekly
     target-branch: main
@@ -38,13 +38,13 @@ updates:
         patterns: ["*"]
 
   - package-ecosystem: npm
-    directory: /irmin-ai
+    directory: /ai
     schedule:
       interval: weekly
     target-branch: main
 
   - package-ecosystem: npm
-    directory: /irmin-console
+    directory: /console
     schedule:
       interval: weekly
     target-branch: main
