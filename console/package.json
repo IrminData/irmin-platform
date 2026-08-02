@@ -139,7 +139,7 @@
     "husky": "^9.1.7",
     "import-in-the-middle": "1.14.4",
     "knip": "^5.85.0",
-    "postcss": "^8.5.15",
+    "postcss": "^8.5.18",
     "postcss-flexbugs-fixes": "^5.0.2",
     "postcss-nested": "^7.0.2",
     "postcss-preset-env": "^11.3.0",
