@@ -24,8 +24,9 @@ Install dependencies only for the projects you are changing:
     cd ../../ai && pnpm install --frozen-lockfile
     cd ../console && pnpm install --frozen-lockfile
 
-The root go.work makes the local Go SDK available to Core and Connectors. Do not
-add local replace directives to committed go.mod files.
+The root go.work includes every in-repository Go module and makes the local Go
+SDK available to each consumer. Do not add local replace directives to
+committed go.mod files or use workspace toggle scripts.
 
 ## Validation
 
