@@ -34,10 +34,10 @@ configuration, and detailed agent instructions where applicable.
 
 ## Local setup
 
-The Go workspace resolves Core and Connectors against the local Go SDK without
-changing their published module dependencies:
+The committed Go workspace resolves Core, Connectors, and both E2E modules
+against the local Go SDK without changing their published module dependencies.
+No local replace directives or workspace toggle scripts are needed:
 
-    go work use ./core ./connectors ./sdks/go
     go test -timeout 2m ./sdks/go/...
 
 Node applications deliberately retain independent lockfiles:

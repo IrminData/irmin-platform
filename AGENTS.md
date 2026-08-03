@@ -32,10 +32,10 @@ specific instructions win for files inside that project.
 
 ## Shared development
 
-The root go.work resolves
-github.com/IrminData/irmin-platform/sdks/go from sdks/go for local Core and
-Connectors development. Keep the published dependency in go.mod and do not
-commit local replace directives.
+The root go.work includes every in-repository Go module and resolves
+github.com/IrminData/irmin-platform/sdks/go from sdks/go for local development.
+Keep the published dependency in go.mod and do not commit local replace
+directives.
 
 Node projects retain independent pnpm lockfiles. Run pnpm commands from the
 project directory; do not consolidate lockfiles without a dedicated migration.

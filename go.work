@@ -2,6 +2,8 @@ go 1.25.4
 
 use (
 	./core
+	./core/e2e-tests
 	./connectors
+	./connectors/e2e-tests
 	./sdks/go
 )
