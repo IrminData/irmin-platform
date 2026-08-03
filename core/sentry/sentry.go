@@ -26,7 +26,6 @@ func Init(logger *slog.Logger, env *utils.CoreAPIEnv) {
 		TracesSampleRate: env.SentryTracesSampleRate,
 		EnableTracing:    true,
 		AttachStacktrace: true,
-		EnableLogs:       true,
 		// SendDefaultPII stays OFF: this service authenticates via Clerk JWTs
 		// and API tokens passed in Authorization / Cookie headers, and enabling
 		// PII forwards request headers and cookies verbatim to Sentry — bearer

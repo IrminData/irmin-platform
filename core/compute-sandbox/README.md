@@ -28,7 +28,7 @@ The compute sandbox uses direct process execution with:
 
 - **Python 3.11+** - for Python script execution
 - **Node.js** - for JavaScript/TypeScript execution
-- **Go 1.25** - for Go script execution
+- **Go 1.26** - for Go script execution
 
 ### Deployment
 
@@ -57,7 +57,7 @@ Each runtime can boot from a pre-built Daytona **snapshot** instead of pulling a
 | `DAYTONA_API_KEY` | Required for sandbox execution | — |
 | `DAYTONA_API_URL` | Daytona API endpoint | `https://app.daytona.io/api` |
 | `DAYTONA_TARGET` | Region (`eu`, `us`, etc.). Snapshots are per-region — seed and runtime must agree. | `""` (org default) |
-| `DAYTONA_SNAPSHOT_GO` | Snapshot name for the Go runtime. Empty = fall back to raw `golang:1.25` image (SDK installed per-run). | `""` |
+| `DAYTONA_SNAPSHOT_GO` | Snapshot name for the Go runtime. Empty = fall back to raw `golang:1.26` image (SDK installed per-run). | `""` |
 | `DAYTONA_SNAPSHOT_PYTHON` *(reserved)* | Snapshot name for the Python runtime. Not yet honoured. | — |
 | `DAYTONA_SNAPSHOT_NODE` *(reserved)* | Snapshot name for the Node runtime. Not yet honoured. | — |
 
@@ -118,7 +118,7 @@ Processes:       Controlled by OS and container limits
 
 - **Python 3.11+**: Direct execution with system python3
 - **Node.js**: Direct execution with system node
-- **Go 1.25**: go run with automatic go mod management
+- **Go 1.26**: go run with automatic go mod management
 
 ## Security
 

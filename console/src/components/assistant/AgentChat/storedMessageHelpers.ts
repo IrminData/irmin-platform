@@ -118,8 +118,7 @@ export function getMessageMetadata(
 
   // Extract tool calls if they exist
   const additionalKwargs = message.data?.additional_kwargs as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   if (
     additionalKwargs?.tool_calls &&
     Array.isArray(additionalKwargs.tool_calls)

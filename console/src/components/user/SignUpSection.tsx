@@ -61,7 +61,7 @@ const SignUpSection = () => {
         <SignUp
           signInUrl={`/${locale}/sign-in`}
           appearance={{
-            baseTheme: resolvedTheme === 'dark' ? dark : undefined,
+            theme: resolvedTheme === 'dark' ? dark : undefined,
             variables: { colorPrimary: '#a3c2ac' },
           }}
         />

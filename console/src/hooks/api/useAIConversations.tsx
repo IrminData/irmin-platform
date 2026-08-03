@@ -152,8 +152,7 @@ export function useAIConversations(options: UseAIConversationsOptions = {}) {
     onError: (error, _input, context: unknown) => {
       // Rollback on error
       const typedContext = context as
-        | { previousConversations?: AIConversationsListResponse }
-        | undefined;
+        { previousConversations?: AIConversationsListResponse } | undefined;
 
       if (typedContext?.previousConversations) {
         queryClient.setQueryData(

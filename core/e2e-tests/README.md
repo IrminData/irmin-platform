@@ -4,7 +4,7 @@ End-to-end tests for the Irmin API using the Go SDK. These tests verify realisti
 
 ## Prerequisites
 
-- Go 1.25 or later
+- Go 1.26.5 or later
 - An Irmin API instance (cloud or self-hosted)
 - An API token or JWT for authentication
 - golangci-lint (for linting)

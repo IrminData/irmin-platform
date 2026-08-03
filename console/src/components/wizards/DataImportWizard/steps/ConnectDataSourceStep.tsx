@@ -19,6 +19,8 @@ import { usePopup } from '@/context/PopupContext';
 import { useConnections } from '@/hooks/api';
 import { useResourceAllowed } from '@/hooks/utils';
 
+import { cn } from '@/utils/tw';
+
 import type { Connection } from '@/types/core/Connection';
 
 import type { DataImportWizardData } from '../types';
@@ -130,10 +132,10 @@ export default function ConnectDataSourceStep({
             </Label>
           </div>
           <div
-            className={
-              'flex items-center space-x-2' +
-              (!isResourceAllowed('connection', 'create') ? ' opacity-50' : '')
-            }
+            className={cn(
+              'flex items-center space-x-2',
+              !isResourceAllowed('connection', 'create') && 'opacity-50'
+            )}
           >
             <RadioGroupItem
               value='new'

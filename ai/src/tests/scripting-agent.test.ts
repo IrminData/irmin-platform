@@ -144,8 +144,7 @@ async function testSqlDelegation(): Promise<boolean> {
     const data = msg as Record<string, unknown>;
     const kwargs = data.kwargs as Record<string, unknown> | undefined;
     const toolCalls = kwargs?.tool_calls as
-      | Array<{ name?: string }>
-      | undefined;
+      Array<{ name?: string }> | undefined;
     return toolCalls?.some((tc) => tc.name === 'query_sql_assistant') ?? false;
   });
   if (calledSqlAssistant) {

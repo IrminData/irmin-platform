@@ -42,11 +42,7 @@ import {
 } from './utils';
 
 type SortableColumn =
-  | 'action'
-  | 'effect'
-  | 'principal'
-  | 'resource'
-  | 'resourceId';
+  'action' | 'effect' | 'principal' | 'resource' | 'resourceId';
 type SortDirection = 'asc' | 'desc' | null;
 
 interface SortState {

@@ -69,8 +69,7 @@ interface ConsolidatedTool {
  */
 function extractToolCallsFromMessage(message: StoredMessage): ToolCallInfo[] {
   const additionalKwargs = message.data?.additional_kwargs as
-    | Record<string, unknown>
-    | undefined;
+    Record<string, unknown> | undefined;
   const toolCalls = additionalKwargs?.tool_calls as
     | Array<{
         id: string;

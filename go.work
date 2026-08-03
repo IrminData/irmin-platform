@@ -1,9 +1,9 @@
-go 1.25.4
+go 1.26.5
 
 use (
-	./core
-	./core/e2e-tests
 	./connectors
 	./connectors/e2e-tests
+	./core
+	./core/e2e-tests
 	./sdks/go
 )

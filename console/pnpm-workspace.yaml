@@ -1,10 +1,35 @@
-onlyBuiltDependencies:
-  - '@clerk/shared'
-  - '@sentry/cli'
-  - '@tailwindcss/oxide'
-  - '@vercel/speed-insights'
-  - canvas
-  - core-js
-  - es5-ext
-  - sharp
-  - unrs-resolver
+packages:
+  - .
+
+overrides:
+  '@cyntler/react-doc-viewer>ajv': 8.18.0
+  require-in-the-middle: 7.5.2
+  import-in-the-middle: 1.14.4
+  '@uiw/react-codemirror': 4.25.4
+  '@uiw/codemirror-theme-vscode': 4.25.4
+  '@uiw/codemirror-themes': 4.25.4
+  '@uiw/codemirror-extensions-basic-setup': 4.25.4
+  '@codemirror/view': 6.39.15
+  '@codemirror/state': 6.5.4
+  '@codemirror/lint': 6.9.5
+  '@codemirror/lang-javascript': 6.2.4
+  '@codemirror/lang-markdown': 6.4.0
+  '@codemirror/lang-sql': 6.9.1
+  immutable: 5.1.8
+  postcss: 8.5.25
+  sharp: 0.35.3
+  seroval: 1.5.3
+
+allowBuilds:
+  '@clerk/shared': true
+  '@sentry/cli': true
+  '@sentry/node-cpu-profiler': true
+  '@tailwindcss/oxide': true
+  '@vercel/speed-insights': true
+  canvas: true
+  core-js: true
+  es5-ext: true
+  esbuild: true
+  protobufjs: true
+  sharp: true
+  unrs-resolver: true

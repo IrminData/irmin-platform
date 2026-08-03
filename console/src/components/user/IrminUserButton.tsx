@@ -34,7 +34,7 @@ export default function IrminUserButton() {
     <div id='irmin-user-button' className='contents'>
       <UserButton
         appearance={{
-          baseTheme: resolvedTheme === 'dark' ? dark : undefined,
+          theme: resolvedTheme === 'dark' ? dark : undefined,
           variables: { colorPrimary: '#a3c2ac' },
         }}
         userProfileMode='navigation'

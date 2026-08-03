@@ -54,7 +54,7 @@ export default function AcceptInviteSection({
   if (!isSignedIn) {
     const inviteUrl = `/${locale}/invite/${inviteID}`;
     const clerkAppearance = {
-      baseTheme: resolvedTheme === 'dark' ? dark : undefined,
+      theme: resolvedTheme === 'dark' ? dark : undefined,
       variables: { colorPrimary: '#a3c2ac' },
     };
 

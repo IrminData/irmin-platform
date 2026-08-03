@@ -1,7 +1,7 @@
 'use client';
 
 import { useTheme } from 'next-themes';
-import ReactDiffViewer from 'react-diff-viewer';
+import ReactDiffViewer from 'react-diff-viewer-continued';
 
 /**
  * Component to display the difference between two texts

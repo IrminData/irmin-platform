@@ -697,8 +697,7 @@ export class VectorizeDocsScript {
         for (const point of points) {
           const payload = point.payload as Record<string, unknown> | undefined;
           const metadata = payload?.metadata as
-            | Record<string, unknown>
-            | undefined;
+            Record<string, unknown> | undefined;
 
           if (metadata && typeof metadata.documentId === 'string') {
             const chunkDocId = metadata.documentId;

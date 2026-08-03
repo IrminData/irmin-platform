@@ -35,11 +35,7 @@ import RepositoryDocumentationCard from './RepositoryDocumentationCard';
 import { downloadSchemaPDF } from './usePDFExport';
 
 type FlowNodeType =
-  | 'connector'
-  | 'connection'
-  | 'workflow'
-  | 'repository'
-  | 'ai_application';
+  'connector' | 'connection' | 'workflow' | 'repository' | 'ai_application';
 
 type FlowNode = {
   id: string;

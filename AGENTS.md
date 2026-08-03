@@ -57,7 +57,7 @@ and has known imported cache invalidation failures recorded in TODO.md.
 
 ### core/
 
-Read core/AGENTS.md. Use Go 1.25+, Fiber, GORM, structured slog logging, and
+Read core/AGENTS.md. Use Go 1.26.5+, Fiber, GORM, structured slog logging, and
 the project golangci-lint configuration.
 
 ### ai/
@@ -72,7 +72,7 @@ Next.js, React, accessibility, localization, and design-system conventions.
 
 ### connectors/
 
-Use Go 1.25+, Fiber, GORM, structured logging, and the local golangci-lint
+Use Go 1.26.5+, Fiber, GORM, structured logging, and the local golangci-lint
 configuration. Connector contracts shared with Core belong in sdks/go/.
 
 ### sdks/

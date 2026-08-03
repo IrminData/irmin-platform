@@ -380,10 +380,7 @@ const ConnectionSubscriptionsSection = () => {
                     setFormData({
                       ...formData,
                       event_types: value.split(',') as (
-                        | 'insert'
-                        | 'update'
-                        | 'delete'
-                        | 'upsert'
+                        'insert' | 'update' | 'delete' | 'upsert'
                       )[],
                     });
                   }
@@ -498,10 +495,7 @@ const ConnectionSubscriptionsSection = () => {
                     setEditFormData({
                       ...editFormData,
                       event_types: value.split(',') as (
-                        | 'insert'
-                        | 'update'
-                        | 'delete'
-                        | 'upsert'
+                        'insert' | 'update' | 'delete' | 'upsert'
                       )[],
                     });
                   }

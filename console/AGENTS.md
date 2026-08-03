@@ -5,7 +5,7 @@ This file provides guidance to coding agents (Claude Code, Gemini CLI, etc.) whe
 ## Development Commands
 
 ```bash
-pnpm install                     # Install dependencies (Node.js 24+, pnpm 10.24.0+)
+pnpm install                     # Install dependencies (Node.js 24+, pnpm 11.18.0+)
 pnpm dev                         # Start dev server with HTTPS and Turbopack
 pnpm validate                    # TypeScript check + lint + format with auto-fix
 pnpm build                       # Production build (includes TypeDoc generation)

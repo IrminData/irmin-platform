@@ -5,8 +5,8 @@ import dynamic from 'next/dynamic';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 /**
- * Async wrapper for TextDiff that lazy-loads react-diff-viewer.
- * react-diff-viewer is ~100KB and only needed when viewing diffs.
+ * Async wrapper for TextDiff that lazy-loads react-diff-viewer-continued.
+ * The diff viewer is only needed when viewing diffs.
  */
 const TextDiffAsync = dynamic(() => import('./TextDiff'), {
   loading: () => (
