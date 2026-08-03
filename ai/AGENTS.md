@@ -9,7 +9,7 @@ Irmin AI is a LangChain-powered AI service (Fastify + TypeScript) providing stre
 ## Development Commands
 
 ```bash
-# Dependencies (requires Node.js 24+, pnpm 10.22.0+)
+# Dependencies (requires Node.js 24+, pnpm 11.18.0+)
 pnpm install
 
 # Development

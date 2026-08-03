@@ -29,9 +29,7 @@ const WorkflowFieldMapperSection = ({ workflowID }: { workflowID: string }) => {
   const { isResourceAllowed } = useResourceAllowed();
 
   const workflow = workflowQuery.data?.data as
-    | ExportWorkflow
-    | ImportWorkflow
-    | undefined;
+    ExportWorkflow | ImportWorkflow | undefined;
 
   const [mappings, setMappings] = useState<FieldMapping[]>(
     workflow?.workflowable?.field_mappings ?? []

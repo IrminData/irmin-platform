@@ -170,7 +170,7 @@ func TestCreateMultipartFormHeaderInjectionProtection(t *testing.T) {
 			filename:       "test\r\nfile.txt",
 			fieldName:      "file",
 			shouldFail:     false,
-			expectParseErr: true, // multipart reader should reject malformed headers
+			expectParseErr: false, // Go percent-encodes CR/LF in multipart parameters
 		},
 		{
 			name:           "fieldname with quotes",
@@ -184,7 +184,7 @@ func TestCreateMultipartFormHeaderInjectionProtection(t *testing.T) {
 			filename:       "test.txt",
 			fieldName:      "file\r\nfield",
 			shouldFail:     false,
-			expectParseErr: true, // multipart reader should reject malformed headers
+			expectParseErr: false, // Go percent-encodes CR/LF in multipart parameters
 		},
 		{
 			name:           "both with malicious chars",
@@ -263,6 +263,7 @@ func testCreateMultipartForm(t *testing.T, tt struct {
 	if part.FileName() == "" {
 		t.Error("Filename should not be empty")
 	}
+	assertSafeMultipartParameters(t, part)
 }
 
 func testCreateMultipartFormWithFields(t *testing.T, tt struct {
@@ -330,6 +331,14 @@ func testCreateMultipartFormWithFields(t *testing.T, tt struct {
 		if filePart.FileName() == "" {
 			t.Error("Filename should not be empty")
 		}
+		assertSafeMultipartParameters(t, filePart)
+	}
+}
+
+func assertSafeMultipartParameters(t *testing.T, part *multipart.Part) {
+	t.Helper()
+	if strings.ContainsAny(part.FormName(), "\r\n") || strings.ContainsAny(part.FileName(), "\r\n") {
+		t.Error("Multipart parameters should not contain raw CR/LF characters")
 	}
 }
 

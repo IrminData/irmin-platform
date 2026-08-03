@@ -354,15 +354,15 @@ const (
     DaytonaDefaultDisk   = 5               // GB per sandbox
     DaytonaCreateTimeout = 2 * time.Minute // Maximum time to wait for sandbox creation
 
-    DockerImageGo     = "golang:1.25"
+    DockerImageGo     = "golang:1.26"
     DockerImagePython = "python:3.11"
     DockerImageNode   = "node:24"
 
-    SnapshotGoDefault = "irmin-go-1.25-sdk-v2"
+    SnapshotGoDefault = "irmin-go-1.26-sdk-v1"
 
     SandboxWorkDir = "/workspace"
 
-    LatestGoVersion = "1.25.0"
+    LatestGoVersion = "1.26.5"
     GoSDKVersion    = "v0.1.0"
 
     RuntimeTypePython = "python"
@@ -14445,7 +14445,7 @@ const FlushTimeout = 2 * time.Second
 ```
 
 <a name="CaptureError"></a>
-## func [CaptureError](<https://github.com/IrminData/irmin-platform/blob/main/core/sentry/sentry.go#L52>)
+## func [CaptureError](<https://github.com/IrminData/irmin-platform/blob/main/core/sentry/sentry.go#L51>)
 
 ```go
 func CaptureError(err error)
@@ -14463,7 +14463,7 @@ func FiberMiddleware() fiber.Handler
 FiberMiddleware returns a Fiber middleware that clones the Sentry hub per request, sets request metadata, stores the hub in c.Locals, and manages a Sentry transaction.
 
 <a name="Flush"></a>
-## func [Flush](<https://github.com/IrminData/irmin-platform/blob/main/core/sentry/sentry.go#L47>)
+## func [Flush](<https://github.com/IrminData/irmin-platform/blob/main/core/sentry/sentry.go#L46>)
 
 ```go
 func Flush(timeout time.Duration)
@@ -14490,7 +14490,7 @@ func Init(logger *slog.Logger, env *utils.CoreAPIEnv)
 Init initializes the Sentry SDK using the provided environment configuration. Returns early if Sentry is disabled or no DSN is configured.
 
 <a name="RecoverAndCapture"></a>
-## func [RecoverAndCapture](<https://github.com/IrminData/irmin-platform/blob/main/core/sentry/sentry.go#L61>)
+## func [RecoverAndCapture](<https://github.com/IrminData/irmin-platform/blob/main/core/sentry/sentry.go#L60>)
 
 ```go
 func RecoverAndCapture(logger *slog.Logger, component string)

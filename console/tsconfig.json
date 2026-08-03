@@ -13,7 +13,6 @@
     "jsx": "react-jsx",
     "incremental": true,
     "moduleResolution": "bundler",
-    "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
     },

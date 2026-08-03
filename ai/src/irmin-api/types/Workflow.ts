@@ -88,10 +88,7 @@ type PipelineWorkflow = WorkflowBase & {
  * Workflow object
  */
 export type Workflow =
-  | ActionWorkflow
-  | ExportWorkflow
-  | ImportWorkflow
-  | PipelineWorkflow;
+  ActionWorkflow | ExportWorkflow | ImportWorkflow | PipelineWorkflow;
 
 /**
  * Workflow status options

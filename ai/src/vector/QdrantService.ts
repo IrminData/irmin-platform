@@ -239,10 +239,7 @@ class QdrantService {
           };
         }),
         nextOffset: result.next_page_offset as
-          | string
-          | number
-          | null
-          | undefined,
+          string | number | null | undefined,
       };
     } catch (error) {
       throw new Error(

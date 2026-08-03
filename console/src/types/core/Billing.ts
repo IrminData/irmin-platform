@@ -2,11 +2,7 @@
  * Status of a workspace subscription.
  */
 type SubscriptionStatus =
-  | 'active'
-  | 'cancelled'
-  | 'past_due'
-  | 'trialing'
-  | 'none';
+  'active' | 'cancelled' | 'past_due' | 'trialing' | 'none';
 
 /**
  * Usage tracking dimension.

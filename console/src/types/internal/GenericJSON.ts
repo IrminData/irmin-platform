@@ -2,12 +2,7 @@
  * Type for JSON-compatible values
  */
 export type JSONValue =
-  | JSONArray
-  | JSONObject
-  | boolean
-  | number
-  | string
-  | null;
+  JSONArray | JSONObject | boolean | number | string | null;
 
 /**
  * Type for JSON-compatible objects

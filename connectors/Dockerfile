@@ -1,6 +1,6 @@
 # Stage 1: Build
 # Use a Debian Bookworm-based Go image to pin glibc version and avoid runtime mismatches
-FROM golang:1.25-bookworm AS builder
+FROM golang:1.26-bookworm AS builder
 
 # Install C/C++ build tools needed for CGO
 RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*

@@ -162,7 +162,7 @@ Core Operations Layer (LakeFS, DuckDB, Database, Connectors)
 - HTTP dispatch pattern for horizontal scaling
 
 **4. Compute Sandbox** (`/compute-sandbox`)
-- Isolated code execution for Python 3.11+, Node.js, and Go 1.25 via Daytona sandboxes
+- Isolated code execution for Python 3.11+, Node.js, and Go 1.26 via Daytona sandboxes
 - Limits: 50 concurrent executions, 10-minute timeout
 - Features: Script locking (PostgreSQL advisory locks), input/output file management
 - Security: Separate temp directories, automatic cleanup

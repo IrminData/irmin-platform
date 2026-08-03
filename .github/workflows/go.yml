@@ -40,8 +40,8 @@ jobs:
           - name: Go SDK
             module: sdks/go
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: "${{ matrix.module }}/go.mod"
           cache-dependency-path: "${{ matrix.module }}/go.sum"
@@ -57,7 +57,7 @@ jobs:
         include:
           - name: Core
             module: core
-            version: v2.4.0
+            version: v2.6.1
             timeout: 10m
           - name: Connectors
             module: connectors
@@ -68,14 +68,15 @@ jobs:
             version: v2.6.1
             timeout: 5m
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: "${{ matrix.module }}/go.mod"
           cache-dependency-path: "${{ matrix.module }}/go.sum"
-      - uses: golangci/golangci-lint-action@v8
+      - uses: golangci/golangci-lint-action@v9
         with:
           version: ${{ matrix.version }}
+          install-mode: goinstall
           working-directory: ${{ matrix.module }}
           args: "--timeout=${{ matrix.timeout }}"
           skip-cache: false

@@ -16,6 +16,8 @@ import { usePopup } from '@/context/PopupContext';
 import { useRepositories } from '@/hooks/api';
 import { useResourceAllowed } from '@/hooks/utils';
 
+import { cn } from '@/utils/tw';
+
 import type { Repository } from '@/types/core/Repository';
 
 import type { DataImportWizardData } from '../types';
@@ -125,10 +127,10 @@ export default function SetupRepositoryStep({
             </Label>
           </div>
           <div
-            className={
-              'flex items-center space-x-2' +
-              (!isResourceAllowed('repository', 'create') ? ' opacity-50' : '')
-            }
+            className={cn(
+              'flex items-center space-x-2',
+              !isResourceAllowed('repository', 'create') && 'opacity-50'
+            )}
           >
             <RadioGroupItem
               value='new'

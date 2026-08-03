@@ -26,7 +26,6 @@ func Init(logger *slog.Logger, env *utils.ConnectorsEnv) {
 		TracesSampleRate: env.SentryTracesSampleRate,
 		EnableTracing:    true,
 		AttachStacktrace: true,
-		EnableLogs:       true,
 		// SendDefaultPII stays OFF: connector requests carry the Irmin Core API
 		// token in Authorization headers and per-connector credentials in the
 		// body. Enabling PII would forward those verbatim to Sentry. Request

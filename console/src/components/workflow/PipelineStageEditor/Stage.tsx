@@ -1338,10 +1338,7 @@ function Stage({
                     setStage((prevStage) => ({
                       ...prevStage,
                       repository_action_type: value as
-                        | 'commit'
-                        | 'merge'
-                        | 'revert'
-                        | 'delete',
+                        'commit' | 'merge' | 'revert' | 'delete',
                     }));
                   }}
                   disabled={readOnly}

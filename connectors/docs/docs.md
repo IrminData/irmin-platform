@@ -1403,7 +1403,7 @@ const FlushTimeout = 2 * time.Second
 ```
 
 <a name="CaptureError"></a>
-## func [CaptureError](<https://github.com/IrminData/irmin-platform/blob/main/connectors/sentry/sentry.go#L51>)
+## func [CaptureError](<https://github.com/IrminData/irmin-platform/blob/main/connectors/sentry/sentry.go#L50>)
 
 ```go
 func CaptureError(err error)
@@ -1421,7 +1421,7 @@ func FiberMiddleware() fiber.Handler
 FiberMiddleware returns a Fiber middleware that clones the Sentry hub per request, sets request metadata, stores the hub in c.Locals, and manages a Sentry transaction.
 
 <a name="Flush"></a>
-## func [Flush](<https://github.com/IrminData/irmin-platform/blob/main/connectors/sentry/sentry.go#L46>)
+## func [Flush](<https://github.com/IrminData/irmin-platform/blob/main/connectors/sentry/sentry.go#L45>)
 
 ```go
 func Flush(timeout time.Duration)
@@ -1448,7 +1448,7 @@ func Init(logger *slog.Logger, env *utils.ConnectorsEnv)
 Init initializes the Sentry SDK using the provided environment configuration. Returns early if Sentry is disabled or no DSN is configured.
 
 <a name="RecoverAndCapture"></a>
-## func [RecoverAndCapture](<https://github.com/IrminData/irmin-platform/blob/main/connectors/sentry/sentry.go#L60>)
+## func [RecoverAndCapture](<https://github.com/IrminData/irmin-platform/blob/main/connectors/sentry/sentry.go#L59>)
 
 ```go
 func RecoverAndCapture(logger *slog.Logger, component string)

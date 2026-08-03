@@ -15,9 +15,9 @@ import { useLocale } from '@/context/LocaleContext';
  * on {@link ErrorBoundary}.
  */
 type ErrorDictStringKey = {
-  [K in keyof Dictionary['common']['errors']]: Dictionary['common']['errors'][K] extends string
-    ? K
-    : never;
+  [
+    K in keyof Dictionary['common']['errors']
+  ]: Dictionary['common']['errors'][K] extends string ? K : never;
 }[keyof Dictionary['common']['errors']];
 
 interface ErrorBoundaryState {

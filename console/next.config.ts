@@ -62,16 +62,18 @@ const sentryConfig: SentryBuildOptions = {
 
   widenClientFileUpload: true,
 
-  reactComponentAnnotation: {
-    enabled: true,
-  },
-
   // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers.
   tunnelRoute: '/monitoring',
 
-  disableLogger: true,
-
-  automaticVercelMonitors: true,
+  webpack: {
+    reactComponentAnnotation: {
+      enabled: true,
+    },
+    treeshake: {
+      removeDebugLogging: true,
+    },
+    automaticVercelMonitors: true,
+  },
 
   sourcemaps: {
     // Missing any of token/org/project → skip generation entirely. Build

@@ -26,8 +26,7 @@ import ImportWorkflow from './Workflowable/ImportWorkflow';
 import PipelineWorkflow from './Workflowable/PipelineWorkflow';
 
 type WorkflowableUpdater =
-  | WorkflowRequest
-  | ((_prevState: WorkflowRequest) => WorkflowRequest);
+  WorkflowRequest | ((_prevState: WorkflowRequest) => WorkflowRequest);
 
 /**
  * Workflow Pipeline section component

@@ -30,7 +30,7 @@ The tests use **real data only** (no mocks) and restore the system to its origin
 
 ## Prerequisites
 
-- Go 1.25 or higher
+- Go 1.26.5 or higher
 - Access to running connector services
 - Valid credentials for each connector you want to test
 - Test databases/systems for connectors (optional but recommended for isolated testing)

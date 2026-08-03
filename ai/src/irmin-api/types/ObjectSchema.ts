@@ -72,13 +72,7 @@ type GroupSchemaRestrictions = {
 interface JSONSchema {
   /** Specifies the JSON Schema data type (e.g., 'object', 'array', 'string'). */
   type:
-    | 'array'
-    | 'boolean'
-    | 'null'
-    | 'number'
-    | 'object'
-    | 'string'
-    | 'integer';
+    'array' | 'boolean' | 'null' | 'number' | 'object' | 'string' | 'integer';
   /** Defines the fields and respective schemas when the type is 'object'. */
   properties?: Record<string, JSONSchema>;
   /** Lists the required fields within the object. */
