@@ -29,7 +29,6 @@
     "prepare": "husky"
   },
   "author": "Tim Borovkov / Irmin",
-  "packageManager": "pnpm@11.18.0+sha512.M9g8d9qC9J+6g2klxvG4QRgewxMrZwY5vQEvcHX1x89jTF+HAUfBmq50ePrAHfCdiJLogEVIlu3SPumzN1dWPA==",
   "dependencies": {
     "@fastify/cors": "^11.3.0",
     "@fastify/helmet": "^13.1.0",
