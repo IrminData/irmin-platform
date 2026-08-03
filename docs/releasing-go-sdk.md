@@ -6,7 +6,7 @@ module to include its repository-relative directory.
 
 | Module version | Repository tag |
 | --- | --- |
-| `v0.1.0` | `sdks/go/v0.1.0` |
+| `v0.1.1` | `sdks/go/v0.1.1` |
 | `v0.2.0-rc.1` | `sdks/go/v0.2.0-rc.1` |
 
 ## Release checklist
@@ -19,7 +19,7 @@ module to include its repository-relative directory.
    `vX.Y.Z` form:
 
    ```bash
-   gh workflow run release-go-sdk.yml --ref main -f version=v0.1.0
+   gh workflow run release-go-sdk.yml --ref main -f version=v0.1.1
    ```
 
 5. Wait for the workflow. It tests the SDK as a standalone module, creates the
@@ -30,7 +30,7 @@ module to include its repository-relative directory.
    temp_dir="$(mktemp -d)"
    cd "$temp_dir"
    go mod init example.com/irmin-sdk-check
-   go get github.com/IrminData/irmin-platform/sdks/go/api@v0.1.0
+   go get github.com/IrminData/irmin-platform/sdks/go/api@v0.1.1
    go list -m github.com/IrminData/irmin-platform/sdks/go
    ```
 
