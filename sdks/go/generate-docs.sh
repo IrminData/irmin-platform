@@ -122,7 +122,11 @@ echo "Writing index: ${INDEX_FILE}"
 } > "${INDEX_FILE}"
 
 echo "Generating Markdown reference (gomarkdoc) -> ${MD_FILE}"
-"$GOMARKDOC_CMD" ${GOMARKDOC_FLAGS:-} ./... > "${MD_FILE}"
+"$GOMARKDOC_CMD" \
+  --repository.url "https://github.com/IrminData/irmin-platform" \
+  --repository.default-branch main \
+  --repository.path /sdks/go \
+  ${GOMARKDOC_FLAGS:-} ./... > "${MD_FILE}"
 
 echo "Done."
 echo "HTML index: ${INDEX_FILE}"
