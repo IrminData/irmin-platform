@@ -51,3 +51,4 @@ go.work
 
 # Claude Code / git worktrees used for isolated work
 .worktrees/
+docker-compose.override.yml
