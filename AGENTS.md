@@ -155,5 +155,11 @@ Core validates Clerk JWTs with **HS512** using `CLERK_SIGNING_KEY` and the Clerk
 - `make lint-go` pins `golangci-lint@v2.6.1`, which is built with Go 1.25 and **fails** against this repo’s Go 1.26.5 `go.mod` until the pin is raised. Prefer a newer golangci-lint locally if you need Go lint in Cloud Agents.
 - AI `pnpm db:migrate` can hang after printing success; if so, interrupt and rely on the migrate-on-boot path in `pnpm dev`.
 
+
+### Secrets / .env loading
+Cursor-injected secrets can arrive **duplicated** (the value concatenated with itself). Always check `len(value) % 2 == 0 and value[:len//2] == value[len//2:]` and keep only the first half when that is true before writing `.env` files.
+
+`godotenv` / Next.js do **not** override variables already present in the process environment. If duplicated secrets are injected into the shell env, they win over the corrected `.env` and Core Clerk JWT validation fails (`signature is invalid`). Before starting Core/AI/Console, export the de-duplicated values (or `unset` the injected names so `.env` is read).
+
 ### Commands reference
 Standard install/lint/test/run commands live in root `README.md`, `CONTRIBUTING.md`, and each project’s `AGENTS.md` / README — prefer those over duplicating here.
