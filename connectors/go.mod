@@ -3,7 +3,7 @@ module irmin-connectors
 go 1.26.5
 
 require (
-	github.com/IrminData/irmin-platform/sdks/go v0.1.0
+	github.com/IrminData/irmin-platform/sdks/go v0.1.1
 	github.com/getsentry/sentry-go v0.48.0
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/gofiber/fiber/v3 v3.4.0
