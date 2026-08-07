@@ -3,8 +3,8 @@ module irmin-api
 go 1.26.5
 
 require (
-	github.com/IrminData/irmin-platform/sdks/go v0.1.0
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.106.3
+	github.com/IrminData/irmin-platform/sdks/go v0.1.1
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.106.4
 	github.com/clerk/clerk-sdk-go/v2 v2.7.0
 	github.com/daytonaio/daytona/libs/sdk-go v0.190.0
 	github.com/getsentry/sentry-go v0.48.0
@@ -20,7 +20,7 @@ require (
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 	github.com/nguyenthenguyen/docx v0.0.0-20230621112118-9c8e795a11db
 	github.com/novuhq/novu-go v1.5.0
-	github.com/openai/openai-go/v3 v3.49.0
+	github.com/openai/openai-go/v3 v3.50.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/swaggo/swag v1.16.6
 	github.com/teambition/rrule-go v1.8.2
