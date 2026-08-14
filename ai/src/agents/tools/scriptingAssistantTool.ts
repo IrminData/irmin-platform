@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import { DynamicStructuredTool } from 'langchain';
 import { z } from 'zod';
 
@@ -47,9 +46,8 @@ function extractGoBlock(lines: string[], start: number): string {
  * conventions itself, it asks the scripting expert and surfaces the returned
  * script verbatim.
  *
- * Calls ScriptingAgent.execute() directly with an ephemeral thread id instead
- * of going through AgentsManager. This avoids creating a user-visible row in
- * the conversations table and skips title generation for every internal call.
+ * Calls ScriptingAgent.execute() directly without a checkpointer or user-visible
+ * conversation. Internal specialist calls therefore leave no thread history.
  *
  * @param authToken - Bearer token forwarded to the scripting agent
  * @param workspace - The workspace the scripting agent should run inside
@@ -119,7 +117,6 @@ export function createScriptingAssistantTool(
         if (currentScript) context['current-script-content'] = currentScript;
 
         const scriptingAgent = new ScriptingAgent();
-        const ephemeralThreadId = randomUUID();
         const response = await scriptingAgent.execute(
           {
             message: question,
@@ -127,8 +124,9 @@ export function createScriptingAssistantTool(
             authToken,
             workspace,
             user,
+            persistConversation: false,
           },
-          ephemeralThreadId
+          'specialist-scripting'
         );
 
         const messages = response.messages ?? [];

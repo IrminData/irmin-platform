@@ -61,6 +61,12 @@ func (rm *responseMonitor) Write(data []byte) (int, error) {
 
 func wrapWithHTTPAuth(base http.Handler, cfg *authConfig) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !OriginAllowed(r.Header.Get("Origin"), nil) {
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = w.Write([]byte("Forbidden origin"))
+			return
+		}
+
 		// Create a timeout context for the entire request
 		ctx, cancel := context.WithTimeout(r.Context(), MCPAttachTimeout)
 		defer cancel()

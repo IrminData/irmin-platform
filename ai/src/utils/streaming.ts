@@ -14,7 +14,9 @@ interface StreamingEvent {
  *
  * @returns An object containing the readable stream and a controller for pushing events
  */
-export function createDeferredStream(): {
+export function createDeferredStream(options?: {
+  onCancel?: (reason?: unknown) => void;
+}): {
   readable: ReadableStream<Uint8Array>;
   pushEvent: (event: StreamingEvent) => void;
   pipeFrom: (
@@ -27,15 +29,16 @@ export function createDeferredStream(): {
   const textEncoder = new TextEncoder();
   let controller: ReadableStreamDefaultController<Uint8Array> | null = null;
   let isClosed = false;
+  let sourceReader: ReadableStreamDefaultReader | null = null;
 
   const readable = new ReadableStream<Uint8Array>({
     start(ctrl) {
       controller = ctrl;
     },
-    cancel() {
-      // Client disconnected - stop consuming from source stream
-      console.log('[Streaming] Client disconnected, marking stream as closed');
+    async cancel(reason) {
       isClosed = true;
+      options?.onCancel?.(reason);
+      await sourceReader?.cancel(reason).catch(() => undefined);
     },
   });
 
@@ -57,12 +60,13 @@ export function createDeferredStream(): {
     if (isClosed || !controller) return;
 
     const reader = sourceStream.getReader();
+    sourceReader = reader;
     let isFirstChunk = true;
     try {
       while (true) {
         // Check if stream was closed externally - stop consuming LLM tokens
         if (isClosed) {
-          console.log('[Streaming] Stream closed, stopping LLM consumption');
+          await reader.cancel('Client disconnected').catch(() => undefined);
           break;
         }
 
@@ -111,6 +115,7 @@ export function createDeferredStream(): {
         }
       }
     } finally {
+      sourceReader = null;
       reader.releaseLock();
     }
   };

@@ -3,6 +3,7 @@ import { randomUUID } from 'crypto';
 import { and, eq } from 'drizzle-orm';
 import { BaseMessage } from 'langchain';
 
+import agentService from '@/services/agent';
 import { titleGenerationService } from '@/services/titleGeneration';
 
 import { AssistantAgent } from '@/agents/assistant';
@@ -264,6 +265,11 @@ export class AgentsManager {
     }
 
     return agent.getConversationHistory(conversationId);
+  }
+
+  /** Remove the checkpointed message history owned by a conversation. */
+  async deleteConversationHistory(conversationId: string): Promise<void> {
+    await agentService.deleteThread(conversationId);
   }
 
   getAgentConfig(agentId: string): AgentConfig | undefined {

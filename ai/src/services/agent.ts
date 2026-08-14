@@ -16,6 +16,7 @@ interface AgentOptions {
   tools?: DynamicStructuredTool[];
   middleware?: AgentMiddleware[];
   langchainAgentOptions?: CreateAgentParams;
+  persistConversation?: boolean;
 }
 
 class AgentService {
@@ -43,7 +44,7 @@ class AgentService {
   async getAgent(
     options: AgentOptions
   ): Promise<ReturnType<typeof createAgent>> {
-    if (!this.postgresSaver) {
+    if (options.persistConversation !== false && !this.postgresSaver) {
       await this.configurePostgresSaver();
     }
     const model = llmService.createLLM(options.llmOptions);
@@ -53,7 +54,9 @@ class AgentService {
       tools,
       middleware: options.middleware || [],
       systemPrompt: options.systemPrompt,
-      checkpointer: this.postgresSaver,
+      ...(options.persistConversation === false
+        ? {}
+        : { checkpointer: this.postgresSaver }),
       ...options.langchainAgentOptions,
     });
     return agent;
@@ -71,24 +74,32 @@ class AgentService {
   async invokeAgent(
     agent: Awaited<ReturnType<typeof this.getAgent>>,
     message: string,
-    conversationId?: string
+    conversationId?: string,
+    signal?: AbortSignal
   ) {
     // Invoke agent with thread_id = conversationId
     return agent.invoke(
       { messages: [{ role: 'user', content: message }] },
-      { configurable: { thread_id: conversationId } }
+      { configurable: { thread_id: conversationId }, signal }
     );
   }
 
   async streamAgent(
     agent: Awaited<ReturnType<typeof this.getAgent>>,
     message: string,
-    conversationId?: string
+    conversationId?: string,
+    signal?: AbortSignal
   ) {
     return agent.streamEvents(
       { messages: [{ role: 'user', content: message }] },
-      { configurable: { thread_id: conversationId }, version: 'v2' }
+      { configurable: { thread_id: conversationId }, version: 'v2', signal }
     );
+  }
+
+  /** Delete all LangGraph checkpoints and writes for a conversation thread. */
+  async deleteThread(conversationId: string): Promise<void> {
+    const saver = await this.configurePostgresSaver();
+    await saver.deleteThread(conversationId);
   }
 }
 

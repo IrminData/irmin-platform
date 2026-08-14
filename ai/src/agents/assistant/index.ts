@@ -229,7 +229,8 @@ export class AssistantAgent extends BaseAgent {
     const stream = await agentService.streamAgent(
       agent,
       input.message,
-      conversationId
+      conversationId,
+      input.signal
     );
 
     // Return streaming response

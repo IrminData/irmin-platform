@@ -564,7 +564,9 @@ export async function conversationRoutes(fastify: FastifyInstance) {
           },
         });
 
-        // Delete conversation (messages and analytics will be deleted by CASCADE)
+        // LangGraph checkpoints are not relational children of conversations.
+        // Delete the thread explicitly before the row and its analytics cascade.
+        await agentsManager.deleteConversationHistory(id);
         await db.delete(conversations).where(eq(conversations.id, id));
 
         sendNoContentResponse(reply);

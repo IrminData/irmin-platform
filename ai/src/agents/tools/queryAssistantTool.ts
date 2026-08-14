@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import { DynamicStructuredTool } from 'langchain';
 import { z } from 'zod';
 
@@ -15,11 +14,8 @@ import { getContentAsString } from '@/utils/getContentAsString';
  * needs to embed a DuckDB query — rather than guessing SQL syntax itself, it
  * asks the query expert and inlines the returned statement verbatim.
  *
- * Calls QueryAgent.execute() directly with an ephemeral thread id instead of
- * going through AgentsManager. This avoids creating a user-visible row in the
- * conversations table and skips title generation for every internal call. The
- * LangGraph checkpointer state keyed by the ephemeral id is internal and not
- * surfaced in the UI.
+ * Calls QueryAgent.execute() directly without a checkpointer or user-visible
+ * conversation. Internal specialist calls therefore leave no thread history.
  *
  * @param authToken - Bearer token forwarded to the query agent
  * @param workspace - The workspace the query agent should run inside
@@ -83,7 +79,6 @@ export function createQueryAssistantTool(
         if (currentSql) context['current-sql'] = currentSql;
 
         const queryAgent = new QueryAgent();
-        const ephemeralThreadId = randomUUID();
         const response = await queryAgent.execute(
           {
             message: question,
@@ -91,8 +86,9 @@ export function createQueryAssistantTool(
             authToken,
             workspace,
             user,
+            persistConversation: false,
           },
-          ephemeralThreadId
+          'specialist-query'
         );
 
         const messages = response.messages ?? [];

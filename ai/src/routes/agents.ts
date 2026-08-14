@@ -163,6 +163,18 @@ export async function agentRoutes(fastify: FastifyInstance) {
       timings.validated = Date.now();
 
       const { agentId } = request.params;
+      const runController = new AbortController();
+      const abortRun = () => {
+        if (!runController.signal.aborted) {
+          runController.abort(
+            new DOMException('Client disconnected', 'AbortError')
+          );
+        }
+      };
+      request.raw.once('aborted', abortRun);
+      reply.raw.once('close', () => {
+        if (!reply.raw.writableEnded) abortRun();
+      });
 
       // Get authenticated user and workspace context (set by middleware)
       const authContext = request.auth;
@@ -186,6 +198,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
         authToken,
         workspace: workspaceContext.workspace,
         user: authContext.user,
+        signal: runController.signal,
       };
 
       let conversation: { id: string };
@@ -216,7 +229,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
       }
 
       // STREAM-FIRST: Create deferred stream and send headers with conversation ID
-      const deferredStream = createDeferredStream();
+      const deferredStream = createDeferredStream({ onCancel: abortRun });
 
       applyStreamingHeaders(reply, {
         'X-Agent-Id': agentId,

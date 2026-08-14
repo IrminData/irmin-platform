@@ -216,9 +216,25 @@ See [src/scripts/README.md](src/scripts/README.md) for execution details.
 }
 ```
 
-## API Testing
+## Testing
 
-Test utilities live in `src/tests/` and can be executed with `tsx`:
+Hermetic unit tests run in CI and require no credentials:
+
+```bash
+pnpm test:unit
+```
+
+Live integration and evaluation scripts are opt-in because they use local
+infrastructure, provider credits, and workspace credentials:
+
+```bash
+pnpm test:integration:assistant
+pnpm test:integration:retrieval
+pnpm test:eval:hyde
+pnpm test:eval:vectorization
+```
+
+Live test utilities live in `src/tests/`:
 
 - `assistant-agent.test.ts` – Agent listing, configuration, Anthropic reasoning streams, conversation CRUD, info endpoints (non-streaming assertions are skipped because thinking tokens require streaming)
 - `hypothetical-retrieval.test.ts` – Benchmarks `retrieveWithHypotheticalContent`, compares baseline vs hypothetical queries, and verifies fallback/error handling
