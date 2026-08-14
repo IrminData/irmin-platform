@@ -152,6 +152,11 @@ See [TypeDoc website](https://typedoc.org/) for more information on TypeDoc.
 Run the hermetic TypeScript unit tests with `pnpm test:unit`. Playwright is
 used for end-to-end testing; those tests live in the `tests` directory.
 
+Agent responses use the provider-neutral Irmin `RunEventV1` NDJSON protocol.
+The Console validates sequence and terminal semantics before committing an
+assistant message, and feedback is persisted through the AI runtime rather than
+kept as local thumb state.
+
 To run the tests, use the following commands:
 
 ```

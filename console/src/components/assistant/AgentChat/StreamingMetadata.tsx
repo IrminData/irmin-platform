@@ -12,7 +12,7 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
-import type { ServerStreamEvent } from './types';
+import type { ServerStreamEvent, ServerToolEvent } from './types';
 import { shouldHideTool } from './utils';
 
 interface StreamingMetadataProps {
@@ -88,8 +88,15 @@ export const StreamingMetadata = ({
   const errorParts = streamingParts.filter(
     (p) => p.type === 'stream-error' || p.type === 'error'
   );
+  const approvalParts = streamingParts.filter(
+    (part) => part.type === 'tool-approval-required'
+  ) as ServerToolEvent[];
 
-  if (consolidatedToolCalls.length === 0 && errorParts.length === 0) {
+  if (
+    consolidatedToolCalls.length === 0 &&
+    errorParts.length === 0 &&
+    approvalParts.length === 0
+  ) {
     return null;
   }
 
@@ -116,6 +123,21 @@ export const StreamingMetadata = ({
           ))}
         </div>
       )}
+
+      {approvalParts.map((part, index) => (
+        <div
+          key={part.toolCallId ?? `approval-${index}`}
+          role='status'
+          className={`
+            mt-4 rounded-md border border-border bg-muted/60 p-3 text-sm
+          `}
+        >
+          <div className='font-medium'>{part.toolName}</div>
+          <div className='mt-1 text-muted-foreground'>
+            {part.approvalPreview || dict.assistant.approvalRequired}
+          </div>
+        </div>
+      ))}
 
       {/* Errors only - no system messages or stream-complete */}
       {errorParts.map((part, index) => {

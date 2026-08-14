@@ -116,6 +116,8 @@ export class AgentsManager {
         metadata: {},
         context: input.context || {},
         agentId,
+        runtimeVersion: 1,
+        modelProfileVersion: 'legacy-direct-v1',
         workspaceSlug: input.workspace.slug,
         userId: input.user.id,
         createdAt: now,

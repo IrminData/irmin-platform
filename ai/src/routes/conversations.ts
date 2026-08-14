@@ -1,5 +1,12 @@
 import { AgentsManager } from '@/agents';
-import { conversations, db, type NewConversation } from '@/database';
+import {
+  conversations,
+  db,
+  messageFeedback,
+  modelRuns,
+  type NewConversation,
+} from '@/database';
+import { sanitizeBrowserMessage } from '@/protocol/sanitizeBrowserMessage';
 import { and, asc, count, desc, eq, gt, isNull, lt } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 import { ulid } from 'ulid';
@@ -29,10 +36,31 @@ interface ConversationParams {
   id: string;
 }
 
+interface FeedbackParams extends ConversationParams {
+  messageId: string;
+}
+
 export async function conversationRoutes(fastify: FastifyInstance) {
   const agentsManager = (
     fastify as FastifyInstance & { agentsManager: AgentsManager }
   ).agentsManager;
+
+  const findOwnedConversation = async (
+    id: string,
+    workspaceSlug: string,
+    userId: string
+  ) =>
+    db
+      .select({ id: conversations.id })
+      .from(conversations)
+      .where(
+        and(
+          eq(conversations.id, id),
+          eq(conversations.workspaceSlug, workspaceSlug),
+          eq(conversations.userId, userId)
+        )
+      )
+      .limit(1);
 
   // GET /api/conversations - List all conversations with pagination
   // Supports both offset-based (page/limit) and cursor-based (cursor/limit) pagination
@@ -355,7 +383,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         const serializedHistory = agentHistory
           .map((msg) => {
             if (typeof msg.toDict === 'function') {
-              return msg.toDict();
+              return sanitizeBrowserMessage(msg.toDict());
             }
           })
           .filter((msg) => msg !== undefined);
@@ -518,6 +546,120 @@ export async function conversationRoutes(fastify: FastifyInstance) {
       }
     }
   );
+
+  fastify.get<{ Params: ConversationParams }>(
+    '/conversations/:id/feedback',
+    async (request, reply) => {
+      const workspaceContext = request.workspace;
+      const authContext = request.auth;
+      if (!workspaceContext || !authContext) {
+        sendInternalServerError(
+          reply,
+          'Workspace and authentication context required',
+          fastify.log
+        );
+        return;
+      }
+      const owned = await findOwnedConversation(
+        request.params.id,
+        workspaceContext.slug,
+        authContext.user.id
+      );
+      if (!owned.length) {
+        sendNotFoundError(reply, 'Conversation not found', fastify.log);
+        return;
+      }
+
+      const feedback = await db
+        .select({
+          messageId: messageFeedback.messageId,
+          runId: messageFeedback.runId,
+          rating: messageFeedback.rating,
+          reason: messageFeedback.reason,
+        })
+        .from(messageFeedback)
+        .where(
+          and(
+            eq(messageFeedback.conversationId, request.params.id),
+            eq(messageFeedback.userId, authContext.user.id)
+          )
+        );
+      return reply.send(feedback);
+    }
+  );
+
+  fastify.put<{
+    Params: FeedbackParams;
+    Body: { runId?: string; rating: number; reason?: string };
+  }>('/conversations/:id/feedback/:messageId', async (request, reply) => {
+    const workspaceContext = request.workspace;
+    const authContext = request.auth;
+    if (!workspaceContext || !authContext) {
+      sendInternalServerError(
+        reply,
+        'Workspace and authentication context required',
+        fastify.log
+      );
+      return;
+    }
+    if (request.body.rating !== 1 && request.body.rating !== -1) {
+      return reply.code(400).send({ message: 'Rating must be 1 or -1' });
+    }
+    const owned = await findOwnedConversation(
+      request.params.id,
+      workspaceContext.slug,
+      authContext.user.id
+    );
+    if (!owned.length) {
+      sendNotFoundError(reply, 'Conversation not found', fastify.log);
+      return;
+    }
+    if (request.body.runId) {
+      const run = await db
+        .select({ runId: modelRuns.runId })
+        .from(modelRuns)
+        .where(
+          and(
+            eq(modelRuns.runId, request.body.runId),
+            eq(modelRuns.conversationId, request.params.id),
+            eq(modelRuns.userId, authContext.user.id)
+          )
+        )
+        .limit(1);
+      if (!run.length) {
+        return reply
+          .code(400)
+          .send({ message: 'Run does not belong to conversation' });
+      }
+    }
+
+    const [feedback] = await db
+      .insert(messageFeedback)
+      .values({
+        conversationId: request.params.id,
+        runId: request.body.runId,
+        messageId: request.params.messageId,
+        workspaceSlug: workspaceContext.slug,
+        userId: authContext.user.id,
+        rating: request.body.rating,
+        reason: request.body.reason,
+      })
+      .onConflictDoUpdate({
+        target: [
+          messageFeedback.userId,
+          messageFeedback.conversationId,
+          messageFeedback.messageId,
+        ],
+        set: {
+          runId: request.body.runId,
+          rating: request.body.rating,
+          reason: request.body.reason,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    return reply.send(feedback);
+  });
 
   // DELETE /api/conversations/:id - Delete conversation
   fastify.delete<{ Params: ConversationParams }>(

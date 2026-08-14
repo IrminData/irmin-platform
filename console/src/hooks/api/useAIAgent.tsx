@@ -8,6 +8,7 @@ import type { AIAgentExecuteRequest } from '@/types/ai/requests';
 interface ExecuteAgentStreamResponse {
   stream: ReadableStream<Uint8Array>;
   conversationId?: string;
+  runId?: string;
 }
 
 interface ExecuteAgentParams {
@@ -52,6 +53,10 @@ export function useAIAgent(_agentId: string) {
         response.headers.get('X-Conversation-Id') ||
         response.headers.get('x-conversation-id') ||
         undefined;
+      const runId =
+        response.headers.get('X-Run-Id') ||
+        response.headers.get('x-run-id') ||
+        undefined;
 
       // Check if response is streaming
       const contentType = response.headers.get('Content-Type');
@@ -62,7 +67,7 @@ export function useAIAgent(_agentId: string) {
         if (!response.body) {
           throw new Error('Response body is null');
         }
-        return { stream: response.body, conversationId };
+        return { stream: response.body, conversationId, runId };
       }
 
       // Non-streaming response - convert to stream
@@ -85,7 +90,7 @@ export function useAIAgent(_agentId: string) {
         },
       });
 
-      return { stream, conversationId };
+      return { stream, conversationId, runId };
     },
   });
 

@@ -26,6 +26,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/database/migrate.ts",
     "db:studio": "drizzle-kit studio",
+    "db:reset:prelaunch-ai": "tsx scripts/reset-prelaunch-ai-data.ts",
+    "telemetry:prune": "tsx scripts/prune-model-runs.ts",
     "migrate:ulid": "tsx scripts/migrate-uuids-to-ulid.ts",
     "clean": "rimraf dist",
     "knip": "knip",
