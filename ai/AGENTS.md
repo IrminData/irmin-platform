@@ -49,6 +49,14 @@ docker compose up -d                  # Full stack
 - **systemPromptBuilder.ts** - Dynamic system prompt generation with user/workspace/agent metadata
 - **titleGeneration.ts** - Async conversation title generation after responses
 
+### Agent Runtime (`src/agent-runtime/`)
+
+- **AgentRunner** - Normalized execution, cancellation, and successful terminal ownership
+- **ContextAssembler** - Deterministic context, provenance/trust labels, role budgets, and bounded summaries
+- **SpecialistRunner** - Typed clarification/SQL/Go results; SQL needs execution evidence and Go must compile
+- **ConversationStore** - Relational metadata plus LangGraph thread lifecycle
+- **ToolCatalog** - Capability-based tool selection independent of literal MCP names
+
 ### Agents Framework (`src/agents/`)
 
 All agents extend `BaseAgent` and override hooks:
@@ -112,13 +120,9 @@ All routes (except `/health`) require `Authorization: Bearer <token>` + `X-Works
 
 The browser receives only versioned `RunEventV1` NDJSON. Provider and LangChain event shapes stay server-side; raw reasoning is reduced to curated `reasoning.summary` events. Sequences are monotonic and every run has exactly one completed, failed, or cancelled terminal event.
 
-### Input Sanitization
+### Input normalization and trust
 
-`AgentsManager` sanitizes all messages via `src/utils/sanitization.ts`:
-
-- Strips prompt injection markers, script/command payloads, zero-width characters
-- Enforces 35,000 character limit
-- Empty messages after sanitization raise errors
+User content is preserved except NFC Unicode and line-ending normalization. Oversized input is rejected, never truncated. SQL, Go, base64, and role-like text remain valid. Context trust labels, tool authorization, and output validation provide the security boundary.
 
 ### Workspace Isolation
 

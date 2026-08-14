@@ -1,3 +1,4 @@
+import { contextAssembler } from '@/agent-runtime/contextAssembler';
 import type { ModelRole } from '@/inference';
 import IrminCore from '@/irmin-api';
 import fs from 'fs/promises';
@@ -372,12 +373,17 @@ export abstract class BaseAgent implements BaseAgentInterface {
       }
     }
 
+    const assembledContext = contextAssembler.assemble(
+      options.modelRole,
+      context,
+      `${basePrompt}\n${input.message}`
+    );
     const systemPrompt = systemPromptBuilder.buildSystemPrompt(basePrompt, {
       user: input.user,
       workspace: input.workspace,
       conversationId,
       agentId: this.config.id,
-      customContext: context,
+      customContext: assembledContext,
       contextDescriptions,
     });
 

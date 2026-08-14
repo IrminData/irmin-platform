@@ -1,3 +1,4 @@
+import { specialistRunner } from '@/agent-runtime/specialistRunner';
 import { DynamicStructuredTool } from 'langchain';
 import { z } from 'zod';
 
@@ -5,8 +6,6 @@ import type { User } from '@/irmin-api/types/user';
 import type { Workspace } from '@/irmin-api/types/workspace';
 
 import { QueryAgent } from '@/agents/query';
-
-import { getContentAsString } from '@/utils/getContentAsString';
 
 /**
  * Creates a sub-agent tool that delegates SQL/DuckDB authoring to the dedicated
@@ -91,50 +90,19 @@ export function createQueryAssistantTool(
           'specialist-query'
         );
 
-        const messages = response.messages ?? [];
-        const lastMessage = messages[messages.length - 1];
-        const content = lastMessage
-          ? getContentAsString(lastMessage.content)
-          : '';
-
-        // Strip markdown code fences if the query agent wrapped its SQL.
-        // The scripting agent inlines this verbatim into a Go string literal,
-        // so stray backticks would break compilation or escape the string.
-        const cleaned = content
-          .trim()
-          .replace(/^```[a-zA-Z]*\n?/, '')
-          .replace(/\n?```\s*$/, '')
-          .trim();
-
-        if (!cleaned) {
-          return JSON.stringify({
-            success: false,
-            message: 'The SQL expert returned an empty response.',
-          });
-        }
-
-        // The query agent's contract is "ONE SQL statement OR ONE
-        // clarification paragraph." Detect which we got so the scripting
-        // agent doesn't inline a clarification as if it were SQL. The
-        // \b word boundary only applies to the keyword alternation —
-        // `--` and `/*` are non-word characters and need no boundary.
-        const SQL_STARTS_LINE =
-          /^\s*(?:(?:SELECT|WITH|INSERT|UPDATE|DELETE|COPY|CREATE|DROP|ALTER)\b|--|\/\*)/i;
-
-        const lines = cleaned.split('\n');
-        const sqlStart = SQL_STARTS_LINE.test(cleaned)
-          ? 0
-          : lines.findIndex((line) => SQL_STARTS_LINE.test(line));
-
-        if (sqlStart < 0) {
-          // No SQL detected — this is a clarification request.
-          return JSON.stringify({ success: false, clarification: cleaned });
-        }
-
-        return JSON.stringify({
-          success: true,
-          sql: extractSqlBlock(lines, sqlStart),
-        });
+        const result =
+          response.specialistResult ?? specialistRunner.acceptSql(response);
+        return JSON.stringify(
+          result.kind === 'sql'
+            ? { success: true, sql: result.sql }
+            : {
+                success: false,
+                clarification:
+                  result.kind === 'clarification'
+                    ? result.message
+                    : 'The SQL specialist returned an invalid result type.',
+              }
+        );
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
@@ -145,28 +113,4 @@ export function createQueryAssistantTool(
       }
     },
   });
-}
-
-/**
- * Trim trailing prose from a SQL block. The query agent's contract is one
- * SQL statement, so the LAST line ending with `;` marks the statement
- * terminator and anything after it is explanatory text the scripting agent
- * must not inline. Falls back to the first blank line if no terminator is
- * present, and finally to end-of-input.
- */
-function extractSqlBlock(lines: string[], start: number): string {
-  for (let i = lines.length - 1; i >= start; i--) {
-    if (/;\s*$/.test(lines[i])) {
-      return lines
-        .slice(start, i + 1)
-        .join('\n')
-        .trim();
-    }
-  }
-  for (let i = start + 1; i < lines.length; i++) {
-    if (lines[i].trim() === '') {
-      return lines.slice(start, i).join('\n').trim();
-    }
-  }
-  return lines.slice(start).join('\n').trim();
 }

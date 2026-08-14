@@ -1,0 +1,51 @@
+/* eslint-disable import-x/no-unused-modules -- Node test entrypoint. */
+import { AIMessage, ToolMessage } from '@langchain/core/messages';
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+
+import { specialistRunner } from './specialistRunner';
+
+describe('specialist runner', () => {
+  it('accepts only SQL with successful execution evidence', () => {
+    const sql = specialistRunner.acceptSql({
+      messages: [
+        new ToolMessage({
+          content: '{"success":true}',
+          tool_call_id: 'call-1',
+          name: 'irmin_execute_sql',
+          status: 'success',
+        }),
+        new AIMessage('SELECT 1;'),
+      ],
+    });
+    assert.deepEqual(sql, { kind: 'sql', sql: 'SELECT 1;' });
+
+    assert.equal(
+      specialistRunner.acceptSql({
+        messages: [new AIMessage('SELECT 1;')],
+      }).kind,
+      'clarification'
+    );
+  });
+
+  it('formats and compiles Go before accepting it', async () => {
+    const result = await specialistRunner.acceptGo({
+      messages: [
+        new AIMessage(
+          'package main\nimport "fmt"\nfunc main(){fmt.Println("ok")}'
+        ),
+      ],
+    });
+    assert.equal(result.kind, 'go');
+    if (result.kind === 'go') assert.match(result.code, /func main\(\) \{/);
+
+    const unsupported = await specialistRunner.acceptGo({
+      messages: [
+        new AIMessage(
+          'package main\nimport "example.com/unreviewed"\nfunc main(){}'
+        ),
+      ],
+    });
+    assert.equal(unsupported.kind, 'clarification');
+  });
+});

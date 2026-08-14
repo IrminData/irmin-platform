@@ -88,6 +88,13 @@ export function normalizeLangChainEvent(
   const name = typeof event.name === 'string' ? event.name : undefined;
 
   switch (event.event) {
+    case 'on_chat_model_start':
+      return [
+        {
+          type: 'reasoning.summary',
+          data: { summary: 'Reviewing context and planning the next step.' },
+        },
+      ];
     case 'on_chat_model_stream': {
       const chunk = chunkFromEvent(event);
       const text = textFromContent(chunk?.content);
@@ -100,6 +107,10 @@ export function normalizeLangChainEvent(
     }
     case 'on_tool_start':
       return [
+        {
+          type: 'reasoning.summary',
+          data: { summary: 'Using an authorized tool to continue.' },
+        },
         {
           type: 'tool.started',
           data: { toolCallId: runId, toolName: name, input: data.input ?? {} },

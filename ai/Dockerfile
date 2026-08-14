@@ -4,6 +4,8 @@ FROM node:24-alpine AS base
 WORKDIR /app
 RUN corepack enable
 
+FROM golang:1.26.5-alpine AS go-runtime
+
 # ---------- deps ----------
 FROM base AS deps
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -20,6 +22,8 @@ RUN pnpm run build
 FROM node:24-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
+ENV PATH="/usr/local/go/bin:${PATH}"
+COPY --from=go-runtime /usr/local/go /usr/local/go
 
 # Enable corepack for pnpm
 RUN corepack enable

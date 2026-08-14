@@ -1,10 +1,9 @@
-import { conversations, db } from '@/database';
-import { randomUUID } from 'crypto';
-import { and, eq } from 'drizzle-orm';
+import { agentRunner } from '@/agent-runtime/agentRunner';
+import {
+  type Conversation,
+  conversationStore,
+} from '@/agent-runtime/conversationStore';
 import { BaseMessage } from 'langchain';
-
-import agentService from '@/services/agent';
-import { titleGenerationService } from '@/services/titleGeneration';
 
 import { AssistantAgent } from '@/agents/assistant';
 import { QueryAgent } from '@/agents/query';
@@ -15,9 +14,6 @@ import {
   AgentResponse,
   BaseAgentInterface,
 } from '@/agents/types';
-
-import { getContentAsString } from '@/utils/getContentAsString';
-import { textSanitizer } from '@/utils/sanitization';
 
 export class AgentsManager {
   private agents: Map<string, BaseAgentInterface> = new Map();
@@ -40,7 +36,7 @@ export class AgentsManager {
   async getOrCreateConversation(
     agentId: string,
     input: AgentInput
-  ): Promise<{ conversation: typeof conversations.$inferSelect }> {
+  ): Promise<{ conversation: Conversation }> {
     const agent = this.agents.get(agentId);
     if (!agent) {
       throw new Error(`Agent ${agentId} not found`);
@@ -56,79 +52,9 @@ export class AgentsManager {
       );
     }
 
-    let conversation: typeof conversations.$inferSelect;
-
-    if (input.conversationId) {
-      const existingConversation = await db
-        .select()
-        .from(conversations)
-        .where(
-          and(
-            eq(conversations.id, input.conversationId),
-            eq(conversations.workspaceSlug, input.workspace.slug),
-            eq(conversations.userId, input.user.id)
-          )
-        );
-      if (!existingConversation.length) {
-        throw new Error('Conversation not found');
-      }
-      conversation = existingConversation[0];
-
-      if (conversation.agentId && conversation.agentId !== agentId) {
-        throw new Error(
-          `This conversation is associated with agent '${conversation.agentId}' and cannot be used with agent '${agentId}'`
-        );
-      }
-
-      const storedContext =
-        (conversation.context as Record<string, unknown>) || {};
-      const newContext = input.context || {};
-      const mergedContext: Record<string, unknown> = { ...storedContext };
-
-      for (const [key, value] of Object.entries(newContext)) {
-        if (value !== null && value !== undefined && value !== '') {
-          mergedContext[key] = value;
-        }
-      }
-
-      if (!conversation.agentId) {
-        await db
-          .update(conversations)
-          .set({ agentId, updatedAt: new Date(), context: mergedContext })
-          .where(eq(conversations.id, conversation.id));
-        conversation.agentId = agentId;
-        conversation.context = mergedContext;
-      } else {
-        await db
-          .update(conversations)
-          .set({ updatedAt: new Date(), context: mergedContext })
-          .where(eq(conversations.id, conversation.id));
-        conversation.context = mergedContext;
-      }
-    } else {
-      const id = randomUUID();
-      const now = new Date();
-      const fallbackTitle = titleGenerationService.createFallbackTitle();
-
-      const newConversation = {
-        id,
-        title: fallbackTitle,
-        metadata: {},
-        context: input.context || {},
-        agentId,
-        runtimeVersion: 1,
-        modelProfileVersion: 'legacy-direct-v1',
-        workspaceSlug: input.workspace.slug,
-        userId: input.user.id,
-        createdAt: now,
-        updatedAt: now,
-      };
-
-      await db.insert(conversations).values(newConversation);
-      conversation = newConversation;
-    }
-
-    return { conversation };
+    return {
+      conversation: await conversationStore.getOrCreate(agentId, input),
+    };
   }
 
   /**
@@ -139,11 +65,11 @@ export class AgentsManager {
   async executeAgent(
     agentId: string,
     input: AgentInput,
-    existingConversation?: typeof conversations.$inferSelect
+    existingConversation?: Conversation
   ): Promise<{
     agentResponse: AgentResponse;
     conversationId: string;
-    sanitizedMessage: string;
+    normalizedMessage: string;
   }> {
     const agent = this.agents.get(agentId);
     if (!agent) {
@@ -165,84 +91,11 @@ export class AgentsManager {
       existingConversation ||
       (await this.getOrCreateConversation(agentId, input)).conversation;
 
-    // Sanitize user message
-    const sanitizedMessage = textSanitizer.sanitizeUserMessage(input.message);
-
-    // Validate message is not empty after sanitization
-    if (
-      !sanitizedMessage.sanitized ||
-      sanitizedMessage.sanitized.trim().length === 0
-    ) {
-      throw new Error('Message cannot be empty');
-    }
-
-    // Get context from conversation (already merged for existing conversations)
-    const contextForAgent =
-      conversation.context && typeof conversation.context === 'object'
-        ? (conversation.context as Record<string, unknown>)
-        : {};
-
-    // Execute agent with sanitized message and context
-    const sanitizedInput = {
-      ...input,
-      message: sanitizedMessage.sanitized,
-      context: contextForAgent,
-    };
-    const response = await agent.execute(sanitizedInput, conversation.id);
-    const executionTimestamp = new Date();
-
-    // Check if this is a streaming response
-    const isStreamingResponse = !!response.stream;
-
-    // For streaming responses, generate title without the AI response context
-    if (isStreamingResponse && response.stream) {
-      titleGenerationService
-        .updateTitle(conversation.id, sanitizedMessage.sanitized, {
-          user: input.user,
-          workspace: input.workspace,
-        })
-        .catch((error) => {
-          console.warn(
-            'Failed to update conversation title:',
-            error instanceof Error ? error.message : 'Unknown error'
-          );
-        });
-    }
-
-    // For non-streaming responses, save the assistant message immediately
-    if (
-      !isStreamingResponse &&
-      response.messages &&
-      response.messages.length > 0
-    ) {
-      const lastMessage = response.messages[response.messages.length - 1];
-      const content = lastMessage
-        ? getContentAsString(lastMessage.content)
-        : '';
-      // Update conversation title with AI response context (async, don't wait)
-      titleGenerationService
-        .updateTitle(
-          conversation.id,
-          sanitizedMessage.sanitized,
-          {
-            user: input.user,
-            workspace: input.workspace,
-          },
-          content
-        )
-        .catch((error) => {
-          console.warn(
-            'Failed to update conversation title with AI response:',
-            error instanceof Error ? error.message : 'Unknown error'
-          );
-        });
-    }
-
-    // Update conversation updated timestamp
-    await db
-      .update(conversations)
-      .set({ updatedAt: executionTimestamp })
-      .where(eq(conversations.id, conversation.id));
+    const { response, normalizedMessage } = await agentRunner.run(
+      agent,
+      input,
+      conversation
+    );
 
     // Add conversation ID to response metadata
     const agentResponse: AgentResponse = {
@@ -253,7 +106,7 @@ export class AgentsManager {
     return {
       agentResponse,
       conversationId: conversation.id,
-      sanitizedMessage: sanitizedMessage.sanitized,
+      normalizedMessage,
     };
   }
 
@@ -269,9 +122,9 @@ export class AgentsManager {
     return agent.getConversationHistory(conversationId);
   }
 
-  /** Remove the checkpointed message history owned by a conversation. */
-  async deleteConversationHistory(conversationId: string): Promise<void> {
-    await agentService.deleteThread(conversationId);
+  /** Delete relational metadata and its checkpointed LangGraph thread. */
+  async deleteConversation(conversationId: string): Promise<void> {
+    await conversationStore.delete(conversationId);
   }
 
   getAgentConfig(agentId: string): AgentConfig | undefined {

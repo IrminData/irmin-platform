@@ -14,6 +14,21 @@ async function readEvents(stream: ReadableStream<Uint8Array>) {
 }
 
 describe('RunEventV1', () => {
+  it('emits only curated progress text for workflow phases', () => {
+    assert.deepEqual(
+      normalizeLangChainEvent({
+        event: 'on_chat_model_start',
+        data: { input: 'private prompt' },
+      }),
+      [
+        {
+          type: 'reasoning.summary',
+          data: { summary: 'Reviewing context and planning the next step.' },
+        },
+      ]
+    );
+  });
+
   it('never forwards raw reasoning blocks', () => {
     const events = normalizeLangChainEvent({
       event: 'on_chat_model_stream',

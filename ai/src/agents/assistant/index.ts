@@ -1,3 +1,4 @@
+import { toolCatalog } from '@/agent-runtime/toolCatalog';
 import { inferenceGateway, type ModelRole } from '@/inference';
 import {
   AgentMiddleware,
@@ -30,61 +31,8 @@ export class AssistantAgent extends BaseAgent {
   }
 
   // Core tools that should always be included by the LLM tool selector
-  private static readonly ALWAYS_INCLUDE_TOOLS = [
-    'irmin_retrieve_docs_context',
-    'irmin_list_repositories',
-    'irmin_execute_sql',
-    'query_sql_assistant',
-    'scripting_assistant',
-  ];
-
   // Maximum tools for LLM selector (keeps context manageable)
   private static readonly MAX_SELECTED_TOOLS = 14;
-
-  // Patterns that indicate a docs-only query (no tools needed beyond docs retrieval)
-  // NOTE: Be careful not to match queries about user data (e.g., "What connections do I have?")
-  private static readonly DOCS_ONLY_PATTERNS = [
-    /^(what|who|when|where|why|how)\s+(is|are|does|do|can|should|would|could)\s+(irmin|a|an|the)/i,
-    /^(explain|describe|tell me about|define|clarify)\s+(irmin|what|how|the)/i,
-    /^(help me understand|i want to learn|teach me)/i,
-  ];
-
-  // Patterns that indicate tools are needed (actions, data operations, user data queries)
-  private static readonly NEEDS_TOOLS_PATTERNS = [
-    /\b(list|show|get|fetch|find|search|query|execute|run|create|update|delete|insert)\b/i,
-    /\b(my|our)\s+(repositor(y|ies)|connections?|workflows?|data|tables?)/i,
-    /\bdo\s+I\s+have\b/i, // "What connections do I have?"
-    /\b(sql|duckdb|database)\b/i,
-    /\b(repositor(y|ies)|branch(es)?|commits?|objects?|schemas?|connections?|workflows?)\b/i,
-    /\bscript(s|ing)?\b/i,
-    /\b(golang)\b|\bgo\s+(script|code|program|sdk)\b/i,
-    /\bwrite\b.*\bscript\b/i,
-  ];
-
-  /**
-   * Determine if a query is a simple docs-only question.
-   * Returns true if we can skip the LLM tool selector and just use docs retrieval.
-   */
-  private isDocsOnlyQuery(message: string): boolean {
-    const trimmed = message.trim();
-
-    // If message explicitly needs tools, return false
-    for (const pattern of AssistantAgent.NEEDS_TOOLS_PATTERNS) {
-      if (pattern.test(trimmed)) {
-        return false;
-      }
-    }
-
-    // If message matches docs-only patterns, return true
-    for (const pattern of AssistantAgent.DOCS_ONLY_PATTERNS) {
-      if (pattern.test(trimmed)) {
-        return true;
-      }
-    }
-
-    // Default: assume tools might be needed
-    return false;
-  }
 
   protected async getAgentOptions(input: AgentInput): Promise<{
     modelRole: ModelRole;
@@ -94,23 +42,15 @@ export class AssistantAgent extends BaseAgent {
   }> {
     const optionsStart = Date.now();
 
-    // Check if this is a simple docs-only query (skip expensive tool selection)
-    const docsOnly = this.isDocsOnlyQuery(input.message);
-    console.log(
-      `[Agent Timing] docsOnly=${docsOnly} for query: "${input.message.slice(0, 50)}..."`
-    );
-
     // Get MCP tools from cache (1-minute TTL per auth token)
     // This saves 100-300ms on cache hits vs fetching fresh tools
     let tools: DynamicStructuredTool[] = [];
-    if (!docsOnly && input.authToken) {
+    if (input.authToken) {
       const toolsStart = Date.now();
       tools = await toolCacheService.getTools(input.authToken);
       console.log(
         `[Agent Timing] MCP tools loaded: ${Date.now() - toolsStart}ms (${tools.length} tools)`
       );
-    } else {
-      console.log('[Agent Timing] Skipping MCP tools (docsOnly mode)');
     }
 
     // Add HyDE search tools for enhanced retrieval when needed
@@ -120,7 +60,7 @@ export class AssistantAgent extends BaseAgent {
 
     // Add lazy context tools for on-demand Irmin API data fetching
     // Only add these if we're not in docs-only mode
-    if (!docsOnly && input.authToken && input.workspace?.slug) {
+    if (input.authToken && input.workspace?.slug) {
       tools.push(createLazyContextTool(input.authToken, input.workspace.slug));
       tools.push(createBatchContextTool(input.authToken, input.workspace.slug));
     }
@@ -129,7 +69,7 @@ export class AssistantAgent extends BaseAgent {
     // rather than producing them inline. The assistant routes any non-trivial
     // SQL or scripting work through these tools so users get expert-quality
     // output without the assistant having to specialize.
-    if (!docsOnly && input.authToken && input.workspace && input.user) {
+    if (input.authToken && input.workspace && input.user) {
       tools.push(
         createQueryAssistantTool(input.authToken, input.workspace, input.user)
       );
@@ -156,7 +96,6 @@ export class AssistantAgent extends BaseAgent {
       inferenceContext
     );
 
-    // Build middleware array - skip tool selector for docs-only queries
     const middleware: AgentMiddleware[] = [
       summarizationMiddleware({
         model: summarizerModel,
@@ -168,19 +107,19 @@ export class AssistantAgent extends BaseAgent {
       }),
     ];
 
-    // Only add tool selector middleware if this isn't a docs-only query
-    if (!docsOnly) {
-      middleware.push(
-        llmToolSelectorMiddleware({
-          model: selectorModel,
-          maxTools: AssistantAgent.MAX_SELECTED_TOOLS,
-          alwaysInclude: AssistantAgent.ALWAYS_INCLUDE_TOOLS,
-        })
-      );
-      console.log('[Agent Timing] Tool selector middleware added');
-    } else {
-      console.log('[Agent Timing] Skipping tool selector (docsOnly mode)');
-    }
+    middleware.push(
+      llmToolSelectorMiddleware({
+        model: selectorModel,
+        maxTools: AssistantAgent.MAX_SELECTED_TOOLS,
+        alwaysInclude: toolCatalog.namesFor([
+          'documentation.retrieve',
+          'repository.read',
+          'query.execute',
+          'query.author',
+          'script.author',
+        ]),
+      })
+    );
 
     console.log(
       `[Agent Timing] getAgentOptions total: ${Date.now() - optionsStart}ms (tools=${tools.length}, middleware=${middleware.length})`

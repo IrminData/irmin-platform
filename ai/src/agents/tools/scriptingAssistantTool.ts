@@ -1,3 +1,4 @@
+import { specialistRunner } from '@/agent-runtime/specialistRunner';
 import { DynamicStructuredTool } from 'langchain';
 import { z } from 'zod';
 
@@ -5,39 +6,6 @@ import type { User } from '@/irmin-api/types/user';
 import type { Workspace } from '@/irmin-api/types/workspace';
 
 import { ScriptingAgent } from '@/agents/scripting';
-
-import { getContentAsString } from '@/utils/getContentAsString';
-
-// Lines that begin a Go source file. `package`/`import`/`func` are the
-// definitive signals; `//` and `/*` cover leading comment headers (license,
-// doc block) that may precede the package declaration.
-const GO_STARTS_LINE =
-  /^\s*(?:package\s+\w+|import\s*[("]|func\s+\w+|\/\/|\/\*)/;
-
-// Real Go keyword patterns — `//` and `/*` comment markers alone are not
-// reliable because they're common in English prose (e.g. "// For example...").
-// Require a real Go keyword to be present before treating the response as Go.
-const GO_KEYWORD = /^\s*(?:package\s+\w+|import\s*[("]|func\s+\w+)/;
-
-/**
- * Scans backwards from the end of the response to trim trailing explanatory
- * prose that the
- * scripting agent may have appended after the Go code.  The last top-level `}`
- * on its own line is the natural end of a Go file — anything after it is
- * explanatory text that the assistant must not inline.
- *
- * Falls back to returning everything from `start` onwards when no closing
- * brace is found (the agent may have returned a bare snippet rather than a
- * complete source file).
- */
-function extractGoBlock(lines: string[], start: number): string {
-  for (let i = lines.length - 1; i >= start; i--) {
-    if (/^\s*\}\s*$/.test(lines[i])) {
-      return lines.slice(start, i + 1).join('\n');
-    }
-  }
-  return lines.slice(start).join('\n');
-}
 
 /**
  * Creates a sub-agent tool that delegates Go script authoring to the dedicated
@@ -129,56 +97,20 @@ export function createScriptingAssistantTool(
           'specialist-scripting'
         );
 
-        const messages = response.messages ?? [];
-        const lastMessage = messages[messages.length - 1];
-        const content = lastMessage
-          ? getContentAsString(lastMessage.content)
-          : '';
-
-        // Strip markdown code fences if the scripting agent wrapped its Go
-        // code. The assistant inlines this verbatim, so stray backticks
-        // would confuse downstream rendering or copy-paste workflows.
-        const cleaned = content
-          .trim()
-          .replace(/^```[a-zA-Z]*\n?/, '')
-          .replace(/\n?```\s*$/, '')
-          .trim();
-
-        if (!cleaned) {
-          return JSON.stringify({
-            success: false,
-            message: 'The scripting expert returned an empty response.',
-          });
-        }
-
-        // The scripting agent's contract is "ONE Go script OR ONE
-        // clarification paragraph." Detect which we got so the assistant
-        // doesn't surface a clarification as if it were code. If the very
-        // first line isn't Go, scan line-by-line — the agent occasionally
-        // emits a short preamble before the actual code.
-        //
-        // NOTE: `//` and `/*` comment markers alone are not reliable Go
-        // signals — they're common in English prose (e.g. "// For
-        // example..."). Require a real Go keyword (`package`/`import`/`func`)
-        // somewhere in the response before treating it as Go code.
-        const lines = cleaned.split('\n');
-        const hasGoKeywords =
-          GO_KEYWORD.test(cleaned) || lines.some((l) => GO_KEYWORD.test(l));
-
-        if (!hasGoKeywords) {
-          return JSON.stringify({ success: false, clarification: cleaned });
-        }
-
-        const goStart = GO_STARTS_LINE.test(cleaned)
-          ? 0
-          : lines.findIndex((line) => GO_STARTS_LINE.test(line));
-
-        if (goStart < 0) {
-          return JSON.stringify({ success: false, clarification: cleaned });
-        }
-
-        const script = extractGoBlock(lines, goStart);
-        return JSON.stringify({ success: true, script });
+        const result =
+          response.specialistResult ??
+          (await specialistRunner.acceptGo(response));
+        return JSON.stringify(
+          result.kind === 'go'
+            ? { success: true, script: result.code }
+            : {
+                success: false,
+                clarification:
+                  result.kind === 'clarification'
+                    ? result.message
+                    : 'The scripting specialist returned an invalid result type.',
+              }
+        );
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';

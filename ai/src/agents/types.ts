@@ -48,7 +48,13 @@ export interface AgentResponse {
   stream?: IterableReadableStream<StreamEvent>;
   conversationId?: string;
   metadata?: Record<string, unknown>;
+  specialistResult?: SpecialistResult;
 }
+
+export type SpecialistResult =
+  | { kind: 'sql'; sql: string }
+  | { kind: 'go'; code: string }
+  | { kind: 'clarification'; message: string };
 
 export interface BaseAgentInterface {
   config: AgentConfig;

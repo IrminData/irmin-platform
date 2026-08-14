@@ -5,19 +5,22 @@ The `src/tests` directory contains executable TypeScript utilities that exercise
 ## Prerequisites
 
 1. **Environment variables** (add to `.env` or export before running):
+
 ```bash
    TEST_IRMIN_AUTH_TOKEN=<jwt with agent access>
    TEST_WORKSPACE_SLUG=<workspace-slug>
    IRMIN_API_BASE_URL=http://localhost:3000
    DATABASE_URL=postgres://...
    OPENAI_API_KEY=...
-   GROQ_API_KEY=...
-   ANTHROPIC_API_KEY=...
+   OPENROUTER_API_KEY=...
+   OPENAI_API_KEY=... # embeddings
+   ANTHROPIC_API_KEY=... # only while rollback traffic is non-zero
    QDRANT_URL=http://localhost:6333
-   ```
+```
+
 2. **Services running**:
    - Irmin AI Fastify server (`pnpm dev` or `pnpm start`)
-   - PostgreSQL (populated with migrations + default models)
+   - PostgreSQL (with current migrations)
    - Qdrant (`docker run -p 6333:6333 -p 6334:6334 qdrant/qdrant`)
 3. **Vector collection**: Run the `vectorize-docs` script at least once so the `irmin-docs` system collection exists.
 
@@ -37,14 +40,16 @@ npx tsx src/tests/retrieval.test.ts
 ## Test suites
 
 ### `assistant-agent.test.ts`
+
 - Lists available agents (`GET /api/agents`)
 - Retrieves the assistant config (`GET /api/agents/assistant/config`)
-- Streams the assistant agent and records LangChain events (`POST /api/agents/assistant/stream`)
+- Streams the assistant agent and records `RunEventV1` envelopes (`POST /api/agents/assistant/stream`)
 - Creates/updates/deletes conversations and verifies title generation
 - Exercises `GET /api/info/user`, `/api/info/workspace`, `/api/info/models`, `/api/info/tools`
-- Thinking tokens require streaming, so non-streaming assertions are marked as skipped
+- Raw reasoning/provider payloads are never expected in client events
 
 ### `hypothetical-retrieval.test.ts`
+
 - Connects to the `irmin-docs` system collection
 - Measures the success rate of `retrieveWithHypotheticalContent`
 - Compares baseline similarity scores vs hypothetical queries
@@ -52,6 +57,7 @@ npx tsx src/tests/retrieval.test.ts
 - Captures latency metrics and concurrent request handling
 
 ### `vectorize-docs.test.ts`
+
 - Instantiates `VectorizeDocsScript` with custom parameters (replace + append modes)
 - Runs the script end-to-end and validates response metadata
 - Verifies database records (`vector_collections`) and Qdrant contents
@@ -59,6 +65,7 @@ npx tsx src/tests/retrieval.test.ts
 - Cleans up the test collection and closes database connections
 
 ### `retrieval.test.ts`
+
 - Uses the production `irmin-docs` collection populated by the documentation script
 - Performs domain-specific similarity searches across six topic groups
 - Validates context assembly, multi-query retrieval, high/low score thresholds, and token budgeting
