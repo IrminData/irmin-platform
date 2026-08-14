@@ -68,6 +68,11 @@ func IsTabularTextFormat(path string) bool
     IsTabularTextFormat checks if the file extension is a tabular text format
     that should be converted to JSON for better LLM consumption.
 
+func OriginAllowed(origin string, allowedOrigins []string) bool
+    OriginAllowed applies the MCP browser-origin policy. Machine clients do not
+    send Origin and remain eligible for bearer authentication. Browser clients
+    must match an explicitly configured origin exactly.
+
 func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices)
     RegisterAIAppMCP mounts the AI Application MCP endpoint. This endpoint is
     authenticated by AI Application API keys instead of user tokens.

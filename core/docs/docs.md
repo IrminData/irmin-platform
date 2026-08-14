@@ -12535,6 +12535,7 @@ import "irmin-api/mcp"
 - [func CreateMCPClientSession\(ctx context.Context, apiServices \*services.APIServices\) \(\*mcp.ClientSession, error\)](<#CreateMCPClientSession>)
 - [func IsBinaryFormatSupported\(path string\) bool](<#IsBinaryFormatSupported>)
 - [func IsTabularTextFormat\(path string\) bool](<#IsTabularTextFormat>)
+- [func OriginAllowed\(origin string, allowedOrigins \[\]string\) bool](<#OriginAllowed>)
 - [func RegisterAIAppMCP\(app \*fiber.App, apiServices \*services.APIServices\)](<#RegisterAIAppMCP>)
 - [func RegisterFiber\(app \*fiber.App, apiServices \*services.APIServices\)](<#RegisterFiber>)
 - [type AuditLogger](<#AuditLogger>)
@@ -12637,6 +12638,15 @@ func IsTabularTextFormat(path string) bool
 ```
 
 IsTabularTextFormat checks if the file extension is a tabular text format that should be converted to JSON for better LLM consumption.
+
+<a name="OriginAllowed"></a>
+## func [OriginAllowed](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/origin.go#L6>)
+
+```go
+func OriginAllowed(origin string, allowedOrigins []string) bool
+```
+
+OriginAllowed applies the MCP browser\-origin policy. Machine clients do not send Origin and remain eligible for bearer authentication. Browser clients must match an explicitly configured origin exactly.
 
 <a name="RegisterAIAppMCP"></a>
 ## func [RegisterAIAppMCP](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L169>)
