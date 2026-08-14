@@ -1,13 +1,12 @@
+import { inferenceGateway, type ModelRole } from '@/inference';
 import {
   AgentMiddleware,
   DynamicStructuredTool,
   llmToolSelectorMiddleware,
-  modelFallbackMiddleware,
   summarizationMiddleware,
 } from 'langchain';
 
 import agentService from '@/services/agent';
-import { LLMOptions, llmService } from '@/services/llm';
 import { toolCacheService } from '@/services/toolCache';
 
 import { BaseAgent } from '@/agents/base';
@@ -22,8 +21,6 @@ import {
 import { createQueryAssistantTool } from '@/agents/tools/queryAssistantTool';
 import { createScriptingAssistantTool } from '@/agents/tools/scriptingAssistantTool';
 import type { AgentInput, AgentResponse } from '@/agents/types';
-
-import { ANTHROPIC_FALLBACK_CHAIN } from '@/config/models';
 
 import { agentConfig } from './config';
 
@@ -90,7 +87,7 @@ export class AssistantAgent extends BaseAgent {
   }
 
   protected async getAgentOptions(input: AgentInput): Promise<{
-    llmOptions: LLMOptions;
+    modelRole: ModelRole;
     tools?: DynamicStructuredTool[];
     middleware?: AgentMiddleware[];
     systemPrompt?: string;
@@ -145,29 +142,24 @@ export class AssistantAgent extends BaseAgent {
       );
     }
 
-    // Fallbacks must stay on Anthropic because the primary emits thinking
-    // blocks — switching providers mid-conversation corrupts message history.
-    // Order: cheaper+faster first (Haiku), then a stable older Sonnet as a
-    // last resort if Haiku also fails.
-    const fallbackLLMs = ANTHROPIC_FALLBACK_CHAIN.map((model) =>
-      llmService.createLLM({
-        provider: 'anthropic',
-        model,
-        maxTokens: 1000,
-        streaming: false,
-      })
+    const inferenceContext = {
+      workspaceSlug: input.workspace?.slug,
+      conversationId: input.conversationId,
+      userId: input.user?.id,
+    };
+    const summarizerModel = inferenceGateway.modelFor(
+      'summarizer',
+      inferenceContext
     );
-
-    const cheaperLLM = llmService.createLLM({
-      provider: 'groq',
-      model: 'llama-3.3-70b-versatile',
-      streaming: false,
-    });
+    const selectorModel = inferenceGateway.modelFor(
+      'tool_selector',
+      inferenceContext
+    );
 
     // Build middleware array - skip tool selector for docs-only queries
     const middleware: AgentMiddleware[] = [
       summarizationMiddleware({
-        model: cheaperLLM,
+        model: summarizerModel,
         trigger: [
           { tokens: 5000, messages: 3 },
           { tokens: 3000, messages: 6 },
@@ -180,7 +172,7 @@ export class AssistantAgent extends BaseAgent {
     if (!docsOnly) {
       middleware.push(
         llmToolSelectorMiddleware({
-          model: cheaperLLM,
+          model: selectorModel,
           maxTools: AssistantAgent.MAX_SELECTED_TOOLS,
           alwaysInclude: AssistantAgent.ALWAYS_INCLUDE_TOOLS,
         })
@@ -190,26 +182,12 @@ export class AssistantAgent extends BaseAgent {
       console.log('[Agent Timing] Skipping tool selector (docsOnly mode)');
     }
 
-    middleware.push(modelFallbackMiddleware(...fallbackLLMs));
-
     console.log(
       `[Agent Timing] getAgentOptions total: ${Date.now() - optionsStart}ms (tools=${tools.length}, middleware=${middleware.length})`
     );
 
     return {
-      llmOptions: {
-        provider: 'anthropic' as const,
-        model: 'claude-sonnet-4-6',
-        temperature: 0.8,
-        maxTokens: 4096,
-        streaming: true,
-        anthropic: {
-          thinking: {
-            budget_tokens: 1024,
-            type: 'enabled',
-          },
-        },
-      },
+      modelRole: 'assistant',
       tools,
       middleware,
     };

@@ -1,18 +1,15 @@
+import { inferenceGateway, type ModelRole } from '@/inference';
 import {
   AgentMiddleware,
   DynamicStructuredTool,
   llmToolSelectorMiddleware,
-  modelFallbackMiddleware,
 } from 'langchain';
 
-import { LLMOptions, llmService } from '@/services/llm';
 import { toolsService } from '@/services/tools';
 
 import { BaseAgent } from '@/agents/base';
 import { createQueryAssistantTool } from '@/agents/tools/queryAssistantTool';
 import type { AgentInput } from '@/agents/types';
-
-import { ANTHROPIC_FALLBACK_CHAIN } from '@/config/models';
 
 import { agentConfig } from './config';
 
@@ -22,7 +19,7 @@ export class ScriptingAgent extends BaseAgent {
   }
 
   protected async getAgentOptions(input: AgentInput): Promise<{
-    llmOptions: LLMOptions;
+    modelRole: ModelRole;
     tools?: DynamicStructuredTool[];
     middleware?: AgentMiddleware[];
     systemPrompt?: string;
@@ -69,45 +66,21 @@ export class ScriptingAgent extends BaseAgent {
       }
     }
 
-    // Fallbacks must stay on Anthropic because the primary emits thinking
-    // blocks — switching providers mid-conversation corrupts message history.
-    const fallbackLLMs = ANTHROPIC_FALLBACK_CHAIN.map((model) =>
-      llmService.createLLM({
-        provider: 'anthropic',
-        model,
-        maxTokens: 1000,
-        streaming: false,
-      })
-    );
-
-    const cheaperLLM = llmService.createLLM({
-      provider: 'groq',
-      model: 'llama-3.1-8b-instant',
-      streaming: false,
+    const selectorModel = inferenceGateway.modelFor('tool_selector', {
+      workspaceSlug: input.workspace?.slug,
+      conversationId: input.conversationId,
+      userId: input.user?.id,
     });
 
     return {
-      llmOptions: {
-        provider: 'anthropic' as const,
-        model: 'claude-sonnet-4-6',
-        temperature: 0.8,
-        maxTokens: 2000,
-        streaming: false,
-        anthropic: {
-          thinking: {
-            budget_tokens: 1024,
-            type: 'enabled',
-          },
-        },
-      },
+      modelRole: 'scripting',
       tools,
       middleware: [
         llmToolSelectorMiddleware({
-          model: cheaperLLM,
+          model: selectorModel,
           maxTools: 10,
           alwaysInclude: ['irmin_retrieve_docs_context', 'query_sql_assistant'],
         }),
-        modelFallbackMiddleware(...fallbackLLMs),
       ],
     };
   }

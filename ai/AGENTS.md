@@ -4,7 +4,7 @@ This file provides guidance to coding agents (Claude Code, Gemini CLI, etc.) whe
 
 ## Project Overview
 
-Irmin AI is a LangChain-powered AI service (Fastify + TypeScript) providing streaming LLM agents, vector embeddings, and RAG capabilities for the Irmin data warehouse platform. It uses Anthropic Claude for primary reasoning, Groq for fast inference, and OpenAI for embeddings and fallback.
+Irmin AI is a LangChain-powered AI service (Fastify + TypeScript) providing streaming agents, vector embeddings, and RAG capabilities. Production chat inference goes through OpenRouter using version-controlled roles; direct OpenAI remains embeddings-only. Direct Anthropic is a temporary emergency rollback path during rollout.
 
 ## Development Commands
 
@@ -42,7 +42,7 @@ docker compose up -d                  # Full stack
 
 ### Core Services Layer (`src/services/`)
 
-- **llm.ts** - Multi-provider LLM factory (Anthropic/Groq/OpenAI) with LangSmith tracing
+- **inference/** - Deep gateway, OpenRouter/direct rollback adapters, reviewed role profiles, privacy controls, and prompt-free model-run telemetry
 - **agent.ts** - LangGraph wrapper with Postgres checkpointer for persistent agent memory
 - **tools.ts** - Request-scoped MCP tool client that loads Irmin tools when JWT is provided
 - **analytics.ts** - Event logging to PostgreSQL (model usage, vector ops, errors)
@@ -52,16 +52,19 @@ docker compose up -d                  # Full stack
 ### Agents Framework (`src/agents/`)
 
 All agents extend `BaseAgent` and override hooks:
+
 - `getAgentOptions()` - LLM config, middleware, tool selection
 - `prepareContext()` - Vector retrieval and custom context
 - `execute()` - Execution logic (streaming vs synchronous)
 
 **Built-in agents:**
-- `assistant` - Claude Sonnet 4.5 with thinking tokens, MCP tools, HyDE retrieval, streaming
-- `query` - Groq Llama 3.3 for SQL generation (synchronous)
-- `scripting` - Groq Llama 3.3 for Go code generation (synchronous)
+
+- `assistant` - `assistant` role with MCP tools, HyDE retrieval, and streaming
+- `query` - `query` role for SQL generation (synchronous)
+- `scripting` - `scripting` role for Go code generation (synchronous)
 
 **Adding a new agent:**
+
 1. Create `src/agents/my-agent/config.ts` with `AgentConfig`
 2. Create `src/agents/my-agent/index.ts` extending `BaseAgent`
 3. Register in `AgentsManager` constructor (`src/agents/index.ts`)
@@ -73,13 +76,15 @@ All agents extend `BaseAgent` and override hooks:
 - **QdrantService** - Low-level Qdrant client wrapper
 
 **System collections** (populated by `vectorize-docs` script):
+
 - `irmin-docs` - Irmin SDK + local `llm-docs/*.md` content
 - `duckdb-sql-syntax-docs` - DuckDB SQL reference
 
 ### Database Schema (`src/database/schema.ts`)
 
 - `conversations` - Workspace + user scoped threads
-- `ai_models` - LLM catalog with pricing metadata
+- `model_runs` - Prompt-free resolved model/provider, usage, cost, latency, and status telemetry
+- `message_feedback` - User-owned message/run ratings
 - `analytics` - Event log for operations
 - `vector_collections` - Qdrant collection metadata
 
@@ -105,14 +110,12 @@ All routes (except `/health`) require `Authorization: Bearer <token>` + `X-Works
 
 ### Streaming Responses
 
-Agent responses use LangChain v2 `StreamEvent` format converted to NDJSON. Event types:
-- `reasoning-delta` / `reasoning-end` - Anthropic thinking tokens
-- `llm_response` / `agent_response` - Natural language output
-- `tool_call_*` / `tool_result_*` - MCP tool execution
+The browser receives only versioned `RunEventV1` NDJSON. Provider and LangChain event shapes stay server-side; raw reasoning is reduced to curated `reasoning.summary` events. Sequences are monotonic and every run has exactly one completed, failed, or cancelled terminal event.
 
 ### Input Sanitization
 
 `AgentsManager` sanitizes all messages via `src/utils/sanitization.ts`:
+
 - Strips prompt injection markers, script/command payloads, zero-width characters
 - Enforces 35,000 character limit
 - Empty messages after sanitization raise errors
@@ -120,6 +123,7 @@ Agent responses use LangChain v2 `StreamEvent` format converted to NDJSON. Event
 ### Workspace Isolation
 
 All data is scoped by `workspaceSlug` + `userId`:
+
 - Conversations validated against caller
 - Vector collections respect workspace membership and creator ownership
 - System collections accessible to all authenticated users
@@ -128,7 +132,7 @@ All data is scoped by `workspaceSlug` + `userId`:
 
 - `summarizationMiddleware` - Compresses long conversations at token/message thresholds
 - `llmToolSelectorMiddleware` - Filters tools by context (max 10, preserves core tools)
-- `modelFallbackMiddleware` - Transparent fallback to cheaper models on failure
+- Ordered model fallback is owned by the versioned OpenRouter role profile, never agent middleware
 
 ## Testing
 
@@ -148,11 +152,16 @@ Requires `TEST_IRMIN_AUTH_TOKEN` and `TEST_WORKSPACE_SLUG` in `.env`.
 Copy `.env.example` to `.env` and configure:
 
 **Required:**
+
 - `DATABASE_URL` - PostgreSQL connection
-- `ANTHROPIC_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY` - LLM providers
+- `OPENROUTER_API_KEY` - Production inference
+- `OPENAI_API_KEY` - Embeddings only
 - `AI_API_SYSTEM_TOKEN` - System endpoint authentication
 
 **Optional:**
+
+- `ANTHROPIC_API_KEY` - Temporary emergency rollback only
+- `OPENROUTER_PROVIDER_ALLOWLIST`, `OPENROUTER_CANARY_PERCENT`, `AI_INFERENCE_BACKEND` - Reviewed rollout controls
 - `QDRANT_URL`, `QDRANT_PORT`, `QDRANT_API_KEY` - Vector database (defaults to localhost:6333)
 - `IRMIN_API_BASE_URL` - Irmin Core API for MCP tools
 - `LANGSMITH_TRACING`, `LANGSMITH_API_KEY` - LLM observability

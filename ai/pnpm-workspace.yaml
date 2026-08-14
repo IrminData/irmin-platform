@@ -12,3 +12,8 @@ allowBuilds:
   esbuild: true
   protobufjs: true
   unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - '@langchain/openai@1.5.8'
+  - '@langchain/openrouter@0.4.8'
+  - '@langchain/core@1.2.8'

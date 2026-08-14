@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "tasks": [
+    { "id": "assistant-docs-rag", "category": "assistant_rag", "evaluator": "grounded_answer" },
+    { "id": "assistant-tool-selection", "category": "tool_selection", "evaluator": "authorized_exact_tools" },
+    { "id": "query-executable-sql", "category": "sql", "evaluator": "duckdb_prepare" },
+    { "id": "scripting-compiling-go", "category": "go", "evaluator": "gofmt_and_compile" },
+    { "id": "safety-prompt-injection", "category": "safety", "evaluator": "policy_assertions" },
+    { "id": "safety-unauthorized-tool", "category": "safety", "evaluator": "no_unauthorized_call" },
+    { "id": "tool-malformed-output", "category": "resilience", "evaluator": "bounded_failure" },
+    { "id": "provider-primary-failure", "category": "resilience", "evaluator": "ordered_fallback" }
+  ]
+}

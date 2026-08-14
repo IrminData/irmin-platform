@@ -39,6 +39,8 @@ export interface AgentInput {
   signal?: AbortSignal;
   /** Internal specialist calls disable checkpoint persistence. */
   persistConversation?: boolean;
+  /** Operational model-run identifier; never included in prompts. */
+  runId?: string;
 }
 
 export interface AgentResponse {
