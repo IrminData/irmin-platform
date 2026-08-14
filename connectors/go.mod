@@ -3,7 +3,7 @@ module irmin-connectors
 go 1.26.5
 
 require (
-	github.com/IrminData/irmin-platform/sdks/go v0.1.0
+	github.com/IrminData/irmin-platform/sdks/go v0.1.1
 	github.com/getsentry/sentry-go v0.48.0
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/gofiber/fiber/v3 v3.4.0
@@ -18,7 +18,7 @@ require (
 	github.com/zeebo/assert v1.3.1
 	golang.org/x/crypto v0.54.0
 	golang.org/x/sync v0.22.0
-	google.golang.org/protobuf v1.36.11
+	google.golang.org/protobuf v1.36.12
 	gorm.io/datatypes v1.2.7
 	gorm.io/driver/postgres v1.6.2
 	gorm.io/gorm v1.31.2
