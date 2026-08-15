@@ -20,7 +20,9 @@ export const REVIEWED_ZDR_PROVIDER_CONFIGS = [
     rollbackOwner: 'AI runtime on-call',
   },
   {
-    name: 'Google AI Studio',
+    // OpenRouter's provider-routing API and ZDR endpoint catalog identify
+    // this provider as "Google". Keep this exact external identity in sync.
+    name: 'Google',
     operator: 'Google LLC',
     zdrEvidence: 'https://openrouter.ai/docs/features/zdr',
     reviewedAt: '2026-08-15',

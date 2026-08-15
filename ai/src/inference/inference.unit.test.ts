@@ -50,6 +50,8 @@ describe('inference gateway', () => {
     assert.equal(model.provider?.data_collection, 'deny');
     assert.equal(model.provider?.require_parameters, true);
     assert.equal(model.provider?.allow_fallbacks, false);
+    assert.deepEqual(model.provider?.only, ['Anthropic', 'OpenAI', 'Google']);
+    assert.ok(!model.provider?.only?.includes('Google AI Studio'));
   });
 
   it('rejects unreviewed providers', () => {
