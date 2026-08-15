@@ -1,3 +1,8 @@
+import {
+  inferenceGateway,
+  type InferenceRunContext,
+  type ModelRole,
+} from '@/inference';
 import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres';
 import {
   type AgentMiddleware,
@@ -8,10 +13,9 @@ import {
 
 import { env } from '@/config/env';
 
-import { type LLMOptions, llmService } from './llm';
-
 interface AgentOptions {
-  llmOptions: LLMOptions;
+  modelRole: ModelRole;
+  runContext?: InferenceRunContext;
   systemPrompt: string;
   tools?: DynamicStructuredTool[];
   middleware?: AgentMiddleware[];
@@ -47,7 +51,10 @@ class AgentService {
     if (options.persistConversation !== false && !this.postgresSaver) {
       await this.configurePostgresSaver();
     }
-    const model = llmService.createLLM(options.llmOptions);
+    const model = inferenceGateway.modelFor(
+      options.modelRole,
+      options.runContext
+    );
     const tools = options.tools || [];
     const agent = createAgent({
       model,

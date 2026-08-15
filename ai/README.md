@@ -2,14 +2,14 @@
 
 # Irmin AI
 
-LangChain-powered (Fastify, TypeScript) AI agents API for Irmin with Anthropic reasoning streams, Groq/OpenAI fallbacks, persisted agent memory, and workspace-scoped vector retrieval.
+LangChain-powered (Fastify, TypeScript) AI agents API for Irmin with OpenRouter inference, provider-neutral run events, persisted agent memory, and workspace-scoped vector retrieval.
 
 ## What it does
 
-- Multi-provider LLM runtime across Anthropic, Groq, and OpenAI with configurable temperatures, token limits, and automatic fallbacks
+- Version-controlled inference roles routed through OpenRouter with reviewed ZDR providers, ordered model fallbacks, exact usage/cost telemetry, and a temporary direct-Anthropic rollback path
 - Request-scoped MCP tool access so the assistant agent can load Irmin MCP tools whenever a bearer token is supplied
 - Persisted agent memory via LangGraph Postgres checkpointing to keep multi-turn conversations aligned with the database
-- NDJSON streaming pipeline that forwards LangChain v2 `StreamEvent`s (reasoning deltas, tool activity, final responses) directly to clients
+- Versioned `RunEventV1` NDJSON streaming that isolates browsers from LangChain/provider payloads and exposes curated progress instead of raw reasoning
 - Workspace-isolated conversations & analytics with automatic title generation and token usage tracking
 - Vector services for Qdrant-backed RAG, including hypothetical-query retrieval, contextual compression, and multi-query helpers
 - Document ingestion through a vectorization script that merges remote SDK docs with local `llm-docs` content
@@ -132,12 +132,14 @@ curl -X POST http://localhost:3000/api/agents/assistant/stream \
 
 Agents use LangChain’s `createAgent` builder backed by the LangGraph Postgres checkpointer. Each conversation maps to a `thread_id`, so agent state persists between requests and stays aligned with the `conversations` table. The assistant enriches context with vector results and optionally loads MCP tools.
 
-Streaming responses are emitted as newline-delimited JSON and forward LangChain v2 `StreamEvent`s verbatim. Expect:
+Streaming responses are emitted as newline-delimited `RunEventV1` envelopes. Every event has a run-scoped monotonic sequence and one of these provider-neutral types:
 
-- `reasoning-delta` / `reasoning-end` events from Anthropic thinking tokens
-- `llm_response` / `agent_response` chunks with natural language output
-- `tool_call_*` and `tool_result_*` events when MCP tools execute
-- Final completion envelopes containing metadata (e.g., token usage)
+- `run.started`, `message.delta`, and curated `reasoning.summary`
+- `tool.started`, `tool.completed`, `tool.failed`, and `tool.approval_required`
+- `usage`
+- exactly one terminal `run.completed`, `run.failed`, or `run.cancelled`
+
+Raw reasoning and provider response structures remain server-side. Browser cancellation aborts the model stream and cancellable tools.
 
 Use `/api/agents/:agentId/stream` for real-time output. Non-streaming endpoints return `AgentResponse` objects for synchronous agents (query, scripting), while the assistant returns an empty `content` field because output is streamed.
 
@@ -162,6 +164,12 @@ const dsn = env.SENTRY_DSN;
 ```
 
 Adding a new var: update `.env.example` and the Zod schema in `src/config/env.ts`.
+
+### Model-profile governance
+
+Profiles are reviewed in Git in `src/inference/profiles.ts`; `/api/info/model-profile` is read-only. New OpenRouter providers require a reviewed config change recording provider identity, operator, ZDR evidence, review date, supported capabilities, and rollback owner. Live evaluations are opt-in and must not run in hermetic CI.
+
+Promotion requires no safety/tool-authorization regression, task success within two points of baseline, at least 40% lower median model cost, and p95 latency no more than 20% worse. Rollout uses deterministic workspace/conversation buckets at 5%, 25%, then 100%, held for one internal release cycle at each stage. `AI_INFERENCE_BACKEND=direct-anthropic` is the temporary emergency rollback during this rollout.
 
 ## Commands
 
@@ -257,7 +265,7 @@ IRMIN_PRELAUNCH_RESET_ACK=RESET_IRMIN_PRELAUNCH_AI_DATA pnpm db:reset:prelaunch-
 
 Live test utilities live in `src/tests/`:
 
-- `assistant-agent.test.ts` – Agent listing, configuration, Anthropic reasoning streams, conversation CRUD, info endpoints (non-streaming assertions are skipped because thinking tokens require streaming)
+- `assistant-agent.test.ts` – Opt-in live agent, conversation, and info endpoint checks
 - `hypothetical-retrieval.test.ts` – Benchmarks `retrieveWithHypotheticalContent`, compares baseline vs hypothetical queries, and verifies fallback/error handling
 - `vectorize-docs.test.ts` – Runs the ingestion script in replace/append modes, validates Qdrant indexing, and ensures local markdown files are ingested
 - `retrieval.test.ts` – Validates similarity search, context assembly, multi-query retrieval, and threshold behaviour across the `irmin-docs` collection
@@ -266,10 +274,9 @@ Live test utilities live in `src/tests/`:
 
 ## Services
 
-### LLM service
+### Inference gateway
 
-Wraps Anthropic, Groq, and OpenAI chat models using LangSmith tracing wrappers. Supplies shared defaults plus provider-specific overrides for thinking tokens, streaming, and timeouts. Provides metadata for `/api/info/models`.
-See [src/services/llm.ts](src/services/llm.ts).
+`InferenceGateway` resolves stable roles from a Git-reviewed profile, constructs the OpenRouter model with strict provider/privacy policy, and installs prompt-free telemetry callbacks. Callers never supply model IDs or provider options. See [src/inference](src/inference) and `GET /api/info/model-profile`.
 
 ### MCP (tools) service
 
@@ -286,11 +293,6 @@ See [src/services/analytics.ts](src/services/analytics.ts).
 Generates system prompts that combine base text with user, workspace, conversation, and agent metadata, while accepting optional custom context.
 See [src/services/systemPromptBuilder.ts](src/services/systemPromptBuilder.ts).
 
-### Completion service
-
-Streams completions from configured models and integrates with analytics logging.
-See [src/services/completion.ts](src/services/completion.ts).
-
 ### Title generation service
 
 Creates fallback titles, triggers async updates after assistant responses, validates AI output, and records analytics.
@@ -305,7 +307,7 @@ See [src/services/titleGeneration.ts](src/services/titleGeneration.ts).
 Irmin AI ships with a Qdrant-backed RAG stack:
 
 - **IndexingService** – Validates documents with Zod, creates embeddings via OpenAI, tracks collection stats, and supports replace/append workflows
-- **RetrievalService** – Provides similarity search, context assembly, multi-query retrieval, contextual compression, and hypothetical-content retrieval (HyDE-style) using Groq LLMs
+- **RetrievalService** – Provides similarity search, context assembly, multi-query retrieval, contextual compression, and hypothetical-content retrieval through the `hyde` inference role
 - **CollectionService** – Manages workspace/user scoped collections in PostgreSQL with access checks and statistic helpers
 
 Run Qdrant locally:
@@ -324,23 +326,23 @@ Detailed documentation lives in [src/vector/README.md](src/vector/README.md).
 
 ## Agents
 
-The agents framework sits atop `llmService`, `toolsService`, and LangChain agent builders.
+The agents framework sits atop `InferenceGateway`, `toolsService`, and LangChain agent builders.
 
-- `assistant` – Anthropic-first streaming agent with reasoning tokens, optional MCP tool usage, Groq/OpenAI fallback middleware, and vector-backed context enrichment
-- `query` – Groq-powered SQL generator that validates repository context before execution (synchronous responses)
-- `scripting` – Groq-powered Go automation generator (synchronous responses)
+- `assistant` – `assistant` role with optional MCP tools and vector-backed context enrichment
+- `query` – `query` role that validates repository context before SQL generation
+- `scripting` – `scripting` role for Go automation generation
 
 All agents share sanitized inputs, workspace/user validation, persisted conversation history, and analytics logging. Extend the framework via [src/agents/README.md](src/agents/README.md).
 
 ## Database
 
-PostgreSQL (via Drizzle ORM) stores conversations, messages, AI models, vector collections, and analytics.
+PostgreSQL (via Drizzle ORM) stores conversation metadata, prompt-free model telemetry, feedback, vector collections, and analytics. LangGraph owns checkpointed message history.
 
 **Schema highlights**
 
 - `conversations` – Workspace + user scoped threads with optional `agentId`
-- `messages` – Stores message content, type (reasoning/assistant/user), and token usage
-- `ai_models` – Catalog of supported models and pricing metadata
+- `model_runs` – Resolved provider/model, role/profile, tokens, exact OpenRouter cost, latency, and terminal status; never prompts or tool payloads
+- `message_feedback` – User-owned rating and optional reason for a message/run
 - `vector_collections` – Tracks Qdrant collections, counts, and metadata
 - `analytics` – Event log for key operations
 

@@ -27,7 +27,6 @@ import { systemEmbeddingRoutes } from '@/routes/systemEmbeddings';
 import { systemScriptRoutes } from '@/routes/systemScripts';
 
 import { env } from '@/config/env';
-import { seedDefaultModels } from '@/config/models';
 
 import { sendErrorResponse } from '@/utils/errors';
 
@@ -233,10 +232,6 @@ async function start() {
     // Run database migrations (safe to call multiple times)
     await runMigrations();
     server.log.info('Database migrations completed');
-
-    // Seed default AI models
-    await seedDefaultModels();
-    server.log.info('AI models seeded');
 
     // Run parallel initialization tasks
     await Promise.all([

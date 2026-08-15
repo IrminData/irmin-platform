@@ -1,11 +1,14 @@
 import { AgentsManager } from '@/agents';
-import { db, modelRuns } from '@/database';
+import { conversations, db, modelRuns } from '@/database';
+import { MODEL_PROFILE } from '@/inference';
 import { createRunEventStream } from '@/protocol/runEvents';
 import { eq } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 import { ulid } from 'ulid';
 
 import { reportAIUsage } from '@/services/usageReporter';
+
+import type { AgentInput } from '@/agents/types';
 
 import { swaggerSchemas } from '@/config/swagger';
 
@@ -186,7 +189,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
 
       // Get or create conversation FIRST so we can include the ID in headers
       // This adds ~10-50ms but provides better client compatibility
-      const agentInput = {
+      const agentInput: AgentInput = {
         message: agentRequest.message,
         context: agentRequest.context,
         conversationId: agentRequest.conversationId,
@@ -223,13 +226,22 @@ export async function agentRoutes(fastify: FastifyInstance) {
       }
 
       const runId = ulid();
+      agentInput.runId = runId;
+      await db
+        .update(conversations)
+        .set({
+          runtimeVersion: 1,
+          modelProfileVersion: MODEL_PROFILE.version,
+          updatedAt: new Date(),
+        })
+        .where(eq(conversations.id, conversation.id));
       await db.insert(modelRuns).values({
         runId,
         conversationId: conversation.id,
         workspaceSlug: workspaceContext.workspace.slug,
         userId: authContext.user.id,
         role: 'assistant',
-        profileVersion: 'legacy-direct-v1',
+        profileVersion: MODEL_PROFILE.version,
         status: 'running',
       });
 

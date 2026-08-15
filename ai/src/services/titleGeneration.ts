@@ -1,10 +1,10 @@
 import { conversations, db } from '@/database';
+import { inferenceGateway } from '@/inference';
 import { eq } from 'drizzle-orm';
 
 import { getContentAsString } from '@/utils/getContentAsString';
 
 import { analyticsService } from './analytics';
-import { llmService } from './llm';
 
 interface TitleGenerationOptions {
   message: string;
@@ -84,11 +84,10 @@ Return only the title, nothing else.`;
         titlePrompt += `\n\nAI response: "${truncatedResponse}"`;
       }
 
-      const llm = llmService.createLLM({
-        provider: 'groq',
-        model: 'llama-3.1-8b-instant',
-        maxTokens: 500,
-        streaming: false,
+      const llm = inferenceGateway.modelFor('title', {
+        workspaceSlug: options.workspace.slug,
+        conversationId: options.conversationId,
+        userId: options.user.id,
       });
 
       const logPrefix = options.conversationId

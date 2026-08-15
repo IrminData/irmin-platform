@@ -1,10 +1,10 @@
-import { aiModels, db } from '@/database';
-import { eq } from 'drizzle-orm';
+import { MODEL_PROFILE } from '@/inference';
 import { FastifyInstance } from 'fastify';
 
 import { swaggerSchemas } from '@/config/swagger';
 
 import {
+  ModelProfileResponseSchema,
   ModelsResponseSchema,
   UserProfileResponseSchema,
   WorkspaceInfoResponseSchema,
@@ -93,21 +93,16 @@ export async function infoRoutes(fastify: FastifyInstance) {
     },
     async (_, reply) => {
       try {
-        // Get models from database with pricing and capabilities
-        const dbModels = await db
-          .select()
-          .from(aiModels)
-          .where(eq(aiModels.isActive, true));
-
-        // Transform to match expected format
-        const models = dbModels.map((model) => ({
-          name: model.name,
-          provider: model.provider,
-          modelId: model.modelId,
-          description: model.description,
-          inputPricePerMillionTokens: model.inputPricePerMillionTokens,
-          outputPricePerMillionTokens: model.outputPricePerMillionTokens,
-        }));
+        const models = Object.entries(MODEL_PROFILE.roles).map(
+          ([role, profile]) => ({
+            name: role,
+            provider: 'openrouter',
+            modelId: profile.primaryModel,
+            description: `Version-controlled model profile for the ${role} role`,
+            inputPricePerMillionTokens: null,
+            outputPricePerMillionTokens: null,
+          })
+        );
 
         sendOkResponse(reply, ModelsResponseSchema, { models }, fastify.log);
         return;
@@ -118,6 +113,37 @@ export async function infoRoutes(fastify: FastifyInstance) {
         sendInternalServerError(reply, errorMessage, fastify.log);
         return;
       }
+    }
+  );
+
+  fastify.get(
+    '/info/model-profile',
+    { schema: swaggerSchemas.modelProfile },
+    async (_, reply) => {
+      sendOkResponse(
+        reply,
+        ModelProfileResponseSchema,
+        {
+          profile: {
+            ...MODEL_PROFILE,
+            providerAllowlist: [...MODEL_PROFILE.providerAllowlist],
+            roles: Object.fromEntries(
+              Object.entries(MODEL_PROFILE.roles).map(([role, value]) => [
+                role,
+                {
+                  primaryModel: value.primaryModel,
+                  fallbackModels: [...value.fallbackModels],
+                  capabilities: value.capabilities,
+                  maxInputTokens: value.maxInputTokens,
+                  maxOutputTokens: value.maxOutputTokens,
+                  timeoutMs: value.timeoutMs,
+                },
+              ])
+            ),
+          },
+        },
+        fastify.log
+      );
     }
   );
 }

@@ -32,16 +32,16 @@ The vector services power Retrieval Augmented Generation (RAG) inside Irmin AI. 
 
 `src/vector/IndexingService.ts`
 
-| Method | Description |
-| --- | --- |
+| Method                                                                          | Description                                                                                                                                       |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `initVectorStore(collectionName, isSystemCollection?, workspaceSlug?, userId?)` | Connect to an existing Qdrant collection after verifying workspace/user permissions. Throws if access is denied or the collection does not exist. |
-| `createNewVectorStore(collectionName, workspaceSlug, userId, description?)` | Creates a new collection (DB + Qdrant). Returns a ready-to-use `QdrantVectorStore`. |
-| `indexDocuments(vectorStore, documents, collectionName?)` | Validates records via Zod, uploads them, updates collection stats, and logs analytics. |
-| `createEmbeddings(texts, model?)` / `createEmbedding(text, model?)` | Convenience helpers for batch or single embeddings (default `text-embedding-3-small`). |
-| `deleteAllDocuments(vectorStore, collectionName?)` | Removes all points from a collection and resets counters. |
-| `deleteSpecificChunks(vectorStore, chunkIds, collectionName?)` | Removes chunks by `metadata.documentId`. |
-| `deleteDocuments(vectorStore, documentIds, collectionName?)` | Removes all chunk variants for a base document ID. |
-| `getEmbeddingModel()` | Returns the underlying `OpenAIEmbeddings` instance for custom workflows. |
+| `createNewVectorStore(collectionName, workspaceSlug, userId, description?)`     | Creates a new collection (DB + Qdrant). Returns a ready-to-use `QdrantVectorStore`.                                                               |
+| `indexDocuments(vectorStore, documents, collectionName?)`                       | Validates records via Zod, uploads them, updates collection stats, and logs analytics.                                                            |
+| `createEmbeddings(texts, model?)` / `createEmbedding(text, model?)`             | Convenience helpers for batch or single embeddings (default `text-embedding-3-small`).                                                            |
+| `deleteAllDocuments(vectorStore, collectionName?)`                              | Removes all points from a collection and resets counters.                                                                                         |
+| `deleteSpecificChunks(vectorStore, chunkIds, collectionName?)`                  | Removes chunks by `metadata.documentId`.                                                                                                          |
+| `deleteDocuments(vectorStore, documentIds, collectionName?)`                    | Removes all chunk variants for a base document ID.                                                                                                |
+| `getEmbeddingModel()`                                                           | Returns the underlying `OpenAIEmbeddings` instance for custom workflows.                                                                          |
 
 ### Example: create + index
 
@@ -59,7 +59,8 @@ const vectorStore = await indexingService.createNewVectorStore(
 // 2. Index content (metadata is optional)
 await indexingService.indexDocuments(vectorStore, [
   {
-    pageContent: 'Irmin tracks data versioning through repositories and branches.',
+    pageContent:
+      'Irmin tracks data versioning through repositories and branches.',
     metadata: { category: 'concepts', documentId: 'concepts-1' },
   },
 ]);
@@ -72,6 +73,7 @@ const vectorStore = await indexingService.initVectorStore('irmin-docs', true);
 ```
 
 `initVectorStore` is used by agents to connect to system collections. The `vectorize-docs` script maintains two system collections:
+
 - `irmin-docs`: Irmin SDK documentation and local LLM documentation (used by all agents via `BaseAgent`)
 - `duckdb-sql-syntax-docs`: DuckDB SQL syntax documentation (used by specialized agents like `QueryAgent`)
 
@@ -79,14 +81,14 @@ const vectorStore = await indexingService.initVectorStore('irmin-docs', true);
 
 `src/vector/RetrievalService.ts`
 
-| Method | Description |
-| --- | --- |
-| `searchSimilar(vectorStore, options, collectionName?)` | Similarity search with optional metadata filters and score thresholds. Returns documents, scores, and timing metrics. |
-| `retrieveWithAnalysis(vectorStore, analysis, collectionName?)` | Executes an analyzed query structure (filters + window). Useful for advanced search experiences. |
-| `retrieveContext(vectorStore, query, options?, collectionName?)` | Builds a context string (with optional metadata blocks) constrained by token estimates. |
-| `multiQueryRetrieval(vectorStore, queries, options?, collectionName?)` | Executes multiple queries and optionally deduplicates by content. |
-| `retrieveWithCompression(vectorStore, query, options?, collectionName?)` | Filters results by score and truncates content to reduce tokens. |
-| `retrieveWithHypotheticalContent(vectorStore, query, options?, collectionName?)` | HyDE-style retrieval: generates hypothetical content using domain-specific prompts and Groq LLMs, falls back to the raw query if generation fails. Returns structured context with source attribution, scores, and granular timing metrics. |
+| Method                                                                           | Description                                                                                                                                                                                         |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `searchSimilar(vectorStore, options, collectionName?)`                           | Similarity search with optional metadata filters and score thresholds. Returns documents, scores, and timing metrics.                                                                               |
+| `retrieveWithAnalysis(vectorStore, analysis, collectionName?)`                   | Executes an analyzed query structure (filters + window). Useful for advanced search experiences.                                                                                                    |
+| `retrieveContext(vectorStore, query, options?, collectionName?)`                 | Builds a context string (with optional metadata blocks) constrained by token estimates.                                                                                                             |
+| `multiQueryRetrieval(vectorStore, queries, options?, collectionName?)`           | Executes multiple queries and optionally deduplicates by content.                                                                                                                                   |
+| `retrieveWithCompression(vectorStore, query, options?, collectionName?)`         | Filters results by score and truncates content to reduce tokens.                                                                                                                                    |
+| `retrieveWithHypotheticalContent(vectorStore, query, options?, collectionName?)` | HyDE-style retrieval through the `hyde` inference role, falling back to the raw query if generation fails. Returns structured context with source attribution, scores, and granular timing metrics. |
 
 ### Example: build RAG context with HyDE
 
@@ -129,11 +131,11 @@ console.log(result.usedHypothetical, result.hypotheticalContent);
 
 The retrieval service uses specialized prompts based on collection name:
 
-| Collection | Prompt Focus |
-| --- | --- |
-| `duckdb-sql-syntax-docs` | SQL syntax, function signatures, data types, query patterns |
-| `irmin-docs` | API endpoints, SDK methods, configuration, integration patterns |
-| Default | Generic technical documentation format |
+| Collection               | Prompt Focus                                                    |
+| ------------------------ | --------------------------------------------------------------- |
+| `duckdb-sql-syntax-docs` | SQL syntax, function signatures, data types, query patterns     |
+| `irmin-docs`             | API endpoints, SDK methods, configuration, integration patterns |
+| Default                  | Generic technical documentation format                          |
 
 These domain-specific prompts generate richer hypothetical documents that better match the actual documentation structure.
 
@@ -192,17 +194,20 @@ QDRANT_API_KEY=optional_api_key_if_required
 Agents expect system collections to exist. The `vectorize-docs` script populates both `irmin-docs` and `duckdb-sql-syntax-docs` collections. Run it via `POST /api/system/scripts/vectorize-docs` or `tsx src/scripts/vectorize-docs.ts`.
 
 **Agent context retrieval:**
+
 - `BaseAgent` automatically retrieves context from `irmin-docs` for all agents
 - Specialized agents (like `QueryAgent`) can override `prepareContext` to retrieve additional collections (e.g., `duckdb-sql-syntax-docs`)
 
 ## Best practices
 
 ### Indexing
+
 - Chunk text between ~700–1000 characters with 150–250 overlap (defaults used by the script)
 - Use deterministic `metadata.documentId` values when you need replace-mode updates (the script auto-generates them)
 - Record relevant metadata (category, source, file path) for better filtering
 
 ### Retrieval
+
 - Apply score thresholds to trim irrelevant content (`0.2`–`0.3` works well for most docs)
 - Use `retrieveWithHypotheticalContent` by default for better semantic matching
 - The structured output format includes source attribution and relevance scores for transparency
@@ -210,6 +215,7 @@ Agents expect system collections to exist. The `vectorize-docs` script populates
 - Cap `maxTokens` to stay within LLM context limits and avoid flooding prompts with stale data
 
 ### Performance
+
 - Cache vector store connections per request when possible (`initVectorStore` reuses the same embeddings client)
 - Prefer batch indexing (`indexDocuments`) over multiple single calls
 - Monitor analytics events in the `analytics` table to understand document counts and retrieval timings

@@ -1,9 +1,9 @@
+import { inferenceGateway } from '@/inference';
 import type { Document } from '@langchain/core/documents';
 import { z } from 'zod';
 
 import { analyticsService } from '@/services/analytics';
 import { hydeCacheService } from '@/services/hydeCache';
-import { llmService } from '@/services/llm';
 
 import { getContentAsString } from '@/utils/getContentAsString';
 
@@ -575,12 +575,7 @@ class RetrievalService {
         const TIMEOUT_MS = 5000;
 
         try {
-          const llm = llmService.createLLM({
-            provider: 'groq',
-            model: 'llama-3.1-8b-instant',
-            temperature: 0.6,
-            maxTokens: 500, // Increased for 2-3 paragraph responses
-          });
+          const llm = inferenceGateway.modelFor('hyde');
 
           // Select domain-specific prompt based on collection name
           const basePrompt =

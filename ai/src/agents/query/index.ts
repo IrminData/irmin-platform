@@ -1,18 +1,12 @@
+import type { ModelRole } from '@/inference';
 import { indexingService, retrievalService } from '@/vector';
 import { collectionService } from '@/vector/vectorCollections';
-import {
-  AgentMiddleware,
-  DynamicStructuredTool,
-  modelFallbackMiddleware,
-} from 'langchain';
+import { AgentMiddleware, DynamicStructuredTool } from 'langchain';
 
-import { LLMOptions, llmService } from '@/services/llm';
 import { toolsService } from '@/services/tools';
 
 import { BaseAgent } from '@/agents/base';
 import type { AgentInput } from '@/agents/types';
-
-import { ANTHROPIC_FALLBACK_CHAIN } from '@/config/models';
 
 import { agentConfig } from './config';
 
@@ -22,7 +16,7 @@ export class QueryAgent extends BaseAgent {
   }
 
   protected async getAgentOptions(input: AgentInput): Promise<{
-    llmOptions: LLMOptions;
+    modelRole: ModelRole;
     tools?: DynamicStructuredTool[];
     middleware?: AgentMiddleware[];
     systemPrompt?: string;
@@ -53,33 +47,10 @@ export class QueryAgent extends BaseAgent {
       tools.push(...filteredTools);
     }
 
-    // Fallbacks must stay on Anthropic because the primary emits thinking
-    // blocks — switching providers mid-conversation corrupts message history.
-    const fallbackLLMs = ANTHROPIC_FALLBACK_CHAIN.map((model) =>
-      llmService.createLLM({
-        provider: 'anthropic',
-        model,
-        maxTokens: 2048,
-        streaming: false,
-      })
-    );
-
     return {
-      llmOptions: {
-        provider: 'anthropic' as const,
-        model: 'claude-sonnet-4-6',
-        temperature: 0.9,
-        maxTokens: 2048,
-        streaming: false,
-        anthropic: {
-          thinking: {
-            budget_tokens: 1024,
-            type: 'enabled',
-          },
-        },
-      },
+      modelRole: 'query',
       tools,
-      middleware: [modelFallbackMiddleware(...fallbackLLMs)],
+      middleware: [],
     };
   }
 

@@ -1,10 +1,10 @@
+import type { ModelRole } from '@/inference';
 import IrminCore from '@/irmin-api';
 import fs from 'fs/promises';
 import { AgentMiddleware, BaseMessage, DynamicStructuredTool } from 'langchain';
 import path from 'path';
 
 import agentService from '@/services/agent';
-import type { LLMOptions } from '@/services/llm';
 import {
   DOC_SETS,
   type DocFile,
@@ -32,19 +32,12 @@ export abstract class BaseAgent implements BaseAgentInterface {
    */
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   protected async getAgentOptions(_input: AgentInput): Promise<{
-    llmOptions: LLMOptions;
+    modelRole: ModelRole;
     tools?: DynamicStructuredTool[];
     middleware?: AgentMiddleware[];
     systemPrompt?: string;
   }> {
-    // Default: cheap Groq model as fallback
-    return {
-      llmOptions: {
-        provider: 'groq',
-        model: 'llama-3.1-8b-instant',
-        temperature: 0.7,
-      },
-    };
+    return { modelRole: 'assistant' };
   }
 
   /**
@@ -391,7 +384,13 @@ export abstract class BaseAgent implements BaseAgentInterface {
     // 4. Create LangChain agent via AgentService
     const agentCreateStart = Date.now();
     const agent = await agentService.getAgent({
-      llmOptions: options.llmOptions,
+      modelRole: options.modelRole,
+      runContext: {
+        workspaceSlug: input.workspace?.slug,
+        conversationId,
+        runId: input.runId,
+        userId: input.user?.id,
+      },
       systemPrompt,
       tools: options.tools,
       middleware: options.middleware,
@@ -438,11 +437,8 @@ export abstract class BaseAgent implements BaseAgentInterface {
   async getConversationHistory(conversationId: string): Promise<BaseMessage[]> {
     // Create a simple agent
     const agent = await agentService.getAgent({
-      llmOptions: {
-        provider: 'groq',
-        model: 'llama-3.1-8b-instant',
-        temperature: 0.7,
-      },
+      modelRole: 'assistant',
+      runContext: { conversationId },
       systemPrompt: `You are a helpful assistant.`,
       tools: [],
       middleware: [],

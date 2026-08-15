@@ -27,3 +27,31 @@ export const ModelsResponseSchema = z.object({
     })
   ),
 });
+
+export const ModelProfileResponseSchema = z.object({
+  profile: z.object({
+    id: z.string(),
+    version: z.string(),
+    providerAllowlist: z.array(z.string()),
+    privacy: z.object({
+      zdrRequired: z.literal(true),
+      dataCollection: z.literal('deny'),
+    }),
+    roles: z.record(
+      z.string(),
+      z.object({
+        primaryModel: z.string(),
+        fallbackModels: z.array(z.string()),
+        capabilities: z.object({
+          tools: z.boolean(),
+          structuredOutput: z.boolean(),
+          reasoning: z.boolean(),
+          contextSize: z.number(),
+        }),
+        maxInputTokens: z.number(),
+        maxOutputTokens: z.number(),
+        timeoutMs: z.number(),
+      })
+    ),
+  }),
+});

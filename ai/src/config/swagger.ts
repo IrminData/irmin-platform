@@ -60,8 +60,8 @@ const aiModelSchema = {
     provider: { type: 'string' },
     modelId: { type: 'string' },
     description: { type: 'string' },
-    inputPricePerMillionTokens: { type: 'number' },
-    outputPricePerMillionTokens: { type: 'number' },
+    inputPricePerMillionTokens: { type: 'number', nullable: true },
+    outputPricePerMillionTokens: { type: 'number', nullable: true },
   },
 } as const;
 
@@ -144,7 +144,7 @@ export const swaggerSchemas = {
     tags: ['Info'],
     summary: 'List available AI models',
     description:
-      'Retrieves a list of all available AI models with their capabilities and pricing',
+      'Retrieves the primary model assigned to each version-controlled inference role. Runtime cost comes from OpenRouter usage telemetry.',
     response: {
       200: {
         description: 'AI models retrieved successfully',
@@ -153,6 +153,41 @@ export const swaggerSchemas = {
           models: {
             type: 'array',
             items: aiModelSchema,
+          },
+        },
+      },
+    },
+  },
+
+  modelProfile: {
+    tags: ['Info'],
+    summary: 'Get the active inference model profile',
+    description:
+      'Returns the reviewed, version-controlled role profile without rollback-only provider configuration.',
+    response: {
+      200: {
+        description: 'Active model profile retrieved successfully',
+        type: 'object',
+        additionalProperties: false,
+        required: ['profile'],
+        properties: {
+          profile: {
+            type: 'object',
+            additionalProperties: false,
+            required: [
+              'id',
+              'version',
+              'providerAllowlist',
+              'privacy',
+              'roles',
+            ],
+            properties: {
+              id: { type: 'string' },
+              version: { type: 'string' },
+              providerAllowlist: { type: 'array', items: { type: 'string' } },
+              privacy: { type: 'object' },
+              roles: { type: 'object' },
+            },
           },
         },
       },
