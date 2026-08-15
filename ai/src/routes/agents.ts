@@ -250,6 +250,26 @@ export async function agentRoutes(fastify: FastifyInstance) {
         conversationId: conversation.id,
         signal: runController.signal,
         onCancel: abortRun,
+        onError: (error) => {
+          const failure =
+            error instanceof Error
+              ? {
+                  name: error.name,
+                  message: error.message.slice(0, 1_000),
+                  stack: error.stack?.slice(0, 4_000),
+                }
+              : { message: String(error).slice(0, 1_000) };
+          fastify.log.error(
+            {
+              failure,
+              runId,
+              conversationId: conversation.id,
+              agentId,
+              workspaceSlug: workspaceContext.workspace.slug,
+            },
+            'Agent run failed before terminal event'
+          );
+        },
         source: async () => {
           const response = await agentsManager.executeAgent(
             agentId,

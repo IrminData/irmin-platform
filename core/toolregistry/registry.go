@@ -322,6 +322,13 @@ func Register[In any](
 	if err != nil {
 		panic(fmt.Sprintf("derive output schema for %s: %v", name, err))
 	}
+	// jsonschema-go renders an unconstrained `any` field as the boolean schema
+	// `true`. Although valid JSON Schema, the official TypeScript MCP SDK
+	// requires each entry in outputSchema.properties to be an object. Spell out
+	// the JSON value union so tools/list remains interoperable across SDKs.
+	outputSchema.Properties["data"] = &jsonschema.Schema{Types: []string{
+		"object", "array", "string", "number", "integer", "boolean", "null",
+	}}
 	outputSchema.AdditionalProperties = &jsonschema.Schema{Not: &jsonschema.Schema{}}
 	descriptor := Describe(name, description)
 	descriptor.InputSchema = inputSchema

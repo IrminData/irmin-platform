@@ -202,6 +202,7 @@ interface CreateRunEventStreamOptions {
   signal: AbortSignal;
   source: () => Promise<ReadableStream<unknown>>;
   onCancel?: (reason?: unknown) => void;
+  onError?: (error: unknown) => void | Promise<void>;
   onEvent?: (event: RunEventV1) => void | Promise<void>;
 }
 
@@ -213,6 +214,7 @@ export function createRunEventStream({
   signal,
   source,
   onCancel,
+  onError,
   onEvent,
 }: CreateRunEventStreamOptions): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
@@ -281,6 +283,14 @@ export function createRunEventStream({
           const cancelled =
             signal.aborted ||
             (error instanceof Error && error.name === 'AbortError');
+          if (!cancelled) {
+            await Promise.resolve(onError?.(error)).catch((reportingError) => {
+              console.error(
+                '[RunEvents] Failure reporting side effect failed',
+                reportingError
+              );
+            });
+          }
           await emit(
             cancelled ? 'run.cancelled' : 'run.failed',
             cancelled

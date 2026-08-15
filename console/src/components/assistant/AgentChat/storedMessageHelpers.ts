@@ -105,3 +105,11 @@ export function getMessageMetadata(
 
   return metadata;
 }
+
+/** Return the terminal run status attached to locally materialized messages. */
+export function getMessageRunStatus(
+  message: StoredMessage
+): 'failed' | 'cancelled' | undefined {
+  const status = getMessageMetadata(message).runStatus;
+  return status === 'failed' || status === 'cancelled' ? status : undefined;
+}
