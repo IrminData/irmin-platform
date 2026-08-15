@@ -4,8 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useRouter, useSearchParams } from 'next/navigation';
 
-import { GoGitMerge } from 'react-icons/go';
-import { TbArrowLeft, TbRefresh } from 'react-icons/tb';
+import { TbArrowLeft, TbGitMerge, TbRefresh } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
@@ -210,13 +209,12 @@ function RepositoryCompareSectionContent() {
     return (
       <SafeComponent
         level='section'
-        title='Repository Access Error'
-        description='Failed to access repository diff due to permissions'
+        title={dict.repository.compare.accessErrorTitle}
+        description={dict.repository.compare.accessErrorDescription}
       >
         <div
           className={`
-            w-full rounded-lg border border-gray-200 bg-card px-2 py-8
-            dark:border-gray-800
+            w-full rounded-[2px] border border-border bg-card px-2 py-8
           `}
         >
           <p
@@ -235,8 +233,8 @@ function RepositoryCompareSectionContent() {
   return (
     <SafeComponent
       level='section'
-      title='Repository Compare Error'
-      description='Failed to load repository comparison interface'
+      title={dict.repository.compare.interfaceErrorTitle}
+      description={dict.repository.compare.interfaceErrorDescription}
     >
       <div
         className={`
@@ -336,9 +334,9 @@ function RepositoryCompareSectionContent() {
             />
             <Button
               className='w-full max-w-28'
-              variant='default'
+              variant='accent'
               size='sm'
-              icon={<GoGitMerge size={18} />}
+              icon={<TbGitMerge size={18} />}
               onClick={() => {
                 handleMerge();
               }}

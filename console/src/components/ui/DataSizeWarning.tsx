@@ -1,7 +1,10 @@
 'use client';
 
-import { AiOutlineDownload } from 'react-icons/ai';
-import { TbAlertTriangle, TbExclamationCircle } from 'react-icons/tb';
+import {
+  TbAlertTriangle,
+  TbDownload,
+  TbExclamationCircle,
+} from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 
@@ -95,33 +98,19 @@ const DataSizeWarning = ({
       <div
         className={`
           flex items-center justify-center rounded-full p-4
-          ${
-            isError
-              ? `
-                bg-red-100
-                dark:bg-red-900/20
-              `
-              : `
-                bg-yellow-100
-                dark:bg-yellow-900/20
-              `
-          }
+          ${isError ? 'bg-destructive/10' : 'bg-warning/10'}
         `}
       >
         {isError ? (
           <TbExclamationCircle
-            className={`
-              text-red-600
-              dark:text-red-400
-            `}
+            aria-hidden='true'
+            className='text-destructive'
             size={48}
           />
         ) : (
           <TbAlertTriangle
-            className={`
-              text-yellow-600
-              dark:text-yellow-400
-            `}
+            aria-hidden='true'
+            className='text-warning'
             size={48}
           />
         )}
@@ -131,35 +120,13 @@ const DataSizeWarning = ({
         <h3
           className={`
             text-lg font-semibold
-            ${
-              isError
-                ? `
-                  text-red-600
-                  dark:text-red-400
-                `
-                : `
-                  text-yellow-600
-                  dark:text-yellow-400
-                `
-            }
+            ${isError ? 'text-destructive' : 'text-warning'}
           `}
         >
           {getTitle()}
         </h3>
-        <p
-          className={`
-            text-sm text-gray-600
-            dark:text-gray-400
-          `}
-        >
-          {getMessage()}
-        </p>
-        <p
-          className={`
-            font-mono text-xs text-gray-500
-            dark:text-gray-500
-          `}
-        >
+        <p className='text-sm text-muted-foreground'>{getMessage()}</p>
+        <p className='font-mono text-xs text-muted-foreground'>
           {dict.dataSizeWarning.sizeLabel} {getFormattedSize()}
           {contentType && ` (${contentType})`}
         </p>
@@ -172,14 +139,17 @@ const DataSizeWarning = ({
         `}
       >
         {downloadUrl ? (
-          <a href={downloadUrl} download>
-            <Button icon={<AiOutlineDownload />} variant='accent'>
-              {dict.common.download || 'Download'}
-            </Button>
-          </a>
+          <Button
+            href={downloadUrl}
+            download
+            icon={<TbDownload aria-hidden='true' />}
+            variant='accent'
+          >
+            {dict.common.download}
+          </Button>
         ) : onDownload ? (
           <Button
-            icon={<AiOutlineDownload />}
+            icon={<TbDownload aria-hidden='true' />}
             variant='accent'
             onClick={onDownload}
           >
@@ -197,12 +167,7 @@ const DataSizeWarning = ({
       </div>
 
       {isWarning && (
-        <p
-          className={`
-            text-xs text-gray-500
-            dark:text-gray-600
-          `}
-        >
+        <p className='text-xs text-muted-foreground'>
           {dict.dataSizeWarning.performanceWarning}
         </p>
       )}

@@ -56,7 +56,7 @@ export default function WebsiteError({
         title={title}
         description={description}
         variant='page'
-        showDetails={!pageNotFound}
+        showDetails={!pageNotFound && process.env.NODE_ENV === 'development'}
         showReload={!pageNotFound}
         showHome={true}
         showReport={!pageNotFound}

@@ -58,8 +58,8 @@ function TabsTrigger({
           border-b border-transparent px-3 py-1 text-sm font-medium
           whitespace-nowrap text-muted-foreground transition-colors duration-150
           hover:text-foreground
-          focus-visible:outline-1 focus-visible:outline-offset-0
-          focus-visible:outline-accent/70
+          focus-visible:outline-2 focus-visible:outline-offset-2
+          focus-visible:outline-accent
           disabled:pointer-events-none disabled:opacity-50
           data-[state=active]:border-accent data-[state=active]:text-foreground
           [&_svg]:pointer-events-none [&_svg]:shrink-0

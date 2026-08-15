@@ -2,12 +2,12 @@
 
 import { useEffect, useMemo, useState } from 'react';
 
-import { AiOutlineDownload } from 'react-icons/ai';
-import { TbSearch } from 'react-icons/tb';
+import { TbDownload, TbSearch } from 'react-icons/tb';
 
 import AdvancedDatatable from '@/components/repository/objects/ObjectViewer/AdvancedDatatable/Async';
 import JSONViewer from '@/components/repository/objects/ObjectViewer/JSONViewer';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -42,10 +42,14 @@ const TableViewer = ({
   };
   loading?: boolean;
 }) => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
 
   const [filterText, setFilterText] = useState('');
   const [debouncedFilterText, setDebouncedFilterText] = useState('');
+  const numberFormatter = useMemo(
+    () => new Intl.NumberFormat(locale),
+    [locale]
+  );
 
   const isSimpleArrayOfObjects = useMemo(
     () => checkIfSimpleArrayOfObjects(data),
@@ -97,7 +101,7 @@ const TableViewer = ({
       <div className='flex items-center justify-start px-4 py-1 text-xs'>
         <p
           className={`
-            ml-0 hidden text-gray-400
+            ml-0 hidden text-muted-foreground
             lg:inline
           `}
         >
@@ -105,23 +109,20 @@ const TableViewer = ({
         </p>
         <p
           className={`
-            inline text-[8px] text-irmin-blue-500
+            type-mono-small inline whitespace-nowrap text-accent tabular-nums
             md:ml-auto md:pl-2
-            lg:text-xs
-            dark:text-irmin-green-500
           `}
         >
-          {metadata?.rowsReturned && metadata.timeTaken
-            ? `
-          ${metadata.rowsReturned} ${dict.query.rowsReturnedIn} ${metadata.timeTaken}ms
-        `
-            : ``}
+          {metadata?.rowsReturned !== undefined &&
+          metadata.timeTaken !== undefined
+            ? `${numberFormatter.format(metadata.rowsReturned)} ${dict.query.rowsReturnedIn} ${numberFormatter.format(metadata.timeTaken)}\u00a0ms`
+            : ''}
         </p>
         <div className='grow' />
         <div className='ml-auto flex flex-row items-center gap-2'>
           {isSimpleArrayOfObjects && data && (
             <Button
-              icon={<AiOutlineDownload />}
+              icon={<TbDownload />}
               variant='link'
               size='sm'
               className={`
@@ -136,37 +137,19 @@ const TableViewer = ({
             </Button>
           )}
           {isSimpleArrayOfObjects && (
-            <div
+            <Input
+              type='search'
+              value={filterText}
+              onChange={(e) => setFilterText(e.target.value)}
+              icon={<TbSearch aria-hidden='true' />}
+              aria-label={dict.query.search}
               className={`
-                relative flex h-8 w-48 flex-row items-center rounded-full border
-                border-gray-200
-                dark:border-gray-800
+                h-9 w-48 rounded-[2px] border border-border bg-muted/50 px-3
+                focus-within:border-accent focus-within:ring-1
+                focus-within:ring-accent
               `}
-            >
-              <div
-                className={`
-                  pointer-events-none absolute inset-y-0 inset-s-0 flex
-                  items-center ps-3
-                `}
-              >
-                <TbSearch className='text-gray-500' />
-              </div>
-              <input
-                value={filterText}
-                onChange={(e) => setFilterText(e.target.value)}
-                className={`
-                  block w-full rounded-full bg-gray-50/50 px-4 py-3 ps-10
-                  text-xs text-gray-900
-                  placeholder:invisible placeholder:opacity-40
-                  group-focus-within:placeholder:visible
-                  focus:outline-hidden
-                  md:placeholder:visible
-                  lg:text-sm
-                  dark:bg-irmin-black-500/50 dark:text-white
-                `}
-                placeholder={dict.query.search}
-              />
-            </div>
+              placeholder={dict.query.search}
+            />
           )}
         </div>
       </div>
@@ -178,7 +161,11 @@ const TableViewer = ({
           <LoadingSkeleton className='h-96' />
         ) : isSimpleArrayOfObjects ? (
           filteredItems.length === 0 ? (
-            <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+            <div
+              className='
+                w-full px-4 py-12 text-center text-lg text-muted-foreground
+              '
+            >
               {dict.common.noResults}
             </div>
           ) : (

@@ -128,7 +128,7 @@ export default function WorkspaceSettingsLayoutWrapper({
           <DisplayTitle>{workspaceQuery?.data?.data?.name ?? ''}</DisplayTitle>
           <p
             className={`
-              max-w-lg text-base text-gray-400
+              max-w-lg text-base text-muted-foreground
               lg:text-lg
             `}
           >

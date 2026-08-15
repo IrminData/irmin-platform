@@ -72,7 +72,7 @@ export default function CreateTagModalContent({
             <>
               <Input {...field} disabled={loading} />
               {errors.tagName && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.tagName.message}
                 </p>
               )}
@@ -90,7 +90,7 @@ export default function CreateTagModalContent({
             <>
               <Input disabled {...field} />
               {errors.ref && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.ref.message}
                 </p>
               )}
@@ -99,7 +99,7 @@ export default function CreateTagModalContent({
         />
       </div>
       <Button
-        variant='default'
+        variant='accent'
         loading={loading}
         className='w-full'
         type='submit'

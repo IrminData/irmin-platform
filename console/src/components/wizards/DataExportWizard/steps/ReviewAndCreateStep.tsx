@@ -222,7 +222,7 @@ export default function ReviewAndCreateStep({
               <div
                 className={`
                   size-2 rounded-full
-                  ${creationProgress.workflow ? 'bg-green-500' : 'bg-muted'}
+                  ${creationProgress.workflow ? 'bg-success' : 'bg-muted'}
                 `}
               />
               <span className='text-sm'>{dict.wizard.creatingWorkflow}</span>

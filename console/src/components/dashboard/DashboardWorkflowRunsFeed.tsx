@@ -4,7 +4,7 @@ import Link from 'next/link';
 
 import * as Tooltip from '@radix-ui/react-tooltip';
 import { useQuery } from '@tanstack/react-query';
-import { formatDistanceToNow, intervalToDuration } from 'date-fns';
+import { intervalToDuration } from 'date-fns';
 
 import { TbClock, TbHourglassLow, TbRun } from 'react-icons/tb';
 
@@ -22,6 +22,7 @@ import { useLocale } from '@/context/LocaleContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
+import { formatRelativeTime } from '@/utils/formatTimestamp';
 import { cn } from '@/utils/tw';
 
 import type {
@@ -161,18 +162,13 @@ export function DashboardWorkflowRunsFeed({
                               <Tooltip.Trigger>
                                 <div className='flex items-center gap-1'>
                                   <TbClock className='size-2.5' />
-                                  {formatDistanceToNow(
-                                    new Date(run.started_at ?? ''),
-                                    {
-                                      addSuffix: true,
-                                    }
-                                  )}
+                                  {formatRelativeTime(run.started_at, locale)}
                                 </div>
                               </Tooltip.Trigger>
                               <Tooltip.Content
                                 side='top'
                                 align='center'
-                                className='rounded-sm bg-background p-2'
+                                className='rounded-[2px] bg-background p-2'
                               >
                                 <p className='text-xs'>
                                   {dict.workflow.startedAt}
@@ -200,7 +196,7 @@ export function DashboardWorkflowRunsFeed({
                                 <Tooltip.Content
                                   side='top'
                                   align='center'
-                                  className='rounded-sm bg-background p-2'
+                                  className='rounded-[2px] bg-background p-2'
                                 >
                                   <p className='text-xs'>
                                     {dict.workflow.duration}

@@ -70,10 +70,10 @@ export default function CreateScriptModal({
           type='text'
           placeholder={dict.scripts.scriptName}
           {...register('name', { required: true })}
-          className={errors.name ? 'border-red-500' : ''}
+          className={errors.name ? 'border-destructive' : ''}
         />
         {errors.name && (
-          <p className='mt-1 text-sm text-red-500'>
+          <p className='mt-1 text-sm text-destructive'>
             {dict.common.fieldRequired}
           </p>
         )}
@@ -87,7 +87,6 @@ export default function CreateScriptModal({
           id='script-description'
           placeholder={dict.scripts.scriptDescription}
           {...register('description')}
-          rows={3}
         />
       </div>
 
@@ -106,7 +105,7 @@ export default function CreateScriptModal({
         <Button type='button' variant='secondary' onClick={onCancel}>
           {dict.common.cancel}
         </Button>
-        <Button type='submit' variant='default'>
+        <Button type='submit' variant='accent'>
           {dict.scripts.createScript}
         </Button>
       </div>

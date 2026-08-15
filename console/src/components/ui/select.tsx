@@ -43,23 +43,22 @@ function SelectTrigger({
       data-size={size}
       className={cn(
         `
-          flex w-fit items-center justify-between gap-2 rounded-md border
-          border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap
-          shadow-xs transition-[color,box-shadow] outline-none
-          focus-visible:border-ring focus-visible:ring-[3px]
-          focus-visible:ring-ring/50
+          flex w-fit items-center justify-between gap-2 border-0 border-b
+          border-input bg-transparent px-0 py-2.5 text-sm whitespace-nowrap
+          transition-[color,border-color] duration-150 ease-out outline-none
+          focus-visible:border-accent focus-visible:outline-2
+          focus-visible:outline-offset-2 focus-visible:outline-accent
           disabled:cursor-not-allowed disabled:opacity-50
-          aria-invalid:border-destructive aria-invalid:ring-destructive/20
+          aria-invalid:border-destructive
           data-placeholder:text-muted-foreground
-          data-[size=default]:h-9
-          data-[size=sm]:h-8
+          data-[size=default]:h-11
+          data-[size=sm]:h-11
           *:data-[slot=select-value]:line-clamp-1
           *:data-[slot=select-value]:flex
           *:data-[slot=select-value]:items-center
           *:data-[slot=select-value]:gap-2
-          dark:bg-input/30
-          dark:hover:bg-input/50
-          dark:aria-invalid:ring-destructive/40
+          md:data-[size=default]:h-10
+          md:data-[size=sm]:h-9
           [&_svg]:pointer-events-none [&_svg]:shrink-0
           [&_svg:not([class*='size-'])]:size-4
           [&_svg:not([class*='text-'])]:text-muted-foreground
@@ -95,17 +94,12 @@ function SelectContent({
         className={cn(
           `
             relative z-50 max-h-(--radix-select-content-available-height)
-            min-w-32 origin-(--radix-select-content-transform-origin)
-            overflow-x-hidden overflow-y-auto rounded-md border bg-popover
-            text-popover-foreground shadow-md
-            data-[side=bottom]:slide-in-from-top-2
-            data-[side=left]:slide-in-from-right-2
-            data-[side=right]:slide-in-from-left-2
-            data-[side=top]:slide-in-from-bottom-2
-            data-[state=closed]:animate-out data-[state=closed]:fade-out-0
-            data-[state=closed]:zoom-out-95
-            data-[state=open]:animate-in data-[state=open]:fade-in-0
-            data-[state=open]:zoom-in-95
+            min-w-32 overflow-x-hidden overflow-y-auto rounded-[2px] border
+            border-border bg-popover text-popover-foreground
+            data-[state=closed]:animate-out data-[state=closed]:duration-100
+            data-[state=closed]:ease-in data-[state=closed]:fade-out-0
+            data-[state=open]:animate-in data-[state=open]:duration-150
+            data-[state=open]:ease-out data-[state=open]:fade-in-0
           `,
           position === 'popper' &&
             `
@@ -162,9 +156,10 @@ function SelectItem({
       data-slot='select-item'
       className={cn(
         `
-          relative flex w-full cursor-default items-center gap-2 rounded-sm
-          py-1.5 pr-8 pl-2 text-sm outline-hidden select-none
-          focus:bg-accent focus:text-accent-foreground
+          relative flex w-full cursor-default items-center gap-2 rounded-[2px]
+          py-1.5 pr-8 pl-2 text-sm outline-hidden
+          transition-[color,background-color] duration-150 ease-out select-none
+          focus:bg-muted focus:text-foreground
           data-disabled:pointer-events-none data-disabled:opacity-50
           [&_svg]:pointer-events-none [&_svg]:shrink-0
           [&_svg:not([class*='size-'])]:size-4

@@ -16,8 +16,8 @@ import { cn } from '@/utils/tw';
 const statusBadgeVariants = cva(
   `
     inline-flex size-auto min-h-6 min-w-20 items-center justify-center
-    rounded-[2px] px-2 py-0.5 text-center text-[11px] font-medium
-    tracking-[0.02em]
+    rounded-[2px] border border-transparent px-2 py-0.5 text-center text-[11px]
+    font-medium tracking-[0.02em]
   `,
   {
     variants: {
@@ -29,19 +29,19 @@ const statusBadgeVariants = cva(
        * attention, not on a row of lime "Complete" pills.
        */
       status: {
-        '': 'bg-muted text-muted-foreground',
-        private: 'bg-muted text-muted-foreground',
-        public: 'bg-muted text-foreground',
-        connected: 'bg-accent/15 text-accent',
-        cancelled: 'bg-muted text-muted-foreground',
-        error: 'bg-destructive/15 text-destructive',
-        complete: 'bg-muted text-muted-foreground',
-        running: 'bg-accent/15 text-accent',
-        cancelling: 'bg-accent/15 text-accent',
-        paused: 'bg-muted text-muted-foreground',
-        pending: 'bg-accent/15 text-accent',
-        initiating: 'bg-accent/15 text-accent',
-        default: 'bg-muted text-muted-foreground',
+        '': 'border-border bg-muted text-muted-foreground',
+        private: 'border-border bg-muted text-muted-foreground',
+        public: 'border-border bg-muted text-foreground',
+        connected: 'border-accent/30 bg-accent/15 text-foreground',
+        cancelled: 'border-border bg-muted text-muted-foreground',
+        error: 'border-destructive/30 bg-destructive/15 text-foreground',
+        complete: 'border-border bg-muted text-muted-foreground',
+        running: 'border-accent/30 bg-accent/15 text-foreground',
+        cancelling: 'border-accent/30 bg-accent/15 text-foreground',
+        paused: 'border-border bg-muted text-muted-foreground',
+        pending: 'border-accent/30 bg-accent/15 text-foreground',
+        initiating: 'border-accent/30 bg-accent/15 text-foreground',
+        default: 'border-border bg-muted text-muted-foreground',
       },
     },
     defaultVariants: {

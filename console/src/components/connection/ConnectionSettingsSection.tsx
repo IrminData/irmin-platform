@@ -78,7 +78,8 @@ const ConnectionSettingsSection = () => {
     if (!connectionQuery.data?.data?.id) return;
     const confirmed = await irminConfirm(
       'warning',
-      `${dict.common.areYouSureYouWantToDelete} (${connectionQuery.data?.data?.name})`
+      `${dict.common.areYouSureYouWantToDelete} (${connectionQuery.data?.data?.name})`,
+      dict.connections.settings.delete
     );
     if (!confirmed) return;
     await deleteConnectionMutation.mutateAsync(connectionQuery.data?.data?.id);
@@ -277,7 +278,7 @@ const ConnectionSettingsSection = () => {
         fieldConfiguration={fieldConfiguration}
         deleteItem={handleDeleteConnection}
         deleteItemLoading={deleteConnectionMutation.isPending}
-        itemName='Connection'
+        itemName={dict.connections.connection}
         submitButtonLabel={dict.connections.settings.saveChanges}
         deleteButtonLabel={dict.connections.settings.delete}
         dangerZoneMessage={dict.connections.settings.deletionNote}
@@ -288,12 +289,7 @@ const ConnectionSettingsSection = () => {
         additionalContentRight={
           <>
             {canViewTags && (
-              <div
-                className={`
-                  border-b border-gray-200 pb-4
-                  dark:border-gray-800
-                `}
-              >
+              <div className={`border-b border-border pb-4`}>
                 <WorkspaceTagSelector
                   selectedTags={selectedTags}
                   onTagsChange={handleUpdateTags}

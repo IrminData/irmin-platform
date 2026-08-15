@@ -146,7 +146,7 @@ export default function UpdateScriptModal({
           )}
         />
         {errors.name && (
-          <p className='mt-1 text-xs text-red-600'>{errors.name.message}</p>
+          <p className='mt-1 text-xs text-destructive'>{errors.name.message}</p>
         )}
       </div>
 
@@ -160,13 +160,12 @@ export default function UpdateScriptModal({
               id='script-description'
               disabled={loading}
               placeholder={dict.scripts.scriptDescription}
-              rows={3}
               {...field}
             />
           )}
         />
         {errors.description && (
-          <p className='mt-1 text-xs text-red-600'>
+          <p className='mt-1 text-xs text-destructive'>
             {errors.description.message}
           </p>
         )}
@@ -211,14 +210,16 @@ export default function UpdateScriptModal({
           }}
         />
         {errors.owner_id && (
-          <p className='mt-1 text-xs text-red-600'>{errors.owner_id.message}</p>
+          <p className='mt-1 text-xs text-destructive'>
+            {errors.owner_id.message}
+          </p>
         )}
       </div>
 
       {error && <div className='text-destructive'>{error}</div>}
 
       <Button
-        variant='default'
+        variant='accent'
         size='sm'
         className='w-full'
         type='submit'

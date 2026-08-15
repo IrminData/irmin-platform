@@ -118,7 +118,7 @@ export const WorkspaceSendInviteModalContent = ({
           <Button
             size='sm'
             className='ml-auto min-w-32'
-            variant='default'
+            variant='accent'
             type='submit'
           >
             {dict.users.invite}

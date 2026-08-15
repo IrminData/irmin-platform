@@ -5,7 +5,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
  *
  * Real structure (see `src/components/user/UserProfileForm.tsx`):
  * - `ContentWrapper wrapperClassName='py-8'` — `container max-w-7xl
- *   px-2 sm:mx-auto` outer + `rounded-lg border bg-popover/10 p-2`
+ *   px-2 sm:mx-auto` outer + `rounded-[2px] border bg-popover/10 p-2`
  *   inner card.
  * - Two-column grid `grid-cols-1 lg:grid-cols-2 gap-8`.
  * - Left column: avatar + profile-picture input + first/last name row
@@ -26,7 +26,7 @@ export default function ProfileLoading() {
     >
       <div
         className={`
-          w-full max-w-full rounded-lg border border-border bg-popover/10 p-2
+          w-full max-w-full rounded-[2px] border border-border bg-popover/10 p-2
           py-8
         `}
       >
@@ -45,7 +45,7 @@ export default function ProfileLoading() {
               {/* Profile-picture input */}
               <div className='flex flex-col gap-2'>
                 <LoadingSkeleton className='h-4 w-40' />
-                <LoadingSkeleton className='h-10 w-full rounded-md' />
+                <LoadingSkeleton className='h-10 w-full rounded-[2px]' />
               </div>
               {/* First + last name row */}
               <div
@@ -56,22 +56,22 @@ export default function ProfileLoading() {
               >
                 <div className='flex flex-col gap-2'>
                   <LoadingSkeleton className='h-4 w-24' />
-                  <LoadingSkeleton className='h-10 w-full rounded-md' />
+                  <LoadingSkeleton className='h-10 w-full rounded-[2px]' />
                 </div>
                 <div className='flex flex-col gap-2'>
                   <LoadingSkeleton className='h-4 w-24' />
-                  <LoadingSkeleton className='h-10 w-full rounded-md' />
+                  <LoadingSkeleton className='h-10 w-full rounded-[2px]' />
                 </div>
               </div>
               {/* Email / phone / company / language — four stacked fields */}
               {Array.from({ length: 4 }).map((_, i) => (
                 <div key={`field-${i}`} className='flex flex-col gap-2'>
                   <LoadingSkeleton className='h-4 w-28' />
-                  <LoadingSkeleton className='h-10 w-full rounded-md' />
+                  <LoadingSkeleton className='h-10 w-full rounded-[2px]' />
                 </div>
               ))}
               {/* Submit */}
-              <LoadingSkeleton className='h-9 w-full rounded-md' />
+              <LoadingSkeleton className='h-9 w-full rounded-[2px]' />
             </div>
           </div>
 
@@ -82,7 +82,7 @@ export default function ProfileLoading() {
               {Array.from({ length: 6 }).map((_, i) => (
                 <LoadingSkeleton
                   key={`notification-${i}`}
-                  className='h-16 w-full rounded-md'
+                  className='h-16 w-full rounded-[2px]'
                 />
               ))}
             </div>

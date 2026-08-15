@@ -116,7 +116,7 @@ export default function CreateWorkspaceModal({
             </Button>
             <Button
               type='submit'
-              variant='gradient'
+              variant='accent'
               disabled={!name.trim() || createMutation.isPending}
               loading={createMutation.isPending}
             >

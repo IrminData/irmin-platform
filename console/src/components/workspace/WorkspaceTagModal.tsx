@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useId, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +43,7 @@ export function WorkspaceTagModal({
   onCancel,
 }: WorkspaceTagModalProps) {
   const { dict } = useLocale();
+  const colorLabelId = useId();
 
   const [formState, setFormState] = useState({
     name: initialTag?.name || '',
@@ -102,8 +103,12 @@ export function WorkspaceTagModal({
         />
       </div>
 
-      <div className='flex flex-col gap-2'>
-        <Label>{dict.common.color}</Label>
+      <div
+        className='flex flex-col gap-2'
+        role='group'
+        aria-labelledby={colorLabelId}
+      >
+        <Label id={colorLabelId}>{dict.common.color}</Label>
 
         {/* Color Palette */}
         <div className='grid grid-cols-8 gap-2'>
@@ -112,11 +117,15 @@ export function WorkspaceTagModal({
               key={paletteColor}
               type='button'
               disabled={isSubmitting}
+              aria-label={`${dict.common.color}: ${paletteColor}`}
+              aria-pressed={(customColor || color) === paletteColor}
               className={cn(
                 `
-                  h-12 w-full rounded-md border-2
-                  transition-[transform,border-color,box-shadow]
+                  h-12 w-full rounded-[2px] border-2
+                  transition-[transform,border-color]
                   hover:scale-110
+                  focus-visible:outline-2 focus-visible:outline-offset-2
+                  focus-visible:outline-accent
                 `,
                 (customColor || color) === paletteColor
                   ? 'border-foreground ring-2 ring-ring ring-offset-2'
@@ -146,6 +155,7 @@ export function WorkspaceTagModal({
         <div className='flex items-center gap-2'>
           <input
             type='color'
+            aria-label={dict.common.color}
             value={customColor || color}
             onChange={(e) =>
               setFormState((prev) => ({
@@ -160,6 +170,7 @@ export function WorkspaceTagModal({
             disabled={isSubmitting}
           />
           <Input
+            aria-label={dict.common.color}
             value={customColor || color}
             onChange={(e) =>
               setFormState((prev) => ({
@@ -201,7 +212,12 @@ export function WorkspaceTagModal({
             {dict.common.cancel}
           </Button>
         )}
-        <Button type='submit' disabled={!name.trim()} loading={isSubmitting}>
+        <Button
+          type='submit'
+          variant='accent'
+          disabled={!name.trim()}
+          loading={isSubmitting}
+        >
           {initialTag?.id ? dict.common.update : dict.common.create}
         </Button>
       </div>

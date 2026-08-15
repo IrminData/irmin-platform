@@ -1,7 +1,7 @@
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 /**
- * Generic list skeleton — N rounded rows with optional avatar and
+ * Generic list skeleton — N list rows with optional avatar and
  * trailing action buttons. Used for sidebars and small lists; for
  * full list pages prefer `ListPageSkeleton` or `ListShellSkeleton`.
  */
@@ -27,7 +27,8 @@ function ListSkeleton({
         <div
           key={`list-item-${i}`}
           className={`
-            flex items-center gap-4 rounded-lg border border-border bg-card p-4
+            flex items-center gap-4 rounded-[2px] border border-border bg-card
+            p-4
           `}
         >
           {showAvatar && (
@@ -39,8 +40,8 @@ function ListSkeleton({
           </div>
           {showActions && (
             <div className='flex gap-2'>
-              <LoadingSkeleton className='size-8 rounded-md' />
-              <LoadingSkeleton className='size-8 rounded-md' />
+              <LoadingSkeleton className='size-8 rounded-[2px]' />
+              <LoadingSkeleton className='size-8 rounded-[2px]' />
             </div>
           )}
         </div>

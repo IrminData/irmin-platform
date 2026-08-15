@@ -189,7 +189,7 @@ export default function ObjectSchemaBuilder({
               <Label className='text-xs text-muted-foreground'>
                 {dict.schemaBuilder.properties}
               </Label>
-              <div className='rounded-md border'>
+              <div className='rounded-[2px] border'>
                 <JSONSchemaEditor
                   value={
                     value.schema || {

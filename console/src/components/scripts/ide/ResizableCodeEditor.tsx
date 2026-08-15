@@ -1,9 +1,16 @@
 'use client';
 
+/* eslint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/no-noninteractive-tabindex -- A focusable separator is an interactive splitter under the ARIA pattern. */
 import type React from 'react';
 import { useCallback, useEffect, useRef } from 'react';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import CodeMirrorEditor from './CodeMirrorEditor';
+
+const MIN_EDITOR_HEIGHT = 160;
+const MAX_EDITOR_HEIGHT = 1200;
+const EDITOR_RESIZE_STEP = 24;
 
 /**
  * Resizable Code editor component for the Editor and Query tools
@@ -30,6 +37,7 @@ const ResizableCodeEditor = ({
   editorHeight: string;
   setEditorHeight: (_height: string) => void;
 }) => {
+  const { dict } = useLocale();
   const editorRef = useRef<HTMLDivElement | null>(null);
   const handleMouseMoveRef = useRef<(e: MouseEvent) => void>(() => {});
   const handleMouseUpRef = useRef<() => void>(() => {});
@@ -37,7 +45,11 @@ const ResizableCodeEditor = ({
   useEffect(() => {
     handleMouseMoveRef.current = (e: MouseEvent) => {
       const offsetTop = editorRef.current?.offsetTop ?? 0;
-      setEditorHeight(`${e.clientY - offsetTop}px`);
+      const nextHeight = Math.min(
+        MAX_EDITOR_HEIGHT,
+        Math.max(MIN_EDITOR_HEIGHT, e.clientY - offsetTop)
+      );
+      setEditorHeight(`${nextHeight}px`);
     };
 
     handleMouseUpRef.current = () => {
@@ -52,15 +64,37 @@ const ResizableCodeEditor = ({
     e.preventDefault();
   }, []);
 
+  const numericEditorHeight = Number.parseFloat(editorHeight);
+  const currentEditorHeight = Number.isFinite(numericEditorHeight)
+    ? numericEditorHeight
+    : MIN_EDITOR_HEIGHT;
+
+  const handleSeparatorKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      const decrease = event.key === 'ArrowLeft' || event.key === 'ArrowUp';
+      const increase = event.key === 'ArrowRight' || event.key === 'ArrowDown';
+
+      if (!decrease && !increase) return;
+
+      event.preventDefault();
+      const delta = decrease ? -EDITOR_RESIZE_STEP : EDITOR_RESIZE_STEP;
+      const nextHeight = Math.min(
+        MAX_EDITOR_HEIGHT,
+        Math.max(MIN_EDITOR_HEIGHT, currentEditorHeight + delta)
+      );
+      setEditorHeight(`${nextHeight}px`);
+    },
+    [currentEditorHeight, setEditorHeight]
+  );
+
   return (
     <div
       style={{ maxHeight: editorHeight }}
       ref={editorRef}
       id='code-editor'
       className={`
-        flex h-full flex-col bg-gray-200 text-xs
+        flex h-full flex-col bg-muted text-xs
         lg:text-sm
-        dark:bg-irmin-black-500
       `}
     >
       <CodeMirrorEditor
@@ -69,15 +103,24 @@ const ResizableCodeEditor = ({
         editorHeight={editorHeight}
         updateEditorContent={updateTabContent}
       />
-      <button
-        type='button'
-        aria-label='Resize editor'
+      <div
+        role='separator'
+        aria-label={dict.common.resizeEditor}
+        aria-orientation='horizontal'
+        aria-valuemin={MIN_EDITOR_HEIGHT}
+        aria-valuemax={MAX_EDITOR_HEIGHT}
+        aria-valuenow={Math.round(currentEditorHeight)}
+        tabIndex={0}
         className={`
-          h-1 cursor-ns-resize appearance-none border-0 bg-gray-200 p-0
-          outline-none
-          dark:bg-irmin-blue-500
+          relative h-1 w-full cursor-ns-resize border-0 bg-border p-0
+          transition-colors
+          before:absolute before:inset-x-0 before:-inset-y-2 before:content-['']
+          hover:bg-accent
+          focus-visible:outline-2 focus-visible:outline-offset-2
+          focus-visible:outline-accent
         `}
         onMouseDown={handleMouseDown}
+        onKeyDown={handleSeparatorKeyDown}
       />
     </div>
   );

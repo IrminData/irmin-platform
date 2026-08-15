@@ -76,12 +76,7 @@ const ActionWorkflowList = ({
                 className='inline-flex flex-col gap-1'
               >
                 <p className='text-base'>{item.name}</p>
-                <span
-                  className={`
-                    text-sm text-gray-600
-                    dark:text-gray-400
-                  `}
-                >
+                <span className={`text-sm text-muted-foreground`}>
                   {dict.common.owner}: {item.owner.email}
                   {item.owner.company ? ` (${item.owner.company})` : ''}
                 </span>
@@ -101,11 +96,11 @@ const ActionWorkflowList = ({
                 <div className='flex flex-col'>
                   {item.schedule?.triggers &&
                   item.schedule.triggers.length > 0 ? (
-                    <span className='text-xs text-gray-400'>
+                    <span className='text-xs text-muted-foreground'>
                       {dict.workflow.scheduled}
                     </span>
                   ) : (
-                    <span className='text-xs text-gray-400'>
+                    <span className='text-xs text-muted-foreground'>
                       {dict.workflow.notScheduled}
                     </span>
                   )}
@@ -124,12 +119,7 @@ const ActionWorkflowList = ({
             ],
             actions: tableActions.filter((action) => !action.hidden),
             details: (
-              <div
-                className={`
-                  flex max-w-sm flex-col text-gray-600
-                  dark:text-gray-400
-                `}
-              >
+              <div className={`flex max-w-sm flex-col text-muted-foreground`}>
                 <p className='pb-4 text-sm'>{item.description}</p>
               </div>
             ),

@@ -22,7 +22,9 @@ export default function PolicyLogsPage() {
 
   const { policyQuery } = usePolicy(params.policy);
 
-  if (policyQuery.isLoading) return <LoadingSpinner />;
+  if (policyQuery.isLoading) {
+    return <LoadingSpinner label={dict.common.loading} />;
+  }
   if (policyQuery.isError) {
     return (
       <QueryError

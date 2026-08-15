@@ -4,12 +4,12 @@ import { useEffect, useMemo } from 'react';
 
 import { usePathname, useRouter } from 'next/navigation';
 
-import { GoWorkflow } from 'react-icons/go';
 import {
   TbActivity,
   TbBook,
   TbFileText,
   TbPlug,
+  TbRoute,
   TbSchema,
   TbSettings,
   TbShield,
@@ -84,7 +84,7 @@ export default function ConnectionLayoutWrapper({
         name: dict.common.overview,
         link: `${baseUrl}`,
         active: pathname === `${baseUrl}`,
-        icon: <GoWorkflow size={14} />,
+        icon: <TbRoute size={14} />,
       },
       {
         name: dict.repository.schema.schema,
@@ -178,15 +178,12 @@ export default function ConnectionLayoutWrapper({
         >
           <div className='flex flex-col gap-2 py-4'>
             <div
-              className={`
-                flex flex-row items-center divide-x divide-gray-300
-                dark:divide-gray-700
-              `}
+              className={`flex flex-row items-center divide-x divide-border`}
             >
               <div className='flex flex-row items-center gap-2 pr-2'>
                 <span
                   className={`
-                    text-xs text-gray-400
+                    text-xs text-muted-foreground
                     md:text-sm
                   `}
                 >
@@ -196,7 +193,7 @@ export default function ConnectionLayoutWrapper({
               </div>
               <span
                 className={`
-                  px-2 text-xs text-gray-400
+                  px-2 text-xs text-muted-foreground
                   md:text-sm
                 `}
               >
@@ -211,7 +208,7 @@ export default function ConnectionLayoutWrapper({
             <DisplayTitle>{connection.name}</DisplayTitle>
             <p
               className={`
-                max-w-lg text-xs text-gray-400
+                max-w-lg text-xs text-muted-foreground
                 lg:text-sm
               `}
             >

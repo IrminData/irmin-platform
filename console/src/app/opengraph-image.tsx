@@ -1,24 +1,26 @@
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
-export const alt = 'Irmin';
+/* eslint-disable import-x/no-nodejs-modules -- Metadata generation reads a bundled brand asset at build time. */
+import { readFile } from 'node:fs/promises';
+import { join } from 'node:path';
+
+/* eslint-enable import-x/no-nodejs-modules */
+
+export const alt = 'Irmin — the data platform for engineering teams';
 export const size = { width: 1200, height: 630 };
 export const contentType = 'image/png';
 
 /**
- * Static brand card served at `/opengraph-image` and auto-injected as
- * `og:image` on every route that doesn't override it.
- *
- * DESIGN.md calls for a single static card on all authenticated (noindex)
- * routes — a shared brand surface, not per-workspace previews that would
- * leak workspace names into Slack / iMessage threads when a link is pasted.
- *
- * Placeholder composition: Irmin wordmark on the dark theme background
- * (HSL(197 94% 4%) ≈ #010e14), with the Irmin Blue / Green accent mark.
- * Swap for the final brand asset when design delivers it — Next.js will
- * pick up the change on next build.
+ * Static Almanac brand card served at `/opengraph-image` and shared by
+ * routes that do not provide a more specific preview.
  */
 export default async function OGImage() {
+  const lockup = await readFile(
+    join(process.cwd(), 'public', 'brand', 'lockup-horizontal-dark.svg'),
+    'base64'
+  );
+  const lockupSrc = `data:image/svg+xml;base64,${lockup}`;
+
   return new ImageResponse(
     <div
       style={{
@@ -26,66 +28,89 @@ export default async function OGImage() {
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'flex-start',
         justifyContent: 'space-between',
-        padding: '80px',
-        background:
-          'radial-gradient(ellipse at 20% 0%, hsl(197 94% 14%) 0%, hsl(197 94% 4%) 60%)',
-        color: 'hsl(0 0% 98%)',
-        fontFamily: 'system-ui, sans-serif',
+        padding: '64px 72px 56px',
+        background: '#0f1212',
+        color: '#efe7db',
+        fontFamily: 'Arial, sans-serif',
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-        <div
-          style={{
-            width: 52,
-            height: 52,
-            borderRadius: 14,
-            background:
-              'linear-gradient(135deg, hsl(197 94% 55%), hsl(137 52% 50%))',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'hsl(197 94% 4%)',
-            fontSize: 36,
-            fontWeight: 700,
-          }}
-        >
-          I
-        </div>
-        <div
-          style={{ fontSize: 40, fontWeight: 600, letterSpacing: '-0.01em' }}
-        >
-          Irmin
-        </div>
-      </div>
       <div
         style={{
           display: 'flex',
-          flexDirection: 'column',
-          gap: '12px',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          borderTop: '2px solid #c6f432',
+          paddingTop: 28,
+        }}
+      >
+        <img
+          alt='Irmin'
+          src={lockupSrc}
+          width={520}
+          height={171}
+          style={{ objectFit: 'contain' }}
+        />
+        <div
+          style={{
+            display: 'flex',
+            fontFamily: 'monospace',
+            fontSize: 18,
+            letterSpacing: '0.16em',
+            color: '#c6f432',
+          }}
+        >
+          DATA INFRASTRUCTURE
+        </div>
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: 'space-between',
+          width: '100%',
         }}
       >
         <div
           style={{
-            fontSize: 76,
-            fontWeight: 700,
-            letterSpacing: '-0.03em',
-            lineHeight: 1.05,
-            maxWidth: 900,
+            display: 'flex',
+            maxWidth: 940,
+            fontSize: 70,
+            fontWeight: 600,
+            letterSpacing: '-0.035em',
+            lineHeight: 1.02,
           }}
         >
           The data platform for engineering teams.
         </div>
         <div
           style={{
-            fontSize: 28,
-            color: 'hsl(197 20% 68%)',
-            letterSpacing: '-0.01em',
+            display: 'flex',
+            width: 24,
+            height: 24,
+            background: '#c6f432',
           }}
-        >
-          Versioned data · Workflows · AI-native
+        />
+      </div>
+
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          width: '100%',
+          borderTop: '1px solid rgba(239, 231, 219, 0.22)',
+          paddingTop: 20,
+          fontFamily: 'monospace',
+          fontSize: 18,
+          letterSpacing: '0.08em',
+          color: 'rgba(239, 231, 219, 0.72)',
+        }}
+      >
+        <div style={{ display: 'flex' }}>
+          VERSIONED DATA / WORKFLOWS / AI-NATIVE
         </div>
+        <div style={{ display: 'flex' }}>IRMIN.DATA</div>
       </div>
     </div>,
     { ...size }

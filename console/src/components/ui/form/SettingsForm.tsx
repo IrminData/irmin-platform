@@ -1,5 +1,7 @@
 'use client';
 
+import { useId } from 'react';
+
 import type {
   DefaultValues,
   FieldValues,
@@ -21,6 +23,8 @@ import {
 } from '@/components/ui/select';
 
 import { useLocale } from '@/context/LocaleContext';
+
+const toDomId = (value: string) => value.replace(/[^a-zA-Z0-9_-]/g, '-');
 
 /**
  * The configuration for a field in the form
@@ -81,8 +85,8 @@ export default function SettingsForm<T extends FieldValues>({
   fieldConfiguration,
   deleteItem,
   deleteItemLoading,
-  itemName = 'Item',
-  dangerZoneMessage = 'This action cannot be undone. Deleting this item will remove it permanently.',
+  itemName,
+  dangerZoneMessage,
   submitButtonLabel,
   deleteButtonLabel,
   additionalDangerContent,
@@ -91,10 +95,15 @@ export default function SettingsForm<T extends FieldValues>({
   additionalContentRight,
 }: SettingsFormProps<T>) {
   const { dict } = useLocale();
+  const resolvedItemName = itemName ?? dict.common.item;
+  const resolvedDangerZoneMessage =
+    dangerZoneMessage ?? dict.common.permanentDeleteDescription;
+  const generatedFormId = useId();
+  const formId = `settings-form-${toDomId(generatedFormId)}`;
   const {
     control,
     handleSubmit,
-    formState: { isDirty, errors },
+    formState: { isDirty },
   } = useForm<T>({
     defaultValues: initialValues,
   });
@@ -102,71 +111,93 @@ export default function SettingsForm<T extends FieldValues>({
   return (
     <ContentWrapper wrapperClassName='py-8 flex flex-col md:flex-row gap-8 md:gap-12 px-4'>
       <form
+        id={formId}
         onSubmit={handleSubmit(onSubmit)}
         className='flex flex-1 flex-col gap-4'
       >
-        {fieldConfiguration.map((field) => (
-          <div key={`field-${field.name}`} className='flex flex-col gap-2'>
-            <Label>{field.label}</Label>
-            <Controller
-              name={field.name}
-              control={control}
-              rules={field.rules}
-              render={({ field: formField }) => (
-                <>
-                  {field.type === 'text' || field.type === 'textarea' ? (
-                    <Input
-                      required={!!field.rules?.required}
-                      type='text'
-                      placeholder={field.placeholder}
-                      {...formField}
-                      longtext={
-                        field.type === 'textarea' ? { rows: 3 } : undefined
-                      }
-                      disabled={submitting || disabled}
-                    />
-                  ) : field.type === 'select' && field.options ? (
-                    <Select
-                      value={formField.value}
-                      onValueChange={formField.onChange}
-                      disabled={submitting || disabled}
-                    >
-                      <SelectTrigger className='w-full'>
-                        <SelectValue placeholder={field.placeholder}>
-                          {
-                            field.options.find(
-                              (option) => option.value === formField.value
-                            )?.label
+        {fieldConfiguration.map((field, index) => {
+          const fieldId = `${formId}-${toDomId(field.name)}-${index}`;
+          const errorId = `${fieldId}-error`;
+
+          return (
+            <div key={`field-${field.name}`} className='flex flex-col gap-2'>
+              <Label htmlFor={fieldId}>{field.label}</Label>
+              <Controller
+                name={field.name}
+                control={control}
+                rules={field.rules}
+                render={({ field: formField, fieldState }) => (
+                  <>
+                    {field.type === 'text' || field.type === 'textarea' ? (
+                      <Input
+                        {...formField}
+                        id={fieldId}
+                        required={!!field.rules?.required}
+                        type='text'
+                        placeholder={field.placeholder}
+                        longtext={
+                          field.type === 'textarea' ? { rows: 3 } : undefined
+                        }
+                        disabled={submitting || disabled}
+                        aria-invalid={fieldState.invalid || undefined}
+                        aria-describedby={
+                          fieldState.error ? errorId : undefined
+                        }
+                      />
+                    ) : field.type === 'select' && field.options ? (
+                      <Select
+                        name={formField.name}
+                        value={formField.value}
+                        onValueChange={formField.onChange}
+                        disabled={submitting || disabled}
+                      >
+                        <SelectTrigger
+                          ref={formField.ref}
+                          id={fieldId}
+                          className='w-full'
+                          aria-required={!!field.rules?.required || undefined}
+                          aria-invalid={fieldState.invalid || undefined}
+                          aria-describedby={
+                            fieldState.error ? errorId : undefined
                           }
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        {field.options.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : null}
-                  {errors[field.name] && (
-                    <p className='mt-1 text-xs text-destructive'>
-                      {String(
-                        (errors[field.name] as { message?: string } | undefined)
-                          ?.message ?? ''
-                      )}
-                    </p>
-                  )}
-                </>
-              )}
-            />
-          </div>
-        ))}
+                        >
+                          <SelectValue placeholder={field.placeholder}>
+                            {
+                              field.options.find(
+                                (option) => option.value === formField.value
+                              )?.label
+                            }
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {field.options.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : null}
+                    {fieldState.error && (
+                      <p
+                        id={errorId}
+                        role='alert'
+                        className='mt-1 text-xs text-destructive'
+                      >
+                        {String(fieldState.error.message ?? '')}
+                      </p>
+                    )}
+                  </>
+                )}
+              />
+            </div>
+          );
+        })}
         <Button
           className='h-11 w-full'
           type='submit'
           size='sm'
-          variant='default'
+          variant='accent'
           disabled={!isDirty || disabled}
           loading={submitting}
         >
@@ -192,18 +223,19 @@ export default function SettingsForm<T extends FieldValues>({
                   md:text-sm
                 `}
               >
-                {dangerZoneMessage}
+                {resolvedDangerZoneMessage}
               </p>
               <div className='flex gap-2'>
                 <Button
                   className='mt-4'
                   size='sm'
-                  variant='secondary'
+                  variant='destructive'
                   onClick={deleteItem}
                   loading={deleteItemLoading}
                   disabled={disabled || deleteButtonDisabled}
                 >
-                  {deleteButtonLabel ?? `Delete ${itemName}`}
+                  {deleteButtonLabel ??
+                    dict.common.deleteNamed.replace('{item}', resolvedItemName)}
                 </Button>
                 {additionalDangerContent}
               </div>

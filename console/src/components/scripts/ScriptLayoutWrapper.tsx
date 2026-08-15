@@ -19,8 +19,8 @@ export default function ScriptLayoutWrapper({
   return (
     <SafeComponent
       level='section'
-      title='Scripts Interface Error'
-      description='Failed to load scripts interface'
+      titleKey='scriptsInterfaceTitle'
+      descriptionKey='scriptsInterfaceDescription'
     >
       <QueryProvider>{children}</QueryProvider>
     </SafeComponent>

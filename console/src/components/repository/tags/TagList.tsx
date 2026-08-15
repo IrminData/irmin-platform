@@ -56,8 +56,7 @@ export default function TagList({
             {tag.name === currentRef && (
               <span
                 className={`
-                  h-max rounded-lg bg-gray-300 px-1 text-xs/4 text-foreground
-                  dark:bg-gray-600
+                  h-max rounded-[2px] bg-muted px-1 text-xs/4 text-foreground
                 `}
               >
                 {dict.repository.tags.currentlyViewing}

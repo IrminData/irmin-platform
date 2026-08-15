@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { formatDistanceToNow, intervalToDuration } from 'date-fns';
+import { intervalToDuration } from 'date-fns';
 
 import { TbClock, TbHourglassLow } from 'react-icons/tb';
 
@@ -29,6 +29,7 @@ import {
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
+import { formatRelativeTime } from '@/utils/formatTimestamp';
 
 import type { GridRow } from '@/types/internal/ListProps';
 
@@ -87,9 +88,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
                   `}
                 >
                   <TbClock className='mr-1' />
-                  {formatDistanceToNow(new Date(run.started_at ?? ''), {
-                    addSuffix: true,
-                  })}
+                  {formatRelativeTime(run.started_at, locale)}
                 </p>
                 <p
                   className={`
@@ -112,7 +111,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
             <Tooltip.Content
               side='top'
               align='center'
-              className='rounded-sm bg-background p-2'
+              className='rounded-[2px] bg-background p-2'
             >
               <p
                 className={`
@@ -176,27 +175,35 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
               )}
               {run.triggered_by?.type === 'time' && run.triggered_by.cron && (
                 <p className='text-xs text-muted-foreground'>
-                  Cron: {run.triggered_by.cron}
+                  {dict.workflow.schedule.cronExpression}:{' '}
+                  {run.triggered_by.cron}
                 </p>
               )}
               {run.triggered_by?.type === 'time' && run.triggered_by.rrule && (
                 <p className='text-xs text-muted-foreground'>
-                  RRule: {run.triggered_by.rrule}
+                  {dict.workflow.schedule.recurrenceRule}:{' '}
+                  {run.triggered_by.rrule}
                 </p>
               )}
               {run.triggered_by?.type === 'repository-event' && (
                 <p className='text-xs text-muted-foreground'>
-                  Event: {run.triggered_by.event}
-                  {run.triggered_by.repository &&
-                    ` on ${run.triggered_by.repository}`}
+                  {dict.workflow.schedule.event}:{' '}
+                  {run.triggered_by.repository
+                    ? dict.workflow.schedule.eventOnSource
+                        .replace('{event}', run.triggered_by.event)
+                        .replace('{source}', run.triggered_by.repository)
+                    : run.triggered_by.event}
                   {run.triggered_by.ref && ` (${run.triggered_by.ref})`}
                 </p>
               )}
               {run.triggered_by?.type === 'workflow-run-event' && (
                 <p className='text-xs text-muted-foreground'>
-                  Event: {run.triggered_by.event}
-                  {run.triggered_by.workflow &&
-                    ` from ${run.triggered_by.workflow}`}
+                  {dict.workflow.schedule.event}:{' '}
+                  {run.triggered_by.workflow
+                    ? dict.workflow.schedule.eventFromSource
+                        .replace('{event}', run.triggered_by.event)
+                        .replace('{source}', run.triggered_by.workflow)
+                    : run.triggered_by.event}
                 </p>
               )}
               <Tooltip.Arrow />
@@ -315,7 +322,7 @@ const WorkflowSection = ({ workflowID }: { workflowID: string }) => {
           <div
             className={`
               flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4
-              rounded-lg bg-card p-4 text-sm text-foreground
+              rounded-[2px] bg-card p-4 text-sm text-foreground
               lg:text-lg
             `}
           >

@@ -21,12 +21,12 @@ const AssistantSkeleton = () => {
             xl:flex xl:shrink-0
           `}
         >
-          <LoadingSkeleton className='mb-2 h-10 w-full rounded-md' />
-          <LoadingSkeleton className='h-9 w-full rounded-md' />
+          <LoadingSkeleton className='mb-2 h-10 w-full rounded-[2px]' />
+          <LoadingSkeleton className='h-9 w-full rounded-[2px]' />
           {Array.from({ length: 8 }).map((_, i) => (
             <LoadingSkeleton
               key={`conv-${i}`}
-              className='h-12 w-full rounded-md'
+              className='h-12 w-full rounded-[2px]'
             />
           ))}
         </div>
@@ -40,7 +40,7 @@ const AssistantSkeleton = () => {
         >
           <div
             className={`
-              flex size-full flex-col rounded-lg border border-border bg-card
+              flex size-full flex-col rounded-[2px] border border-border bg-card
             `}
           >
             <div
@@ -50,7 +50,7 @@ const AssistantSkeleton = () => {
               `}
             >
               <LoadingSkeleton className='h-5 w-48' />
-              <LoadingSkeleton className='size-8 rounded-md' />
+              <LoadingSkeleton className='size-8 rounded-[2px]' />
             </div>
             <div className='flex flex-1 flex-col gap-4 p-4'>
               {/* Assistant message */}
@@ -72,7 +72,7 @@ const AssistantSkeleton = () => {
             </div>
             {/* Composer */}
             <div className='border-t border-border p-3'>
-              <LoadingSkeleton className='h-12 w-full rounded-md' />
+              <LoadingSkeleton className='h-12 w-full rounded-[2px]' />
             </div>
           </div>
         </div>

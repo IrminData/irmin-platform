@@ -76,7 +76,7 @@ const MarkdownViewer = ({ blob }: { blob: Blob }) => {
       ) : (
         <pre
           className={`
-            overflow-x-auto rounded-lg bg-muted/30 p-4 font-mono text-xs
+            overflow-x-auto rounded-[2px] bg-muted/30 p-4 font-mono text-xs
             break-all whitespace-pre-wrap text-muted-foreground
           `}
         >

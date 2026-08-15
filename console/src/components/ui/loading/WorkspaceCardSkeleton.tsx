@@ -11,11 +11,11 @@ export const WorkspaceCardSkeleton = ({
   return (
     <div
       className={`
-        flex items-center gap-4 rounded-xl bg-card px-4 py-3
+        flex items-center gap-4 rounded-[2px] bg-card px-4 py-3
         ${className}
       `}
     >
-      <LoadingSkeleton className='size-9 shrink-0 rounded-lg' />
+      <LoadingSkeleton className='size-9 shrink-0 rounded-[2px]' />
 
       <div className='flex min-w-0 flex-1 flex-col gap-1.5'>
         <LoadingSkeleton className='h-4 w-1/3' />

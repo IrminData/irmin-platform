@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from 'react';
 
-import { AiOutlinePlayCircle } from 'react-icons/ai';
 import {
   TbDatabase,
   TbExclamationCircle,
   TbLogs,
+  TbPlayerPlay,
   TbStepInto,
   TbTable,
 } from 'react-icons/tb';
@@ -82,19 +82,16 @@ const QueryResults = ({
   return (
     <div
       className={`
-        flex flex-1 flex-col overflow-hidden border-t border-gray-200
+        flex flex-1 flex-col overflow-hidden border-t border-border
         bg-background
-        dark:border-gray-800
       `}
       id='query-results'
     >
       {/* Tab Buttons */}
       <div
         className={`
-          mt-1 mb-0 flex w-full flex-wrap justify-start gap-2 border-gray-200
-          px-2
+          mt-1 mb-0 flex w-full flex-wrap justify-start gap-2 border-border px-2
           md:border-b
-          dark:border-gray-800
         `}
       >
         <div
@@ -167,7 +164,7 @@ const QueryResults = ({
         {onRun && (
           <div className='ml-auto'>
             <Button
-              icon={<AiOutlinePlayCircle />}
+              icon={<TbPlayerPlay />}
               variant='accent'
               size='sm'
               loading={loading}
@@ -190,7 +187,11 @@ const QueryResults = ({
         />
       )}
       {activeTab === 'data' && !result?.data && (
-        <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+        <div
+          className='
+            w-full px-4 py-12 text-center text-lg text-muted-foreground
+          '
+        >
           {dict.common.noResults}
         </div>
       )}
@@ -199,7 +200,11 @@ const QueryResults = ({
           {logs && logs.length > 0 ? (
             <LogFeed logs={logs} />
           ) : (
-            <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+            <div
+              className='
+                w-full px-4 py-12 text-center text-lg text-muted-foreground
+              '
+            >
               {dict.logs.noLogsFound}
             </div>
           )}
@@ -221,7 +226,11 @@ const QueryResults = ({
           ) : workspaceSchema.schema ? (
             <SchemaViewer schema={workspaceSchema.schema} isExpanded={true} />
           ) : (
-            <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+            <div
+              className='
+                w-full px-4 py-12 text-center text-lg text-muted-foreground
+              '
+            >
               {dict.common.noResults}
             </div>
           )}

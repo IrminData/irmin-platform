@@ -122,7 +122,7 @@ export default function MoveRenameObjectModal({
                 }}
               />
               {errors.name && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.name.message}
                 </p>
               )}
@@ -151,7 +151,7 @@ export default function MoveRenameObjectModal({
                 }}
               />
               {errors.path && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.path.message}
                 </p>
               )}
@@ -165,7 +165,7 @@ export default function MoveRenameObjectModal({
       {error && <div className='py-2 text-destructive'>{error}</div>}
       <div className='pb-3'>
         <Button
-          variant='default'
+          variant='accent'
           size='sm'
           className='w-full'
           loading={loading}

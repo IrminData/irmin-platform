@@ -193,7 +193,8 @@ export default function AssetSharePopover({
   const handleRemoveAccess = async (group: PrincipalGroup) => {
     const confirmed = await irminConfirm(
       'warning',
-      dict.policy.share.removeAccessConfirm
+      dict.policy.share.removeAccessConfirm,
+      dict.policy.share.removeAccess
     );
     if (!confirmed) return;
 
@@ -304,7 +305,7 @@ export default function AssetSharePopover({
           {dict.policy.share.title}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className='w-96' align='end'>
+      <PopoverContent className='w-[calc(100vw-1rem)] max-w-96' align='end'>
         <div className='flex flex-col gap-3'>
           <h4 className='text-sm font-semibold'>
             {dict.policy.share.shareThis} &ldquo;{resourceLabel}&rdquo;
@@ -378,7 +379,7 @@ export default function AssetSharePopover({
                         className='size-7'
                         disabled={changingLevelKey !== null}
                         onClick={() => handleRemoveAccess(group)}
-                        aria-label='Remove access'
+                        aria-label={dict.policy.share.removeAccess}
                       >
                         <TbTrash className='size-3.5' />
                       </Button>
@@ -466,6 +467,7 @@ export default function AssetSharePopover({
                 </SelectContent>
               </Select>
               <Button
+                variant='accent'
                 size='sm'
                 className='h-8'
                 onClick={handleGrantAccess}

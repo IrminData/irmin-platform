@@ -112,7 +112,8 @@ export function useConnection(connectionID: string) {
     if (!connectionID) return;
     const confirmed = await irminConfirm(
       'warning',
-      `${dict.common.areYouSureYouWantToDelete} (${connectionQuery.data?.data?.name})`
+      `${dict.common.areYouSureYouWantToDelete} (${connectionQuery.data?.data?.name})`,
+      dict.connections.settings.delete
     );
     if (confirmed) {
       deleteConnection(connectionID);

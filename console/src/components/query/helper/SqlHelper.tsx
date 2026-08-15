@@ -178,10 +178,11 @@ export default function SqlHelper({
       </SheetTrigger>
       <SheetContent
         className={`
-          flex w-[400px] flex-col overflow-hidden
+          flex w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] flex-col
+          overflow-hidden
           focus:outline-none
           focus-visible:outline-none
-          sm:w-[540px]
+          sm:w-[540px] sm:max-w-[540px]
         `}
       >
         <SheetHeader>
@@ -245,7 +246,7 @@ export default function SqlHelper({
           >
             {/* DuckDB Information Section */}
             <section className='mb-4 px-2'>
-              <div className='rounded-md border bg-card p-2'>
+              <div className='rounded-[2px] border bg-card p-2'>
                 <div className='mb-2 flex items-center justify-between'>
                   <h3 className='text-sm font-semibold'>
                     {dict.queryHelper.poweredBy}
@@ -255,8 +256,11 @@ export default function SqlHelper({
                     target='_blank'
                     rel='noopener noreferrer'
                     className={`
-                      flex items-center gap-1 text-xs text-accent
-                      hover:underline
+                      flex items-center gap-1 text-xs text-foreground underline
+                      decoration-accent decoration-1 underline-offset-4
+                      transition-[text-decoration-thickness] duration-150
+                      ease-out
+                      hover:decoration-2
                     `}
                   >
                     {dict.queryHelper.duckDbDocs}
@@ -271,7 +275,7 @@ export default function SqlHelper({
 
             {/* Placeholder Syntax Section */}
             <section className='mb-4 px-2'>
-              <div className='rounded-md border bg-card p-2'>
+              <div className='rounded-[2px] border bg-card p-2'>
                 <h3 className='mb-2 text-sm font-semibold'>
                   {dict.queryHelper.placeholderSyntax} (
                   {dict.queryHelper.recommended})
@@ -279,7 +283,7 @@ export default function SqlHelper({
                 <p className='mb-3 text-xs text-muted-foreground'>
                   {dict.queryHelper.placeholderDescription}
                 </p>
-                <div className='rounded-md bg-muted p-2 font-mono text-xs'>
+                <div className='rounded-[2px] bg-muted p-2 font-mono text-xs'>
                   {`$["workspace;repository;object.json@ref"]`}
                 </div>
                 <p className='mt-2 text-xs text-muted-foreground'>
@@ -291,7 +295,7 @@ export default function SqlHelper({
             {/* Alternative S3 Syntax Section */}
             <section className='mb-4 px-2'>
               <Collapsible>
-                <div className='rounded-md border bg-card'>
+                <div className='rounded-[2px] border bg-card'>
                   <CollapsibleTrigger asChild>
                     <Button
                       variant='ghost'
@@ -307,7 +311,7 @@ export default function SqlHelper({
                     <p className='mb-3 text-xs text-muted-foreground'>
                       {dict.queryHelper.alternativeS3Description}
                     </p>
-                    <div className='rounded-md bg-muted p-2 font-mono text-xs'>
+                    <div className='rounded-[2px] bg-muted p-2 font-mono text-xs'>
                       {displayS3Path
                         ? `read_json('${displayS3Path}')`
                         : context && workspaceSlug
@@ -325,7 +329,7 @@ export default function SqlHelper({
             {/* Query Inputs & Outputs Section */}
             <section className='mb-4 px-2'>
               <Collapsible>
-                <div className='rounded-md border bg-card'>
+                <div className='rounded-[2px] border bg-card'>
                   <CollapsibleTrigger asChild>
                     <Button
                       variant='ghost'
@@ -339,7 +343,7 @@ export default function SqlHelper({
                   </CollapsibleTrigger>
                   <CollapsibleContent className='p-2'>
                     <div className='space-y-3'>
-                      <div className='rounded-md bg-muted/30 p-3 text-xs'>
+                      <div className='rounded-[2px] bg-muted/30 p-3 text-xs'>
                         <h4 className='mb-2 font-semibold'>
                           {dict.queryHelper.workflowInputs}
                         </h4>
@@ -347,10 +351,12 @@ export default function SqlHelper({
                           {dict.queryHelper.explanations.workflowInputs}
                         </p>
                         <div
-                          className={`mt-3 rounded-md border bg-background p-2`}
+                          className={`
+                            mt-3 rounded-[2px] border bg-background p-2
+                          `}
                         >
                           <p className='mb-2 font-mono text-xs font-semibold'>
-                            Path → Table Name Examples:
+                            {dict.queryHelper.pathTableNameExamples}
                           </p>
                           <ul className='space-y-1 font-mono text-xs'>
                             <li>
@@ -384,7 +390,7 @@ export default function SqlHelper({
                         </div>
                       </div>
 
-                      <div className='rounded-md bg-muted/30 p-3 text-xs'>
+                      <div className='rounded-[2px] bg-muted/30 p-3 text-xs'>
                         <h4 className='mb-2 font-semibold'>
                           {dict.queryHelper.queryOutputFormat}
                         </h4>
@@ -420,7 +426,7 @@ export default function SqlHelper({
               {/* Context Section */}
               {context && (
                 <section id='context'>
-                  <div className='rounded-md border bg-card p-3 text-xs'>
+                  <div className='rounded-[2px] border bg-card p-3 text-xs'>
                     <h3 className='mb-2 text-sm font-semibold'>
                       {dict.queryHelper.context}
                     </h3>
@@ -428,7 +434,7 @@ export default function SqlHelper({
                       <div className='flex flex-col gap-1'>
                         <span
                           className={`
-                            text-[10px] font-bold tracking-wider
+                            text-[11px] font-bold tracking-wider
                             text-muted-foreground uppercase
                           `}
                         >
@@ -440,7 +446,7 @@ export default function SqlHelper({
                       <div className='flex flex-col gap-1'>
                         <span
                           className={`
-                            text-[10px] font-bold tracking-wider
+                            text-[11px] font-bold tracking-wider
                             text-muted-foreground uppercase
                           `}
                         >
@@ -455,7 +461,7 @@ export default function SqlHelper({
                         <div className='flex flex-col gap-1'>
                           <span
                             className={`
-                              text-[10px] font-bold tracking-wider
+                              text-[11px] font-bold tracking-wider
                               text-muted-foreground uppercase
                             `}
                           >
@@ -471,7 +477,7 @@ export default function SqlHelper({
               {/* Schema & Selectors Section */}
               {(effectiveSchema?.schema || displaySelector) && (
                 <section id='schema-and-selectors'>
-                  <div className='rounded-md border p-3'>
+                  <div className='rounded-[2px] border p-3'>
                     {displaySelector && (
                       <>
                         <div className='mb-2 flex items-center justify-between'>
@@ -485,7 +491,7 @@ export default function SqlHelper({
                         </div>
                         <div
                           className={`
-                            mb-4 rounded-sm bg-muted p-2 font-mono text-xs
+                            mb-4 rounded-[2px] bg-muted p-2 font-mono text-xs
                             break-all
                           `}
                         >
@@ -507,7 +513,8 @@ export default function SqlHelper({
                         </h4>
                         <div
                           className={`
-                            rounded-md border border-border bg-background/50 p-2
+                            rounded-[2px] border border-border bg-background/50
+                            p-2
                           `}
                         >
                           <JSONSchemaViewer
@@ -575,7 +582,7 @@ export default function SqlHelper({
 
                   {/* Advanced Analytics - Collapsible */}
                   <Collapsible>
-                    <div className='rounded-md border bg-card'>
+                    <div className='rounded-[2px] border bg-card'>
                       <CollapsibleTrigger asChild>
                         <Button
                           variant='ghost'
@@ -651,7 +658,7 @@ export default function SqlHelper({
                   {/* JSON Operations - Collapsible (only shown for JSON) */}
                   {isJsonObject && (
                     <Collapsible>
-                      <div className='rounded-md border bg-card'>
+                      <div className='rounded-[2px] border bg-card'>
                         <CollapsibleTrigger asChild>
                           <Button
                             variant='ghost'
@@ -700,7 +707,7 @@ export default function SqlHelper({
 
                   {/* Cross-Repository & Branch - Collapsible */}
                   <Collapsible>
-                    <div className='rounded-md border bg-card'>
+                    <div className='rounded-[2px] border bg-card'>
                       <CollapsibleTrigger asChild>
                         <Button
                           variant='ghost'
@@ -752,7 +759,7 @@ export default function SqlHelper({
 
                   {/* Write Operations - Collapsible */}
                   <Collapsible>
-                    <div className='rounded-md border bg-card'>
+                    <div className='rounded-[2px] border bg-card'>
                       <CollapsibleTrigger asChild>
                         <Button
                           variant='ghost'
@@ -900,7 +907,7 @@ function ExampleItem({
   explanation?: string;
 }) {
   return (
-    <div className='rounded-md border bg-card'>
+    <div className='rounded-[2px] border bg-card'>
       <div
         className={`
           flex items-center justify-between border-b bg-muted/30 px-3 py-1.5

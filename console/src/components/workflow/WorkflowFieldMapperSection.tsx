@@ -145,12 +145,7 @@ const WorkflowFieldMapperSection = ({ workflowID }: { workflowID: string }) => {
 
   return (
     <div className='mx-auto max-w-7xl p-4'>
-      <div
-        className={`
-          flex justify-end gap-2 border-b pb-4
-          dark:border-gray-800
-        `}
-      >
+      <div className={`flex justify-end gap-2 border-b border-border pb-4`}>
         <Button
           onClick={handleReset}
           variant='outline'
@@ -159,6 +154,7 @@ const WorkflowFieldMapperSection = ({ workflowID }: { workflowID: string }) => {
           {dict.common.resetForm}
         </Button>
         <Button
+          variant='accent'
           onClick={handleSave}
           disabled={!isDirty || updateWorkflowableMutation.isPending}
           loading={updateWorkflowableMutation.isPending}

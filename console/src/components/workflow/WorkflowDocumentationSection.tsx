@@ -69,7 +69,7 @@ const WorkflowDocumentationSection = ({
     >
       <Button
         size='sm'
-        variant='default'
+        variant='accent'
         type='submit'
         disabled={!isResourceAllowed('workflow', 'update', workflowID)}
       >

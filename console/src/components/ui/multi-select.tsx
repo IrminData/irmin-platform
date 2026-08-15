@@ -118,6 +118,13 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
     const [isPopoverOpen, setIsPopoverOpen] = useState(false);
     const [isAnimating, setIsAnimating] = useState(false);
     const popoverId = useId();
+    const isDisabled = Boolean(loading || props.disabled);
+    const selectedLabels = selectedValues.map(
+      (value) =>
+        options.find((option) => option.value === value)?.label ?? value
+    );
+    const extraSelectedLabels = selectedLabels.slice(maxCount);
+    const triggerLabel = placeholder || dict.common.noOptionsMessage;
 
     const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
       if (event.key === 'Enter') {
@@ -143,10 +150,6 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
       onValueChange([]);
     };
 
-    const handleTogglePopover = () => {
-      setIsPopoverOpen((prev) => !prev);
-    };
-
     const clearExtraOptions = () => {
       const newSelectedValues = selectedValues.slice(0, maxCount);
       setSelectedValues(newSelectedValues);
@@ -169,169 +172,165 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
         onOpenChange={(open) => !loading && setIsPopoverOpen(open)}
         modal={modalPopover}
       >
-        <PopoverTrigger asChild>
-          <button
-            ref={ref}
-            type='button'
-            role='combobox'
-            aria-expanded={isPopoverOpen}
-            aria-controls={popoverId}
-            onClick={handleTogglePopover}
-            disabled={loading || props.disabled}
-            className={cn(
-              `
-                flex w-full items-center justify-between gap-2 rounded-md border
-                border-input bg-transparent px-3 py-2 text-sm whitespace-nowrap
-                shadow-xs transition-[color,box-shadow] outline-none
-                focus-visible:border-ring focus-visible:ring-[3px]
-                focus-visible:ring-ring/50
-                disabled:cursor-not-allowed disabled:opacity-50
-                aria-invalid:border-destructive aria-invalid:ring-destructive/20
-                data-placeholder:text-muted-foreground
-                dark:bg-input/30
-                dark:hover:bg-input/50
-                dark:aria-invalid:ring-destructive/40
-                [&_svg]:pointer-events-none [&_svg]:shrink-0
-                [&_svg:not([class*='size-'])]:size-4
-                [&_svg:not([class*='text-'])]:text-muted-foreground
-              `,
-              loading && 'cursor-wait',
-              className
-            )}
-            {...props}
+        <div
+          className={cn(
+            `
+              relative flex min-h-10 w-full items-center rounded-[2px] text-sm
+              whitespace-nowrap
+              [&_svg]:pointer-events-none [&_svg]:shrink-0
+              [&_svg:not([class*='size-'])]:size-4
+              [&_svg:not([class*='text-'])]:text-muted-foreground
+            `,
+            isDisabled && 'cursor-not-allowed opacity-50',
+            className
+          )}
+        >
+          <PopoverTrigger asChild>
+            <button
+              {...props}
+              ref={ref}
+              type='button'
+              role='combobox'
+              aria-expanded={isPopoverOpen && !isDisabled}
+              aria-controls={
+                isPopoverOpen && !isDisabled ? popoverId : undefined
+              }
+              disabled={isDisabled}
+              className={cn(
+                `
+                  absolute inset-0 z-0 cursor-pointer rounded-[2px] border
+                  border-input bg-transparent transition-[color,box-shadow]
+                  outline-none
+                  hover:bg-input/50
+                  focus-visible:border-ring focus-visible:ring-[3px]
+                  focus-visible:ring-ring/50
+                  disabled:cursor-not-allowed
+                  aria-invalid:border-destructive
+                  aria-invalid:ring-destructive/20
+                  dark:bg-input/30
+                  dark:aria-invalid:ring-destructive/40
+                `,
+                loading && 'cursor-wait'
+              )}
+            >
+              <span className='sr-only'>
+                {selectedLabels.length > 0
+                  ? `${triggerLabel}: ${selectedLabels.join(', ')}`
+                  : triggerLabel}
+              </span>
+            </button>
+          </PopoverTrigger>
+
+          <div
+            className={`
+              pointer-events-none relative z-10 flex w-full items-center
+              justify-between gap-2 px-3 py-2
+            `}
           >
             {selectedValues.length > 0 ? (
-              <div className='flex w-full items-center justify-between gap-2'>
-                <div className='flex flex-wrap items-center gap-1'>
-                  {selectedValues.slice(0, maxCount).map((value) => {
-                    const option = options.find((o) => o.value === value);
-                    const IconComponent = option?.icon;
-                    return (
-                      <span
-                        key={value}
-                        className={cn(
-                          `
-                            inline-flex items-center gap-1 rounded-sm border
-                            border-transparent bg-secondary px-1.5 py-0.5
-                            text-xs font-medium text-secondary-foreground
-                          `,
-                          isAnimating ? 'animate-bounce' : ''
-                        )}
-                        style={{ animationDuration: `${animation}s` }}
-                      >
-                        {IconComponent && (
-                          <IconComponent className='size-3 shrink-0' />
-                        )}
-                        {option?.label}
-                        <span
-                          role='button'
-                          tabIndex={0}
-                          className={`
-                            ml-1 rounded-sm
-                            hover:bg-secondary-foreground/20
-                          `}
-                          onClick={(event) => {
-                            event.stopPropagation();
-                            toggleOption(value);
-                          }}
-                          onKeyDown={(event) => {
-                            if (event.key === 'Enter' || event.key === ' ') {
-                              event.stopPropagation();
-                              event.preventDefault();
-                              toggleOption(value);
-                            }
-                          }}
-                        >
-                          <TbX className='size-3' />
-                        </span>
-                      </span>
-                    );
-                  })}
-                  {selectedValues.length > maxCount && (
-                    <span
+              <div className='flex flex-wrap items-center gap-1'>
+                {selectedValues.slice(0, maxCount).map((value) => {
+                  const option = options.find((o) => o.value === value);
+                  const IconComponent = option?.icon;
+                  const optionLabel = option?.label ?? value;
+                  return (
+                    <button
+                      key={value}
+                      type='button'
+                      aria-label={`${dict.common.remove}: ${optionLabel}`}
+                      disabled={isDisabled}
                       className={cn(
                         `
-                          inline-flex items-center gap-1 rounded-sm border
+                          pointer-events-auto inline-flex min-h-6 cursor-pointer
+                          items-center gap-1 rounded-[2px] border
                           border-transparent bg-secondary px-1.5 py-0.5 text-xs
                           font-medium text-secondary-foreground
+                          hover:bg-secondary-foreground/20
+                          focus-visible:outline-2 focus-visible:outline-offset-2
+                          focus-visible:outline-accent
+                          disabled:cursor-not-allowed
                         `,
                         isAnimating ? 'animate-bounce' : ''
                       )}
                       style={{ animationDuration: `${animation}s` }}
+                      onClick={() => toggleOption(value)}
                     >
-                      +{selectedValues.length - maxCount}
-                      <span
-                        role='button'
-                        tabIndex={-1}
-                        className={`
-                          ml-1 rounded-sm
-                          hover:bg-secondary-foreground/20
-                        `}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          clearExtraOptions();
-                        }}
-                        onKeyDown={(event) => {
-                          if (event.key === 'Enter' || event.key === ' ') {
-                            event.stopPropagation();
-                            event.preventDefault();
-                            clearExtraOptions();
-                          }
-                        }}
-                      >
-                        <TbX className='size-3' />
-                      </span>
-                    </span>
-                  )}
-                </div>
-                <div className='flex items-center gap-1'>
-                  {!loading && (
-                    <span
-                      role='button'
-                      tabIndex={-1}
-                      className={`
-                        rounded-sm p-1
-                        hover:bg-accent
-                      `}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        handleClear();
-                      }}
-                      onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') {
-                          event.stopPropagation();
-                          event.preventDefault();
-                          handleClear();
-                        }
-                      }}
-                    >
-                      <TbX className='size-3' />
-                    </span>
-                  )}
-                  <Separator orientation='vertical' className='h-4' />
-                  {loading ? (
-                    <TbLoader2 className='size-4 animate-spin opacity-50' />
-                  ) : (
-                    <TbChevronDown className='size-4 opacity-50' />
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className='flex w-full items-center justify-between'>
-                <span className='text-muted-foreground'>
-                  {loading
-                    ? 'Loading...'
-                    : placeholder || dict.common.noOptionsMessage}
-                </span>
-                {loading ? (
-                  <TbLoader2 className='size-4 animate-spin opacity-50' />
-                ) : (
-                  <TbChevronDown className='size-4 opacity-50' />
+                      {IconComponent && (
+                        <span aria-hidden='true'>
+                          <IconComponent className='size-3 shrink-0' />
+                        </span>
+                      )}
+                      {optionLabel}
+                      <TbX aria-hidden='true' className='size-3' />
+                    </button>
+                  );
+                })}
+                {selectedValues.length > maxCount && (
+                  <button
+                    type='button'
+                    aria-label={`${dict.common.remove}: ${extraSelectedLabels.join(', ')}`}
+                    disabled={isDisabled}
+                    className={cn(
+                      `
+                        pointer-events-auto inline-flex min-h-6 cursor-pointer
+                        items-center gap-1 rounded-[2px] border
+                        border-transparent bg-secondary px-1.5 py-0.5 text-xs
+                        font-medium text-secondary-foreground
+                        hover:bg-secondary-foreground/20
+                        focus-visible:outline-2 focus-visible:outline-offset-2
+                        focus-visible:outline-accent
+                        disabled:cursor-not-allowed
+                      `,
+                      isAnimating ? 'animate-bounce' : ''
+                    )}
+                    style={{ animationDuration: `${animation}s` }}
+                    onClick={clearExtraOptions}
+                  >
+                    +{selectedValues.length - maxCount}
+                    <TbX aria-hidden='true' className='size-3' />
+                  </button>
                 )}
               </div>
+            ) : (
+              <span className='text-muted-foreground'>
+                {loading ? dict.common.loading : triggerLabel}
+              </span>
             )}
-          </button>
-        </PopoverTrigger>
+
+            <div className='flex items-center gap-1'>
+              {selectedValues.length > 0 && !loading && (
+                <button
+                  type='button'
+                  aria-label={`${dict.common.remove}: ${selectedLabels.join(', ')}`}
+                  disabled={isDisabled}
+                  className={`
+                    pointer-events-auto inline-flex size-6 cursor-pointer
+                    items-center justify-center rounded-[2px]
+                    hover:bg-accent
+                    focus-visible:outline-2 focus-visible:outline-offset-2
+                    focus-visible:outline-accent
+                    disabled:cursor-not-allowed
+                  `}
+                  onClick={handleClear}
+                >
+                  <TbX aria-hidden='true' className='size-3' />
+                </button>
+              )}
+              <Separator orientation='vertical' className='h-4' />
+              {loading ? (
+                <TbLoader2
+                  aria-hidden='true'
+                  className='size-4 animate-spin opacity-50'
+                />
+              ) : (
+                <TbChevronDown
+                  aria-hidden='true'
+                  className='size-4 opacity-50'
+                />
+              )}
+            </div>
+          </div>
+        </div>
         <PopoverContent
           id={popoverId}
           className='w-(--radix-select-trigger-width) p-0'
@@ -349,8 +348,8 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                   <div
                     className={cn(
                       `
-                        mr-2 flex size-4 items-center justify-center rounded-sm
-                        border border-border
+                        mr-2 flex size-4 items-center justify-center
+                        rounded-[2px] border border-border
                       `,
                       selectedValues.length === options.length
                         ? 'bg-muted text-muted-foreground'
@@ -362,7 +361,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                   >
                     <TbCheck className='size-4' />
                   </div>
-                  {dict.common.selectAll || 'Select All'}
+                  {dict.common.selectAll}
                 </CommandItem>
                 {options.map((option) => {
                   const isSelected = selectedValues.includes(option.value);
@@ -376,7 +375,7 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
                         className={cn(
                           `
                             mr-2 flex size-4 items-center justify-center
-                            rounded-sm border border-border
+                            rounded-[2px] border border-border
                           `,
                           isSelected
                             ? 'bg-muted text-muted-foreground'
@@ -427,16 +426,26 @@ export const MultiSelect = forwardRef<HTMLButtonElement, MultiSelectProps>(
         {animation > 0 && selectedValues.length > 0 && (
           <button
             type='button'
+            aria-label={
+              isAnimating
+                ? dict.common.disableAnimations
+                : dict.common.enableAnimations
+            }
+            aria-pressed={isAnimating}
             className={cn(
               `
-                mt-2 rounded-sm p-1 transition-colors
+                mt-2 inline-flex size-11 items-center justify-center
+                rounded-[2px] transition-colors
                 hover:bg-accent
+                focus-visible:outline-2 focus-visible:outline-offset-2
+                focus-visible:outline-accent
+                md:size-8
               `,
               isAnimating ? 'text-primary' : 'text-muted-foreground'
             )}
             onClick={() => setIsAnimating(!isAnimating)}
           >
-            <TbSparkles className='size-3' />
+            <TbSparkles aria-hidden='true' className='size-3' />
           </button>
         )}
       </Popover>

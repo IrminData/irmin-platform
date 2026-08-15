@@ -238,7 +238,6 @@ export default function DefineDetailsStep({
           autoComplete: 'off',
           autoCorrect: 'off',
           autoSave: 'off',
-          autoFocus: true,
         }}
       />
 

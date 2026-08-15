@@ -62,7 +62,11 @@ export default function CommitList({
       if (!currentRef || !isCurrentRefABranch) return;
 
       const confirmMessage = `${dict.repository.commit.confirmResetBranch}\n\n${dict.repository.commit.resetBranchDescription}`;
-      const confirmed = await irminConfirm('warning', confirmMessage);
+      const confirmed = await irminConfirm(
+        'warning',
+        confirmMessage,
+        dict.repository.commit.resetBranch
+      );
 
       if (confirmed) {
         resetBranchMutation.mutate({
@@ -79,7 +83,11 @@ export default function CommitList({
       if (!currentRef || !isCurrentRefABranch) return;
 
       const confirmMessage = `${dict.repository.commit.confirmRevertCommit}\n\n${dict.repository.commit.revertCommitDescription}`;
-      const confirmed = await irminConfirm('warning', confirmMessage);
+      const confirmed = await irminConfirm(
+        'warning',
+        confirmMessage,
+        dict.repository.commit.revertCommit
+      );
 
       if (confirmed) {
         revertCommitMutation.mutate({

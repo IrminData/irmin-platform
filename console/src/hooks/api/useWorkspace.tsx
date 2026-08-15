@@ -195,7 +195,8 @@ export function useWorkspace(slug: string) {
       if (isTransferPending || isTransferSuccess) return;
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.common.areYouSureYouWantToTransferOwnership} (${workspaceQuery.data?.data?.name})`
+        `${dict.common.areYouSureYouWantToTransferOwnership} (${workspaceQuery.data?.data?.name})`,
+        dict.users.transferOwnership
       );
       if (confirmed) {
         transferWorkspace(newOwnerID);
@@ -246,7 +247,8 @@ export function useWorkspace(slug: string) {
     if (isLeavePending || isLeaveSuccess) return;
     const confirmed = await irminConfirm(
       'warning',
-      `${dict.workspaceSwitcher.leaveWorkspaceConfirm} (${workspaceQuery.data?.data?.name})`
+      `${dict.workspaceSwitcher.leaveWorkspaceConfirm} (${workspaceQuery.data?.data?.name})`,
+      dict.workspaceSwitcher.leaveWorkspace
     );
     if (confirmed) {
       leaveWorkspace();

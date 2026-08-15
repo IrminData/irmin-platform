@@ -2,8 +2,6 @@
 
 import { memo, useCallback, useMemo, useState } from 'react';
 
-import { format } from 'date-fns';
-
 import { TbCopy, TbInfoCircle } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
@@ -34,47 +32,48 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { formatTimestamp } from '@/utils/formatTimestamp';
 import { cn } from '@/utils/tw';
 
 // Common cron presets
 const PRESETS = [
-  { label: 'Every minute', value: '* * * * *' },
-  { label: 'Every hour', value: '0 * * * *' },
-  { label: 'Every day at midnight', value: '0 0 * * *' },
-  { label: 'Every day at noon', value: '0 12 * * *' },
-  { label: 'Every Monday', value: '0 0 * * 1' },
-  { label: 'Every weekday', value: '0 0 * * 1-5' },
-  { label: 'Every weekend', value: '0 0 * * 0,6' },
-  { label: 'Every month', value: '0 0 1 * *' },
-];
+  { labelKey: 'everyMinute', value: '* * * * *' },
+  { labelKey: 'everyHour', value: '0 * * * *' },
+  { labelKey: 'everyDayAtMidnight', value: '0 0 * * *' },
+  { labelKey: 'everyDayAtNoon', value: '0 12 * * *' },
+  { labelKey: 'everyMonday', value: '0 0 * * 1' },
+  { labelKey: 'everyWeekday', value: '0 0 * * 1-5' },
+  { labelKey: 'everyWeekend', value: '0 0 * * 0,6' },
+  { labelKey: 'everyMonth', value: '0 0 1 * *' },
+] as const;
 
 // Options for each cron field
 const MINUTES = Array.from({ length: 60 }, (_, i) => i.toString());
 const HOURS = Array.from({ length: 24 }, (_, i) => i.toString());
 const DAYS_OF_MONTH = Array.from({ length: 31 }, (_, i) => (i + 1).toString());
 const MONTHS = [
-  { value: '1', label: 'January' },
-  { value: '2', label: 'February' },
-  { value: '3', label: 'March' },
-  { value: '4', label: 'April' },
-  { value: '5', label: 'May' },
-  { value: '6', label: 'June' },
-  { value: '7', label: 'July' },
-  { value: '8', label: 'August' },
-  { value: '9', label: 'September' },
-  { value: '10', label: 'October' },
-  { value: '11', label: 'November' },
-  { value: '12', label: 'December' },
-];
+  { value: '1', labelKey: 'january' },
+  { value: '2', labelKey: 'february' },
+  { value: '3', labelKey: 'march' },
+  { value: '4', labelKey: 'april' },
+  { value: '5', labelKey: 'may' },
+  { value: '6', labelKey: 'june' },
+  { value: '7', labelKey: 'july' },
+  { value: '8', labelKey: 'august' },
+  { value: '9', labelKey: 'september' },
+  { value: '10', labelKey: 'october' },
+  { value: '11', labelKey: 'november' },
+  { value: '12', labelKey: 'december' },
+] as const;
 const DAYS_OF_WEEK = [
-  { value: '0', label: 'Sunday' },
-  { value: '1', label: 'Monday' },
-  { value: '2', label: 'Tuesday' },
-  { value: '3', label: 'Wednesday' },
-  { value: '4', label: 'Thursday' },
-  { value: '5', label: 'Friday' },
-  { value: '6', label: 'Saturday' },
-];
+  { value: '0', labelKey: 'sunday' },
+  { value: '1', labelKey: 'monday' },
+  { value: '2', labelKey: 'tuesday' },
+  { value: '3', labelKey: 'wednesday' },
+  { value: '4', labelKey: 'thursday' },
+  { value: '5', labelKey: 'friday' },
+  { value: '6', labelKey: 'saturday' },
+] as const;
 
 // Default values when switching a cron field from "every" to "specific"
 const FIELD_DEFAULTS = ['0', '0', '1', '1', '1'];
@@ -218,7 +217,7 @@ const CronGenerator = ({
   onSave: (cron: string) => void;
   isDisabled?: boolean;
 }) => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const [activeTab, setActiveTab] = useState('presets');
   const [cronExpression, setCronExpression] = useState(expression);
   const [copied, setCopied] = useState(false);
@@ -307,8 +306,8 @@ const CronGenerator = ({
   return (
     <SafeComponent
       level='component'
-      title='Cron Generator Error'
-      description='Failed to load cron expression generator'
+      titleKey='cronGeneratorTitle'
+      descriptionKey='cronGeneratorDescription'
     >
       <div className='flex flex-col space-y-4'>
         <Tabs value={activeTab} onValueChange={setActiveTab} className='w-full'>
@@ -344,7 +343,7 @@ const CronGenerator = ({
                 <SelectContent>
                   {PRESETS.map((preset) => (
                     <SelectItem key={preset.value} value={preset.value}>
-                      {preset.label}
+                      {dict.workflow.schedule.presetOptions[preset.labelKey]}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -359,7 +358,7 @@ const CronGenerator = ({
             {/* Minutes */}
             <div
               className={`
-                flex max-w-80 flex-col space-y-3 rounded-md border
+                flex max-w-80 flex-col space-y-3 rounded-[2px] border
                 border-border/20 p-2
               `}
             >
@@ -407,7 +406,7 @@ const CronGenerator = ({
             {/* Hours */}
             <div
               className={`
-                flex max-w-80 flex-col space-y-3 rounded-md border
+                flex max-w-80 flex-col space-y-3 rounded-[2px] border
                 border-border/20 p-2
               `}
             >
@@ -455,7 +454,7 @@ const CronGenerator = ({
             {/* Days of Month */}
             <div
               className={`
-                flex max-w-80 flex-col space-y-3 rounded-md border
+                flex max-w-80 flex-col space-y-3 rounded-[2px] border
                 border-border/20 p-2
               `}
             >
@@ -505,7 +504,7 @@ const CronGenerator = ({
             {/* Months */}
             <div
               className={`
-                flex max-w-80 flex-col space-y-3 rounded-md border
+                flex max-w-80 flex-col space-y-3 rounded-[2px] border
                 border-border/20 p-2
               `}
             >
@@ -541,7 +540,7 @@ const CronGenerator = ({
                     <SelectContent>
                       {MONTHS.map((m) => (
                         <SelectItem key={`month-${m.value}`} value={m.value}>
-                          {m.label}
+                          {dict.workflow.schedule.monthNames[m.labelKey]}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -553,7 +552,7 @@ const CronGenerator = ({
             {/* Days of Week */}
             <div
               className={`
-                flex max-w-80 flex-col space-y-3 rounded-md border
+                flex max-w-80 flex-col space-y-3 rounded-[2px] border
                 border-border/20 p-2
               `}
             >
@@ -591,7 +590,7 @@ const CronGenerator = ({
                     <SelectContent>
                       {DAYS_OF_WEEK.map((d) => (
                         <SelectItem key={`dow-${d.value}`} value={d.value}>
-                          {d.label}
+                          {dict.workflow.schedule.weekdayNames[d.labelKey]}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -614,7 +613,7 @@ const CronGenerator = ({
                       size='icon'
                       onClick={handleCopy}
                       disabled={isDisabled}
-                      aria-label='Copy expression'
+                      aria-label={dict.workflow.schedule.cron.copyCron}
                     >
                       <TbCopy
                         className={cn('size-4', copied ? 'text-accent' : '')}
@@ -639,7 +638,7 @@ const CronGenerator = ({
                     variant='ghost'
                     size='icon'
                     className='size-6'
-                    aria-label='Syntax help'
+                    aria-label={dict.workflow.schedule.cron.cronSyntaxHelp}
                   >
                     <TbInfoCircle className='size-4' />
                     <span className='sr-only'>
@@ -656,11 +655,21 @@ const CronGenerator = ({
                       {dict.workflow.schedule.cron.cronSyntaxDescription}
                     </p>
                     <div className='grid grid-cols-5 gap-1 font-mono text-xs'>
-                      <div className='text-center'>minute</div>
-                      <div className='text-center'>hour</div>
-                      <div className='text-center'>day</div>
-                      <div className='text-center'>month</div>
-                      <div className='text-center'>weekday</div>
+                      <div className='text-center'>
+                        {dict.workflow.schedule.cron.minutes}
+                      </div>
+                      <div className='text-center'>
+                        {dict.workflow.schedule.cron.hours}
+                      </div>
+                      <div className='text-center'>
+                        {dict.workflow.schedule.cron.dayOfMonth}
+                      </div>
+                      <div className='text-center'>
+                        {dict.workflow.schedule.cron.month}
+                      </div>
+                      <div className='text-center'>
+                        {dict.workflow.schedule.cron.dayOfWeek}
+                      </div>
                       <div className='text-center'>(0-59)</div>
                       <div className='text-center'>(0-23)</div>
                       <div className='text-center'>(1-31)</div>
@@ -710,9 +719,9 @@ const CronGenerator = ({
               {nextDates.map((date) => (
                 <li
                   key={`next-execution-${date.getTime()}`}
-                  className='rounded-md bg-muted p-2 text-sm'
+                  className='rounded-[2px] bg-muted p-2 text-sm'
                 >
-                  {format(date, 'PPpp')}
+                  {formatTimestamp(date.toISOString(), locale)}
                 </li>
               ))}
             </ul>

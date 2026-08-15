@@ -45,15 +45,15 @@ export function MetadataEditor({
 
   const handleAddField = useCallback(() => {
     if (!newKey.trim()) {
-      setKeyError('Key is required');
+      setKeyError(dict.repository.objects.embeddingsMetadataKeyRequired);
       return;
     }
     if (!isValidKey(newKey)) {
-      setKeyError('Key must be alphanumeric (a-z, 0-9, _, -)');
+      setKeyError(dict.repository.objects.embeddingsMetadataKeyInvalid);
       return;
     }
     if (Object.hasOwn(value, newKey)) {
-      setKeyError('Key already exists');
+      setKeyError(dict.repository.objects.embeddingsMetadataKeyExists);
       return;
     }
 
@@ -64,7 +64,7 @@ export function MetadataEditor({
     });
     setNewKey('');
     setNewValue('');
-  }, [newKey, newValue, value, onChange]);
+  }, [dict.repository.objects, newKey, newValue, value, onChange]);
 
   const handleRemoveField = useCallback(
     (key: string) => {
@@ -103,24 +103,35 @@ export function MetadataEditor({
           parsed === null ||
           Array.isArray(parsed)
         ) {
-          throw new Error('JSON must be a flat object');
+          throw new Error(
+            dict.repository.objects.embeddingsMetadataJsonObjectOnly
+          );
         }
 
         const newMetadata: Record<string, string> = {};
         for (const [key, val] of Object.entries(parsed)) {
           if (!isValidKey(key)) {
             throw new Error(
-              `Invalid key "${key}": keys must be alphanumeric (a-z, 0-9, _, -)`
+              dict.repository.objects.embeddingsMetadataInvalidKey.replace(
+                '{key}',
+                key
+              )
             );
           }
           if (val === null || val === undefined) {
             throw new Error(
-              `Invalid value for key "${key}": null and undefined are not allowed`
+              dict.repository.objects.embeddingsMetadataNullValue.replace(
+                '{key}',
+                key
+              )
             );
           }
           if (typeof val === 'object') {
             throw new Error(
-              `Invalid value for key "${key}": nested objects and arrays are not allowed. Values must be strings, numbers, or booleans`
+              dict.repository.objects.embeddingsMetadataNestedValue.replace(
+                '{key}',
+                key
+              )
             );
           }
           newMetadata[key] = String(val);
@@ -130,12 +141,14 @@ export function MetadataEditor({
         onChange({ ...value, ...newMetadata });
       } catch (err) {
         const message =
-          err instanceof Error ? err.message : 'Failed to import JSON';
+          err instanceof Error
+            ? err.message
+            : dict.repository.objects.embeddingsMetadataImportFailed;
         setImportError(message);
       }
     };
     input.click();
-  }, [value, onChange]);
+  }, [dict.repository.objects, value, onChange]);
 
   const handleExportJson = useCallback(() => {
     const json = JSON.stringify(value, null, 2);
@@ -213,7 +226,9 @@ export function MetadataEditor({
                 size='icon'
                 onClick={() => handleRemoveField(key)}
                 disabled={disabled}
-                aria-label='Remove entry'
+                aria-label={
+                  dict.repository.objects.embeddingsMetadataRemoveEntry
+                }
                 className={`
                   text-destructive
                   hover:text-destructive
@@ -264,7 +279,7 @@ export function MetadataEditor({
             size='icon'
             onClick={handleAddField}
             disabled={disabled || !newKey.trim()}
-            aria-label='Add entry'
+            aria-label={dict.repository.objects.embeddingsMetadataAddEntry}
           >
             <TbPlus className='size-4' />
           </Button>
@@ -275,7 +290,7 @@ export function MetadataEditor({
       {/* Empty state */}
       {entries.length === 0 && !newKey && (
         <p className='text-sm text-muted-foreground'>
-          No metadata fields. Add a key-value pair above.
+          {dict.repository.objects.embeddingsMetadataEmpty}
         </p>
       )}
     </div>

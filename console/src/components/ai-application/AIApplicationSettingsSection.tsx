@@ -74,7 +74,8 @@ const AIApplicationSettingsSectionContent = () => {
         if (data.owner !== aiApplication.owner.id) {
           const confirmed = await irminConfirm(
             'warning',
-            `${dict.common.areYouSureYouWantToTransferOwnership} (${aiApplication.name})`
+            `${dict.common.areYouSureYouWantToTransferOwnership} (${aiApplication.name})`,
+            dict.users.transferOwnership
           );
           if (confirmed) {
             await transferOwnershipMutation.mutateAsync({
@@ -107,7 +108,8 @@ const AIApplicationSettingsSectionContent = () => {
   const handleDeleteAIApplication = useCallback(async () => {
     const confirmed = await irminConfirm(
       'warning',
-      `${dict.common.areYouSureYouWantToDelete} (${aiApplication.name})`
+      `${dict.common.areYouSureYouWantToDelete} (${aiApplication.name})`,
+      dict.aiApplication.deleteAIApplication
     );
     if (!confirmed) return;
     await deleteAIApplicationMutation.mutateAsync();
@@ -289,12 +291,7 @@ const AIApplicationSettingsSectionContent = () => {
         }
         additionalContentRight={
           canViewTags && (
-            <div
-              className={`
-                border-b border-gray-200 pb-4
-                dark:border-gray-800
-              `}
-            >
+            <div className={`border-b border-border pb-4`}>
               <WorkspaceTagSelector
                 selectedTags={selectedTags}
                 onTagsChange={handleUpdateTags}

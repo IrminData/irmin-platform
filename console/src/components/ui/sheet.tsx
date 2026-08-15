@@ -6,6 +6,8 @@ import * as SheetPrimitive from '@radix-ui/react-dialog';
 
 import { TbX } from 'react-icons/tb';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { cn } from '@/utils/tw';
 
 function Sheet({ ...props }: React.ComponentProps<typeof SheetPrimitive.Root>) {
@@ -33,9 +35,11 @@ function SheetOverlay({
       data-slot='sheet-overlay'
       className={cn(
         `
-          fixed inset-0 z-50 bg-black/50
-          data-[state=closed]:animate-out data-[state=closed]:fade-out-0
-          data-[state=open]:animate-in data-[state=open]:fade-in-0
+          fixed inset-0 z-50 bg-overlay/50
+          data-[state=closed]:animate-out data-[state=closed]:duration-150
+          data-[state=closed]:ease-in data-[state=closed]:fade-out-0
+          data-[state=open]:animate-in data-[state=open]:duration-200
+          data-[state=open]:ease-out data-[state=open]:fade-in-0
         `,
         className
       )}
@@ -49,11 +53,18 @@ function SheetContent({
   children,
   side = 'right',
   hideCloseButton = false,
+  closeLabel,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof SheetPrimitive.Content> & {
   side?: 'top' | 'right' | 'bottom' | 'left';
   hideCloseButton?: boolean;
+  closeLabel?: string;
 }) {
+  const { dict } = useLocale();
+  const returnFocusRef = React.useRef<HTMLElement | null>(null);
+
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -61,10 +72,11 @@ function SheetContent({
         data-slot='sheet-content'
         className={cn(
           `
-            fixed z-50 flex flex-col gap-4 bg-background shadow-lg transition
-            ease-in-out
-            data-[state=closed]:animate-out data-[state=closed]:duration-300
-            data-[state=open]:animate-in data-[state=open]:duration-500
+            fixed z-50 flex flex-col gap-4 bg-background
+            data-[state=closed]:animate-out data-[state=closed]:duration-200
+            data-[state=closed]:ease-in
+            data-[state=open]:animate-in data-[state=open]:duration-300
+            data-[state=open]:ease-out
           `,
           side === 'right' &&
             `
@@ -94,23 +106,42 @@ function SheetContent({
             `,
           className
         )}
+        onOpenAutoFocus={(event) => {
+          const activeElement = document.activeElement;
+          returnFocusRef.current =
+            activeElement instanceof HTMLElement &&
+            activeElement !== document.body
+              ? activeElement
+              : null;
+          onOpenAutoFocus?.(event);
+        }}
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          if (event.defaultPrevented) return;
+
+          const returnTarget = returnFocusRef.current;
+          if (returnTarget?.isConnected) {
+            event.preventDefault();
+            returnTarget.focus({ preventScroll: true });
+          }
+          returnFocusRef.current = null;
+        }}
         {...props}
       >
         {children}
         {!hideCloseButton && (
           <SheetPrimitive.Close
             className={`
-              absolute top-4 right-4 rounded-xs opacity-70
-              ring-offset-background transition-opacity
+              absolute top-4 right-4 rounded-[2px] opacity-70 transition-opacity
+              duration-150 ease-out
               hover:opacity-100
-              focus:ring-2 focus:ring-ring focus:ring-offset-2
-              focus:outline-hidden
+              focus-visible:outline-2 focus-visible:outline-offset-2
+              focus-visible:outline-accent
               disabled:pointer-events-none
-              data-[state=open]:bg-secondary
             `}
           >
             <TbX className='size-4' />
-            <span className='sr-only'>Close</span>
+            <span className='sr-only'>{closeLabel ?? dict.common.close}</span>
           </SheetPrimitive.Close>
         )}
       </SheetPrimitive.Content>
