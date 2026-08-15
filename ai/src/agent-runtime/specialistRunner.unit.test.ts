@@ -4,9 +4,21 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 import { specialistRunner } from './specialistRunner';
+import { toolCatalog } from './toolCatalog';
 
 describe('specialist runner', () => {
   it('accepts only SQL with successful execution evidence', () => {
+    toolCatalog.select(
+      [
+        {
+          name: 'irmin_query_execute_sql',
+          metadata: {
+            irminDescriptor: { capability: 'query.execute' },
+          },
+        },
+      ] as never,
+      ['query.execute']
+    );
     const sql = specialistRunner.acceptSql({
       messages: [
         new AIMessage({
@@ -14,7 +26,7 @@ describe('specialist runner', () => {
           tool_calls: [
             {
               id: 'call-1',
-              name: 'irmin_execute_sql',
+              name: 'irmin_query_execute_sql',
               args: { sql: 'SELECT 1;' },
             },
           ],
@@ -22,7 +34,7 @@ describe('specialist runner', () => {
         new ToolMessage({
           content: '{"success":true}',
           tool_call_id: 'call-1',
-          name: 'irmin_execute_sql',
+          name: 'irmin_query_execute_sql',
           status: 'success',
         }),
         new AIMessage('SELECT 1;'),
@@ -45,7 +57,7 @@ describe('specialist runner', () => {
             tool_calls: [
               {
                 id: 'call-2',
-                name: 'irmin_execute_sql',
+                name: 'irmin_query_execute_sql',
                 args: { sql: 'SELECT 1;' },
               },
             ],
@@ -53,7 +65,7 @@ describe('specialist runner', () => {
           new ToolMessage({
             content: '{"success":true}',
             tool_call_id: 'call-2',
-            name: 'irmin_execute_sql',
+            name: 'irmin_query_execute_sql',
             status: 'success',
           }),
           new AIMessage('SELECT 2;'),

@@ -8,6 +8,8 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -40,34 +42,35 @@ func (mcpTools *MCPTools) RegisterRepositoryTools() {
 	mcpTools.registerUpdateRepositoryTool()
 }
 
-// registerListRepositoriesTool registers the irmin_list_repositories tool for listing repositories in a workspace
+// registerListRepositoriesTool registers the irmin_repository_list tool for listing repositories in a workspace
 //
 //nolint:dupl // This tool is similar to other tools which list things, but for a different resource
 func (mcpTools *MCPTools) registerListRepositoriesTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_list_repositories",
-			Description: "List all repositories in a specified workspace. Repositories are Git-like data stores with versioning capabilities where data objects are stored and queried. Returns an array of repository objects with name, slug, default branch, storage location, and configuration details. Requires workspace_slug parameter. Use this to discover available repositories before performing data operations.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoriesArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_list",
+		"List all repositories in a specified workspace. Repositories are Git-like data stores with versioning capabilities where data objects are stored and queried. Returns an array of repository objects with name, slug, default branch, storage location, and configuration details. Requires workspace_slug parameter. Use this to discover available repositories before performing data operations.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoriesArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// List the repositories
 			repositories, err := mcpTools.apiServices.ListRepositories(ctx, user, workspace)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to list repositories", "error", err)
-				return helpers.MCPError("Failed to list repositories"), struct{}{}, nil
+				return helpers.MCPError("Failed to list repositories"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Format the response using the same formatter as the API
@@ -78,38 +81,39 @@ func (mcpTools *MCPTools) registerListRepositoriesTool() {
 			)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format repositories", "error", ferr)
-				return nil, struct{}{}, fmt.Errorf("failed to format repositories response: %w", ferr)
+				return nil, toolregistry.ToolOutput{}, fmt.Errorf("failed to format repositories response: %w", ferr)
 			}
 
-			result, err := helpers.MCPSuccess(formatted)
+			result, resultOutput, err := helpers.MCPSuccess(formatted)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerGetRepositoryTool registers the irmin_get_repository tool for getting a repository by slug
+// registerGetRepositoryTool registers the irmin_repository_get tool for getting a repository by slug
 func (mcpTools *MCPTools) registerGetRepositoryTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_get_repository",
-			Description: "Retrieve detailed information about a specific repository by its slug identifier. Returns comprehensive repository metadata including name, description, default branch, storage backend configuration, and version control settings. Requires workspace_slug and repository_slug parameters. Use this to inspect repository configuration before performing operations.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_get",
+		"Retrieve detailed information about a specific repository by its slug identifier. Returns comprehensive repository metadata including name, description, default branch, storage backend configuration, and version control settings. Requires workspace_slug and repository_slug parameters. Use this to inspect repository configuration before performing operations.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -122,45 +126,46 @@ func (mcpTools *MCPTools) registerGetRepositoryTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Format the response using the same formatter as the API
 			formatted, ferr := formatter.FormatRepositoryResponse(repository, mcpTools.apiServices.SQIDManager)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format repository response", "error", ferr)
-				return nil, struct{}{}, fmt.Errorf("failed to format repository response: %w", ferr)
+				return nil, toolregistry.ToolOutput{}, fmt.Errorf("failed to format repository response: %w", ferr)
 			}
 
-			result, err := helpers.MCPSuccess(formatted)
+			result, resultOutput, err := helpers.MCPSuccess(formatted)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerCreateRepositoryTool registers the irmin_create_repository tool for creating a new repository
+// registerCreateRepositoryTool registers the irmin_repository_create tool for creating a new repository
 func (mcpTools *MCPTools) registerCreateRepositoryTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_create_repository",
-			Description: "Create a new Git-like versioned data repository in a workspace. Repositories store structured and unstructured data with full version control capabilities. Requires workspace_slug and repository configuration (name, storage backend, default branch). Returns the created repository object. Use irmin_retrieve_docs_context tool with 'repositories' query before creating to understand configuration options and best practices.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createRepositoryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_create",
+		"Create a new Git-like versioned data repository in a workspace. Repositories store structured and unstructured data with full version control capabilities. Requires workspace_slug and repository configuration (name, storage backend, default branch). Returns the created repository object. Use irmin_documentation_retrieve tool with 'repositories' query before creating to understand configuration options and best practices.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createRepositoryArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Create the repository
@@ -173,21 +178,21 @@ func (mcpTools *MCPTools) registerCreateRepositoryTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("repository creation failed", "error", err)
-				return helpers.MCPError("Repository creation failed"), struct{}{}, nil
+				return helpers.MCPError("Repository creation failed"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Format the response using the same formatter as the API
 			formatted, ferr := formatter.FormatRepositoryResponse(repository, mcpTools.apiServices.SQIDManager)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format repository response", "error", ferr)
-				return nil, struct{}{}, fmt.Errorf("failed to format repository response: %w", ferr)
+				return nil, toolregistry.ToolOutput{}, fmt.Errorf("failed to format repository response: %w", ferr)
 			}
 
 			// Marshal the formatted response to JSON
 			b, err := json.Marshal(formatted)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to marshal repository response", "error", err)
-				return nil, struct{}{}, fmt.Errorf("failed to marshal repository response: %w", err)
+				return nil, toolregistry.ToolOutput{}, fmt.Errorf("failed to marshal repository response: %w", err)
 			}
 
 			// Return the formatted response as a text content with JSON MIME type
@@ -196,73 +201,78 @@ func (mcpTools *MCPTools) registerCreateRepositoryTool() {
 					Text: string(b),
 					Meta: sdkmcp.Meta{"mimeType": "application/json"},
 				}},
-			}, struct{}{}, nil
+			}, toolregistry.ToolOutput{}, nil
 		},
 	)
 }
 
-// registerUpdateRepositoryTool registers the irmin_update_repository tool for updating an existing repository
+// registerUpdateRepositoryTool registers the irmin_repository_update tool for updating an existing repository
 func (mcpTools *MCPTools) registerUpdateRepositoryTool() {
-	// Add the update_repository tool for updating an existing repository
-	sdkmcp.AddTool(
-		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_update_repository",
-			Description: "Update metadata and configuration of an existing repository. Allows modification of name, description, and other repository settings while preserving all stored data and version history. Requires workspace_slug, repository_slug, and update parameters. Returns the updated repository object. Cannot change the storage backend or default branch after creation.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateRepositoryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
-			// Validate user
-			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
-			if err != nil {
-				return nil, struct{}{}, err
-			}
+	toolregistry.
+		// Add the update_repository tool for updating an existing repository
+		Register(
+			mcpTools.registry,
+			mcpTools.server,
 
-			// Get the workspace first
-			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
-			if err != nil {
-				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
-			}
+			"irmin_repository_update",
+			"Update metadata and configuration of an existing repository. Allows modification of name, description, and other repository settings while preserving all stored data and version history. Requires workspace_slug, repository_slug, and update parameters. Returns the updated repository object. Cannot change the storage backend or default branch after creation.",
 
-			// Get the repository
-			repository, err := mcpTools.apiServices.GetRepositoryBySlug(
-				ctx,
-				"en",
-				user,
-				workspace,
-				args.RepositorySlug,
-			)
-			if err != nil {
-				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
-			}
+			func(ctx context.Context, _ *sdkmcp.CallToolRequest, args updateRepositoryArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
+				// Validate user
+				user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
+				if err != nil {
+					return nil, toolregistry.ToolOutput{}, err
+				}
 
-			// Update the repository
-			updatedRepository, err := mcpTools.apiServices.UpdateRepository(
-				ctx,
-				"en",
-				user,
-				workspace,
-				repository,
-				args.Repository,
-			)
-			if err != nil {
-				mcpTools.apiServices.Logger.Error("repository update failed", "error", err)
-				return helpers.MCPError("Repository update failed"), struct{}{}, nil
-			}
+				// Get the workspace first
+				workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
+				if err != nil {
+					mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
+					return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
+				}
 
-			// Format the response using the same formatter as the API
-			formatted, ferr := formatter.FormatRepositoryResponse(updatedRepository, mcpTools.apiServices.SQIDManager)
-			if ferr != nil {
-				mcpTools.apiServices.Logger.Error("Failed to format repository", "error", ferr)
-				return nil, struct{}{}, fmt.Errorf("failed to format repository response: %w", ferr)
-			}
+				// Get the repository
+				repository, err := mcpTools.apiServices.GetRepositoryBySlug(
+					ctx,
+					"en",
+					user,
+					workspace,
+					args.RepositorySlug,
+				)
+				if err != nil {
+					mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
+					return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
+				}
 
-			result, err := helpers.MCPSuccess(formatted)
-			if err != nil {
-				return nil, struct{}{}, err
-			}
-			return result, struct{}{}, nil
-		},
-	)
+				// Update the repository
+				updatedRepository, err := mcpTools.apiServices.UpdateRepository(
+					ctx,
+					"en",
+					user,
+					workspace,
+					repository,
+					args.Repository,
+				)
+				if err != nil {
+					mcpTools.apiServices.Logger.Error("repository update failed", "error", err)
+					return helpers.MCPError("Repository update failed"), toolregistry.ToolOutput{}, nil
+				}
+
+				// Format the response using the same formatter as the API
+				formatted, ferr := formatter.FormatRepositoryResponse(
+					updatedRepository,
+					mcpTools.apiServices.SQIDManager,
+				)
+				if ferr != nil {
+					mcpTools.apiServices.Logger.Error("Failed to format repository", "error", ferr)
+					return nil, toolregistry.ToolOutput{}, fmt.Errorf("failed to format repository response: %w", ferr)
+				}
+
+				result, resultOutput, err := helpers.MCPSuccess(formatted)
+				if err != nil {
+					return nil, toolregistry.ToolOutput{}, err
+				}
+				return result, resultOutput, nil
+			},
+		)
 }

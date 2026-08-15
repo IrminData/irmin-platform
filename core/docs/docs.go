@@ -382,14 +382,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/ai-app/pending-writes": {
+        "/ai-app/pending-operations": {
             "get": {
                 "security": [
                     {
                         "AIAppAPIKey": []
                     }
                 ],
-                "description": "List all pending write operations awaiting approval",
+                "description": "List all pending operations awaiting approval",
                 "consumes": [
                     "application/json"
                 ],
@@ -399,7 +399,7 @@ const docTemplate = `{
                 "tags": [
                     "ai-app-api"
                 ],
-                "summary": "List pending writes",
+                "summary": "List pending operations",
                 "parameters": [
                     {
                         "type": "integer",
@@ -416,7 +416,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Pending writes list",
+                        "description": "Pending operations list",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -436,14 +436,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/ai-app/pending-writes/{id}": {
+        "/ai-app/pending-operations/{id}": {
             "get": {
                 "security": [
                     {
                         "AIAppAPIKey": []
                     }
                 ],
-                "description": "Get details of a specific pending write",
+                "description": "Get details of a specific pending operation",
                 "consumes": [
                     "application/json"
                 ],
@@ -453,11 +453,11 @@ const docTemplate = `{
                 "tags": [
                     "ai-app-api"
                 ],
-                "summary": "Get pending write details",
+                "summary": "Get pending operation details",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Pending write ID",
+                        "description": "Pending operation ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -465,7 +465,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Pending write details",
+                        "description": "Pending operation details",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -477,7 +477,7 @@ const docTemplate = `{
                         }
                     },
                     "404": {
-                        "description": "Pending write not found",
+                        "description": "Pending operation not found",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -491,14 +491,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/ai-app/pending-writes/{id}/approve": {
+        "/ai-app/pending-operations/{id}/approve": {
             "post": {
                 "security": [
                     {
                         "AIAppAPIKey": []
                     }
                 ],
-                "description": "Approval of pending writes is not allowed via the AI App API. Use the workspace API with user authentication to approve writes. This prevents AI applications from self-approving and preserves RequireApproval human oversight.",
+                "description": "Approval of pending operations is not allowed via the AI App API. Use the workspace API with user authentication to approve writes. This prevents AI applications from self-approving and preserves RequireApproval human oversight.",
                 "consumes": [
                     "application/json"
                 ],
@@ -508,11 +508,11 @@ const docTemplate = `{
                 "tags": [
                     "ai-app-api"
                 ],
-                "summary": "Approve pending write (forbidden)",
+                "summary": "Approve pending operation (forbidden)",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Pending write ID",
+                        "description": "Pending operation ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -534,14 +534,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/ai-app/pending-writes/{id}/reject": {
+        "/ai-app/pending-operations/{id}/reject": {
             "post": {
                 "security": [
                     {
                         "AIAppAPIKey": []
                     }
                 ],
-                "description": "Rejection of pending writes is not allowed via the AI App API. Use the workspace API with user authentication to reject writes. This prevents AI applications from self-rejecting and preserves RequireApproval human oversight.",
+                "description": "Rejection of pending operations is not allowed via the AI App API. Use the workspace API with user authentication to reject writes. This prevents AI applications from self-rejecting and preserves RequireApproval human oversight.",
                 "consumes": [
                     "application/json"
                 ],
@@ -551,11 +551,11 @@ const docTemplate = `{
                 "tags": [
                     "ai-app-api"
                 ],
-                "summary": "Reject pending write (forbidden)",
+                "summary": "Reject pending operation (forbidden)",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "Pending write ID",
+                        "description": "Pending operation ID",
                         "name": "id",
                         "in": "path",
                         "required": true
@@ -3288,14 +3288,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes": {
+        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-operations": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get pending write operations awaiting approval for this AI application",
+                "description": "Get pending operations awaiting approval for this AI application",
                 "consumes": [
                     "application/json"
                 ],
@@ -3305,7 +3305,7 @@ const docTemplate = `{
                 "tags": [
                     "ai-applications"
                 ],
-                "summary": "Get AI application pending writes",
+                "summary": "Get AI application pending operations",
                 "parameters": [
                     {
                         "type": "string",
@@ -3336,7 +3336,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "Pending writes retrieved successfully",
+                        "description": "Pending operations retrieved successfully",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -3368,14 +3368,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}": {
+        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-operations/{pending_operation}": {
             "get": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Get details of a specific pending write operation",
+                "description": "Get details of a specific pending operation",
                 "consumes": [
                     "application/json"
                 ],
@@ -3385,7 +3385,7 @@ const docTemplate = `{
                 "tags": [
                     "ai-applications"
                 ],
-                "summary": "Get a specific pending write",
+                "summary": "Get a specific pending operation",
                 "parameters": [
                     {
                         "type": "string",
@@ -3403,15 +3403,15 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Pending write ID",
-                        "name": "pending_write",
+                        "description": "Pending operation ID",
+                        "name": "pending_operation",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Pending write retrieved successfully",
+                        "description": "Pending operation retrieved successfully",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -3443,14 +3443,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}/approve": {
+        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-operations/{pending_operation}/approve": {
             "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Approve a pending write operation, executing the write",
+                "description": "Approve a pending operation, executing the write",
                 "consumes": [
                     "application/json"
                 ],
@@ -3460,7 +3460,7 @@ const docTemplate = `{
                 "tags": [
                     "ai-applications"
                 ],
-                "summary": "Approve a pending write",
+                "summary": "Approve a pending operation",
                 "parameters": [
                     {
                         "type": "string",
@@ -3478,15 +3478,15 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Pending write ID",
-                        "name": "pending_write",
+                        "description": "Pending operation ID",
+                        "name": "pending_operation",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Pending write approved and executed",
+                        "description": "Pending operation completed",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -3524,14 +3524,14 @@ const docTemplate = `{
                 }
             }
         },
-        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}/reject": {
+        "/workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-operations/{pending_operation}/reject": {
             "post": {
                 "security": [
                     {
                         "ApiKeyAuth": []
                     }
                 ],
-                "description": "Reject a pending write operation",
+                "description": "Reject a pending operation",
                 "consumes": [
                     "application/json"
                 ],
@@ -3541,7 +3541,7 @@ const docTemplate = `{
                 "tags": [
                     "ai-applications"
                 ],
-                "summary": "Reject a pending write",
+                "summary": "Reject a pending operation",
                 "parameters": [
                     {
                         "type": "string",
@@ -3559,15 +3559,15 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Pending write ID",
-                        "name": "pending_write",
+                        "description": "Pending operation ID",
+                        "name": "pending_operation",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Pending write rejected",
+                        "description": "Pending operation rejected",
                         "schema": {
                             "$ref": "#/definitions/irminmodels.IrminAPIResponse"
                         }
@@ -17202,9 +17202,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "https://app.example.com"
                 },
-                "pending_write_id": {
+                "pending_operation_id": {
                     "type": "string",
-                    "example": "pw_1a2b3c4d"
+                    "example": "po_1a2b3c4d"
                 },
                 "protocol": {
                     "type": "string",
@@ -17220,7 +17220,7 @@ const docTemplate = `{
                 },
                 "tool_name": {
                     "type": "string",
-                    "example": "irmin_execute_sql"
+                    "example": "irmin_query_execute_sql"
                 },
                 "tool_type": {
                     "type": "string",
@@ -17312,7 +17312,7 @@ const docTemplate = `{
                 },
                 "tool_name": {
                     "type": "string",
-                    "example": "irmin_execute_sql"
+                    "example": "irmin_query_execute_sql"
                 }
             }
         },

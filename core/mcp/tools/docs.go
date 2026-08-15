@@ -12,6 +12,8 @@ import (
 
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -36,7 +38,7 @@ func (mcpTools *MCPTools) RegisterDocsTools() {
 	mcpTools.registerRetrieveDocsContextTool()
 }
 
-// retrieveDocsContextToolDescription is the description for the irmin_retrieve_docs_context tool
+// retrieveDocsContextToolDescription is the description for the irmin_documentation_retrieve tool
 const retrieveDocsContextToolDescription = `Search documentation using advanced semantic search with HyDE (Hypothetical Document Embeddings).
 
 Use this tool when:
@@ -57,19 +59,20 @@ Parameters:
 - useHyde: Use hypothetical document generation for better matching (default: true)
 - reason: Brief explanation of why search is needed (optional, for debugging)`
 
-// registerRetrieveDocsContextTool registers the irmin_retrieve_docs_context tool for getting context from documentation
+// registerRetrieveDocsContextTool registers the irmin_documentation_retrieve tool for getting context from documentation
 func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_retrieve_docs_context",
-			Description: retrieveDocsContextToolDescription,
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args RetrieveContextRequest) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_documentation_retrieve",
+		retrieveDocsContextToolDescription,
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args RetrieveContextRequest) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			_, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Determine which collections to search
@@ -81,7 +84,7 @@ func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
 			// Convert combined response to JSON
 			responseJSON, err := json.MarshalIndent(combinedResults, "", "  ")
 			if err != nil {
-				return nil, struct{}{}, fmt.Errorf("failed to marshal combined response: %w", err)
+				return nil, toolregistry.ToolOutput{}, fmt.Errorf("failed to marshal combined response: %w", err)
 			}
 
 			return &sdkmcp.CallToolResult{
@@ -90,7 +93,7 @@ func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
 						Text: string(responseJSON),
 					},
 				},
-			}, struct{}{}, nil
+			}, toolregistry.ToolOutput{}, nil
 		},
 	)
 }

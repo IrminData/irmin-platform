@@ -1,16 +1,16 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
-import { aiApplicationPendingWritesQueryKey } from '@/lib/queryKeys';
+import { aiApplicationPendingOperationsQueryKey } from '@/lib/queryKeys';
 
 import { useIrminCore } from '@/context/IrminCoreContext';
 import { useLocale } from '@/context/LocaleContext';
 import { usePopup } from '@/context/PopupContext';
 import { useWorkspaceContext } from '@/context/WorkspaceContext';
 
-import type { AIApplicationPendingWritesResponse } from '@/types/core/AIApplication';
+import type { AIApplicationPendingOperationsResponse } from '@/types/core/AIApplication';
 import type { IrminAPIResponse } from '@/types/core/IrminAPIResponse';
 
-interface UseAIApplicationPendingWritesOptions {
+interface UseAIApplicationPendingOperationsOptions {
   /** Number of items per page (default: 10) */
   limit?: number;
   /** Page offset (default: 0) */
@@ -20,11 +20,11 @@ interface UseAIApplicationPendingWritesOptions {
 }
 
 /**
- * Hook for fetching and managing pending writes for an AI Application
+ * Hook for fetching and managing pending operations for an AI Application
  */
-export function useAIApplicationPendingWrites(
+export function useAIApplicationPendingOperations(
   aiApplicationId: string,
-  options: UseAIApplicationPendingWritesOptions = {}
+  options: UseAIApplicationPendingOperationsOptions = {}
 ) {
   const { limit = 10, offset = 0, enabled = true } = options;
   const { getCore } = useIrminCore();
@@ -33,18 +33,18 @@ export function useAIApplicationPendingWrites(
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
-  const pendingWritesQuery = useQuery<
-    IrminAPIResponse<AIApplicationPendingWritesResponse>,
+  const pendingOperationsQuery = useQuery<
+    IrminAPIResponse<AIApplicationPendingOperationsResponse>,
     Error
   >({
     queryKey: [
-      ...aiApplicationPendingWritesQueryKey(workspaceSlug, aiApplicationId),
+      ...aiApplicationPendingOperationsQueryKey(workspaceSlug, aiApplicationId),
       limit,
       offset,
     ],
     queryFn: async () => {
       const core = await getCore();
-      return await core.aiApplicationService.getPendingWrites({
+      return await core.aiApplicationService.getPendingOperations({
         workspace: workspaceSlug,
         aiApplicationId,
         limit,
@@ -53,30 +53,27 @@ export function useAIApplicationPendingWrites(
     },
     // Only enable query and polling when the feature is enabled
     enabled,
-    // Refetch every 30 seconds to catch new pending writes (only when enabled)
+    // Refetch every 30 seconds to catch new pending operations (only when enabled)
     refetchInterval: enabled ? 30000 : false,
   });
 
   const approveMutation = useMutation<
     IrminAPIResponse,
     Error,
-    { pendingWriteId: string }
+    { pendingOperationId: string }
   >({
-    mutationFn: async ({ pendingWriteId }) => {
+    mutationFn: async ({ pendingOperationId }) => {
       const core = await getCore();
-      return await core.aiApplicationService.approvePendingWrite({
+      return await core.aiApplicationService.approvePendingOperation({
         workspace: workspaceSlug,
         aiApplicationId,
-        pendingWriteId,
+        pendingOperationId,
       });
     },
     onSuccess: (res) => {
-      irminAlert(
-        'success',
-        res.message ?? 'Pending write approved and executed'
-      );
+      irminAlert('success', res.message ?? 'Pending operation completed');
       void queryClient.invalidateQueries({
-        queryKey: aiApplicationPendingWritesQueryKey(
+        queryKey: aiApplicationPendingOperationsQueryKey(
           workspaceSlug,
           aiApplicationId
         ),
@@ -85,7 +82,7 @@ export function useAIApplicationPendingWrites(
     onError: (error) => {
       irminAlert(
         'error',
-        error.message ?? dict.common.errors.mutations.approveWriteFailed
+        error.message ?? dict.common.errors.mutations.approveOperationFailed
       );
     },
   });
@@ -93,20 +90,20 @@ export function useAIApplicationPendingWrites(
   const rejectMutation = useMutation<
     IrminAPIResponse,
     Error,
-    { pendingWriteId: string }
+    { pendingOperationId: string }
   >({
-    mutationFn: async ({ pendingWriteId }) => {
+    mutationFn: async ({ pendingOperationId }) => {
       const core = await getCore();
-      return await core.aiApplicationService.rejectPendingWrite({
+      return await core.aiApplicationService.rejectPendingOperation({
         workspace: workspaceSlug,
         aiApplicationId,
-        pendingWriteId,
+        pendingOperationId,
       });
     },
     onSuccess: (res) => {
-      irminAlert('success', res.message ?? 'Pending write rejected');
+      irminAlert('success', res.message ?? 'Pending operation rejected');
       void queryClient.invalidateQueries({
-        queryKey: aiApplicationPendingWritesQueryKey(
+        queryKey: aiApplicationPendingOperationsQueryKey(
           workspaceSlug,
           aiApplicationId
         ),
@@ -115,14 +112,14 @@ export function useAIApplicationPendingWrites(
     onError: (error) => {
       irminAlert(
         'error',
-        error.message ?? dict.common.errors.mutations.rejectWriteFailed
+        error.message ?? dict.common.errors.mutations.rejectOperationFailed
       );
     },
   });
 
   return {
     // Queries
-    pendingWritesQuery,
+    pendingOperationsQuery,
 
     // Mutations
     approveMutation,

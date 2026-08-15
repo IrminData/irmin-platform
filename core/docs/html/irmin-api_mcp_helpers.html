@@ -10,7 +10,7 @@ FUNCTIONS
 func MCPError(message string) *sdkmcp.CallToolResult
     MCPError creates a standardized error response for MCP tools.
 
-func MCPSuccess(data any) (*sdkmcp.CallToolResult, error)
+func MCPSuccess(data any) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error)
     MCPSuccess creates a standardized success response for MCP tools with JSON
     data.
 

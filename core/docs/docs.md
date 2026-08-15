@@ -619,26 +619,26 @@ import "irmin-api/controllers"
 - [func CollectMultipartFiles\(c fiber.Ctx, fieldNames ...string\) \(map\[string\]\[\]byte, error\)](<#CollectMultipartFiles>)
 - [type APIControllers](<#APIControllers>)
   - [func NewAPIControllers\(apiServices \*services.APIServices\) \*APIControllers](<#NewAPIControllers>)
-  - [func \(api \*APIControllers\) AIAppAPIApprovePendingWrite\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIApprovePendingWrite>)
+  - [func \(api \*APIControllers\) AIAppAPIApprovePendingOperation\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIApprovePendingOperation>)
   - [func \(api \*APIControllers\) AIAppAPICommit\(c fiber.Ctx\) error](<#APIControllers.AIAppAPICommit>)
   - [func \(api \*APIControllers\) AIAppAPIExecuteCustomTool\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIExecuteCustomTool>)
   - [func \(api \*APIControllers\) AIAppAPIGetObject\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIGetObject>)
-  - [func \(api \*APIControllers\) AIAppAPIGetPendingWrite\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIGetPendingWrite>)
+  - [func \(api \*APIControllers\) AIAppAPIGetPendingOperation\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIGetPendingOperation>)
   - [func \(api \*APIControllers\) AIAppAPIGetSchema\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIGetSchema>)
   - [func \(api \*APIControllers\) AIAppAPIInfo\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIInfo>)
   - [func \(api \*APIControllers\) AIAppAPIListCustomTools\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIListCustomTools>)
   - [func \(api \*APIControllers\) AIAppAPIListObjects\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIListObjects>)
-  - [func \(api \*APIControllers\) AIAppAPIListPendingWrites\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIListPendingWrites>)
+  - [func \(api \*APIControllers\) AIAppAPIListPendingOperations\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIListPendingOperations>)
   - [func \(api \*APIControllers\) AIAppAPIPatchFile\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIPatchFile>)
   - [func \(api \*APIControllers\) AIAppAPIQuery\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIQuery>)
-  - [func \(api \*APIControllers\) AIAppAPIRejectPendingWrite\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIRejectPendingWrite>)
+  - [func \(api \*APIControllers\) AIAppAPIRejectPendingOperation\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIRejectPendingOperation>)
   - [func \(api \*APIControllers\) AIAppAPISearchEmbeddings\(c fiber.Ctx\) error](<#APIControllers.AIAppAPISearchEmbeddings>)
   - [func \(api \*APIControllers\) AIAppAPISystemPrompt\(c fiber.Ctx\) error](<#APIControllers.AIAppAPISystemPrompt>)
   - [func \(api \*APIControllers\) AIAppAPIWriteFile\(c fiber.Ctx\) error](<#APIControllers.AIAppAPIWriteFile>)
-  - [func \(api \*APIControllers\) AIApplicationPendingWriteApprove\(c fiber.Ctx\) error](<#APIControllers.AIApplicationPendingWriteApprove>)
-  - [func \(api \*APIControllers\) AIApplicationPendingWriteReject\(c fiber.Ctx\) error](<#APIControllers.AIApplicationPendingWriteReject>)
-  - [func \(api \*APIControllers\) AIApplicationPendingWriteShow\(c fiber.Ctx\) error](<#APIControllers.AIApplicationPendingWriteShow>)
-  - [func \(api \*APIControllers\) AIApplicationPendingWrites\(c fiber.Ctx\) error](<#APIControllers.AIApplicationPendingWrites>)
+  - [func \(api \*APIControllers\) AIApplicationPendingOperationApprove\(c fiber.Ctx\) error](<#APIControllers.AIApplicationPendingOperationApprove>)
+  - [func \(api \*APIControllers\) AIApplicationPendingOperationReject\(c fiber.Ctx\) error](<#APIControllers.AIApplicationPendingOperationReject>)
+  - [func \(api \*APIControllers\) AIApplicationPendingOperationShow\(c fiber.Ctx\) error](<#APIControllers.AIApplicationPendingOperationShow>)
+  - [func \(api \*APIControllers\) AIApplicationPendingOperations\(c fiber.Ctx\) error](<#APIControllers.AIApplicationPendingOperations>)
   - [func \(api \*APIControllers\) AIApplicationToolLogStats\(c fiber.Ctx\) error](<#APIControllers.AIApplicationToolLogStats>)
   - [func \(api \*APIControllers\) AIApplicationToolLogs\(c fiber.Ctx\) error](<#APIControllers.AIApplicationToolLogs>)
   - [func \(api \*APIControllers\) AIApplicationsDestroy\(c fiber.Ctx\) error](<#APIControllers.AIApplicationsDestroy>)
@@ -856,14 +856,14 @@ func NewAPIControllers(apiServices *services.APIServices) *APIControllers
 
 
 
-<a name="APIControllers.AIAppAPIApprovePendingWrite"></a>
-### func \(\*APIControllers\) [AIAppAPIApprovePendingWrite](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-app-api.go#L954>)
+<a name="APIControllers.AIAppAPIApprovePendingOperation"></a>
+### func \(\*APIControllers\) [AIAppAPIApprovePendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-app-api.go#L948>)
 
 ```go
-func (api *APIControllers) AIAppAPIApprovePendingWrite(c fiber.Ctx) error
+func (api *APIControllers) AIAppAPIApprovePendingOperation(c fiber.Ctx) error
 ```
 
-AIAppAPIApprovePendingWrite godoc @Summary Approve pending write \(forbidden\) @Description Approval of pending writes is not allowed via the AI App API. Use the workspace API with user authentication to approve writes. This prevents AI applications from self\-approving and preserves RequireApproval human oversight. @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param id path string true "Pending write ID" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Approval not allowed via AI App API; use workspace API" @Router /ai\-app/pending\-writes/\{id\}/approve \[post\]
+AIAppAPIApprovePendingOperation godoc @Summary Approve pending operation \(forbidden\) @Description Approval of pending operations is not allowed via the AI App API. Use the workspace API with user authentication to approve writes. This prevents AI applications from self\-approving and preserves RequireApproval human oversight. @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param id path string true "Pending operation ID" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Approval not allowed via AI App API; use workspace API" @Router /ai\-app/pending\-operations/\{id\}/approve \[post\]
 
 <a name="APIControllers.AIAppAPICommit"></a>
 ### func \(\*APIControllers\) [AIAppAPICommit](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-app-api.go#L719>)
@@ -892,14 +892,14 @@ func (api *APIControllers) AIAppAPIGetObject(c fiber.Ctx) error
 
 AIAppAPIGetObject godoc @Summary Get object content @Description Get the content of an object using unified path format: /\{repository\-slug\}/\{ref\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string true "Unified path to object \(e.g., /repo\-slug/main/data/file.json\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Object content" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing path" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/content \[get\]
 
-<a name="APIControllers.AIAppAPIGetPendingWrite"></a>
-### func \(\*APIControllers\) [AIAppAPIGetPendingWrite](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-app-api.go#L894>)
+<a name="APIControllers.AIAppAPIGetPendingOperation"></a>
+### func \(\*APIControllers\) [AIAppAPIGetPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-app-api.go#L883>)
 
 ```go
-func (api *APIControllers) AIAppAPIGetPendingWrite(c fiber.Ctx) error
+func (api *APIControllers) AIAppAPIGetPendingOperation(c fiber.Ctx) error
 ```
 
-AIAppAPIGetPendingWrite godoc @Summary Get pending write details @Description Get details of a specific pending write @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param id path string true "Pending write ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending write details" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Pending write not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/pending\-writes/\{id\} \[get\]
+AIAppAPIGetPendingOperation godoc @Summary Get pending operation details @Description Get details of a specific pending operation @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param id path string true "Pending operation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending operation details" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Pending operation not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/pending\-operations/\{id\} \[get\]
 
 <a name="APIControllers.AIAppAPIGetSchema"></a>
 ### func \(\*APIControllers\) [AIAppAPIGetSchema](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-app-api.go#L275>)
@@ -937,14 +937,14 @@ func (api *APIControllers) AIAppAPIListObjects(c fiber.Ctx) error
 
 AIAppAPIListObjects godoc @Summary List objects @Description List objects within the AI Application's data sources. Use unified path format: /\{repository\-slug\}/\{ref\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param path query string false "Unified path \(e.g., /repo\-slug/main/folder\). If empty, lists all data source roots." @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.Object\} "Objects" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- tool not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/objects \[get\]
 
-<a name="APIControllers.AIAppAPIListPendingWrites"></a>
-### func \(\*APIControllers\) [AIAppAPIListPendingWrites](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-app-api.go#L811>)
+<a name="APIControllers.AIAppAPIListPendingOperations"></a>
+### func \(\*APIControllers\) [AIAppAPIListPendingOperations](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-app-api.go#L796>)
 
 ```go
-func (api *APIControllers) AIAppAPIListPendingWrites(c fiber.Ctx) error
+func (api *APIControllers) AIAppAPIListPendingOperations(c fiber.Ctx) error
 ```
 
-AIAppAPIListPendingWrites godoc @Summary List pending writes @Description List all pending write operations awaiting approval @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param limit query int false "Number of results per page \(default 50\)" @Param offset query int false "Offset for pagination \(default 0\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending writes list" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/pending\-writes \[get\]
+AIAppAPIListPendingOperations godoc @Summary List pending operations @Description List all pending operations awaiting approval @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param limit query int false "Number of results per page \(default 50\)" @Param offset query int false "Offset for pagination \(default 0\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending operations list" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/pending\-operations \[get\]
 
 <a name="APIControllers.AIAppAPIPatchFile"></a>
 ### func \(\*APIControllers\) [AIAppAPIPatchFile](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-app-api.go#L659>)
@@ -964,14 +964,14 @@ func (api *APIControllers) AIAppAPIQuery(c fiber.Ctx) error
 
 AIAppAPIQuery godoc @Summary Execute SQL query @Description Execute a SQL query within the AI Application's data scope @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param body body object true "SQL query request with 'sql' field" @Success 200 \{object\} irminmodels.IrminAPIResponse "Query results" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid SQL" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- query tool not enabled, path not in data sources, or path traversal detected" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/query \[post\]
 
-<a name="APIControllers.AIAppAPIRejectPendingWrite"></a>
-### func \(\*APIControllers\) [AIAppAPIRejectPendingWrite](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-app-api.go#L977>)
+<a name="APIControllers.AIAppAPIRejectPendingOperation"></a>
+### func \(\*APIControllers\) [AIAppAPIRejectPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-app-api.go#L971>)
 
 ```go
-func (api *APIControllers) AIAppAPIRejectPendingWrite(c fiber.Ctx) error
+func (api *APIControllers) AIAppAPIRejectPendingOperation(c fiber.Ctx) error
 ```
 
-AIAppAPIRejectPendingWrite godoc @Summary Reject pending write \(forbidden\) @Description Rejection of pending writes is not allowed via the AI App API. Use the workspace API with user authentication to reject writes. This prevents AI applications from self\-rejecting and preserves RequireApproval human oversight. @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param id path string true "Pending write ID" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Rejection not allowed via AI App API; use workspace API" @Router /ai\-app/pending\-writes/\{id\}/reject \[post\]
+AIAppAPIRejectPendingOperation godoc @Summary Reject pending operation \(forbidden\) @Description Rejection of pending operations is not allowed via the AI App API. Use the workspace API with user authentication to reject writes. This prevents AI applications from self\-rejecting and preserves RequireApproval human oversight. @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param id path string true "Pending operation ID" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Rejection not allowed via AI App API; use workspace API" @Router /ai\-app/pending\-operations/\{id\}/reject \[post\]
 
 <a name="APIControllers.AIAppAPISearchEmbeddings"></a>
 ### func \(\*APIControllers\) [AIAppAPISearchEmbeddings](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-app-api.go#L366>)
@@ -1000,41 +1000,41 @@ func (api *APIControllers) AIAppAPIWriteFile(c fiber.Ctx) error
 
 AIAppAPIWriteFile godoc @Summary Write or update a file @Description Write or update a file at the specified path. Use unified path format: /\{repository\-slug\}/\{ref\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param body body object true "Write request with path \(required\), content \(required\), commit\_message \(optional\), auto\_commit \(optional\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Write result" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing required fields" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- write not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/write \[post\]
 
-<a name="APIControllers.AIApplicationPendingWriteApprove"></a>
-### func \(\*APIControllers\) [AIApplicationPendingWriteApprove](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L738>)
+<a name="APIControllers.AIApplicationPendingOperationApprove"></a>
+### func \(\*APIControllers\) [AIApplicationPendingOperationApprove](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L752>)
 
 ```go
-func (api *APIControllers) AIApplicationPendingWriteApprove(c fiber.Ctx) error
+func (api *APIControllers) AIApplicationPendingOperationApprove(c fiber.Ctx) error
 ```
 
-AIApplicationPendingWriteApprove godoc @Summary Approve a pending write @Description Approve a pending write operation, executing the write @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_write path string true "Pending write ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending write approved and executed" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 409 \{object\} irminmodels.IrminAPIResponse "Conflict \- already processed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-writes/\{pending\_write\}/approve \[post\]
+AIApplicationPendingOperationApprove godoc @Summary Approve a pending operation @Description Approve a pending operation, executing the write @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_operation path string true "Pending operation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending operation completed" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 409 \{object\} irminmodels.IrminAPIResponse "Conflict \- already processed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-operations/\{pending\_operation\}/approve \[post\]
 
-<a name="APIControllers.AIApplicationPendingWriteReject"></a>
-### func \(\*APIControllers\) [AIApplicationPendingWriteReject](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L862>)
+<a name="APIControllers.AIApplicationPendingOperationReject"></a>
+### func \(\*APIControllers\) [AIApplicationPendingOperationReject](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L889>)
 
 ```go
-func (api *APIControllers) AIApplicationPendingWriteReject(c fiber.Ctx) error
+func (api *APIControllers) AIApplicationPendingOperationReject(c fiber.Ctx) error
 ```
 
-AIApplicationPendingWriteReject godoc @Summary Reject a pending write @Description Reject a pending write operation @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_write path string true "Pending write ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending write rejected" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 409 \{object\} irminmodels.IrminAPIResponse "Conflict \- already processed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-writes/\{pending\_write\}/reject \[post\]
+AIApplicationPendingOperationReject godoc @Summary Reject a pending operation @Description Reject a pending operation @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_operation path string true "Pending operation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending operation rejected" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 409 \{object\} irminmodels.IrminAPIResponse "Conflict \- already processed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-operations/\{pending\_operation\}/reject \[post\]
 
-<a name="APIControllers.AIApplicationPendingWriteShow"></a>
-### func \(\*APIControllers\) [AIApplicationPendingWriteShow](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L656>)
+<a name="APIControllers.AIApplicationPendingOperationShow"></a>
+### func \(\*APIControllers\) [AIApplicationPendingOperationShow](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L665>)
 
 ```go
-func (api *APIControllers) AIApplicationPendingWriteShow(c fiber.Ctx) error
+func (api *APIControllers) AIApplicationPendingOperationShow(c fiber.Ctx) error
 ```
 
-AIApplicationPendingWriteShow godoc @Summary Get a specific pending write @Description Get details of a specific pending write operation @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_write path string true "Pending write ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending write retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-writes/\{pending\_write\} \[get\]
+AIApplicationPendingOperationShow godoc @Summary Get a specific pending operation @Description Get details of a specific pending operation @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_operation path string true "Pending operation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending operation retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-operations/\{pending\_operation\} \[get\]
 
-<a name="APIControllers.AIApplicationPendingWrites"></a>
-### func \(\*APIControllers\) [AIApplicationPendingWrites](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L550>)
+<a name="APIControllers.AIApplicationPendingOperations"></a>
+### func \(\*APIControllers\) [AIApplicationPendingOperations](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L550>)
 
 ```go
-func (api *APIControllers) AIApplicationPendingWrites(c fiber.Ctx) error
+func (api *APIControllers) AIApplicationPendingOperations(c fiber.Ctx) error
 ```
 
-AIApplicationPendingWrites godoc @Summary Get AI application pending writes @Description Get pending write operations awaiting approval for this AI application @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param limit query int false "Limit \(default 50, max 200\)" @Param offset query int false "Offset \(default 0\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending writes retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-writes \[get\]
+AIApplicationPendingOperations godoc @Summary Get AI application pending operations @Description Get pending operations awaiting approval for this AI application @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param limit query int false "Limit \(default 50, max 200\)" @Param offset query int false "Offset \(default 0\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending operations retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-operations \[get\]
 
 <a name="APIControllers.AIApplicationToolLogStats"></a>
 ### func \(\*APIControllers\) [AIApplicationToolLogStats](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L499>)
@@ -2715,7 +2715,7 @@ import "irmin-api/db"
   - [func \(a \*AIApplication\) ParseToolConfig\(\) AIApplicationToolConfig](<#AIApplication.ParseToolConfig>)
 - [type AIApplicationCustomTool](<#AIApplicationCustomTool>)
 - [type AIApplicationDataSource](<#AIApplicationDataSource>)
-- [type AIApplicationPendingWrite](<#AIApplicationPendingWrite>)
+- [type AIApplicationPendingOperation](<#AIApplicationPendingOperation>)
 - [type AIApplicationTag](<#AIApplicationTag>)
 - [type AIApplicationToolConfig](<#AIApplicationToolConfig>)
 - [type AIApplicationToolLog](<#AIApplicationToolLog>)
@@ -2758,14 +2758,16 @@ import "irmin-api/db"
   - [func \(d \*Database\) AddUserToWorkspace\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.AddUserToWorkspace>)
   - [func \(d \*Database\) AggregateUsageSummaries\(periodStart, periodEnd time.Time\) error](<#Database.AggregateUsageSummaries>)
   - [func \(d \*Database\) CheckIfRepositoryExists\(slug string, workspaceID uint\) bool](<#Database.CheckIfRepositoryExists>)
+  - [func \(d \*Database\) ClaimMCPPendingOperation\(id, reviewerID uint\) \(bool, error\)](<#Database.ClaimMCPPendingOperation>)
   - [func \(d \*Database\) Close\(\)](<#Database.Close>)
   - [func \(d \*Database\) CountWorkspaceMembersAndInvites\(workspaceID uint\) \(int64, error\)](<#Database.CountWorkspaceMembersAndInvites>)
-  - [func \(d \*Database\) CreateAIApplicationPendingWrite\(pw \*AIApplicationPendingWrite\) error](<#Database.CreateAIApplicationPendingWrite>)
+  - [func \(d \*Database\) CreateAIApplicationPendingOperation\(pw \*AIApplicationPendingOperation\) error](<#Database.CreateAIApplicationPendingOperation>)
   - [func \(d \*Database\) CreateAIApplicationToolLog\(log \*AIApplicationToolLog\) error](<#Database.CreateAIApplicationToolLog>)
   - [func \(d \*Database\) CreateBillingEvent\(event \*BillingEvent\) error](<#Database.CreateBillingEvent>)
   - [func \(d \*Database\) CreateConnectionOAuthClient\(tx \*gorm.DB, client \*ConnectionOAuthClient\) error](<#Database.CreateConnectionOAuthClient>)
   - [func \(d \*Database\) CreateConnectionOAuthSession\(tx \*gorm.DB, session \*ConnectionOAuthSession\) error](<#Database.CreateConnectionOAuthSession>)
   - [func \(d \*Database\) CreateConnectionSubscription\(subscription \*ConnectionSubscription\) error](<#Database.CreateConnectionSubscription>)
+  - [func \(d \*Database\) CreateMCPPendingOperation\(operation \*MCPPendingOperation\) error](<#Database.CreateMCPPendingOperation>)
   - [func \(d \*Database\) CreateSearchIndexes\(\) error](<#Database.CreateSearchIndexes>)
   - [func \(d \*Database\) CreateUsageRecordsBatch\(records \[\]\*UsageRecord\) error](<#Database.CreateUsageRecordsBatch>)
   - [func \(d \*Database\) CustomToolNameExists\(name string, aiApplicationID uint, excludeID \*uint\) \(bool, error\)](<#Database.CustomToolNameExists>)
@@ -2781,7 +2783,7 @@ import "irmin-api/db"
   - [func \(d \*Database\) DeleteExpiredConnectionOAuthSessions\(now time.Time\) \(int64, error\)](<#Database.DeleteExpiredConnectionOAuthSessions>)
   - [func \(d \*Database\) DeleteInvite\(id uint\) error](<#Database.DeleteInvite>)
   - [func \(d \*Database\) DeleteObjects\(tx \*gorm.DB, path \*string, repositoryID \*uint, ref \*string\) error](<#Database.DeleteObjects>)
-  - [func \(d \*Database\) DeletePendingWritesByAIApplicationID\(tx \*gorm.DB, aiApplicationID uint\) error](<#Database.DeletePendingWritesByAIApplicationID>)
+  - [func \(d \*Database\) DeletePendingOperationsByAIApplicationID\(tx \*gorm.DB, aiApplicationID uint\) error](<#Database.DeletePendingOperationsByAIApplicationID>)
   - [func \(d \*Database\) DeleteStoredQuery\(tx \*gorm.DB, id uint\) error](<#Database.DeleteStoredQuery>)
   - [func \(d \*Database\) DeleteStoredScript\(tx \*gorm.DB, id uint\) error](<#Database.DeleteStoredScript>)
   - [func \(d \*Database\) DeleteTag\(tx \*gorm.DB, id uint\) error](<#Database.DeleteTag>)
@@ -2790,15 +2792,17 @@ import "irmin-api/db"
   - [func \(d \*Database\) DeleteWorkspace\(id uint, tx \*gorm.DB\) error](<#Database.DeleteWorkspace>)
   - [func \(d \*Database\) DropSearchIndexes\(\) error](<#Database.DropSearchIndexes>)
   - [func \(d \*Database\) EnsureNotificationTrigger\(ctx context.Context\) error](<#Database.EnsureNotificationTrigger>)
+  - [func \(d \*Database\) FailPendingOperation\(id uint, executionError string\) error](<#Database.FailPendingOperation>)
   - [func \(d \*Database\) FindChildObjects\(parentID uint\) \(\[\]RepositoryObject, error\)](<#Database.FindChildObjects>)
   - [func \(d \*Database\) FindConnectionSchemaCache\(connectionID uint, opMethod string\) \(\*ConnectionSchemaCache, error\)](<#Database.FindConnectionSchemaCache>)
   - [func \(d \*Database\) FindObject\(path \*string, repositoryID \*uint, ref \*string\) \(\*RepositoryObject, error\)](<#Database.FindObject>)
   - [func \(d \*Database\) FindRepositorySchemaCache\(repositoryID uint, path, ref string\) \(\*RepositorySchemaCache, error\)](<#Database.FindRepositorySchemaCache>)
+  - [func \(d \*Database\) FinishMCPPendingOperation\(id uint, status PendingOperationStatus, executionError string\) error](<#Database.FinishMCPPendingOperation>)
   - [func \(d \*Database\) GenerateAllPossiblePolicies\(workspaceID uint, principal PolicyPrincipal, principalID \*uint, opts ...PolicyGenerationOptions\) \[\]Policy](<#Database.GenerateAllPossiblePolicies>)
   - [func \(d \*Database\) GetAIApplicationByAPIKey\(apiKey string\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByAPIKey>)
   - [func \(d \*Database\) GetAIApplicationByAPIKeyWithContext\(ctx context.Context, apiKey string\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByAPIKeyWithContext>)
   - [func \(d \*Database\) GetAIApplicationByID\(id uint\) \(\*AIApplication, error\)](<#Database.GetAIApplicationByID>)
-  - [func \(d \*Database\) GetAIApplicationPendingWriteByID\(id uint\) \(\*AIApplicationPendingWrite, error\)](<#Database.GetAIApplicationPendingWriteByID>)
+  - [func \(d \*Database\) GetAIApplicationPendingOperationByID\(id uint\) \(\*AIApplicationPendingOperation, error\)](<#Database.GetAIApplicationPendingOperationByID>)
   - [func \(d \*Database\) GetAIApplicationTags\(aiApplicationID uint\) \(\[\]Tag, error\)](<#Database.GetAIApplicationTags>)
   - [func \(d \*Database\) GetAIApplicationToolLogStats\(aiApplicationID uint\) \(\*irminmodels.AIApplicationToolLogStats, error\)](<#Database.GetAIApplicationToolLogStats>)
   - [func \(d \*Database\) GetAIApplicationToolLogs\(aiApplicationID uint, toolName string, limit, offset int\) \(\[\]AIApplicationToolLog, int64, error\)](<#Database.GetAIApplicationToolLogs>)
@@ -2840,8 +2844,9 @@ import "irmin-api/db"
   - [func \(d \*Database\) GetLatestWorkflowRunByWorkflowID\(workflowID uint\) \(\*WorkflowRun, error\)](<#Database.GetLatestWorkflowRunByWorkflowID>)
   - [func \(d \*Database\) GetLogEventsByWorkspaceAndAsset\(workspaceID uint, assetType string, assetID uint, searchTerm string, limit, offset int\) \(\[\]LogEvent, int64, error\)](<#Database.GetLogEventsByWorkspaceAndAsset>)
   - [func \(d \*Database\) GetLogEventsForWorkspace\(workspaceID uint, searchTerm string, limit, offset int\) \(\[\]LogEvent, int64, error\)](<#Database.GetLogEventsForWorkspace>)
+  - [func \(d \*Database\) GetMCPPendingOperation\(id uint\) \(\*MCPPendingOperation, error\)](<#Database.GetMCPPendingOperation>)
   - [func \(d \*Database\) GetOwnerRole\(\) \(\*Role, error\)](<#Database.GetOwnerRole>)
-  - [func \(d \*Database\) GetPendingWritesByAIApplicationID\(aiApplicationID uint, status \*PendingWriteStatus, limit, offset int\) \(\[\]AIApplicationPendingWrite, int64, error\)](<#Database.GetPendingWritesByAIApplicationID>)
+  - [func \(d \*Database\) GetPendingOperationsByAIApplicationID\(aiApplicationID uint, status \*PendingOperationStatus, limit, offset int\) \(\[\]AIApplicationPendingOperation, int64, error\)](<#Database.GetPendingOperationsByAIApplicationID>)
   - [func \(d \*Database\) GetPgxConn\(ctx context.Context\) \(\*pgxpool.Conn, error\)](<#Database.GetPgxConn>)
   - [func \(d \*Database\) GetPipelineWorkflowableByID\(id uint\) \(\*PipelineWorkflowable, error\)](<#Database.GetPipelineWorkflowableByID>)
   - [func \(d \*Database\) GetQueriesByTag\(tagID uint\) \(\[\]StoredQuery, error\)](<#Database.GetQueriesByTag>)
@@ -2906,14 +2911,14 @@ import "irmin-api/db"
   - [func \(d \*Database\) RemoveTagFromWorkflow\(workflowID, tagID uint\) error](<#Database.RemoveTagFromWorkflow>)
   - [func \(d \*Database\) RemoveUserFromWorkspace\(tx \*gorm.DB, userID, workspaceID uint\) error](<#Database.RemoveUserFromWorkspace>)
   - [func \(d \*Database\) Reset\(\) error](<#Database.Reset>)
-  - [func \(d \*Database\) RevertPendingWriteToPending\(id uint\) error](<#Database.RevertPendingWriteToPending>)
   - [func \(d \*Database\) RunRawQuery\(sqlQuery string, args ...any\) error](<#Database.RunRawQuery>)
   - [func \(d \*Database\) SearchWithCursor\(ctx context.Context, workspaceID uint, filters SearchFilters, pagination CursorPagination\) \(\[\]SearchResult, \*string, \*string, error\)](<#Database.SearchWithCursor>)
   - [func \(d \*Database\) SearchWorkspace\(workspaceID uint, filters SearchFilters\) \(\[\]SearchResult, int, error\)](<#Database.SearchWorkspace>)
   - [func \(d \*Database\) SearchWorkspaceCount\(workspaceID uint, filters SearchFilters\) \(int, error\)](<#Database.SearchWorkspaceCount>)
+  - [func \(d \*Database\) TransitionMCPPendingOperation\(id uint, expected, next PendingOperationStatus, reviewerID uint\) \(bool, error\)](<#Database.TransitionMCPPendingOperation>)
   - [func \(d \*Database\) UpdateConnectionSubscription\(subscription \*ConnectionSubscription\) error](<#Database.UpdateConnectionSubscription>)
-  - [func \(d \*Database\) UpdatePendingWriteStatus\(id uint, status PendingWriteStatus, reviewedByID \*uint\) error](<#Database.UpdatePendingWriteStatus>)
-  - [func \(d \*Database\) UpdatePendingWriteStatusAtomic\(id uint, expectedStatus PendingWriteStatus, newStatus PendingWriteStatus, reviewedByID \*uint\) \(bool, error\)](<#Database.UpdatePendingWriteStatusAtomic>)
+  - [func \(d \*Database\) UpdatePendingOperationStatus\(id uint, status PendingOperationStatus, reviewedByID \*uint\) error](<#Database.UpdatePendingOperationStatus>)
+  - [func \(d \*Database\) UpdatePendingOperationStatusAtomic\(id uint, expectedStatus PendingOperationStatus, newStatus PendingOperationStatus, reviewedByID \*uint\) \(bool, error\)](<#Database.UpdatePendingOperationStatusAtomic>)
   - [func \(d \*Database\) UpdateWorkspaceUserRoles\(tx \*gorm.DB, userID, workspaceID uint, roleIDs \[\]uint\) \(\*WorkspaceUser, error\)](<#Database.UpdateWorkspaceUserRoles>)
   - [func \(d \*Database\) UpsertConnectionOAuthToken\(tx \*gorm.DB, token \*ConnectionOAuthToken\) error](<#Database.UpsertConnectionOAuthToken>)
   - [func \(d \*Database\) UpsertTemplate\(template \*Template\) error](<#Database.UpsertTemplate>)
@@ -2928,8 +2933,9 @@ import "irmin-api/db"
 - [type Invite](<#Invite>)
 - [type LogEvent](<#LogEvent>)
 - [type LogEventType](<#LogEventType>)
+- [type MCPPendingOperation](<#MCPPendingOperation>)
 - [type PatchDirection](<#PatchDirection>)
-- [type PendingWriteStatus](<#PendingWriteStatus>)
+- [type PendingOperationStatus](<#PendingOperationStatus>)
 - [type PipelineStage](<#PipelineStage>)
 - [type PipelineStageType](<#PipelineStageType>)
 - [type PipelineWorkflowable](<#PipelineWorkflowable>)
@@ -3244,7 +3250,7 @@ func ContainsSuspiciousPatterns(input string) bool
 ContainsSuspiciousPatterns checks for additional suspicious patterns.
 
 <a name="EnsureNotificationTriggerStatementsForTest"></a>
-## func [EnsureNotificationTriggerStatementsForTest](<https://github.com/IrminData/irmin-platform/blob/main/core/db/db.go#L483>)
+## func [EnsureNotificationTriggerStatementsForTest](<https://github.com/IrminData/irmin-platform/blob/main/core/db/db.go#L485>)
 
 ```go
 func EnsureNotificationTriggerStatementsForTest() []string
@@ -3497,19 +3503,19 @@ type AIApplicationDataSource struct {
 }
 ```
 
-<a name="AIApplicationPendingWrite"></a>
-## type [AIApplicationPendingWrite](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L428-L457>)
+<a name="AIApplicationPendingOperation"></a>
+## type [AIApplicationPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L432-L467>)
 
-AIApplicationPendingWrite represents a write operation awaiting human approval.
+AIApplicationPendingOperation represents a registry operation awaiting human approval.
 
 ```go
-type AIApplicationPendingWrite struct {
+type AIApplicationPendingOperation struct {
     gorm.Model
 
     AIApplicationID uint          `json:"ai_application_id" gorm:"index;not null"`
     AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
 
-    // Link to the tool log entry that created this pending write
+    // Link to the tool log entry that created this pending operation
     ToolLogID *uint                 `json:"tool_log_id,omitempty"`
     ToolLog   *AIApplicationToolLog `json:"tool_log,omitempty"    gorm:"foreignKey:ToolLogID"`
 
@@ -3520,18 +3526,24 @@ type AIApplicationPendingWrite struct {
     Ref          string     `json:"ref"`
 
     // Operation details
-    Operation      string `json:"operation"`                                   // "upload", "update", "patch"
-    Content        []byte `json:"-"                         gorm:"type:bytea"` // Full content for file operations (not serialized to JSON)
-    ContentHash    string `json:"content_hash"`                                // Hash reference to staged content
-    ContentPreview string `json:"content_preview,omitempty"`                   // Preview of content for display
-    PatchJSON      string `json:"patch_json,omitempty"      gorm:"type:jsonb"` // For patch operations
-    CommitMessage  string `json:"commit_message"`
+    ToolName        string `json:"tool_name"                 gorm:"not null;index"`
+    Risk            string `json:"risk"                      gorm:"not null"`
+    Capability      string `json:"capability"`
+    ApprovalPreview string `json:"approval_preview"`
+    ArgumentsJSON   string `json:"-"                         gorm:"type:jsonb"`
+    Operation       string `json:"operation"`                                   // "upload", "update", "patch"
+    Content         []byte `json:"-"                         gorm:"type:bytea"` // Full content for file operations (not serialized to JSON)
+    ContentHash     string `json:"content_hash"`                                // Hash reference to staged content
+    ContentPreview  string `json:"content_preview,omitempty"`                   // Preview of content for display
+    PatchJSON       string `json:"patch_json,omitempty"      gorm:"type:jsonb"` // For patch operations
+    CommitMessage   string `json:"commit_message"`
 
     // Status and review
-    Status       PendingWriteStatus `json:"status"                   gorm:"default:pending;index"`
-    ReviewedByID *uint              `json:"reviewed_by_id,omitempty"`
-    ReviewedBy   *User              `json:"reviewed_by,omitempty"    gorm:"foreignKey:ReviewedByID"`
-    ReviewedAt   *time.Time         `json:"reviewed_at,omitempty"`
+    Status         PendingOperationStatus `json:"status"                    gorm:"default:pending;index"`
+    ReviewedByID   *uint                  `json:"reviewed_by_id,omitempty"`
+    ReviewedBy     *User                  `json:"reviewed_by,omitempty"     gorm:"foreignKey:ReviewedByID"`
+    ReviewedAt     *time.Time             `json:"reviewed_at,omitempty"`
+    ExecutionError string                 `json:"execution_error,omitempty"`
 }
 ```
 
@@ -3599,10 +3611,10 @@ type AIApplicationToolLog struct {
     ErrorMsg   string `json:"error_msg"`
 
     // Write-specific audit fields
-    WriteOperation  string `json:"write_operation,omitempty"`   // "upload", "update", "patch"
-    WriteTargetPath string `json:"write_target_path,omitempty"` // Path that was written to
-    CommitID        string `json:"commit_id,omitempty"`         // Commit ID if changes were committed
-    PendingWriteID  *uint  `json:"pending_write_id,omitempty"`  // Link to pending write if approval required
+    WriteOperation     string `json:"write_operation,omitempty"`      // "upload", "update", "patch"
+    WriteTargetPath    string `json:"write_target_path,omitempty"`    // Path that was written to
+    CommitID           string `json:"commit_id,omitempty"`            // Commit ID if changes were committed
+    PendingOperationID *uint  `json:"pending_operation_id,omitempty"` // Link to pending operation if approval required
 }
 ```
 
@@ -4289,6 +4301,15 @@ func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool
 
 
 
+<a name="Database.ClaimMCPPendingOperation"></a>
+### func \(\*Database\) [ClaimMCPPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/mcp-pending-operations.go#L41>)
+
+```go
+func (d *Database) ClaimMCPPendingOperation(id, reviewerID uint) (bool, error)
+```
+
+
+
 <a name="Database.Close"></a>
 ### func \(\*Database\) [Close](<https://github.com/IrminData/irmin-platform/blob/main/core/db/db.go#L117>)
 
@@ -4307,14 +4328,14 @@ func (d *Database) CountWorkspaceMembersAndInvites(workspaceID uint) (int64, err
 
 CountWorkspaceMembersAndInvites returns the total number of active members and pending invites for a workspace.
 
-<a name="Database.CreateAIApplicationPendingWrite"></a>
-### func \(\*Database\) [CreateAIApplicationPendingWrite](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L460>)
+<a name="Database.CreateAIApplicationPendingOperation"></a>
+### func \(\*Database\) [CreateAIApplicationPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L470>)
 
 ```go
-func (d *Database) CreateAIApplicationPendingWrite(pw *AIApplicationPendingWrite) error
+func (d *Database) CreateAIApplicationPendingOperation(pw *AIApplicationPendingOperation) error
 ```
 
-CreateAIApplicationPendingWrite creates a new pending write entry.
+CreateAIApplicationPendingOperation creates a new pending operation entry.
 
 <a name="Database.CreateAIApplicationToolLog"></a>
 ### func \(\*Database\) [CreateAIApplicationToolLog](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L315>)
@@ -4360,6 +4381,15 @@ func (d *Database) CreateConnectionSubscription(subscription *ConnectionSubscrip
 ```
 
 CreateConnectionSubscription creates a new subscription in the database. It automatically generates a webhook token if not provided.
+
+<a name="Database.CreateMCPPendingOperation"></a>
+### func \(\*Database\) [CreateMCPPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/mcp-pending-operations.go#L28>)
+
+```go
+func (d *Database) CreateMCPPendingOperation(operation *MCPPendingOperation) error
+```
+
+
 
 <a name="Database.CreateSearchIndexes"></a>
 ### func \(\*Database\) [CreateSearchIndexes](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search_indexes.go#L8>)
@@ -4498,14 +4528,14 @@ func (d *Database) DeleteObjects(tx *gorm.DB, path *string, repositoryID *uint, 
 
 
 
-<a name="Database.DeletePendingWritesByAIApplicationID"></a>
-### func \(\*Database\) [DeletePendingWritesByAIApplicationID](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L570>)
+<a name="Database.DeletePendingOperationsByAIApplicationID"></a>
+### func \(\*Database\) [DeletePendingOperationsByAIApplicationID](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L577>)
 
 ```go
-func (d *Database) DeletePendingWritesByAIApplicationID(tx *gorm.DB, aiApplicationID uint) error
+func (d *Database) DeletePendingOperationsByAIApplicationID(tx *gorm.DB, aiApplicationID uint) error
 ```
 
-DeletePendingWritesByAIApplicationID deletes all pending writes for an AI Application.
+DeletePendingOperationsByAIApplicationID deletes all pending operations for an AI Application.
 
 <a name="Database.DeleteStoredQuery"></a>
 ### func \(\*Database\) [DeleteStoredQuery](<https://github.com/IrminData/irmin-platform/blob/main/core/db/queries.go#L35>)
@@ -4571,13 +4601,22 @@ func (d *Database) DropSearchIndexes() error
 DropSearchIndexes drops the search indexes \(useful for testing or cleanup\).
 
 <a name="Database.EnsureNotificationTrigger"></a>
-### func \(\*Database\) [EnsureNotificationTrigger](<https://github.com/IrminData/irmin-platform/blob/main/core/db/db.go#L437>)
+### func \(\*Database\) [EnsureNotificationTrigger](<https://github.com/IrminData/irmin-platform/blob/main/core/db/db.go#L439>)
 
 ```go
 func (d *Database) EnsureNotificationTrigger(ctx context.Context) error
 ```
 
 EnsureNotificationTrigger ensures that the workflow run notification trigger exists in the database.
+
+<a name="Database.FailPendingOperation"></a>
+### func \(\*Database\) [FailPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L569>)
+
+```go
+func (d *Database) FailPendingOperation(id uint, executionError string) error
+```
+
+FailPendingOperation records a terminal execution failure without allowing duplicate execution.
 
 <a name="Database.FindChildObjects"></a>
 ### func \(\*Database\) [FindChildObjects](<https://github.com/IrminData/irmin-platform/blob/main/core/db/repository-objects.go#L110>)
@@ -4615,6 +4654,15 @@ func (d *Database) FindRepositorySchemaCache(repositoryID uint, path, ref string
 
 FindRepositorySchemaCache finds a repository schema cache by repository ID, path, and ref.
 
+<a name="Database.FinishMCPPendingOperation"></a>
+### func \(\*Database\) [FinishMCPPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/mcp-pending-operations.go#L65>)
+
+```go
+func (d *Database) FinishMCPPendingOperation(id uint, status PendingOperationStatus, executionError string) error
+```
+
+
+
 <a name="Database.GenerateAllPossiblePolicies"></a>
 ### func \(\*Database\) [GenerateAllPossiblePolicies](<https://github.com/IrminData/irmin-platform/blob/main/core/db/policies.go#L144-L149>)
 
@@ -4651,14 +4699,14 @@ func (d *Database) GetAIApplicationByID(id uint) (*AIApplication, error)
 
 GetAIApplicationByID retrieves an AI application by its ID.
 
-<a name="Database.GetAIApplicationPendingWriteByID"></a>
-### func \(\*Database\) [GetAIApplicationPendingWriteByID](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L465>)
+<a name="Database.GetAIApplicationPendingOperationByID"></a>
+### func \(\*Database\) [GetAIApplicationPendingOperationByID](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L475>)
 
 ```go
-func (d *Database) GetAIApplicationPendingWriteByID(id uint) (*AIApplicationPendingWrite, error)
+func (d *Database) GetAIApplicationPendingOperationByID(id uint) (*AIApplicationPendingOperation, error)
 ```
 
-GetAIApplicationPendingWriteByID retrieves a pending write by its ID.
+GetAIApplicationPendingOperationByID retrieves a pending operation by its ID.
 
 <a name="Database.GetAIApplicationTags"></a>
 ### func \(\*Database\) [GetAIApplicationTags](<https://github.com/IrminData/irmin-platform/blob/main/core/db/tags.go#L549>)
@@ -5035,6 +5083,15 @@ GetLogEventsForWorkspace returns log events for the given workspace, optionally 
 
 workspaceID: identifier of the workspace to fetch events for searchTerm: substring to search for in the description; if empty, ignored limit: maximum number of events to return offset: number of events to skip returns: slice of LogEvent, total count of matching events, and error if any
 
+<a name="Database.GetMCPPendingOperation"></a>
+### func \(\*Database\) [GetMCPPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/mcp-pending-operations.go#L32>)
+
+```go
+func (d *Database) GetMCPPendingOperation(id uint) (*MCPPendingOperation, error)
+```
+
+
+
 <a name="Database.GetOwnerRole"></a>
 ### func \(\*Database\) [GetOwnerRole](<https://github.com/IrminData/irmin-platform/blob/main/core/db/roles.go#L22>)
 
@@ -5044,14 +5101,14 @@ func (d *Database) GetOwnerRole() (*Role, error)
 
 
 
-<a name="Database.GetPendingWritesByAIApplicationID"></a>
-### func \(\*Database\) [GetPendingWritesByAIApplicationID](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L478-L482>)
+<a name="Database.GetPendingOperationsByAIApplicationID"></a>
+### func \(\*Database\) [GetPendingOperationsByAIApplicationID](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L488-L492>)
 
 ```go
-func (d *Database) GetPendingWritesByAIApplicationID(aiApplicationID uint, status *PendingWriteStatus, limit, offset int) ([]AIApplicationPendingWrite, int64, error)
+func (d *Database) GetPendingOperationsByAIApplicationID(aiApplicationID uint, status *PendingOperationStatus, limit, offset int) ([]AIApplicationPendingOperation, int64, error)
 ```
 
-GetPendingWritesByAIApplicationID retrieves all pending writes for an AI Application.
+GetPendingOperationsByAIApplicationID retrieves all pending operations for an AI Application.
 
 <a name="Database.GetPgxConn"></a>
 ### func \(\*Database\) [GetPgxConn](<https://github.com/IrminData/irmin-platform/blob/main/core/db/db.go#L124>)
@@ -5623,7 +5680,7 @@ func (d *Database) RemoveUserFromWorkspace(tx *gorm.DB, userID, workspaceID uint
 RemoveUserFromWorkspace removes a user from a workspace.
 
 <a name="Database.Reset"></a>
-### func \(\*Database\) [Reset](<https://github.com/IrminData/irmin-platform/blob/main/core/db/db.go#L369>)
+### func \(\*Database\) [Reset](<https://github.com/IrminData/irmin-platform/blob/main/core/db/db.go#L370>)
 
 ```go
 func (d *Database) Reset() error
@@ -5631,17 +5688,8 @@ func (d *Database) Reset() error
 
 Reset drops all tables to start fresh.
 
-<a name="Database.RevertPendingWriteToPending"></a>
-### func \(\*Database\) [RevertPendingWriteToPending](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L561>)
-
-```go
-func (d *Database) RevertPendingWriteToPending(id uint) error
-```
-
-RevertPendingWriteToPending reverts a pending write back to pending status, clearing any review metadata \(reviewed\_by\_id and reviewed\_at\). This is used when a pending write approval fails during execution.
-
 <a name="Database.RunRawQuery"></a>
-### func \(\*Database\) [RunRawQuery](<https://github.com/IrminData/irmin-platform/blob/main/core/db/db.go#L429>)
+### func \(\*Database\) [RunRawQuery](<https://github.com/IrminData/irmin-platform/blob/main/core/db/db.go#L431>)
 
 ```go
 func (d *Database) RunRawQuery(sqlQuery string, args ...any) error
@@ -5676,6 +5724,15 @@ func (d *Database) SearchWorkspaceCount(workspaceID uint, filters SearchFilters)
 
 SearchWorkspaceCount performs a search and returns only the total count of results with timeout protection.
 
+<a name="Database.TransitionMCPPendingOperation"></a>
+### func \(\*Database\) [TransitionMCPPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/mcp-pending-operations.go#L51-L55>)
+
+```go
+func (d *Database) TransitionMCPPendingOperation(id uint, expected, next PendingOperationStatus, reviewerID uint) (bool, error)
+```
+
+
+
 <a name="Database.UpdateConnectionSubscription"></a>
 ### func \(\*Database\) [UpdateConnectionSubscription](<https://github.com/IrminData/irmin-platform/blob/main/core/db/connection-subscriptions.go#L107>)
 
@@ -5685,23 +5742,23 @@ func (d *Database) UpdateConnectionSubscription(subscription *ConnectionSubscrip
 
 UpdateConnectionSubscription updates an existing subscription.
 
-<a name="Database.UpdatePendingWriteStatus"></a>
-### func \(\*Database\) [UpdatePendingWriteStatus](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L512-L516>)
+<a name="Database.UpdatePendingOperationStatus"></a>
+### func \(\*Database\) [UpdatePendingOperationStatus](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L522-L526>)
 
 ```go
-func (d *Database) UpdatePendingWriteStatus(id uint, status PendingWriteStatus, reviewedByID *uint) error
+func (d *Database) UpdatePendingOperationStatus(id uint, status PendingOperationStatus, reviewedByID *uint) error
 ```
 
-UpdatePendingWriteStatus updates the status of a pending write.
+UpdatePendingOperationStatus updates the status of a pending operation.
 
-<a name="Database.UpdatePendingWriteStatusAtomic"></a>
-### func \(\*Database\) [UpdatePendingWriteStatusAtomic](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L532-L537>)
+<a name="Database.UpdatePendingOperationStatusAtomic"></a>
+### func \(\*Database\) [UpdatePendingOperationStatusAtomic](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L542-L547>)
 
 ```go
-func (d *Database) UpdatePendingWriteStatusAtomic(id uint, expectedStatus PendingWriteStatus, newStatus PendingWriteStatus, reviewedByID *uint) (bool, error)
+func (d *Database) UpdatePendingOperationStatusAtomic(id uint, expectedStatus PendingOperationStatus, newStatus PendingOperationStatus, reviewedByID *uint) (bool, error)
 ```
 
-UpdatePendingWriteStatusAtomic atomically updates the status of a pending write only if it's currently in the expected status. This prevents race conditions where concurrent requests could both execute the same pending write. Returns true if the update was successful \(row was modified\), false if the status was already changed by another request.
+UpdatePendingOperationStatusAtomic atomically updates the status of a pending operation only if it's currently in the expected status. This prevents race conditions where concurrent requests could both execute the same pending operation. Returns true if the update was successful \(row was modified\), false if the status was already changed by another request.
 
 <a name="Database.UpdateWorkspaceUserRoles"></a>
 ### func \(\*Database\) [UpdateWorkspaceUserRoles](<https://github.com/IrminData/irmin-platform/blob/main/core/db/users.go#L188-L192>)
@@ -5908,6 +5965,31 @@ const (
 )
 ```
 
+<a name="MCPPendingOperation"></a>
+## type [MCPPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/mcp-pending-operations.go#L10-L26>)
+
+MCPPendingOperation stores a destructive canonical tool call until a user approves it.
+
+```go
+type MCPPendingOperation struct {
+    gorm.Model
+    WorkspaceID     uint                   `json:"workspace_id"              gorm:"not null;index"`
+    Workspace       Workspace              `json:"workspace"                 gorm:"foreignKey:WorkspaceID"`
+    RequestedByID   uint                   `json:"requested_by_id"           gorm:"not null;index"`
+    RequestedBy     User                   `json:"requested_by"              gorm:"foreignKey:RequestedByID"`
+    ToolName        string                 `json:"tool_name"                 gorm:"not null;index"`
+    Risk            string                 `json:"risk"                      gorm:"not null"`
+    Capability      string                 `json:"capability"`
+    ApprovalPreview string                 `json:"approval_preview"`
+    ArgumentsJSON   string                 `json:"-"                         gorm:"type:jsonb;not null"`
+    Status          PendingOperationStatus `json:"status"                    gorm:"default:pending;index"`
+    ReviewedByID    *uint                  `json:"reviewed_by_id,omitempty"`
+    ReviewedBy      *User                  `json:"reviewed_by,omitempty"     gorm:"foreignKey:ReviewedByID"`
+    ReviewedAt      *time.Time             `json:"reviewed_at,omitempty"`
+    ExecutionError  string                 `json:"execution_error,omitempty"`
+}
+```
+
 <a name="PatchDirection"></a>
 ## type [PatchDirection](<https://github.com/IrminData/irmin-platform/blob/main/core/db/workflows.go#L119>)
 
@@ -5926,25 +6008,29 @@ const (
 )
 ```
 
-<a name="PendingWriteStatus"></a>
-## type [PendingWriteStatus](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L416>)
+<a name="PendingOperationStatus"></a>
+## type [PendingOperationStatus](<https://github.com/IrminData/irmin-platform/blob/main/core/db/ai-applications.go#L416>)
 
-PendingWriteStatus represents the status of a pending write operation.
+PendingOperationStatus represents the lifecycle of a staged operation.
 
 ```go
-type PendingWriteStatus string
+type PendingOperationStatus string
 ```
 
-<a name="PendingWriteStatusPending"></a>
+<a name="PendingOperationStatusPending"></a>
 
 ```go
 const (
-    // PendingWriteStatusPending indicates the write is awaiting approval.
-    PendingWriteStatusPending PendingWriteStatus = "pending"
-    // PendingWriteStatusApproved indicates the write has been approved and executed.
-    PendingWriteStatusApproved PendingWriteStatus = "approved"
-    // PendingWriteStatusRejected indicates the write has been rejected.
-    PendingWriteStatusRejected PendingWriteStatus = "rejected"
+    // PendingOperationStatusPending indicates the operation is awaiting approval.
+    PendingOperationStatusPending PendingOperationStatus = "pending"
+    // PendingOperationStatusExecuting indicates one reviewer has atomically claimed execution.
+    PendingOperationStatusExecuting PendingOperationStatus = "executing"
+    // PendingOperationStatusCompleted indicates the approved operation completed successfully.
+    PendingOperationStatusCompleted PendingOperationStatus = "completed"
+    // PendingOperationStatusFailed indicates the claimed operation failed and cannot be retried in place.
+    PendingOperationStatusFailed PendingOperationStatus = "failed"
+    // PendingOperationStatusRejected indicates the operation has been rejected.
+    PendingOperationStatusRejected PendingOperationStatus = "rejected"
 )
 ```
 
@@ -12532,19 +12618,22 @@ import "irmin-api/mcp"
 ## Index
 
 - [Constants](<#constants>)
+- [Variables](<#variables>)
 - [func CreateMCPClientSession\(ctx context.Context, apiServices \*services.APIServices\) \(\*mcp.ClientSession, error\)](<#CreateMCPClientSession>)
 - [func IsBinaryFormatSupported\(path string\) bool](<#IsBinaryFormatSupported>)
 - [func IsTabularTextFormat\(path string\) bool](<#IsTabularTextFormat>)
 - [func OriginAllowed\(origin string, allowedOrigins \[\]string\) bool](<#OriginAllowed>)
-- [func RegisterAIAppMCP\(app \*fiber.App, apiServices \*services.APIServices\)](<#RegisterAIAppMCP>)
 - [func RegisterFiber\(app \*fiber.App, apiServices \*services.APIServices\)](<#RegisterFiber>)
 - [type AuditLogger](<#AuditLogger>)
   - [func NewAuditLogger\(\) \*AuditLogger](<#NewAuditLogger>)
+  - [func RegisterAIAppMCP\(app \*fiber.App, apiServices \*services.APIServices\) \*AuditLogger](<#RegisterAIAppMCP>)
+  - [func \(al \*AuditLogger\) Close\(ctx context.Context\) error](<#AuditLogger.Close>)
+  - [func \(al \*AuditLogger\) Dropped\(\) uint64](<#AuditLogger.Dropped>)
   - [func \(al \*AuditLogger\) Send\(entry auditLogEntry\)](<#AuditLogger.Send>)
 - [type ContentTransformResult](<#ContentTransformResult>)
-  - [func TransformContentForLLM\(content \[\]byte, path string\) \(\*ContentTransformResult, error\)](<#TransformContentForLLM>)
+  - [func TransformContentForLLM\(ctx context.Context, content \[\]byte, path string\) \(\*ContentTransformResult, error\)](<#TransformContentForLLM>)
 - [type RequestMetadata](<#RequestMetadata>)
-  - [func ExtractRequestMetadata\(r \*http.Request\) \*RequestMetadata](<#ExtractRequestMetadata>)
+  - [func ExtractRequestMetadata\(r \*http.Request, trustedProxyCIDRs string\) \*RequestMetadata](<#ExtractRequestMetadata>)
 - [type WriteAuditInfo](<#WriteAuditInfo>)
 
 
@@ -12563,13 +12652,10 @@ const (
 )
 ```
 
-<a name="MCPProtocolVersion"></a>
+<a name="MCPServerName"></a>
 
 ```go
 const (
-    // MCPProtocolVersion is the Model Context Protocol version used by this server
-    MCPProtocolVersion = "2025-06-18"
-
     // MCPServerName is the name of the MCP server implementation
     MCPServerName = "irmin-mcp"
 
@@ -12612,6 +12698,18 @@ const (
 )
 ```
 
+## Variables
+
+<a name="ErrTransformInputTooLarge"></a>
+
+```go
+var (
+    ErrTransformInputTooLarge  = errors.New("content exceeds the 25 MiB MCP extraction limit")
+    ErrTransformOutputTooLarge = errors.New("extracted content exceeds the 16k-token MCP output limit")
+    ErrUnsupportedBinary       = errors.New("unsupported binary format")
+)
+```
+
 <a name="CreateMCPClientSession"></a>
 ## func [CreateMCPClientSession](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/client.go#L18>)
 
@@ -12622,7 +12720,7 @@ func CreateMCPClientSession(ctx context.Context, apiServices *services.APIServic
 CreateMCPClientSession creates a new MCP client session
 
 <a name="IsBinaryFormatSupported"></a>
-## func [IsBinaryFormatSupported](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/content_transform.go#L66>)
+## func [IsBinaryFormatSupported](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/content_transform.go#L105>)
 
 ```go
 func IsBinaryFormatSupported(path string) bool
@@ -12631,7 +12729,7 @@ func IsBinaryFormatSupported(path string) bool
 IsBinaryFormatSupported checks if the file extension is a supported binary format that can be transformed for LLM consumption.
 
 <a name="IsTabularTextFormat"></a>
-## func [IsTabularTextFormat](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/content_transform.go#L78>)
+## func [IsTabularTextFormat](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/content_transform.go#L117>)
 
 ```go
 func IsTabularTextFormat(path string) bool
@@ -12648,15 +12746,6 @@ func OriginAllowed(origin string, allowedOrigins []string) bool
 
 OriginAllowed applies the MCP browser\-origin policy. Machine clients do not send Origin and remain eligible for bearer authentication. Browser clients must match an explicitly configured origin exactly.
 
-<a name="RegisterAIAppMCP"></a>
-## func [RegisterAIAppMCP](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L169>)
-
-```go
-func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices)
-```
-
-RegisterAIAppMCP mounts the AI Application MCP endpoint. This endpoint is authenticated by AI Application API keys instead of user tokens.
-
 <a name="RegisterFiber"></a>
 ## func [RegisterFiber](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/server.go#L13>)
 
@@ -12667,7 +12756,7 @@ func RegisterFiber(app *fiber.App, apiServices *services.APIServices)
 RegisterFiber mounts the existing MCP HTTP endpoint and the new HTTP\-only attach endpoint.
 
 <a name="AuditLogger"></a>
-## type [AuditLogger](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L40-L42>)
+## type [AuditLogger](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L44-L50>)
 
 AuditLogger buffers tool call audit logs and writes them via a background worker.
 
@@ -12678,7 +12767,7 @@ type AuditLogger struct {
 ```
 
 <a name="NewAuditLogger"></a>
-### func [NewAuditLogger](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L45>)
+### func [NewAuditLogger](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L53>)
 
 ```go
 func NewAuditLogger() *AuditLogger
@@ -12686,8 +12775,35 @@ func NewAuditLogger() *AuditLogger
 
 NewAuditLogger creates an AuditLogger and starts the background drain worker.
 
+<a name="RegisterAIAppMCP"></a>
+### func [RegisterAIAppMCP](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L213>)
+
+```go
+func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices) *AuditLogger
+```
+
+RegisterAIAppMCP mounts the AI Application MCP endpoint. This endpoint is authenticated by AI Application API keys instead of user tokens.
+
+<a name="AuditLogger.Close"></a>
+### func \(\*AuditLogger\) [Close](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L97>)
+
+```go
+func (al *AuditLogger) Close(ctx context.Context) error
+```
+
+Close stops accepting entries and waits for the buffered audit log to drain.
+
+<a name="AuditLogger.Dropped"></a>
+### func \(\*AuditLogger\) [Dropped](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L94>)
+
+```go
+func (al *AuditLogger) Dropped() uint64
+```
+
+Dropped returns the number of audit entries rejected because the buffer was full or closed.
+
 <a name="AuditLogger.Send"></a>
-### func \(\*AuditLogger\) [Send](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L52>)
+### func \(\*AuditLogger\) [Send](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L61>)
 
 ```go
 func (al *AuditLogger) Send(entry auditLogEntry)
@@ -12696,7 +12812,7 @@ func (al *AuditLogger) Send(entry auditLogEntry)
 Send enqueues an audit log entry. If the buffer is full the entry is dropped and an error is logged.
 
 <a name="ContentTransformResult"></a>
-## type [ContentTransformResult](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/content_transform.go#L34-L38>)
+## type [ContentTransformResult](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/content_transform.go#L46-L50>)
 
 ContentTransformResult represents the result of content transformation.
 
@@ -12709,16 +12825,16 @@ type ContentTransformResult struct {
 ```
 
 <a name="TransformContentForLLM"></a>
-### func [TransformContentForLLM](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/content_transform.go#L42>)
+### func [TransformContentForLLM](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/content_transform.go#L54>)
 
 ```go
-func TransformContentForLLM(content []byte, path string) (*ContentTransformResult, error)
+func TransformContentForLLM(ctx context.Context, content []byte, path string) (*ContentTransformResult, error)
 ```
 
 TransformContentForLLM transforms file content into a format suitable for LLM consumption. It handles PDFs \(extracts text\) and tabular files \(converts to JSON\).
 
 <a name="RequestMetadata"></a>
-## type [RequestMetadata](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/auth.go#L26-L31>)
+## type [RequestMetadata](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/auth.go#L28-L33>)
 
 RequestMetadata contains HTTP request information for audit logging.
 
@@ -12732,25 +12848,25 @@ type RequestMetadata struct {
 ```
 
 <a name="ExtractRequestMetadata"></a>
-### func [ExtractRequestMetadata](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/auth.go#L55>)
+### func [ExtractRequestMetadata](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/auth.go#L57>)
 
 ```go
-func ExtractRequestMetadata(r *http.Request) *RequestMetadata
+func ExtractRequestMetadata(r *http.Request, trustedProxyCIDRs string) *RequestMetadata
 ```
 
 ExtractRequestMetadata extracts request metadata from an HTTP request for audit logging.
 
 <a name="WriteAuditInfo"></a>
-## type [WriteAuditInfo](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L23-L28>)
+## type [WriteAuditInfo](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L27-L32>)
 
 WriteAuditInfo contains write\-specific audit information.
 
 ```go
 type WriteAuditInfo struct {
-    Operation      string // "upload", "update", "patch", "commit"
-    TargetPath     string // Unified path that was written to
-    CommitID       string // Commit ID if changes were committed
-    PendingWriteID *uint  // Link to pending write if approval required
+    Operation          string // "upload", "update", "patch", "commit"
+    TargetPath         string // Unified path that was written to
+    CommitID           string // Commit ID if changes were committed
+    PendingOperationID *uint  // Link to pending operation if approval required
 }
 ```
 
@@ -14532,8 +14648,9 @@ import "irmin-api/services"
 - [type AIAppToolExecutor](<#AIAppToolExecutor>)
   - [func NewAIAppToolExecutor\(aiApp \*db.AIApplication, apiServices \*APIServices\) \*AIAppToolExecutor](<#NewAIAppToolExecutor>)
   - [func \(e \*AIAppToolExecutor\) CommitStagedChanges\(ctx context.Context, repoSlug, ref, message string\) \(\*irminmodels.Commit, error\)](<#AIAppToolExecutor.CommitStagedChanges>)
+  - [func \(e \*AIAppToolExecutor\) CommitStagedChangesWithApproval\(ctx context.Context, repoSlug, ref, message string\) \(\*WriteResult, error\)](<#AIAppToolExecutor.CommitStagedChangesWithApproval>)
   - [func \(e \*AIAppToolExecutor\) ExecuteCustomTool\(ctx context.Context, toolName string, query string\) \(\*CustomToolResult, error\)](<#AIAppToolExecutor.ExecuteCustomTool>)
-  - [func \(e \*AIAppToolExecutor\) ExecutePendingWrite\(ctx context.Context, pendingWrite \*db.AIApplicationPendingWrite\) \(\*WriteResult, error\)](<#AIAppToolExecutor.ExecutePendingWrite>)
+  - [func \(e \*AIAppToolExecutor\) ExecutePendingOperation\(ctx context.Context, pendingOperation \*db.AIApplicationPendingOperation\) \(\*WriteResult, error\)](<#AIAppToolExecutor.ExecutePendingOperation>)
   - [func \(e \*AIAppToolExecutor\) ExecuteSQL\(ctx context.Context, sql string, limitResponse bool\) \(any, error\)](<#AIAppToolExecutor.ExecuteSQL>)
   - [func \(e \*AIAppToolExecutor\) GetAIApplication\(\) \*db.AIApplication](<#AIAppToolExecutor.GetAIApplication>)
   - [func \(e \*AIAppToolExecutor\) GetContentByPath\(ctx context.Context, unifiedPath string, limitResponse bool\) \(\[\]byte, error\)](<#AIAppToolExecutor.GetContentByPath>)
@@ -14770,6 +14887,8 @@ const (
     WriteOperationUpdate = "update"
     // WriteOperationPatch represents a JSON patch operation.
     WriteOperationPatch = "patch"
+    // WriteOperationCommit represents committing already staged changes.
+    WriteOperationCommit = "commit"
 )
 ```
 
@@ -15037,13 +15156,22 @@ func NewAIAppToolExecutor(aiApp *db.AIApplication, apiServices *APIServices) *AI
 NewAIAppToolExecutor creates a new AIAppToolExecutor.
 
 <a name="AIAppToolExecutor.CommitStagedChanges"></a>
-### func \(\*AIAppToolExecutor\) [CommitStagedChanges](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1631-L1634>)
+### func \(\*AIAppToolExecutor\) [CommitStagedChanges](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1633-L1636>)
 
 ```go
 func (e *AIAppToolExecutor) CommitStagedChanges(ctx context.Context, repoSlug, ref, message string) (*irminmodels.Commit, error)
 ```
 
 CommitStagedChanges commits all staged changes on a branch.
+
+<a name="AIAppToolExecutor.CommitStagedChangesWithApproval"></a>
+### func \(\*AIAppToolExecutor\) [CommitStagedChangesWithApproval](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1667-L1670>)
+
+```go
+func (e *AIAppToolExecutor) CommitStagedChangesWithApproval(ctx context.Context, repoSlug, ref, message string) (*WriteResult, error)
+```
+
+CommitStagedChangesWithApproval honors the AI Application approval policy for explicit commits.
 
 <a name="AIAppToolExecutor.ExecuteCustomTool"></a>
 ### func \(\*AIAppToolExecutor\) [ExecuteCustomTool](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1117-L1121>)
@@ -15054,14 +15182,14 @@ func (e *AIAppToolExecutor) ExecuteCustomTool(ctx context.Context, toolName stri
 
 ExecuteCustomTool executes a custom tool by name.
 
-<a name="AIAppToolExecutor.ExecutePendingWrite"></a>
-### func \(\*AIAppToolExecutor\) [ExecutePendingWrite](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1735-L1738>)
+<a name="AIAppToolExecutor.ExecutePendingOperation"></a>
+### func \(\*AIAppToolExecutor\) [ExecutePendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1797-L1800>)
 
 ```go
-func (e *AIAppToolExecutor) ExecutePendingWrite(ctx context.Context, pendingWrite *db.AIApplicationPendingWrite) (*WriteResult, error)
+func (e *AIAppToolExecutor) ExecutePendingOperation(ctx context.Context, pendingOperation *db.AIApplicationPendingOperation) (*WriteResult, error)
 ```
 
-ExecutePendingWrite executes a previously approved pending write.
+ExecutePendingOperation executes a previously approved pending operation.
 
 <a name="AIAppToolExecutor.ExecuteSQL"></a>
 ### func \(\*AIAppToolExecutor\) [ExecuteSQL](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L509-L513>)
@@ -15199,7 +15327,7 @@ func (e *AIAppToolExecutor) ListRepositoryObjects(ctx context.Context, repoSlug,
 ListRepositoryObjects lists objects in a repository path. Returns the raw db.RepositoryObject which can be formatted by the caller.
 
 <a name="AIAppToolExecutor.PatchFile"></a>
-### func \(\*AIAppToolExecutor\) [PatchFile](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1535-L1541>)
+### func \(\*AIAppToolExecutor\) [PatchFile](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1537-L1543>)
 
 ```go
 func (e *AIAppToolExecutor) PatchFile(ctx context.Context, unifiedPath string, operations []irminmodels.PatchOperation, commitMessage string, autoCommit bool) (*WriteResult, error)
@@ -15244,7 +15372,7 @@ func (e *AIAppToolExecutor) SearchEmbeddingsByPath(ctx context.Context, query st
 SearchEmbeddingsByPath performs vector similarity search, optionally filtered by a unified path. If pathFilter is empty, searches across all embedding files in all data sources. If pathFilter is provided, searches only in the specified embedding file.
 
 <a name="AIAppToolExecutor.WriteFile"></a>
-### func \(\*AIAppToolExecutor\) [WriteFile](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1443-L1449>)
+### func \(\*AIAppToolExecutor\) [WriteFile](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1445-L1451>)
 
 ```go
 func (e *AIAppToolExecutor) WriteFile(ctx context.Context, unifiedPath string, content []byte, commitMessage string, autoCommit bool) (*WriteResult, error)
@@ -15357,7 +15485,7 @@ func (api *APIServices) CopyRepositoryObject(c context.Context, locale string, u
 
 
 <a name="APIServices.CreateAIApplication"></a>
-### func \(\*APIServices\) [CreateAIApplication](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L92-L97>)
+### func \(\*APIServices\) [CreateAIApplication](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L93-L98>)
 
 ```go
 func (api *APIServices) CreateAIApplication(c context.Context, user *db.User, workspace *db.Workspace, req irmincore.CreateAIApplicationRequest) (*db.AIApplication, error)
@@ -15510,7 +15638,7 @@ func (api *APIServices) DeclineInvite(c context.Context, user *db.User, invite *
 
 
 <a name="APIServices.DeleteAIApplication"></a>
-### func \(\*APIServices\) [DeleteAIApplication](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L310-L315>)
+### func \(\*APIServices\) [DeleteAIApplication](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L311-L316>)
 
 ```go
 func (api *APIServices) DeleteAIApplication(c context.Context, user *db.User, workspace *db.Workspace, aiApplication *db.AIApplication) error
@@ -15672,7 +15800,7 @@ func (api *APIServices) ExecuteScript(c context.Context, user *db.User, workspac
 
 
 <a name="APIServices.GenerateAIApplicationSystemPrompt"></a>
-### func \(\*APIServices\) [GenerateAIApplicationSystemPrompt](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-prompts.go#L11>)
+### func \(\*APIServices\) [GenerateAIApplicationSystemPrompt](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-prompts.go#L12>)
 
 ```go
 func (api *APIServices) GenerateAIApplicationSystemPrompt(aiApp *db.AIApplication) string
@@ -15699,7 +15827,7 @@ func (api *APIServices) GenerateSchemaFromUploadedFile(ctx context.Context, loca
 GenerateSchemaFromUploadedFile generates a schema for an uploaded file.
 
 <a name="APIServices.GetAIApplication"></a>
-### func \(\*APIServices\) [GetAIApplication](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L20-L25>)
+### func \(\*APIServices\) [GetAIApplication](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L21-L26>)
 
 ```go
 func (api *APIServices) GetAIApplication(c context.Context, user *db.User, workspace *db.Workspace, aiApplicationSqid string) (*db.AIApplication, error)
@@ -16023,7 +16151,7 @@ func (api *APIServices) LeaveWorkspace(user *db.User, workspace *db.Workspace) e
 
 
 <a name="APIServices.ListAIApplications"></a>
-### func \(\*APIServices\) [ListAIApplications](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L61-L65>)
+### func \(\*APIServices\) [ListAIApplications](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L62-L66>)
 
 ```go
 func (api *APIServices) ListAIApplications(c context.Context, user *db.User, workspace *db.Workspace) ([]db.AIApplication, error)
@@ -16428,7 +16556,7 @@ func (api *APIServices) TestConnection(c context.Context, locale string, user *d
 TestConnection tests an existing connection using its stored credentials.
 
 <a name="APIServices.TransferAIApplicationOwnership"></a>
-### func \(\*APIServices\) [TransferAIApplicationOwnership](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L364-L370>)
+### func \(\*APIServices\) [TransferAIApplicationOwnership](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L365-L371>)
 
 ```go
 func (api *APIServices) TransferAIApplicationOwnership(c context.Context, user *db.User, workspace *db.Workspace, aiApplication *db.AIApplication, req irmincore.TransferAIApplicationOwnershipRequest) (*db.AIApplication, error)
@@ -16491,7 +16619,7 @@ func (api *APIServices) TransferWorkspaceOwnership(ctx context.Context, user *db
 
 
 <a name="APIServices.UpdateAIApplication"></a>
-### func \(\*APIServices\) [UpdateAIApplication](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L149-L155>)
+### func \(\*APIServices\) [UpdateAIApplication](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L150-L156>)
 
 ```go
 func (api *APIServices) UpdateAIApplication(c context.Context, user *db.User, workspace *db.Workspace, aiApplication *db.AIApplication, req irmincore.UpdateAIApplicationRequest) (*db.AIApplication, error)
@@ -16914,7 +17042,7 @@ func (s *ConnectionSubscriptionService) UnregisterSubscriptionFromConnector(ctx 
 UnregisterSubscriptionFromConnector removes a subscription from the connector service.
 
 <a name="CreateCustomToolRequest"></a>
-## type [CreateCustomToolRequest](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L664-L674>)
+## type [CreateCustomToolRequest](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L665-L675>)
 
 CreateCustomToolRequest represents the request body for creating a custom tool. This is defined here to avoid circular imports with the SDK.
 
@@ -17091,7 +17219,7 @@ const (
 ```
 
 <a name="UpdateCustomToolRequest"></a>
-## type [UpdateCustomToolRequest](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L677-L688>)
+## type [UpdateCustomToolRequest](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-applications.go#L678-L689>)
 
 UpdateCustomToolRequest represents the request body for updating a custom tool.
 
@@ -17158,18 +17286,18 @@ func (t *UsageTracker) TrackSeats(workspaceID uint)
 TrackSeats emits a seat\-count usage event for the given workspace. The quantity is \(member \+ pending invite count\) \- 1, since the first seat is free.
 
 <a name="WriteResult"></a>
-## type [WriteResult](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1398-L1405>)
+## type [WriteResult](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1400-L1407>)
 
 WriteResult represents the result of a write operation.
 
 ```go
 type WriteResult struct {
-    Path             string  `json:"path"`
-    Operation        string  `json:"operation"`
-    Committed        bool    `json:"committed"`
-    CommitID         *string `json:"commit_id,omitempty"`
-    PendingID        *string `json:"pending_id,omitempty"`
-    RequiresApproval bool    `json:"requires_approval"`
+    Path               string  `json:"path"`
+    Operation          string  `json:"operation"`
+    Committed          bool    `json:"committed"`
+    CommitID           *string `json:"commit_id,omitempty"`
+    PendingOperationID *string `json:"pending_operation_id,omitempty"`
+    RequiresApproval   bool    `json:"requires_approval"`
 }
 ```
 
@@ -17249,6 +17377,299 @@ import "irmin-api/templates"
 ```go
 var SwaggerUIHTML []byte
 ```
+
+# toolregistry
+
+```go
+import "irmin-api/toolregistry"
+```
+
+Package toolregistry owns the canonical Irmin tool contract.
+
+## Index
+
+- [Constants](<#constants>)
+- [Variables](<#variables>)
+- [func CanonicalCustomName\(label string\) string](<#CanonicalCustomName>)
+- [func RedactForAudit\(input any, policy AuditRedaction\) any](<#RedactForAudit>)
+- [func Register\[In any\]\(registry \*Registry, server \*sdkmcp.Server, name string, description string, handler sdkmcp.ToolHandlerFor\[In, ToolOutput\]\)](<#Register>)
+- [func ValidateDescriptor\(descriptor Descriptor\) error](<#ValidateDescriptor>)
+- [func WithApproval\(ctx context.Context\) context.Context](<#WithApproval>)
+- [func WithWorkspaceBinding\(ctx context.Context, workspaceSlug string\) context.Context](<#WithWorkspaceBinding>)
+- [type ApprovalStager](<#ApprovalStager>)
+- [type AuditRedaction](<#AuditRedaction>)
+  - [func AuditRedactionFor\(name string\) AuditRedaction](<#AuditRedactionFor>)
+- [type CancellationPolicy](<#CancellationPolicy>)
+- [type Descriptor](<#Descriptor>)
+  - [func Describe\(name, description string\) Descriptor](<#Describe>)
+- [type Handler](<#Handler>)
+- [type Registry](<#Registry>)
+  - [func New\(stager ...ApprovalStager\) \*Registry](<#New>)
+  - [func \(r \*Registry\) Add\(descriptor Descriptor\) error](<#Registry.Add>)
+  - [func \(r \*Registry\) Execute\(ctx context.Context, name string, request \*sdkmcp.CallToolRequest, arguments json.RawMessage\) \(\*sdkmcp.CallToolResult, ToolOutput, error\)](<#Registry.Execute>)
+  - [func \(r \*Registry\) Get\(name string\) \(Descriptor, bool\)](<#Registry.Get>)
+  - [func \(r \*Registry\) List\(\) \[\]Descriptor](<#Registry.List>)
+- [type Risk](<#Risk>)
+- [type ToolOutput](<#ToolOutput>)
+  - [func OutputFromResult\(result \*sdkmcp.CallToolResult\) ToolOutput](<#OutputFromResult>)
+
+
+## Constants
+
+<a name="CatalogVersion"></a>
+
+```go
+const CatalogVersion = 1
+```
+
+## Variables
+
+<a name="ErrApprovalRequired"></a>
+
+```go
+var ErrApprovalRequired = errors.New("destructive tool requires authenticated approval")
+```
+
+<a name="CanonicalCustomName"></a>
+## func [CanonicalCustomName](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L259>)
+
+```go
+func CanonicalCustomName(label string) string
+```
+
+CanonicalCustomName turns an administrator\-defined label into a stable catalog name.
+
+<a name="RedactForAudit"></a>
+## func [RedactForAudit](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L54>)
+
+```go
+func RedactForAudit(input any, policy AuditRedaction) any
+```
+
+RedactForAudit recursively replaces descriptor\-selected fields before persistence.
+
+<a name="Register"></a>
+## func [Register](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L309-L315>)
+
+```go
+func Register[In any](registry *Registry, server *sdkmcp.Server, name string, description string, handler sdkmcp.ToolHandlerFor[In, ToolOutput])
+```
+
+Register binds one typed handler to both the MCP SDK and the canonical registry.
+
+<a name="ValidateDescriptor"></a>
+## func [ValidateDescriptor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L267>)
+
+```go
+func ValidateDescriptor(descriptor Descriptor) error
+```
+
+
+
+<a name="WithApproval"></a>
+## func [WithApproval](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L127>)
+
+```go
+func WithApproval(ctx context.Context) context.Context
+```
+
+WithApproval marks an approval replay after the operation was atomically claimed.
+
+<a name="WithWorkspaceBinding"></a>
+## func [WithWorkspaceBinding](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L134>)
+
+```go
+func WithWorkspaceBinding(ctx context.Context, workspaceSlug string) context.Context
+```
+
+WithWorkspaceBinding binds a user\-token MCP session to the selected workspace.
+
+<a name="ApprovalStager"></a>
+## type [ApprovalStager](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L115-L120>)
+
+
+
+```go
+type ApprovalStager func(
+    context.Context,
+    Descriptor,
+    *sdkmcp.CallToolRequest,
+    json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
+```
+
+<a name="AuditRedaction"></a>
+## type [AuditRedaction](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L40-L42>)
+
+
+
+```go
+type AuditRedaction struct {
+    Fields []string `json:"fields"`
+}
+```
+
+<a name="AuditRedactionFor"></a>
+### func [AuditRedactionFor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L45>)
+
+```go
+func AuditRedactionFor(name string) AuditRedaction
+```
+
+AuditRedactionFor returns the catalog\-owned redaction policy for a tool.
+
+<a name="CancellationPolicy"></a>
+## type [CancellationPolicy](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L35-L38>)
+
+
+
+```go
+type CancellationPolicy struct {
+    Cancellable bool  `json:"cancellable"`
+    TimeoutMS   int64 `json:"timeout_ms"`
+}
+```
+
+<a name="Descriptor"></a>
+## type [Descriptor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L161-L176>)
+
+
+
+```go
+type Descriptor struct {
+    Name            string             `json:"name"`
+    CatalogVersion  int                `json:"catalog_version"`
+    Domain          string             `json:"domain"`
+    Action          string             `json:"action"`
+    Description     string             `json:"description"`
+    Summary         string             `json:"summary"`
+    ApprovalPreview string             `json:"approval_preview"`
+    Risk            Risk               `json:"risk"`
+    Capability      string             `json:"capability"`
+    InputSchema     any                `json:"input_schema"`
+    OutputSchema    any                `json:"output_schema"`
+    Cancellation    CancellationPolicy `json:"cancellation"`
+    AuditRedaction  AuditRedaction     `json:"audit_redaction"`
+    Handler         Handler            `json:"-"`
+}
+```
+
+<a name="Describe"></a>
+### func [Describe](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L284>)
+
+```go
+func Describe(name, description string) Descriptor
+```
+
+Describe returns the canonical policy metadata shared by registration, prompts, and audit adapters.
+
+<a name="Handler"></a>
+## type [Handler](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L109-L113>)
+
+
+
+```go
+type Handler func(
+    context.Context,
+    *sdkmcp.CallToolRequest,
+    json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
+```
+
+<a name="Registry"></a>
+## type [Registry](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L178-L182>)
+
+
+
+```go
+type Registry struct {
+    // contains filtered or unexported fields
+}
+```
+
+<a name="New"></a>
+### func [New](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L184>)
+
+```go
+func New(stager ...ApprovalStager) *Registry
+```
+
+
+
+<a name="Registry.Add"></a>
+### func \(\*Registry\) [Add](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L192>)
+
+```go
+func (r *Registry) Add(descriptor Descriptor) error
+```
+
+
+
+<a name="Registry.Execute"></a>
+### func \(\*Registry\) [Execute](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L224-L229>)
+
+```go
+func (r *Registry) Execute(ctx context.Context, name string, request *sdkmcp.CallToolRequest, arguments json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
+```
+
+
+
+<a name="Registry.Get"></a>
+### func \(\*Registry\) [Get](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L217>)
+
+```go
+func (r *Registry) Get(name string) (Descriptor, bool)
+```
+
+
+
+<a name="Registry.List"></a>
+### func \(\*Registry\) [List](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L205>)
+
+```go
+func (r *Registry) List() []Descriptor
+```
+
+
+
+<a name="Risk"></a>
+## type [Risk](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L27>)
+
+
+
+```go
+type Risk string
+```
+
+<a name="RiskRead"></a>
+
+```go
+const (
+    RiskRead        Risk = "read"
+    RiskWrite       Risk = "write"
+    RiskDestructive Risk = "destructive"
+)
+```
+
+<a name="ToolOutput"></a>
+## type [ToolOutput](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L89-L91>)
+
+ToolOutput is the stable structured MCP result envelope.
+
+```go
+type ToolOutput struct {
+    Data any `json:"data"`
+}
+```
+
+<a name="OutputFromResult"></a>
+### func [OutputFromResult](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L94>)
+
+```go
+func OutputFromResult(result *sdkmcp.CallToolResult) ToolOutput
+```
+
+OutputFromResult adapts legacy JSON text results into the canonical structured envelope.
 
 # utils
 
@@ -17737,7 +18158,7 @@ type AsyncResult[T any] struct {
 ```
 
 <a name="CoreAPIEnv"></a>
-## type [CoreAPIEnv](<https://github.com/IrminData/irmin-platform/blob/main/core/utils/loadEnvs.go#L13-L86>)
+## type [CoreAPIEnv](<https://github.com/IrminData/irmin-platform/blob/main/core/utils/loadEnvs.go#L13-L87>)
 
 CoreAPIEnv is a struct that holds the environment variables for the data engine.
 
@@ -17754,6 +18175,7 @@ type CoreAPIEnv struct {
     AIServiceSystemToken         string // Key to authenticate system requests to the AI service
     OpenAIAPIKey                 string // Key to authenticate system requests to the OpenAI API
     MCPHTTPPath                  string // Mount path for the embedded MCP streamable HTTP endpoint
+    MCPTrustedProxyCIDRs         string // Comma-separated proxy CIDRs allowed to supply forwarded client IP headers
     OrchestratorEnabled          bool   // Flag to enable the orchestrator
     SqidAlphabet                 string // Alphabet to use for SQIDs
     DatabaseConnectionString     string // Postgres DB connection string
@@ -17819,7 +18241,7 @@ type CoreAPIEnv struct {
 ```
 
 <a name="LoadEnv"></a>
-### func [LoadEnv](<https://github.com/IrminData/irmin-platform/blob/main/core/utils/loadEnvs.go#L135>)
+### func [LoadEnv](<https://github.com/IrminData/irmin-platform/blob/main/core/utils/loadEnvs.go#L136>)
 
 ```go
 func LoadEnv() (*CoreAPIEnv, error)
@@ -18042,6 +18464,18 @@ func ValidateSignedToken(secret []byte, token string) (*SignedURLPayload, error)
 ```
 
 ValidateSignedToken verifies the HMAC signature and expiry of a signed token. Returns the decoded payload if valid, or an error if the token is invalid or expired.
+
+# install\-duckdb\-extensions
+
+```go
+import "irmin-api/cmd/install-duckdb-extensions"
+```
+
+Command install\-duckdb\-extensions downloads the pinned DuckDB extensions required by the runtime image. It is run only while building the container.
+
+## Index
+
+
 
 # config
 
@@ -19069,12 +19503,12 @@ import "irmin-api/mcp/helpers"
 ## Index
 
 - [func MCPError\(message string\) \*sdkmcp.CallToolResult](<#MCPError>)
-- [func MCPSuccess\(data any\) \(\*sdkmcp.CallToolResult, error\)](<#MCPSuccess>)
+- [func MCPSuccess\(data any\) \(\*sdkmcp.CallToolResult, toolregistry.ToolOutput, error\)](<#MCPSuccess>)
 - [func ValidateUser\(ctx context.Context, getUser func\(ctx context.Context\) \(\*db.User, bool\)\) \(\*db.User, error\)](<#ValidateUser>)
 
 
 <a name="MCPError"></a>
-## func [MCPError](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/helpers/helpers.go#L15>)
+## func [MCPError](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/helpers/helpers.go#L16>)
 
 ```go
 func MCPError(message string) *sdkmcp.CallToolResult
@@ -19083,16 +19517,16 @@ func MCPError(message string) *sdkmcp.CallToolResult
 MCPError creates a standardized error response for MCP tools.
 
 <a name="MCPSuccess"></a>
-## func [MCPSuccess](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/helpers/helpers.go#L23>)
+## func [MCPSuccess](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/helpers/helpers.go#L24>)
 
 ```go
-func MCPSuccess(data any) (*sdkmcp.CallToolResult, error)
+func MCPSuccess(data any) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error)
 ```
 
 MCPSuccess creates a standardized success response for MCP tools with JSON data.
 
 <a name="ValidateUser"></a>
-## func [ValidateUser](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/helpers/helpers.go#L38>)
+## func [ValidateUser](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/helpers/helpers.go#L39>)
 
 ```go
 func ValidateUser(ctx context.Context, getUser func(ctx context.Context) (*db.User, bool)) (*db.User, error)
@@ -19163,6 +19597,7 @@ import "irmin-api/mcp/tools"
 - [Constants](<#constants>)
 - [type MCPTools](<#MCPTools>)
   - [func NewMCPTools\(server \*sdkmcp.Server, apiServices \*services.APIServices, getUser func\(ctx context.Context\) \(\*db.User, bool\)\) \*MCPTools](<#NewMCPTools>)
+  - [func \(mcpTools \*MCPTools\) Catalog\(\) \[\]toolregistry.Descriptor](<#MCPTools.Catalog>)
   - [func \(mcpTools \*MCPTools\) RegisterAll\(\)](<#MCPTools.RegisterAll>)
   - [func \(mcpTools \*MCPTools\) RegisterConnectionTools\(\)](<#MCPTools.RegisterConnectionTools>)
   - [func \(mcpTools \*MCPTools\) RegisterConnectorTools\(\)](<#MCPTools.RegisterConnectorTools>)
@@ -19178,6 +19613,7 @@ import "irmin-api/mcp/tools"
   - [func \(mcpTools \*MCPTools\) RegisterWorkflowRunsTools\(\)](<#MCPTools.RegisterWorkflowRunsTools>)
   - [func \(mcpTools \*MCPTools\) RegisterWorkflowsTools\(\)](<#MCPTools.RegisterWorkflowsTools>)
   - [func \(mcpTools \*MCPTools\) RegisterWorkspaceTools\(\)](<#MCPTools.RegisterWorkspaceTools>)
+  - [func \(mcpTools \*MCPTools\) Registry\(\) \*toolregistry.Registry](<#MCPTools.Registry>)
 - [type RetrieveContextRequest](<#RetrieveContextRequest>)
 
 
@@ -19193,7 +19629,7 @@ const (
 ```
 
 <a name="MCPTools"></a>
-## type [MCPTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/tools.go#L12-L16>)
+## type [MCPTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/tools.go#L16-L21>)
 
 
 
@@ -19204,7 +19640,7 @@ type MCPTools struct {
 ```
 
 <a name="NewMCPTools"></a>
-### func [NewMCPTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/tools.go#L18-L22>)
+### func [NewMCPTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/tools.go#L23-L27>)
 
 ```go
 func NewMCPTools(server *sdkmcp.Server, apiServices *services.APIServices, getUser func(ctx context.Context) (*db.User, bool)) *MCPTools
@@ -19212,8 +19648,17 @@ func NewMCPTools(server *sdkmcp.Server, apiServices *services.APIServices, getUs
 
 
 
+<a name="MCPTools.Catalog"></a>
+### func \(\*MCPTools\) [Catalog](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/tools.go#L108>)
+
+```go
+func (mcpTools *MCPTools) Catalog() []toolregistry.Descriptor
+```
+
+Catalog returns the deterministic, handler\-free tool catalog.
+
 <a name="MCPTools.RegisterAll"></a>
-### func \(\*MCPTools\) [RegisterAll](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/tools.go#L27>)
+### func \(\*MCPTools\) [RegisterAll](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/tools.go#L90>)
 
 ```go
 func (mcpTools *MCPTools) RegisterAll()
@@ -19222,7 +19667,7 @@ func (mcpTools *MCPTools) RegisterAll()
 RegisterAll registers all tools in this package.
 
 <a name="MCPTools.RegisterConnectionTools"></a>
-### func \(\*MCPTools\) [RegisterConnectionTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/connections.go#L48>)
+### func \(\*MCPTools\) [RegisterConnectionTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/connections.go#L50>)
 
 ```go
 func (mcpTools *MCPTools) RegisterConnectionTools()
@@ -19231,7 +19676,7 @@ func (mcpTools *MCPTools) RegisterConnectionTools()
 RegisterConnectionTools registers all connection\-related tools.
 
 <a name="MCPTools.RegisterConnectorTools"></a>
-### func \(\*MCPTools\) [RegisterConnectorTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/connectors.go#L32>)
+### func \(\*MCPTools\) [RegisterConnectorTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/connectors.go#L34>)
 
 ```go
 func (mcpTools *MCPTools) RegisterConnectorTools()
@@ -19240,7 +19685,7 @@ func (mcpTools *MCPTools) RegisterConnectorTools()
 RegisterConnectorTools registers all connector\-related tools.
 
 <a name="MCPTools.RegisterDocsTools"></a>
-### func \(\*MCPTools\) [RegisterDocsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/docs.go#L35>)
+### func \(\*MCPTools\) [RegisterDocsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/docs.go#L37>)
 
 ```go
 func (mcpTools *MCPTools) RegisterDocsTools()
@@ -19249,7 +19694,7 @@ func (mcpTools *MCPTools) RegisterDocsTools()
 RegisterDocsTools registers the tools for documentation retrieval
 
 <a name="MCPTools.RegisterQueryTools"></a>
-### func \(\*MCPTools\) [RegisterQueryTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/queries.go#L40>)
+### func \(\*MCPTools\) [RegisterQueryTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/queries.go#L42>)
 
 ```go
 func (mcpTools *MCPTools) RegisterQueryTools()
@@ -19258,7 +19703,7 @@ func (mcpTools *MCPTools) RegisterQueryTools()
 RegisterQueryTools registers all query\-related tools.
 
 <a name="MCPTools.RegisterRepositoryBranchesTools"></a>
-### func \(\*MCPTools\) [RegisterRepositoryBranchesTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-branches.go#L36>)
+### func \(\*MCPTools\) [RegisterRepositoryBranchesTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-branches.go#L38>)
 
 ```go
 func (mcpTools *MCPTools) RegisterRepositoryBranchesTools()
@@ -19267,7 +19712,7 @@ func (mcpTools *MCPTools) RegisterRepositoryBranchesTools()
 RegisterRepositoryBranchesTools registers all repository branch\-related tools.
 
 <a name="MCPTools.RegisterRepositoryCommitsTools"></a>
-### func \(\*MCPTools\) [RegisterRepositoryCommitsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-commits.go#L34>)
+### func \(\*MCPTools\) [RegisterRepositoryCommitsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-commits.go#L36>)
 
 ```go
 func (mcpTools *MCPTools) RegisterRepositoryCommitsTools()
@@ -19276,7 +19721,7 @@ func (mcpTools *MCPTools) RegisterRepositoryCommitsTools()
 RegisterRepositoryCommitsTools registers all repository commit\-related tools.
 
 <a name="MCPTools.RegisterRepositoryCompareTools"></a>
-### func \(\*MCPTools\) [RegisterRepositoryCompareTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-compare.go#L36>)
+### func \(\*MCPTools\) [RegisterRepositoryCompareTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-compare.go#L38>)
 
 ```go
 func (mcpTools *MCPTools) RegisterRepositoryCompareTools()
@@ -19285,7 +19730,7 @@ func (mcpTools *MCPTools) RegisterRepositoryCompareTools()
 RegisterRepositoryCompareTools registers all repository compare\-related tools.
 
 <a name="MCPTools.RegisterRepositoryObjectsTools"></a>
-### func \(\*MCPTools\) [RegisterRepositoryObjectsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-objects.go#L87>)
+### func \(\*MCPTools\) [RegisterRepositoryObjectsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-objects.go#L89>)
 
 ```go
 func (mcpTools *MCPTools) RegisterRepositoryObjectsTools()
@@ -19294,7 +19739,7 @@ func (mcpTools *MCPTools) RegisterRepositoryObjectsTools()
 RegisterRepositoryObjectsTools registers all repository object\-related tools.
 
 <a name="MCPTools.RegisterRepositoryTagsTools"></a>
-### func \(\*MCPTools\) [RegisterRepositoryTagsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-tags.go#L30>)
+### func \(\*MCPTools\) [RegisterRepositoryTagsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-tags.go#L32>)
 
 ```go
 func (mcpTools *MCPTools) RegisterRepositoryTagsTools()
@@ -19303,7 +19748,7 @@ func (mcpTools *MCPTools) RegisterRepositoryTagsTools()
 RegisterRepositoryTagsTools registers all repository tag\-related tools.
 
 <a name="MCPTools.RegisterRepositoryTools"></a>
-### func \(\*MCPTools\) [RegisterRepositoryTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repositories.go#L36>)
+### func \(\*MCPTools\) [RegisterRepositoryTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repositories.go#L38>)
 
 ```go
 func (mcpTools *MCPTools) RegisterRepositoryTools()
@@ -19312,7 +19757,7 @@ func (mcpTools *MCPTools) RegisterRepositoryTools()
 RegisterRepositoryTools registers all repository\-related tools.
 
 <a name="MCPTools.RegisterScriptsTools"></a>
-### func \(\*MCPTools\) [RegisterScriptsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/scripts.go#L40>)
+### func \(\*MCPTools\) [RegisterScriptsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/scripts.go#L42>)
 
 ```go
 func (mcpTools *MCPTools) RegisterScriptsTools()
@@ -19321,7 +19766,7 @@ func (mcpTools *MCPTools) RegisterScriptsTools()
 
 
 <a name="MCPTools.RegisterWorkflowRunsTools"></a>
-### func \(\*MCPTools\) [RegisterWorkflowRunsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/workflow-runs.go#L29>)
+### func \(\*MCPTools\) [RegisterWorkflowRunsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/workflow-runs.go#L31>)
 
 ```go
 func (mcpTools *MCPTools) RegisterWorkflowRunsTools()
@@ -19330,7 +19775,7 @@ func (mcpTools *MCPTools) RegisterWorkflowRunsTools()
 
 
 <a name="MCPTools.RegisterWorkflowsTools"></a>
-### func \(\*MCPTools\) [RegisterWorkflowsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/workflows.go#L52>)
+### func \(\*MCPTools\) [RegisterWorkflowsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/workflows.go#L54>)
 
 ```go
 func (mcpTools *MCPTools) RegisterWorkflowsTools()
@@ -19339,7 +19784,7 @@ func (mcpTools *MCPTools) RegisterWorkflowsTools()
 RegisterWorkflowsTools registers all workflows\-related tools.
 
 <a name="MCPTools.RegisterWorkspaceTools"></a>
-### func \(\*MCPTools\) [RegisterWorkspaceTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/workspaces.go#L15>)
+### func \(\*MCPTools\) [RegisterWorkspaceTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/workspaces.go#L17>)
 
 ```go
 func (mcpTools *MCPTools) RegisterWorkspaceTools()
@@ -19347,8 +19792,17 @@ func (mcpTools *MCPTools) RegisterWorkspaceTools()
 
 RegisterWorkspaceTools registers the tools for workspace management.
 
+<a name="MCPTools.Registry"></a>
+### func \(\*MCPTools\) [Registry](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/tools.go#L38>)
+
+```go
+func (mcpTools *MCPTools) Registry() *toolregistry.Registry
+```
+
+Registry returns the request\-scoped canonical execution catalog.
+
 <a name="RetrieveContextRequest"></a>
-## type [RetrieveContextRequest](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/docs.go#L19-L24>)
+## type [RetrieveContextRequest](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/docs.go#L21-L26>)
 
 RetrieveContextRequest represents the request structure for retrieving context
 

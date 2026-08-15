@@ -27,10 +27,56 @@ class ToolsService {
   }
 
   async getTools(client: MultiServerMCPClient) {
-    return await client.getTools();
+    const tools = await client.getTools();
+    const catalogTool = tools.find(
+      (tool) => tool.name === 'irmin_tool_catalog_list'
+    );
+    if (!catalogTool) {
+      throw new Error('Irmin MCP did not publish its canonical tool catalog');
+    }
+    const result = await catalogTool.invoke({});
+    const descriptors = this.extractDescriptors(result);
+    if (descriptors.length === 0) {
+      throw new Error('Irmin MCP returned an empty or malformed tool catalog');
+    }
+    const byName = new Map(
+      descriptors.map((descriptor) => [descriptor.name, descriptor])
+    );
+    for (const tool of tools) {
+      const descriptor = byName.get(tool.name);
+      if (descriptor) {
+        tool.metadata = { ...tool.metadata, irminDescriptor: descriptor };
+      }
+    }
+    return tools;
   }
 
-  getIrminMCPConfig(authToken?: string) {
+  private extractDescriptors(
+    value: unknown
+  ): Array<Record<string, unknown> & { name: string }> {
+    const found: Array<Record<string, unknown> & { name: string }> = [];
+    const visit = (candidate: unknown) => {
+      if (Array.isArray(candidate)) {
+        for (const item of candidate) visit(item);
+        return;
+      }
+      if (typeof candidate !== 'object' || candidate === null) return;
+      const record = candidate as Record<string, unknown>;
+      if (
+        typeof record.name === 'string' &&
+        typeof record.capability === 'string' &&
+        typeof record.catalog_version === 'number'
+      ) {
+        found.push(record as Record<string, unknown> & { name: string });
+        return;
+      }
+      for (const child of Object.values(record)) visit(child);
+    };
+    visit(value);
+    return found;
+  }
+
+  getIrminMCPConfig(authToken?: string, workspaceSlug?: string) {
     if (!authToken) {
       throw new Error('Auth token is required for Irmin MCP server');
     }
@@ -43,6 +89,7 @@ class ToolsService {
         type: 'http' as const,
         headers: {
           Authorization: `Bearer ${authToken}`,
+          ...(workspaceSlug ? { 'X-Irmin-Workspace': workspaceSlug } : {}),
           // Accept header is automatically added by the adapter for SSE connections
         },
         // Enforce tool execution timeout

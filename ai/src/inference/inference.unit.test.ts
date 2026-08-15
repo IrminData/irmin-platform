@@ -167,5 +167,6 @@ describe('inference gateway', () => {
       completed.map((event) => event.timeToFirstTokenMs),
       [10, 30]
     );
+    assert.equal(new Set(completed.map((event) => event.callId)).size, 2);
   });
 });

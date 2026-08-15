@@ -8,6 +8,8 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
@@ -96,26 +98,27 @@ func (mcpTools *MCPTools) RegisterRepositoryObjectsTools() {
 	mcpTools.registerValidateRepositoryObjectTool()
 }
 
-// registerListRepositoryObjectsTool registers the irmin_list_repository_objects tool for listing repository objects in a workspace
+// registerListRepositoryObjectsTool registers the irmin_repository_object_list tool for listing repository objects in a workspace
 func (mcpTools *MCPTools) registerListRepositoryObjectsTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_list_repository_objects",
-			Description: "List all data objects (files and folders) in a repository at a specific reference. Objects can be structured data (JSON, CSV, XML, YAML) or unstructured files (images, videos, documents). Returns a hierarchical tree structure with object metadata including path, type, size, and modification info. Requires workspace_slug and repository_slug. Optionally specify ref (branch, tag, or commit) to list objects at that version. Use this to explore repository contents before reading or querying data.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoryObjectsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_object_list",
+		"List all data objects (files and folders) in a repository at a specific reference. Objects can be structured data (JSON, CSV, XML, YAML) or unstructured files (images, videos, documents). Returns a hierarchical tree structure with object metadata including path, type, size, and modification info. Requires workspace_slug and repository_slug. Optionally specify ref (branch, tag, or commit) to list objects at that version. Use this to explore repository contents before reading or querying data.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoryObjectsArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -128,7 +131,7 @@ func (mcpTools *MCPTools) registerListRepositoryObjectsTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Determine the ref to list the objects from
@@ -149,7 +152,7 @@ func (mcpTools *MCPTools) registerListRepositoryObjectsTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error listing repository objects", "error", err)
-				return helpers.MCPError("Error listing repository objects"), struct{}{}, nil
+				return helpers.MCPError("Error listing repository objects"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Format the object for the response.
@@ -159,38 +162,39 @@ func (mcpTools *MCPTools) registerListRepositoryObjectsTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting repository object", "error", err)
-				return helpers.MCPError("Error formatting repository object"), struct{}{}, nil
+				return helpers.MCPError("Error formatting repository object"), toolregistry.ToolOutput{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(repositoryObjectResponse)
+			result, resultOutput, err := helpers.MCPSuccess(repositoryObjectResponse)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerGetRepositoryObjectSchemaTool registers the irmin_get_repository_object_schema tool for getting the schema of a repository object in a workspace
+// registerGetRepositoryObjectSchemaTool registers the irmin_repository_object_schema_get tool for getting the schema of a repository object in a workspace
 func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_get_repository_object_schema",
-			Description: "Retrieve the data schema for a structured repository object, showing column names, data types, and descriptions without loading the full content. Essential for writing SQL queries against large datasets. Returns schema metadata derived from the object structure. Requires workspace_slug, repository_slug, and path. Optionally specify branch (defaults to repository's default branch). Use this before querying to understand available columns and write efficient SQL queries.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryObjectSchemaArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_object_schema_get",
+		"Retrieve the data schema for a structured repository object, showing column names, data types, and descriptions without loading the full content. Essential for writing SQL queries against large datasets. Returns schema metadata derived from the object structure. Requires workspace_slug, repository_slug, and path. Optionally specify branch (defaults to repository's default branch). Use this before querying to understand available columns and write efficient SQL queries.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryObjectSchemaArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -203,7 +207,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Determine the branch to get the repository object schema from
@@ -224,7 +228,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
-				return helpers.MCPError("Failed to get repository object"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository object"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository object schema
@@ -239,38 +243,39 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectSchemaTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object schema", "error", err)
-				return helpers.MCPError("Failed to get repository object schema"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository object schema"), toolregistry.ToolOutput{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(schema)
+			result, resultOutput, err := helpers.MCPSuccess(schema)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerGetRepositoryObjectContentTool registers the irmin_get_repository_object_content tool for getting the content of a repository object in a workspace
+// registerGetRepositoryObjectContentTool registers the irmin_repository_object_content_get tool for getting the content of a repository object in a workspace
 func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_get_repository_object_content",
-			Description: "Retrieve the full content of a text-based repository object. Supports structured formats (JSON, CSV, YAML, XML) and text files (TXT, SQL, markdown). Returns the raw file content with MIME type metadata. Requires workspace_slug, repository_slug, and path. Optionally specify branch. Large files are automatically size-limited for MCP. Binary files cannot be fetched via MCP. Use this to read configuration files, examine data samples, or analyze individual data objects.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryObjectContentArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_object_content_get",
+		"Retrieve the full content of a text-based repository object. Supports structured formats (JSON, CSV, YAML, XML) and text files (TXT, SQL, markdown). Returns the raw file content with MIME type metadata. Requires workspace_slug, repository_slug, and path. Optionally specify branch. Large files are automatically size-limited for MCP. Binary files cannot be fetched via MCP. Use this to read configuration files, examine data samples, or analyze individual data objects.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryObjectContentArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -283,7 +288,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Determine the branch to get the repository object content from
@@ -304,7 +309,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
-				return helpers.MCPError("Failed to get repository object"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository object"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository object content
@@ -319,7 +324,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object content", "error", err)
-				return helpers.MCPError("Failed to get repository object content"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository object content"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Detect MIME type
@@ -342,37 +347,38 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectContentTool() {
 							},
 						},
 					},
-				}, struct{}{}, nil
+				}, toolregistry.ToolOutput{}, nil
 			}
 
 			// If not text-based, return error
 			return helpers.MCPError(
 				"The content of this object is not a supported text format and cannot be fetched using the MCP server. Structured objects can be still be queried using SQL. Unstructured objects are viewable and downloadable in the Irmin Console, or through the API by the user.",
-			), struct{}{}, nil
+			), toolregistry.ToolOutput{}, nil
 		},
 	)
 }
 
-// registerGetRepositoryObjectHistoryTool registers the irmin_get_repository_object_history tool for getting the history of a repository object in a workspace
+// registerGetRepositoryObjectHistoryTool registers the irmin_repository_object_history_get tool for getting the history of a repository object in a workspace
 func (mcpTools *MCPTools) registerGetRepositoryObjectHistoryTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_get_repository_object_history",
-			Description: "Retrieve the version history of a specific data object, showing all commits that modified it. Returns an array of commits with SHA, message, author, timestamp, and change type. Requires workspace_slug, repository_slug, and path. Optionally specify branch to trace history along that branch. Use this to understand when and why data was changed, track data lineage, or find who made specific modifications.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryObjectHistoryArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_object_history_get",
+		"Retrieve the version history of a specific data object, showing all commits that modified it. Returns an array of commits with SHA, message, author, timestamp, and change type. Requires workspace_slug, repository_slug, and path. Optionally specify branch to trace history along that branch. Use this to understand when and why data was changed, track data lineage, or find who made specific modifications.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args getRepositoryObjectHistoryArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -385,7 +391,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectHistoryTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Determine the branch to get the repository object history from
@@ -406,7 +412,7 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectHistoryTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
-				return helpers.MCPError("Failed to get repository object"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository object"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository object history
@@ -420,38 +426,39 @@ func (mcpTools *MCPTools) registerGetRepositoryObjectHistoryTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object history", "error", err)
-				return helpers.MCPError("Failed to get repository object history"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository object history"), toolregistry.ToolOutput{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(history)
+			result, resultOutput, err := helpers.MCPSuccess(history)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerSaveTextRepositoryObjectTool registers the irmin_save_text_repository_object tool for saving a text repository object in a workspace, which can be something like a TXT, JSON, CSV, YAML, XML, etc.
+// registerSaveTextRepositoryObjectTool registers the irmin_repository_object_text_save tool for saving a text repository object in a workspace, which can be something like a TXT, JSON, CSV, YAML, XML, etc.
 func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_save_text_repository_object",
-			Description: "Create a new text-based data object or overwrite an existing one with text content. Supports structured formats (JSON, CSV, YAML, XML) and plain text. The operation creates an uncommitted change that must be committed separately. Requires workspace_slug, repository_slug, path (full path with filename), and content string. Optionally specify branch. Returns the saved object metadata. Use this to add or update configuration files, data files, or any text-based content in the repository.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args saveTextRepositoryObjectArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_object_text_save",
+		"Create a new text-based data object or overwrite an existing one with text content. Supports structured formats (JSON, CSV, YAML, XML) and plain text. The operation creates an uncommitted change that must be committed separately. Requires workspace_slug, repository_slug, path (full path with filename), and content string. Optionally specify branch. Returns the saved object metadata. Use this to add or update configuration files, data files, or any text-based content in the repository.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args saveTextRepositoryObjectArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -464,7 +471,7 @@ func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Determine the branch to save the text repository object to
@@ -491,7 +498,9 @@ func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to save text repository object", "error", err)
-				return helpers.MCPError("Failed to save text repository object, please try again"), struct{}{}, nil
+				return helpers.MCPError(
+					"Failed to save text repository object, please try again",
+				), toolregistry.ToolOutput{}, nil
 			}
 
 			// Invalidate caches
@@ -504,38 +513,39 @@ func (mcpTools *MCPTools) registerSaveTextRepositoryObjectTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting repository object", "error", err)
-				return helpers.MCPError("Error formatting repository object"), struct{}{}, nil
+				return helpers.MCPError("Error formatting repository object"), toolregistry.ToolOutput{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(repositoryObjectResponse)
+			result, resultOutput, err := helpers.MCPSuccess(repositoryObjectResponse)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerUploadRepositoryObjectFromURLTool registers the irmin_upload_repository_object_from_url tool for uploading a repository object from a URL in a workspace
+// registerUploadRepositoryObjectFromURLTool registers the irmin_repository_object_upload_url tool for uploading a repository object from a URL in a workspace
 func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_upload_repository_object_from_url",
-			Description: "Upload any file type to the repository by fetching it from a URL. Supports all file types including structured data (JSON, CSV, Excel), documents (PDF, TXT), and media files. Makes a GET request to the specified URL with optional custom headers. Creates an uncommitted change that must be committed separately. Requires workspace_slug, repository_slug, path, and url. Optionally provide headers for authentication. Returns uploaded object metadata. Use this to import external data sources or sync files from web APIs.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args uploadRepositoryObjectFromURLArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_object_upload_url",
+		"Upload any file type to the repository by fetching it from a URL. Supports all file types including structured data (JSON, CSV, Excel), documents (PDF, TXT), and media files. Makes a GET request to the specified URL with optional custom headers. Creates an uncommitted change that must be committed separately. Requires workspace_slug, repository_slug, path, and url. Optionally provide headers for authentication. Returns uploaded object metadata. Use this to import external data sources or sync files from web APIs.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args uploadRepositoryObjectFromURLArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -548,7 +558,7 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Determine the branch to upload the repository object from the URL to
@@ -572,7 +582,7 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to upload repository object from URL", "error", err)
-				return helpers.MCPError("Failed to upload repository object from URL"), struct{}{}, nil
+				return helpers.MCPError("Failed to upload repository object from URL"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Invalidate caches
@@ -585,40 +595,41 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting repository object", "error", err)
-				return helpers.MCPError("Error formatting repository object"), struct{}{}, nil
+				return helpers.MCPError("Error formatting repository object"), toolregistry.ToolOutput{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(repositoryObjectResponse)
+			result, resultOutput, err := helpers.MCPSuccess(repositoryObjectResponse)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerMoveOrCopyRepositoryObjectTool registers the irmin_move_or_copy_repository_object tool for moving or copying a repository object in a workspace
+// registerMoveOrCopyRepositoryObjectTool registers the irmin_repository_object_move_or_copy tool for moving or copying a repository object in a workspace
 //
 //nolint:gocognit // Nothing complex, just wanted to put both copy and move in the same tool
 func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_move_or_copy_repository_object",
-			Description: "Move or copy a data object from one path to another within the repository. Move removes the original, copy creates a duplicate. Both operations create uncommitted changes requiring a commit. Requires workspace_slug, repository_slug, action ('move' or 'copy'), path (source), and new_path (destination). Optionally specify branch. Returns the resulting object metadata. Use this to reorganize repository structure, duplicate data for testing, or rename objects.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args moveOrCopyRepositoryObjectArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_object_move_or_copy",
+		"Move or copy a data object from one path to another within the repository. Move removes the original, copy creates a duplicate. Both operations create uncommitted changes requiring a commit. Requires workspace_slug, repository_slug, action ('move' or 'copy'), path (source), and new_path (destination). Optionally specify branch. Returns the resulting object metadata. Use this to reorganize repository structure, duplicate data for testing, or rename objects.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args moveOrCopyRepositoryObjectArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -631,7 +642,7 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Determine the branch to move or copy the repository object from
@@ -652,7 +663,7 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
-				return helpers.MCPError("Failed to get repository object"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository object"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Move or copy the object
@@ -671,7 +682,7 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 				)
 				if err != nil {
 					mcpTools.apiServices.Logger.Error("Failed to move repository object", "error", err)
-					return helpers.MCPError("Failed to move repository object"), struct{}{}, nil
+					return helpers.MCPError("Failed to move repository object"), toolregistry.ToolOutput{}, nil
 				}
 			} else {
 				// Copy the object
@@ -680,7 +691,7 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 				})
 				if err != nil {
 					mcpTools.apiServices.Logger.Error("Failed to copy repository object", "error", err)
-					return helpers.MCPError("Failed to copy repository object"), struct{}{}, nil
+					return helpers.MCPError("Failed to copy repository object"), toolregistry.ToolOutput{}, nil
 				}
 			}
 
@@ -694,38 +705,39 @@ func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error formatting repository object", "error", err)
-				return helpers.MCPError("Error formatting repository object"), struct{}{}, nil
+				return helpers.MCPError("Error formatting repository object"), toolregistry.ToolOutput{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(repositoryObjectResponse)
+			result, resultOutput, err := helpers.MCPSuccess(repositoryObjectResponse)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerDeleteRepositoryObjectTool registers the irmin_delete_repository_object tool for deleting a repository object in a workspace
+// registerDeleteRepositoryObjectTool registers the irmin_repository_object_delete tool for deleting a repository object in a workspace
 func (mcpTools *MCPTools) registerDeleteRepositoryObjectTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_delete_repository_object",
-			Description: "Delete a data object from the repository. This operation creates an uncommitted change that must be committed to be permanent. The object can be recovered by reverting uncommitted changes before committing. Requires workspace_slug, repository_slug, and path. Optionally specify branch. Returns success confirmation. Use this to remove obsolete data, clean up test files, or manage repository content.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args deleteRepositoryObjectArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_object_delete",
+		"Delete a data object from the repository. This operation creates an uncommitted change that must be committed to be permanent. The object can be recovered by reverting uncommitted changes before committing. Requires workspace_slug, repository_slug, and path. Optionally specify branch. Returns success confirmation. Use this to remove obsolete data, clean up test files, or manage repository content.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args deleteRepositoryObjectArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -738,7 +750,7 @@ func (mcpTools *MCPTools) registerDeleteRepositoryObjectTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Determine the branch to delete the repository object from
@@ -759,26 +771,26 @@ func (mcpTools *MCPTools) registerDeleteRepositoryObjectTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
-				return helpers.MCPError("Failed to get repository object"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository object"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Delete the object
 			err = mcpTools.apiServices.DeleteRepositoryObject(ctx, "en", user, workspace, repository, object)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to delete repository object", "error", err)
-				return helpers.MCPError("Failed to delete repository object"), struct{}{}, nil
+				return helpers.MCPError("Failed to delete repository object"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Invalidate caches
 			mcpTools.invalidateObjectCaches(workspace.Slug, repository.Slug, repository.ID, *branch)
 
-			result, err := helpers.MCPSuccess(map[string]string{
+			result, resultOutput, err := helpers.MCPSuccess(map[string]string{
 				"message": "Object deleted successfully",
 			})
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
@@ -798,26 +810,27 @@ func (mcpTools *MCPTools) invalidateObjectCaches(workspaceSlug, repositorySlug s
 	}
 }
 
-// registerValidateRepositoryObjectTool registers the irmin_validate_repository_object tool for validating a repository object against a schema
+// registerValidateRepositoryObjectTool registers the irmin_repository_object_validate tool for validating a repository object against a schema
 func (mcpTools *MCPTools) registerValidateRepositoryObjectTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_validate_repository_object",
-			Description: "Validate a repository object's data against a provided schema definition. Checks data quality, type correctness, and schema compliance without modifying the object. Supports two validation modes: 'strict' (fails on any error) or 'permissive' (logs errors but continues). Returns validation results with detailed logs showing which checks passed or failed. Requires workspace_slug, repository_slug, path, validation_schema, and validation_mode. Optionally specify branch. Use this to ensure data integrity, verify imports, or check data quality before processing.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args validateRepositoryObjectArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_object_validate",
+		"Validate a repository object's data against a provided schema definition. Checks data quality, type correctness, and schema compliance without modifying the object. Supports two validation modes: 'strict' (fails on any error) or 'permissive' (logs errors but continues). Returns validation results with detailed logs showing which checks passed or failed. Requires workspace_slug, repository_slug, path, validation_schema, and validation_mode. Optionally specify branch. Use this to ensure data integrity, verify imports, or check data quality before processing.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args validateRepositoryObjectArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -830,7 +843,7 @@ func (mcpTools *MCPTools) registerValidateRepositoryObjectTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Determine the branch to validate the repository object from
@@ -851,7 +864,7 @@ func (mcpTools *MCPTools) registerValidateRepositoryObjectTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository object", "error", err)
-				return helpers.MCPError("Failed to get repository object"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository object"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Parse the validation schema from JSON string
@@ -860,7 +873,7 @@ func (mcpTools *MCPTools) registerValidateRepositoryObjectTool() {
 				mcpTools.apiServices.Logger.Error("Failed to parse validation schema", "error", inputSchemaUnmarshalErr)
 				return helpers.MCPError(
 					"Failed to parse validation schema: " + inputSchemaUnmarshalErr.Error(),
-				), struct{}{}, nil
+				), toolregistry.ToolOutput{}, nil
 			}
 
 			// Validate the object
@@ -876,14 +889,14 @@ func (mcpTools *MCPTools) registerValidateRepositoryObjectTool() {
 			)
 			if validationErr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to validate repository object", "error", validationErr)
-				return helpers.MCPError("Failed to validate repository object"), struct{}{}, nil
+				return helpers.MCPError("Failed to validate repository object"), toolregistry.ToolOutput{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(validationResponse)
+			result, resultOutput, err := helpers.MCPSuccess(validationResponse)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }

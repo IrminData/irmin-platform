@@ -6,6 +6,8 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -25,7 +27,7 @@ type showRequiredConnectorConfigurationFieldsArgs struct {
 
 type validateConnectorConfigurationArgs struct {
 	ConnectorID   string                                  `json:"connector_id"  jsonschema:"required,The ID (SQID) of the connector to validate the configuration for"`
-	Configuration irmincore.ConnectorConfigurationRequest `json:"configuration" jsonschema:"required,The configuration to validate. The configuration fields which are required are returned in the show_required_connector_configuration_fields tool."`
+	Configuration irmincore.ConnectorConfigurationRequest `json:"configuration" jsonschema:"required,The configuration to validate. Required fields are returned by irmin_connector_configuration_fields_get."`
 }
 
 // RegisterConnectorTools registers all connector-related tools.
@@ -35,20 +37,21 @@ func (mcpTools *MCPTools) RegisterConnectorTools() {
 	mcpTools.registerValidateConnectorConfigurationTool()
 }
 
-// registerListConnectorsTool registers the irmin_list_connectors tool for listing connectors available on the platform
+// registerListConnectorsTool registers the irmin_connector_list tool for listing connectors available on the platform
 func (mcpTools *MCPTools) registerListConnectorsTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_list_connectors",
-			Description: "List all available connector templates for integrating external data sources and destinations. Connectors are pre-built integrations for services like databases (PostgreSQL, MySQL), APIs (REST, GraphQL), cloud storage (S3, GCS), and SaaS platforms. Returns an array of connector objects with ID, name, type, capabilities, and supported operations. Use this to discover available integrations before creating connections.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, _ struct{}) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_connector_list",
+		"List all available connector templates for integrating external data sources and destinations. Connectors are pre-built integrations for services like databases (PostgreSQL, MySQL), APIs (REST, GraphQL), cloud storage (S3, GCS), and SaaS platforms. Returns an array of connector objects with ID, name, type, capabilities, and supported operations. Use this to discover available integrations before creating connections.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, _ struct{}) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// List the connectors
 			connectors, err := mcpTools.apiServices.ListConnectors(ctx)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to list connectors", "error", err)
-				return helpers.MCPError("Failed to list connectors"), struct{}{}, nil
+				return helpers.MCPError("Failed to list connectors"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Format the response using the same formatter as the API
@@ -59,43 +62,44 @@ func (mcpTools *MCPTools) registerListConnectorsTool() {
 			)
 			if ferr != nil {
 				mcpTools.apiServices.Logger.Error("Failed to format connectors", "error", ferr)
-				return nil, struct{}{}, fmt.Errorf("failed to format connectors response: %w", ferr)
+				return nil, toolregistry.ToolOutput{}, fmt.Errorf("failed to format connectors response: %w", ferr)
 			}
 
-			result, err := helpers.MCPSuccess(formatted)
+			result, resultOutput, err := helpers.MCPSuccess(formatted)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerShowRequiredConnectorConfigurationFieldsTool registers the irmin_show_required_connector_configuration_fields tool for showing the required configuration fields for a connector
+// registerShowRequiredConnectorConfigurationFieldsTool registers the irmin_connector_configuration_fields_get tool for showing the required configuration fields for a connector
 func (mcpTools *MCPTools) registerShowRequiredConnectorConfigurationFieldsTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_show_required_connector_configuration_fields",
-			Description: "Retrieve the configuration schema for a specific connector, showing required fields for authentication and settings. Returns dynamic field definitions including field names, types, validation rules, and dependencies. Configuration has two parts: 'details' (authentication credentials) and 'settings' (connection-specific options). Requires connector_id (SQID), configuration_type ('details' or 'settings'), and current_configuration (for dynamic field resolution). Use this before creating a connection to understand what configuration values are needed.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args showRequiredConnectorConfigurationFieldsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_connector_configuration_fields_get",
+		"Retrieve the configuration schema for a specific connector, showing required fields for authentication and settings. Returns dynamic field definitions including field names, types, validation rules, and dependencies. Configuration has two parts: 'details' (authentication credentials) and 'settings' (connection-specific options). Requires connector_id (SQID), configuration_type ('details' or 'settings'), and current_configuration (for dynamic field resolution). Use this before creating a connection to understand what configuration values are needed.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args showRequiredConnectorConfigurationFieldsArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Parse the connector ID from the SQID
 			connectorID, err := mcpTools.apiServices.SQIDManager.Decode("connectors", args.ConnectorID)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the connector
 			connector, err := mcpTools.apiServices.GetConnector(ctx, uint(connectorID))
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Validate the configuration type
 			if args.ConfigurationType != configurationFieldsTypeDetails &&
 				args.ConfigurationType != configurationFieldsTypeSettings {
-				return helpers.MCPError("Invalid configuration type"), struct{}{}, nil
+				return helpers.MCPError("Invalid configuration type"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the configuration fields
@@ -108,37 +112,40 @@ func (mcpTools *MCPTools) registerShowRequiredConnectorConfigurationFieldsTool()
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error fetching connection configuration fields", "error", err)
-				return helpers.MCPError("Error fetching connection configuration fields"), struct{}{}, nil
+				return helpers.MCPError(
+					"Error fetching connection configuration fields",
+				), toolregistry.ToolOutput{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(configurationFields)
+			result, resultOutput, err := helpers.MCPSuccess(configurationFields)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerValidateConnectorConfigurationTool registers the irmin_validate_connector_configuration tool for validating the configuration of a connector
+// registerValidateConnectorConfigurationTool registers the irmin_connector_configuration_validate tool for validating the configuration of a connector
 func (mcpTools *MCPTools) registerValidateConnectorConfigurationTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_validate_connector_configuration",
-			Description: "Test connector configuration values before creating a connection. Validates credentials, checks connectivity, and verifies permissions by making a test request to the external service. Returns validation results with success status and any error messages. Requires connector_id (SQID) and configuration object with details and settings. Always use this tool before creating or updating a connection to catch configuration errors early.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args validateConnectorConfigurationArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_connector_configuration_validate",
+		"Test connector configuration values before creating a connection. Validates credentials, checks connectivity, and verifies permissions by making a test request to the external service. Returns validation results with success status and any error messages. Requires connector_id (SQID) and configuration object with details and settings. Always use this tool before creating or updating a connection to catch configuration errors early.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args validateConnectorConfigurationArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Parse the connector ID from the SQID
 			connectorID, err := mcpTools.apiServices.SQIDManager.Decode("connectors", args.ConnectorID)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the connector
 			connector, err := mcpTools.apiServices.GetConnector(ctx, uint(connectorID))
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Validate the configuration
@@ -149,14 +156,14 @@ func (mcpTools *MCPTools) registerValidateConnectorConfigurationTool() {
 				args.Configuration,
 			)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
-			result, err := helpers.MCPSuccess(validationResult)
+			result, resultOutput, err := helpers.MCPSuccess(validationResult)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }

@@ -1,5 +1,6 @@
 import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
 import type { LLMResult } from '@langchain/core/outputs';
+import { ulid } from 'ulid';
 
 import type { InferenceRunContext, InferenceTelemetry } from './types';
 
@@ -22,6 +23,8 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
   name = 'irmin_inference_telemetry';
   private startedAt?: number;
   private firstTokenAt?: number;
+  private currentCallId?: string;
+  private invocationCount = 0;
 
   constructor(
     private readonly requestedModel: string,
@@ -37,6 +40,10 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
   override async handleLLMStart() {
     this.startedAt = Date.now();
     this.firstTokenAt = undefined;
+    this.currentCallId =
+      this.invocationCount++ === 0 && this.context.runId
+        ? this.context.runId
+        : ulid();
     await this.emit({ requestedModel: this.requestedModel, status: 'started' });
   }
 
@@ -110,7 +117,11 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
   }
 
   private async emit(telemetry: InferenceTelemetry) {
-    await this.context.onTelemetry?.(telemetry);
+    await this.context.onTelemetry?.(
+      this.currentCallId
+        ? { ...telemetry, callId: this.currentCallId }
+        : telemetry
+    );
   }
 }
 

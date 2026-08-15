@@ -770,24 +770,9 @@ func (api *APIControllers) AIAppAPICommit(c fiber.Ctx) error {
 		ref = resolved.Ref
 	}
 
-	commit, err := executor.CommitStagedChanges(c.Context(), repoSlug, ref, req.Message)
+	result, err := executor.CommitStagedChangesWithApproval(c.Context(), repoSlug, ref, req.Message)
 	if err != nil {
 		return api.handleWriteError(c, err)
-	}
-
-	// Use the actual repository/ref that was committed to, not the potentially empty req.Path
-	resultPath := req.Path
-	if resultPath == "" {
-		resultPath = services.BuildUnifiedPath(repoSlug, ref, "")
-	}
-
-	result := &services.WriteResult{
-		Path:      resultPath,
-		Operation: "commit",
-		Committed: true,
-	}
-	if commit != nil {
-		result.CommitID = &commit.Hash
 	}
 
 	return c.JSON(irminmodels.IrminAPIResponse{
@@ -795,20 +780,20 @@ func (api *APIControllers) AIAppAPICommit(c fiber.Ctx) error {
 	})
 }
 
-// AIAppAPIListPendingWrites godoc
-// @Summary List pending writes
-// @Description List all pending write operations awaiting approval
+// AIAppAPIListPendingOperations godoc
+// @Summary List pending operations
+// @Description List all pending operations awaiting approval
 // @Tags ai-app-api
 // @Security AIAppAPIKey
 // @Accept json
 // @Produce json
 // @Param limit query int false "Number of results per page (default 50)"
 // @Param offset query int false "Offset for pagination (default 0)"
-// @Success 200 {object} irminmodels.IrminAPIResponse "Pending writes list"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Pending operations list"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid API key"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
-// @Router /ai-app/pending-writes [get]
-func (api *APIControllers) AIAppAPIListPendingWrites(c fiber.Ctx) error {
+// @Router /ai-app/pending-operations [get]
+func (api *APIControllers) AIAppAPIListPendingOperations(c fiber.Ctx) error {
 	// Get the AI Application from locals
 	aiApp, ok := c.Locals("ai_application").(*db.AIApplication)
 	if !ok {
@@ -834,64 +819,68 @@ func (api *APIControllers) AIAppAPIListPendingWrites(c fiber.Ctx) error {
 		offset = 0
 	}
 
-	// Get pending writes (only pending status)
-	status := db.PendingWriteStatusPending
-	pendingWrites, total, err := api.DB.GetPendingWritesByAIApplicationID(aiApp.ID, &status, limit, offset)
+	// Get pending operations (only pending status)
+	status := db.PendingOperationStatusPending
+	pendingOperations, total, err := api.DB.GetPendingOperationsByAIApplicationID(aiApp.ID, &status, limit, offset)
 	if err != nil {
-		api.Logger.Error("Failed to get pending writes", "error", err)
+		api.Logger.Error("Failed to get pending operations", "error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(irminmodels.IrminAPIResponse{
-			Message: "Failed to retrieve pending writes",
+			Message: "Failed to retrieve pending operations",
 		})
 	}
 
 	// Format response
-	formattedWrites := make([]fiber.Map, len(pendingWrites))
-	for i, pw := range pendingWrites {
-		pwSqid, encodeErr := api.SQIDManager.Encode("ai_application_pending_writes", uint64(pw.ID))
+	formattedWrites := make([]fiber.Map, len(pendingOperations))
+	for i, pw := range pendingOperations {
+		pwSqid, encodeErr := api.SQIDManager.Encode("ai_application_pending_operations", uint64(pw.ID))
 		if encodeErr != nil {
-			api.Logger.Error("Failed to encode pending write ID", "error", encodeErr, "pending_write_id", pw.ID)
+			api.Logger.Error("Failed to encode pending operation ID", "error", encodeErr, "pending_operation_id", pw.ID)
 			return c.Status(fiber.StatusInternalServerError).JSON(irminmodels.IrminAPIResponse{
-				Message: "Failed to format pending writes",
+				Message: "Failed to format pending operations",
 			})
 		}
 		formattedWrites[i] = fiber.Map{
-			"id":              pwSqid,
-			"repository":      pw.Repository.Slug,
-			"path":            pw.Path,
-			"ref":             pw.Ref,
-			"operation":       pw.Operation,
-			"content_preview": pw.ContentPreview,
-			"patch_json":      pw.PatchJSON,
-			"commit_message":  pw.CommitMessage,
-			"status":          pw.Status,
-			"created_at":      pw.CreatedAt,
+			"id":               pwSqid,
+			"tool_name":        pw.ToolName,
+			"risk":             pw.Risk,
+			"capability":       pw.Capability,
+			"approval_preview": pw.ApprovalPreview,
+			"repository":       pw.Repository.Slug,
+			"path":             pw.Path,
+			"ref":              pw.Ref,
+			"operation":        pw.Operation,
+			"content_preview":  pw.ContentPreview,
+			"patch_json":       pw.PatchJSON,
+			"commit_message":   pw.CommitMessage,
+			"status":           pw.Status,
+			"created_at":       pw.CreatedAt,
 		}
 	}
 
 	return c.JSON(irminmodels.IrminAPIResponse{
 		Data: fiber.Map{
-			"pending_writes": formattedWrites,
-			"total":          total,
-			"limit":          limit,
-			"offset":         offset,
+			"pending_operations": formattedWrites,
+			"total":              total,
+			"limit":              limit,
+			"offset":             offset,
 		},
 	})
 }
 
-// AIAppAPIGetPendingWrite godoc
-// @Summary Get pending write details
-// @Description Get details of a specific pending write
+// AIAppAPIGetPendingOperation godoc
+// @Summary Get pending operation details
+// @Description Get details of a specific pending operation
 // @Tags ai-app-api
 // @Security AIAppAPIKey
 // @Accept json
 // @Produce json
-// @Param id path string true "Pending write ID"
-// @Success 200 {object} irminmodels.IrminAPIResponse "Pending write details"
+// @Param id path string true "Pending operation ID"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Pending operation details"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid API key"
-// @Failure 404 {object} irminmodels.IrminAPIResponse "Pending write not found"
+// @Failure 404 {object} irminmodels.IrminAPIResponse "Pending operation not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
-// @Router /ai-app/pending-writes/{id} [get]
-func (api *APIControllers) AIAppAPIGetPendingWrite(c fiber.Ctx) error {
+// @Router /ai-app/pending-operations/{id} [get]
+func (api *APIControllers) AIAppAPIGetPendingOperation(c fiber.Ctx) error {
 	// Get the AI Application from locals
 	aiApp, ok := c.Locals("ai_application").(*db.AIApplication)
 	if !ok {
@@ -900,58 +889,63 @@ func (api *APIControllers) AIAppAPIGetPendingWrite(c fiber.Ctx) error {
 		})
 	}
 
-	// Decode pending write ID
-	pendingWriteSqid := c.Params("id")
-	pendingWriteID, err := api.SQIDManager.Decode("ai_application_pending_writes", pendingWriteSqid)
+	// Decode pending operation ID
+	pendingOperationSqid := c.Params("id")
+	pendingOperationID, err := api.SQIDManager.Decode("ai_application_pending_operations", pendingOperationSqid)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
-			Message: "Invalid pending write ID",
+			Message: "Invalid pending operation ID",
 		})
 	}
 
-	// Get pending write
-	pendingWrite, err := api.DB.GetAIApplicationPendingWriteByID(uint(pendingWriteID))
+	// Get pending operation
+	pendingOperation, err := api.DB.GetAIApplicationPendingOperationByID(uint(pendingOperationID))
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(irminmodels.IrminAPIResponse{
-			Message: "Pending write not found",
+			Message: "Pending operation not found",
 		})
 	}
 
 	// Verify it belongs to this AI Application
-	if pendingWrite.AIApplicationID != aiApp.ID {
+	if pendingOperation.AIApplicationID != aiApp.ID {
 		return c.Status(fiber.StatusNotFound).JSON(irminmodels.IrminAPIResponse{
-			Message: "Pending write not found",
+			Message: "Pending operation not found",
 		})
 	}
 
 	return c.JSON(irminmodels.IrminAPIResponse{
 		Data: fiber.Map{
-			"id":              pendingWriteSqid,
-			"repository":      pendingWrite.Repository.Slug,
-			"path":            pendingWrite.Path,
-			"ref":             pendingWrite.Ref,
-			"operation":       pendingWrite.Operation,
-			"content_preview": pendingWrite.ContentPreview,
-			"patch_json":      pendingWrite.PatchJSON,
-			"commit_message":  pendingWrite.CommitMessage,
-			"status":          pendingWrite.Status,
-			"created_at":      pendingWrite.CreatedAt,
+			"id":               pendingOperationSqid,
+			"tool_name":        pendingOperation.ToolName,
+			"risk":             pendingOperation.Risk,
+			"capability":       pendingOperation.Capability,
+			"approval_preview": pendingOperation.ApprovalPreview,
+			"repository":       pendingOperation.Repository.Slug,
+			"path":             pendingOperation.Path,
+			"ref":              pendingOperation.Ref,
+			"operation":        pendingOperation.Operation,
+			"content_preview":  pendingOperation.ContentPreview,
+			"patch_json":       pendingOperation.PatchJSON,
+			"commit_message":   pendingOperation.CommitMessage,
+			"status":           pendingOperation.Status,
+			"execution_error":  pendingOperation.ExecutionError,
+			"created_at":       pendingOperation.CreatedAt,
 		},
 	})
 }
 
-// AIAppAPIApprovePendingWrite godoc
-// @Summary Approve pending write (forbidden)
-// @Description Approval of pending writes is not allowed via the AI App API. Use the workspace API with user authentication to approve writes. This prevents AI applications from self-approving and preserves RequireApproval human oversight.
+// AIAppAPIApprovePendingOperation godoc
+// @Summary Approve pending operation (forbidden)
+// @Description Approval of pending operations is not allowed via the AI App API. Use the workspace API with user authentication to approve writes. This prevents AI applications from self-approving and preserves RequireApproval human oversight.
 // @Tags ai-app-api
 // @Security AIAppAPIKey
 // @Accept json
 // @Produce json
-// @Param id path string true "Pending write ID"
+// @Param id path string true "Pending operation ID"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid API key"
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Approval not allowed via AI App API; use workspace API"
-// @Router /ai-app/pending-writes/{id}/approve [post]
-func (api *APIControllers) AIAppAPIApprovePendingWrite(c fiber.Ctx) error {
+// @Router /ai-app/pending-operations/{id}/approve [post]
+func (api *APIControllers) AIAppAPIApprovePendingOperation(c fiber.Ctx) error {
 	_, ok := c.Locals("ai_application").(*db.AIApplication)
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(irminmodels.IrminAPIResponse{
@@ -959,22 +953,22 @@ func (api *APIControllers) AIAppAPIApprovePendingWrite(c fiber.Ctx) error {
 		})
 	}
 	return c.Status(fiber.StatusForbidden).JSON(irminmodels.IrminAPIResponse{
-		Message: "Approval of pending writes must be performed via the workspace API with user authentication. The AI App API cannot approve writes.",
+		Message: "Approval of pending operations must be performed via the workspace API with user authentication. The AI App API cannot approve writes.",
 	})
 }
 
-// AIAppAPIRejectPendingWrite godoc
-// @Summary Reject pending write (forbidden)
-// @Description Rejection of pending writes is not allowed via the AI App API. Use the workspace API with user authentication to reject writes. This prevents AI applications from self-rejecting and preserves RequireApproval human oversight.
+// AIAppAPIRejectPendingOperation godoc
+// @Summary Reject pending operation (forbidden)
+// @Description Rejection of pending operations is not allowed via the AI App API. Use the workspace API with user authentication to reject writes. This prevents AI applications from self-rejecting and preserves RequireApproval human oversight.
 // @Tags ai-app-api
 // @Security AIAppAPIKey
 // @Accept json
 // @Produce json
-// @Param id path string true "Pending write ID"
+// @Param id path string true "Pending operation ID"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid API key"
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Rejection not allowed via AI App API; use workspace API"
-// @Router /ai-app/pending-writes/{id}/reject [post]
-func (api *APIControllers) AIAppAPIRejectPendingWrite(c fiber.Ctx) error {
+// @Router /ai-app/pending-operations/{id}/reject [post]
+func (api *APIControllers) AIAppAPIRejectPendingOperation(c fiber.Ctx) error {
 	_, ok := c.Locals("ai_application").(*db.AIApplication)
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(irminmodels.IrminAPIResponse{
@@ -982,7 +976,7 @@ func (api *APIControllers) AIAppAPIRejectPendingWrite(c fiber.Ctx) error {
 		})
 	}
 	return c.Status(fiber.StatusForbidden).JSON(irminmodels.IrminAPIResponse{
-		Message: "Rejection of pending writes must be performed via the workspace API with user authentication. The AI App API cannot reject writes.",
+		Message: "Rejection of pending operations must be performed via the workspace API with user authentication. The AI App API cannot reject writes.",
 	})
 }
 

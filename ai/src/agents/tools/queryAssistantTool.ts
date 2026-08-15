@@ -27,7 +27,8 @@ export function createQueryAssistantTool(
   user: User
 ): DynamicStructuredTool {
   return new DynamicStructuredTool({
-    name: 'query_sql_assistant',
+    name: 'irmin_query_author',
+    metadata: { irminCapability: 'query.author' },
     description:
       'Delegate a DuckDB/SQL authoring question to the dedicated Irmin SQL ' +
       'expert agent. Use this whenever you need a SQL query — do NOT guess ' +

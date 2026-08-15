@@ -229,7 +229,7 @@ func orphanRules() []orphanRule {
 			FKColumn: "ai_application_id", ParentTable: "ai_applications", ParentHasSoftDelete: true,
 		},
 		{
-			Name: "ai_application_pending_writes", ChildModel: &db.AIApplicationPendingWrite{},
+			Name: "ai_application_pending_operations", ChildModel: &db.AIApplicationPendingOperation{},
 			Type: orphanByParent, HasSoftDelete: true,
 			FKColumn: "ai_application_id", ParentTable: "ai_applications", ParentHasSoftDelete: true,
 		},
@@ -239,7 +239,7 @@ func orphanRules() []orphanRule {
 			FKColumn: "repository_id", ParentTable: "repositories", ParentHasSoftDelete: true,
 		},
 		{
-			Name: "ai_application_pending_writes (by repository)", ChildModel: &db.AIApplicationPendingWrite{},
+			Name: "ai_application_pending_operations (by repository)", ChildModel: &db.AIApplicationPendingOperation{},
 			Type: orphanByParent, HasSoftDelete: true,
 			FKColumn: "repository_id", ParentTable: "repositories", ParentHasSoftDelete: true,
 		},

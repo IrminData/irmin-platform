@@ -37,11 +37,11 @@ func NewAIAppClientWithHTTPClient(baseURL, apiKey string, httpClient *http.Clien
     with a custom HTTP client. If httpClient is nil, a default client with
     DefaultAPITimeout is used.
 
-func (c *AIAppClient) ApprovePendingWrite(
+func (c *AIAppClient) ApprovePendingOperation(
 	ctx context.Context,
-	pendingWriteID string,
+	pendingOperationID string,
 ) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error)
-    ApprovePendingWrite approves a pending write operation, executing the write.
+    ApprovePendingOperation approves a pending operation, executing the write.
 
 func (c *AIAppClient) CommitChanges(
 	ctx context.Context,
@@ -75,11 +75,11 @@ func (c *AIAppClient) GetContent(
 func (c *AIAppClient) GetInfo(ctx context.Context) (*AIAppInfo, *irminmodels.IrminAPIResponse, error)
     GetInfo retrieves information about the AI Application.
 
-func (c *AIAppClient) GetPendingWrite(
+func (c *AIAppClient) GetPendingOperation(
 	ctx context.Context,
-	pendingWriteID string,
-) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
-    GetPendingWrite retrieves a specific pending write by ID.
+	pendingOperationID string,
+) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error)
+    GetPendingOperation retrieves a specific pending operation by ID.
 
 func (c *AIAppClient) GetSchema(
 	ctx context.Context,
@@ -103,11 +103,11 @@ func (c *AIAppClient) ListObjects(
     ListObjects lists objects at the specified path. If path is empty, lists all
     data source roots.
 
-func (c *AIAppClient) ListPendingWrites(
+func (c *AIAppClient) ListPendingOperations(
 	ctx context.Context,
 	limit, offset int,
-) (*irminmodels.AIApplicationPendingWritesResponse, *irminmodels.IrminAPIResponse, error)
-    ListPendingWrites retrieves all pending write operations awaiting approval.
+) (*irminmodels.AIApplicationPendingOperationsResponse, *irminmodels.IrminAPIResponse, error)
+    ListPendingOperations retrieves all pending operations awaiting approval.
 
 func (c *AIAppClient) PatchFile(
 	ctx context.Context,
@@ -122,11 +122,11 @@ func (c *AIAppClient) Query(
 ) (any, *irminmodels.IrminAPIResponse, error)
     Query executes a SQL query within the AI Application's data scope.
 
-func (c *AIAppClient) RejectPendingWrite(
+func (c *AIAppClient) RejectPendingOperation(
 	ctx context.Context,
-	pendingWriteID string,
-) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
-    RejectPendingWrite rejects a pending write operation.
+	pendingOperationID string,
+) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error)
+    RejectPendingOperation rejects a pending operation.
 
 func (c *AIAppClient) Request(ctx context.Context, opts AIAppRequestOptions) ([]byte, error)
     Request sends a request to the AI Application API and returns raw response
@@ -218,12 +218,12 @@ type AIAppWriteFileRequest struct {
     AIAppWriteFileRequest represents the request body for writing a file.
 
 type AIAppWriteResult struct {
-	Path             string  `json:"path"                 example:"/repo-slug/main/data/file.json"`
-	Operation        string  `json:"operation"            example:"upload"`
-	Committed        bool    `json:"committed"            example:"true"`
-	CommitID         *string `json:"commit_id,omitempty"  example:"abc123def456"`
-	PendingID        *string `json:"pending_id,omitempty" example:"pw_1a2b3c4d"`
-	RequiresApproval bool    `json:"requires_approval"    example:"false"`
+	Path               string  `json:"path"                           example:"/repo-slug/main/data/file.json"`
+	Operation          string  `json:"operation"                      example:"upload"`
+	Committed          bool    `json:"committed"                      example:"true"`
+	CommitID           *string `json:"commit_id,omitempty"            example:"abc123def456"`
+	PendingOperationID *string `json:"pending_operation_id,omitempty" example:"po_1a2b3c4d"`
+	RequiresApproval   bool    `json:"requires_approval"              example:"false"`
 }
     AIAppWriteResult represents the result of a write operation.
 
@@ -295,11 +295,11 @@ func (c *Client) AddTagToEntity(
 ) (*irminmodels.IrminAPIResponse, error)
     AddTagToEntity adds an entity to a tag using the workspace tag route.
 
-func (c *Client) ApproveAIApplicationPendingWrite(
+func (c *Client) ApproveAIApplicationPendingOperation(
 	ctx context.Context,
-	workspace, aiApplicationID, pendingWriteID string,
-) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
-    ApproveAIApplicationPendingWrite approves a pending write operation.
+	workspace, aiApplicationID, pendingOperationID string,
+) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error)
+    ApproveAIApplicationPendingOperation approves a pending operation.
 
 func (c *Client) AssociatePresignedUpload(
 	ctx context.Context,
@@ -719,18 +719,19 @@ func (c *Client) GetAIApplication(
 ) (*irminmodels.AIApplication, *irminmodels.IrminAPIResponse, error)
     GetAIApplication retrieves a specific AI application by ID.
 
-func (c *Client) GetAIApplicationPendingWrite(
+func (c *Client) GetAIApplicationPendingOperation(
 	ctx context.Context,
-	workspace, aiApplicationID, pendingWriteID string,
-) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
-    GetAIApplicationPendingWrite retrieves a specific pending write by ID.
+	workspace, aiApplicationID, pendingOperationID string,
+) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error)
+    GetAIApplicationPendingOperation retrieves a specific pending operation by
+    ID.
 
-func (c *Client) GetAIApplicationPendingWrites(
+func (c *Client) GetAIApplicationPendingOperations(
 	ctx context.Context,
 	workspace, aiApplicationID string,
-	opts *GetAIApplicationPendingWritesOptions,
-) (*irminmodels.AIApplicationPendingWritesResponse, *irminmodels.IrminAPIResponse, error)
-    GetAIApplicationPendingWrites retrieves pending write operations for an AI
+	opts *GetAIApplicationPendingOperationsOptions,
+) (*irminmodels.AIApplicationPendingOperationsResponse, *irminmodels.IrminAPIResponse, error)
+    GetAIApplicationPendingOperations retrieves pending operations for an AI
     application.
 
 func (c *Client) GetAIApplicationToolLogStats(
@@ -1115,11 +1116,11 @@ func (c *Client) RegisterNewConnector(
     RegisterNewConnector registers a new connector with the system. Requests to
     this endpoint must be authenticated with a system token.
 
-func (c *Client) RejectAIApplicationPendingWrite(
+func (c *Client) RejectAIApplicationPendingOperation(
 	ctx context.Context,
-	workspace, aiApplicationID, pendingWriteID string,
-) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error)
-    RejectAIApplicationPendingWrite rejects a pending write operation.
+	workspace, aiApplicationID, pendingOperationID string,
+) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error)
+    RejectAIApplicationPendingOperation rejects a pending operation.
 
 func (c *Client) RemoveTagFromEntity(
 	ctx context.Context,
@@ -1691,12 +1692,12 @@ type FormFile struct {
     FormFile holds information about a file you want to upload with
     multipart/form-data.
 
-type GetAIApplicationPendingWritesOptions struct {
+type GetAIApplicationPendingOperationsOptions struct {
 	Limit  int
 	Offset int
 }
-    GetAIApplicationPendingWritesOptions contains optional parameters for
-    fetching pending writes.
+    GetAIApplicationPendingOperationsOptions contains optional parameters for
+    fetching pending operations.
 
 type GetAIApplicationToolLogsOptions struct {
 	Limit    int

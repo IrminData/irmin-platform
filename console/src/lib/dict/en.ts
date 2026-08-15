@@ -197,9 +197,9 @@ const en = {
       commitsTitle: "Couldn't load commits",
       commitsDescription:
         'Something went wrong while loading the commit history. Try refreshing the page.',
-      pendingWritesTitle: "Couldn't load pending writes",
-      pendingWritesDescription:
-        'Something went wrong while loading pending writes. Try refreshing the page.',
+      pendingOperationsTitle: "Couldn't load pending operations",
+      pendingOperationsDescription:
+        'Something went wrong while loading pending operations. Try refreshing the page.',
       appSettingsTitle: "Couldn't load app settings",
       appSettingsDescription:
         'Something went wrong while loading the settings. Try refreshing the page.',
@@ -251,7 +251,7 @@ const en = {
       failedToLoadScript: "Couldn't load the script",
       failedToLoadBillingSubscription: "Couldn't load your subscription",
       failedToLoadEmbedding: "Couldn't load embedding info",
-      failedToLoadPendingWrites: "Couldn't load pending writes",
+      failedToLoadPendingOperations: "Couldn't load pending operations",
       failedToLoadTag: "Couldn't load the tag",
       failedToLoadWorkspace: "Couldn't load the workspace",
       failedToLoadDiff: "Couldn't load the comparison",
@@ -376,8 +376,8 @@ const en = {
         deleteAIApplicationFailed: "Couldn't delete the AI application",
         updateAIApplicationFailed: "Couldn't update the AI application",
         transferAIApplicationFailed: "Couldn't transfer the AI application",
-        approveWriteFailed: "Couldn't approve the pending write",
-        rejectWriteFailed: "Couldn't reject the pending write",
+        approveOperationFailed: "Couldn't approve the pending operation",
+        rejectOperationFailed: "Couldn't reject the pending operation",
         // Script
         createScriptFailed: "Couldn't create the script",
         deleteScriptFailed: "Couldn't delete the script",
@@ -590,19 +590,21 @@ const en = {
     writeRequireCommitMessage: 'Require commit message',
     writeCommitMessagePrefix: 'Commit message prefix',
     writeRequireApproval: 'Require human approval',
-    // Pending Writes
-    pendingWritesTitle: 'Pending Writes',
-    pendingWritesDescription:
+    // Pending Operations
+    pendingOperationsTitle: 'Pending Operations',
+    pendingOperationsDescription:
       'Review and approve write operations from AI agents',
-    noPendingWrites: 'No pending writes to review',
+    noPendingOperations: 'No pending operations to review',
     pendingStatus: 'Pending',
-    approvedStatus: 'Approved',
+    completedStatus: 'Completed',
+    executingStatus: 'Executing',
+    failedStatus: 'Failed',
     rejectedStatus: 'Rejected',
     commitMessage: 'Message',
-    rejectWrite: 'Reject',
-    approveWrite: 'Approve',
+    rejectOperation: 'Reject',
+    approveOperation: 'Approve',
     reviewedByOn: 'Reviewed by {name} on {date}',
-    pendingWritesShowing: 'Showing {start}–{end} of {total}',
+    pendingOperationsShowing: 'Showing {start}–{end} of {total}',
     howToConnect: 'How to Connect',
     howToConnectMcp:
       'The {mcpEndpoint} connects Cursor, Claude Desktop, or another MCP client to this AI Application.',
@@ -2146,6 +2148,12 @@ const en = {
     copyFailed: 'Failed to copy message',
     responseCancelled: 'Response cancelled by user',
     approvalRequired: 'This operation needs your approval before it can run.',
+    rejectOperation: 'Reject',
+    approveOperation: 'Approve',
+    reviewingOperation: 'Submitting your decision…',
+    operationApproved: 'Operation approved and completed.',
+    operationRejected: 'Operation rejected.',
+    operationReviewFailed: 'The operation could not be reviewed. Try again.',
     runFailed: 'The assistant could not complete this response.',
     retryResponse: 'Retry response',
 

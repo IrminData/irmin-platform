@@ -30,7 +30,10 @@ export class ScriptingAgent extends BaseAgent {
     // Create MCP tools with auth token and filter to only include the required tools
     const tools: DynamicStructuredTool[] = [];
     if (input.authToken) {
-      const mcpConfig = toolsService.getIrminMCPConfig(input.authToken);
+      const mcpConfig = toolsService.getIrminMCPConfig(
+        input.authToken,
+        input.workspace.slug
+      );
       const mcpClient = toolsService.createClient({
         ...mcpConfig,
       });
@@ -69,7 +72,7 @@ export class ScriptingAgent extends BaseAgent {
         llmToolSelectorMiddleware({
           model: selectorModel,
           maxTools: 10,
-          alwaysInclude: toolCatalog.namesFor([
+          alwaysInclude: toolCatalog.namesFor(tools, [
             'documentation.retrieve',
             'query.author',
           ]),

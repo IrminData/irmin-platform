@@ -2,6 +2,7 @@ import { AgentsManager } from '@/agents';
 import { conversations, db, modelRuns } from '@/database';
 import { MODEL_PROFILE } from '@/inference';
 import { createRunEventStream } from '@/protocol/runEvents';
+import { sanitizeBrowserMessage } from '@/protocol/sanitizeBrowserMessage';
 import { eq } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 import { ulid } from 'ulid';
@@ -89,10 +90,12 @@ export async function agentRoutes(fastify: FastifyInstance) {
         // Report AI usage (fire-and-forget)
         reportAIUsage(workspaceContext.workspace.id).catch(() => undefined);
 
-        // Serialize LangChain messages using their toDict method
+        // Keep the non-streaming boundary as strict as conversation reloads:
+        // provider metadata and reasoning artifacts never reach the browser.
         const serializedMessages =
-          response.agentResponse.messages?.map((message) => message.toDict()) ??
-          [];
+          response.agentResponse.messages?.map((message) =>
+            sanitizeBrowserMessage(message.toDict())
+          ) ?? [];
 
         // Add conversation ID to response headers
         reply.header('X-Conversation-Id', response.conversationId);

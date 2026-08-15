@@ -200,9 +200,9 @@ const fi = {
       commitsTitle: 'Committien lataaminen epäonnistui',
       commitsDescription:
         'Commit-historian lataamisessa tapahtui virhe. Yritä päivittää sivu.',
-      pendingWritesTitle: 'Odottavien muutosten lataaminen epäonnistui',
-      pendingWritesDescription:
-        'Odottavien muutosten lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      pendingOperationsTitle: 'Odottavien toimintojen lataaminen epäonnistui',
+      pendingOperationsDescription:
+        'Odottavien toimintojen lataamisessa tapahtui virhe. Yritä päivittää sivu.',
       appSettingsTitle: 'Sovelluksen asetusten lataaminen epäonnistui',
       appSettingsDescription:
         'Asetusten lataamisessa tapahtui virhe. Yritä päivittää sivu.',
@@ -256,8 +256,8 @@ const fi = {
       failedToLoadScript: 'Skriptin lataaminen epäonnistui',
       failedToLoadBillingSubscription: 'Tilauksesi lataaminen epäonnistui',
       failedToLoadEmbedding: 'Upotustietojen lataaminen epäonnistui',
-      failedToLoadPendingWrites:
-        'Odottavien kirjoitusten lataaminen epäonnistui',
+      failedToLoadPendingOperations:
+        'Odottavien toimintojen lataaminen epäonnistui',
       failedToLoadTag: 'Tunnisteen lataaminen epäonnistui',
       failedToLoadWorkspace: 'Työtilan lataaminen epäonnistui',
       failedToLoadDiff: 'Vertailun lataaminen epäonnistui',
@@ -383,8 +383,8 @@ const fi = {
         deleteAIApplicationFailed: 'AI-sovelluksen poistaminen epäonnistui',
         updateAIApplicationFailed: 'AI-sovelluksen päivittäminen epäonnistui',
         transferAIApplicationFailed: 'AI-sovelluksen siirto epäonnistui',
-        approveWriteFailed: 'Odottavan muutoksen hyväksyminen epäonnistui',
-        rejectWriteFailed: 'Odottavan muutoksen hylkääminen epäonnistui',
+        approveOperationFailed: 'Odottavan toiminnon hyväksyminen epäonnistui',
+        rejectOperationFailed: 'Odottavan toiminnon hylkääminen epäonnistui',
         // Script
         createScriptFailed: 'Skriptin luominen epäonnistui',
         deleteScriptFailed: 'Skriptin poistaminen epäonnistui',
@@ -597,19 +597,21 @@ const fi = {
     writeRequireCommitMessage: 'Vaadi tallennusviesti',
     writeCommitMessagePrefix: 'Tallennusviestin etuliite',
     writeRequireApproval: 'Vaadi ihmisen hyväksyntä',
-    // Pending Writes
-    pendingWritesTitle: 'Odottavat kirjoitukset',
-    pendingWritesDescription:
+    // Pending Operations
+    pendingOperationsTitle: 'Odottavat toiminnot',
+    pendingOperationsDescription:
       'Tarkista ja hyväksy AI-agenttien kirjoitusoperaatiot',
-    noPendingWrites: 'Ei odottavia kirjoituksia tarkistettavaksi',
+    noPendingOperations: 'Ei odottavia toimintoja tarkistettavaksi',
     pendingStatus: 'Odottaa',
-    approvedStatus: 'Hyväksytty',
+    completedStatus: 'Valmis',
+    executingStatus: 'Suoritetaan',
+    failedStatus: 'Epäonnistui',
     rejectedStatus: 'Hylätty',
     commitMessage: 'Viesti',
-    rejectWrite: 'Hylkää',
-    approveWrite: 'Hyväksy',
+    rejectOperation: 'Hylkää',
+    approveOperation: 'Hyväksy',
     reviewedByOn: 'Tarkistanut {name}, {date}',
-    pendingWritesShowing: 'Näytetään {start}–{end} / {total}',
+    pendingOperationsShowing: 'Näytetään {start}–{end} / {total}',
     howToConnect: 'Kuinka yhdistää',
     howToConnectMcp:
       '{mcpEndpoint} yhdistää Cursorin, Claude Desktopin tai muun MCP-asiakkaan tähän AI-sovellukseen.',
@@ -2140,6 +2142,12 @@ const fi = {
     responseCancelled: 'Käyttäjä peruutti vastauksen',
     approvalRequired:
       'Tämä toiminto tarvitsee hyväksyntäsi ennen suorittamista.',
+    rejectOperation: 'Hylkää',
+    approveOperation: 'Hyväksy',
+    reviewingOperation: 'Päätöstä käsitellään…',
+    operationApproved: 'Toiminto hyväksyttiin ja suoritettiin.',
+    operationRejected: 'Toiminto hylättiin.',
+    operationReviewFailed: 'Toimintoa ei voitu käsitellä. Yritä uudelleen.',
     runFailed: 'Avustaja ei voinut viimeistellä vastausta.',
     retryResponse: 'Yritä vastausta uudelleen',
 

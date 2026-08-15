@@ -1,0 +1,131 @@
+<!doctype html>
+<html><head><meta charset="utf-8"/><title>irmin-api/toolregistry</title></head><body>
+<h1>Package irmin-api/toolregistry</h1>
+<pre>
+package toolregistry // import "irmin-api/toolregistry"
+
+Package toolregistry owns the canonical Irmin tool contract.
+
+CONSTANTS
+
+const CatalogVersion = 1
+
+VARIABLES
+
+var ErrApprovalRequired = errors.New("destructive tool requires authenticated approval")
+
+FUNCTIONS
+
+func CanonicalCustomName(label string) string
+    CanonicalCustomName turns an administrator-defined label into a stable
+    catalog name.
+
+func RedactForAudit(input any, policy AuditRedaction) any
+    RedactForAudit recursively replaces descriptor-selected fields before
+    persistence.
+
+func Register[In any](
+	registry *Registry,
+	server *sdkmcp.Server,
+	name string,
+	description string,
+	handler sdkmcp.ToolHandlerFor[In, ToolOutput],
+)
+    Register binds one typed handler to both the MCP SDK and the canonical
+    registry.
+
+func ValidateDescriptor(descriptor Descriptor) error
+func WithApproval(ctx context.Context) context.Context
+    WithApproval marks an approval replay after the operation was atomically
+    claimed.
+
+func WithWorkspaceBinding(ctx context.Context, workspaceSlug string) context.Context
+    WithWorkspaceBinding binds a user-token MCP session to the selected
+    workspace.
+
+
+TYPES
+
+type ApprovalStager func(
+	context.Context,
+	Descriptor,
+	*sdkmcp.CallToolRequest,
+	json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
+
+type AuditRedaction struct {
+	Fields []string `json:"fields"`
+}
+
+func AuditRedactionFor(name string) AuditRedaction
+    AuditRedactionFor returns the catalog-owned redaction policy for a tool.
+
+type CancellationPolicy struct {
+	Cancellable bool  `json:"cancellable"`
+	TimeoutMS   int64 `json:"timeout_ms"`
+}
+
+type Descriptor struct {
+	Name            string             `json:"name"`
+	CatalogVersion  int                `json:"catalog_version"`
+	Domain          string             `json:"domain"`
+	Action          string             `json:"action"`
+	Description     string             `json:"description"`
+	Summary         string             `json:"summary"`
+	ApprovalPreview string             `json:"approval_preview"`
+	Risk            Risk               `json:"risk"`
+	Capability      string             `json:"capability"`
+	InputSchema     any                `json:"input_schema"`
+	OutputSchema    any                `json:"output_schema"`
+	Cancellation    CancellationPolicy `json:"cancellation"`
+	AuditRedaction  AuditRedaction     `json:"audit_redaction"`
+	Handler         Handler            `json:"-"`
+}
+
+func Describe(name, description string) Descriptor
+    Describe returns the canonical policy metadata shared by registration,
+    prompts, and audit adapters.
+
+type Handler func(
+	context.Context,
+	*sdkmcp.CallToolRequest,
+	json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
+
+type Registry struct {
+	// Has unexported fields.
+}
+
+func New(stager ...ApprovalStager) *Registry
+
+func (r *Registry) Add(descriptor Descriptor) error
+
+func (r *Registry) Execute(
+	ctx context.Context,
+	name string,
+	request *sdkmcp.CallToolRequest,
+	arguments json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
+
+func (r *Registry) Get(name string) (Descriptor, bool)
+
+func (r *Registry) List() []Descriptor
+
+type Risk string
+
+const (
+	RiskRead        Risk = "read"
+	RiskWrite       Risk = "write"
+	RiskDestructive Risk = "destructive"
+)
+type ToolOutput struct {
+	Data any `json:"data"`
+}
+    ToolOutput is the stable structured MCP result envelope.
+
+func OutputFromResult(result *sdkmcp.CallToolResult) ToolOutput
+    OutputFromResult adapts legacy JSON text results into the canonical
+    structured envelope.
+
+</pre>
+</body></html>

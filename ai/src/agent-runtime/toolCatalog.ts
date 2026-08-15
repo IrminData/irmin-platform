@@ -13,43 +13,61 @@ export type ToolCapability =
   | 'workflow.read'
   | 'context.read';
 
-const CAPABILITY_TOOLS: Readonly<Record<ToolCapability, readonly string[]>> = {
-  'documentation.retrieve': [
-    'irmin_retrieve_docs_context',
-    'irmin_hyde_search',
-    'irmin_duckdb_hyde_search',
-  ],
-  'repository.read': [
-    'irmin_list_repositories',
-    'irmin_get_repository',
-    'irmin_list_repository_objects',
-    'irmin_get_repository_object_schema',
-    'irmin_list_repository_branches',
-    'irmin_list_repository_tags',
-    'irmin_list_repository_commits',
-  ],
-  'query.execute': ['irmin_execute_sql'],
-  'query.author': ['query_sql_assistant'],
-  'script.read': ['irmin_list_scripts', 'irmin_get_script_content'],
-  'script.write': ['irmin_create_script', 'irmin_update_script'],
-  'script.execute': ['irmin_execute_script'],
-  'script.author': ['scripting_assistant'],
-  'workflow.read': ['irmin_list_workflows', 'irmin_get_workflow'],
-  'context.read': ['irmin_get_context', 'irmin_get_batch_context'],
-};
+function capabilityOf(tool: DynamicStructuredTool): string | undefined {
+  const direct = tool.metadata?.irminCapability;
+  if (typeof direct === 'string') return direct;
+  const descriptor = tool.metadata?.irminDescriptor;
+  if (typeof descriptor !== 'object' || descriptor === null) return undefined;
+  const capability = (descriptor as Record<string, unknown>).capability;
+  return typeof capability === 'string' ? capability : undefined;
+}
 
 /** Capability-based projection over the transport tool catalog. */
 export class ToolCatalog {
+  private readonly capabilitiesByName = new Map<string, string>();
+
   select(
     tools: readonly DynamicStructuredTool[],
     capabilities: readonly ToolCapability[]
   ): DynamicStructuredTool[] {
-    const names = new Set(this.namesFor(capabilities));
-    return tools.filter((tool) => names.has(tool.name));
+    this.remember(tools);
+    const requested = new Set<string>(capabilities);
+    return tools.filter((tool) => {
+      const capability = capabilityOf(tool);
+      return capability !== undefined && requested.has(capability);
+    });
   }
 
-  namesFor(capabilities: readonly ToolCapability[]): string[] {
-    return [...new Set(capabilities.flatMap((key) => CAPABILITY_TOOLS[key]))];
+  namesFor(
+    tools: readonly DynamicStructuredTool[],
+    capabilities: readonly ToolCapability[]
+  ): string[] {
+    this.remember(tools);
+    const requested = new Set<string>(capabilities);
+    return tools
+      .filter((tool) => {
+        const capability = capabilityOf(tool);
+        return capability !== undefined && requested.has(capability);
+      })
+      .map((tool) => tool.name);
+  }
+
+  hasCapability(
+    toolName: string,
+    capabilities: readonly ToolCapability[]
+  ): boolean {
+    const capability = this.capabilitiesByName.get(toolName);
+    return (
+      capability !== undefined &&
+      capabilities.includes(capability as ToolCapability)
+    );
+  }
+
+  private remember(tools: readonly DynamicStructuredTool[]): void {
+    for (const tool of tools) {
+      const capability = capabilityOf(tool);
+      if (capability) this.capabilitiesByName.set(tool.name, capability);
+    }
   }
 }
 

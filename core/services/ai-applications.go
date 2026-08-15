@@ -6,6 +6,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/lib"
 	"irmin-api/permissions"
+	"irmin-api/toolregistry"
 	"irmin-api/utils"
 	"strings"
 
@@ -790,6 +791,11 @@ func (api *APIServices) createCustomToolFromRequest(
 	if exists {
 		return nil, fmt.Errorf("%w: custom tool with name '%s' already exists", ErrInvalidRequest, req.Name)
 	}
+	if canonicalErr := ensureCanonicalCustomToolNameUnique(
+		tx, req.Name, aiApplicationID, nil,
+	); canonicalErr != nil {
+		return nil, canonicalErr
+	}
 
 	tool := &db.AIApplicationCustomTool{
 		AIApplicationID: aiApplicationID,
@@ -950,11 +956,43 @@ func (api *APIServices) updateExistingCustomTool(
 	if exists {
 		return 0, fmt.Errorf("%w: custom tool with name '%s' already exists", ErrInvalidRequest, ct.Name)
 	}
+	if canonicalErr := ensureCanonicalCustomToolNameUnique(
+		tx, ct.Name, aiApplicationID, &toolIDUint,
+	); canonicalErr != nil {
+		return 0, canonicalErr
+	}
 
 	if updateErr := api.updateCustomToolFromRequest(tx, workspace, toolIDUint, ct); updateErr != nil {
 		return 0, updateErr
 	}
 	return toolIDUint, nil
+}
+
+func ensureCanonicalCustomToolNameUnique(
+	tx *gorm.DB,
+	name string,
+	aiApplicationID uint,
+	excludeID *uint,
+) error {
+	var tools []db.AIApplicationCustomTool
+	query := tx.Select("id", "name").Where("ai_application_id = ?", aiApplicationID)
+	if excludeID != nil {
+		query = query.Where("id != ?", *excludeID)
+	}
+	if err := query.Find(&tools).Error; err != nil {
+		return NewInternalErrorf("error checking canonical tool name: %w", err)
+	}
+	canonical := toolregistry.CanonicalCustomName(name)
+	for _, tool := range tools {
+		if toolregistry.CanonicalCustomName(tool.Name) == canonical {
+			return fmt.Errorf(
+				"%w: custom tool name collides with canonical name %q",
+				ErrInvalidRequest,
+				canonical,
+			)
+		}
+	}
+	return nil
 }
 
 // deleteRemovedCustomTools deletes tools that are no longer in the request.

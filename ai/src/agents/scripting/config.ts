@@ -45,7 +45,7 @@ export const agentConfig: AgentConfig = {
       name: 'irmin-documentation',
       required: false,
       description:
-        'Irmin documentation covering concepts, scripting runtime, and object schemas. Statically injected for fast context loading. Use irmin_hyde_search for deeper queries.',
+        'Irmin documentation covering concepts, scripting runtime, and object schemas. Statically injected for fast context loading. Use irmin_documentation_hyde_search for deeper queries.',
     },
   ],
 };

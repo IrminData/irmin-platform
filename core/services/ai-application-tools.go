@@ -1377,6 +1377,8 @@ const (
 	WriteOperationUpdate = "update"
 	// WriteOperationPatch represents a JSON patch operation.
 	WriteOperationPatch = "patch"
+	// WriteOperationCommit represents committing already staged changes.
+	WriteOperationCommit = "commit"
 )
 
 var (
@@ -1396,12 +1398,12 @@ var (
 
 // WriteResult represents the result of a write operation.
 type WriteResult struct {
-	Path             string  `json:"path"`
-	Operation        string  `json:"operation"`
-	Committed        bool    `json:"committed"`
-	CommitID         *string `json:"commit_id,omitempty"`
-	PendingID        *string `json:"pending_id,omitempty"`
-	RequiresApproval bool    `json:"requires_approval"`
+	Path               string  `json:"path"`
+	Operation          string  `json:"operation"`
+	Committed          bool    `json:"committed"`
+	CommitID           *string `json:"commit_id,omitempty"`
+	PendingOperationID *string `json:"pending_operation_id,omitempty"`
+	RequiresApproval   bool    `json:"requires_approval"`
 }
 
 // validateWriteEnabled checks if write operations are enabled and configured.
@@ -1495,7 +1497,7 @@ func (e *AIAppToolExecutor) WriteFile(
 
 	// Check if approval is required
 	if writeConfig.RequireApproval {
-		return e.createPendingWrite(ctx, resolved, operation, content, nil, finalCommitMessage)
+		return e.createPendingOperation(ctx, resolved, operation, content, nil, finalCommitMessage)
 	}
 
 	// Upload the file
@@ -1571,7 +1573,7 @@ func (e *AIAppToolExecutor) PatchFile(
 
 	// Check if approval is required
 	if writeConfig.RequireApproval {
-		return e.createPendingWrite(ctx, resolved, WriteOperationPatch, nil, operations, finalCommitMessage)
+		return e.createPendingOperation(ctx, resolved, WriteOperationPatch, nil, operations, finalCommitMessage)
 	}
 
 	// Read current file content
@@ -1661,11 +1663,44 @@ func (e *AIAppToolExecutor) CommitStagedChanges(
 	return commit, nil
 }
 
-// contentPreviewMaxLen is the maximum length for content previews in pending writes.
+// CommitStagedChangesWithApproval honors the AI Application approval policy for explicit commits.
+func (e *AIAppToolExecutor) CommitStagedChangesWithApproval(
+	ctx context.Context,
+	repoSlug, ref, message string,
+) (*WriteResult, error) {
+	writeConfig, err := e.validateWriteEnabled()
+	if err != nil {
+		return nil, err
+	}
+	repository, err := e.getRepositoryFromDataSources(repoSlug)
+	if err != nil {
+		return nil, err
+	}
+	resolved := &ResolvedPath{Repository: repository, Ref: ref}
+	if writeConfig.RequireApproval {
+		return e.createPendingOperation(ctx, resolved, WriteOperationCommit, nil, nil, message)
+	}
+	commit, err := e.CommitStagedChanges(ctx, repoSlug, ref, message)
+	if err != nil {
+		return nil, err
+	}
+	result := &WriteResult{
+		Path:             BuildUnifiedPath(repoSlug, ref, ""),
+		Operation:        WriteOperationCommit,
+		Committed:        true,
+		RequiresApproval: false,
+	}
+	if commit != nil {
+		result.CommitID = &commit.Hash
+	}
+	return result, nil
+}
+
+// contentPreviewMaxLen is the maximum length for content previews in pending operations.
 const contentPreviewMaxLen = 500
 
-// createPendingWrite creates a pending write entry for approval.
-func (e *AIAppToolExecutor) createPendingWrite(
+// createPendingOperation creates a pending operation entry for approval.
+func (e *AIAppToolExecutor) createPendingOperation(
 	_ context.Context,
 	resolved *ResolvedPath,
 	operation string,
@@ -1700,41 +1735,68 @@ func (e *AIAppToolExecutor) createPendingWrite(
 		contentHash = hex.EncodeToString(hash[:])
 	}
 
-	// Create the pending write record with full content stored
-	pendingWrite := &db.AIApplicationPendingWrite{
+	// Create the pending operation record with full content stored
+	toolName := "irmin_repository_object_write"
+	capability := "repository_object.write"
+	switch operation {
+	case WriteOperationPatch:
+		toolName = "irmin_repository_object_patch"
+		capability = "repository_object.patch"
+	case WriteOperationCommit:
+		toolName = "irmin_repository_commit_create"
+		capability = "repository_commit.create"
+	}
+	argumentsJSON, _ := json.Marshal(map[string]any{
+		"path":           BuildUnifiedPath(resolved.Repository.Slug, resolved.Ref, resolved.Path),
+		"operation":      operation,
+		"commit_message": commitMessage,
+	})
+	pendingOperation := &db.AIApplicationPendingOperation{
 		AIApplicationID: e.aiApp.ID,
 		RepositoryID:    resolved.Repository.ID,
-		Path:            resolved.Path,
-		Ref:             resolved.Ref,
-		Operation:       operation,
-		Content:         content, // Store full content for later execution
-		ContentHash:     contentHash,
-		ContentPreview:  contentPreview,
-		PatchJSON:       patchJSON,
-		CommitMessage:   commitMessage,
-		Status:          db.PendingWriteStatusPending,
+		ToolName:        toolName,
+		Risk:            "write",
+		Capability:      capability,
+		ApprovalPreview: fmt.Sprintf(
+			"%s %s",
+			operation,
+			BuildUnifiedPath(resolved.Repository.Slug, resolved.Ref, resolved.Path),
+		),
+		ArgumentsJSON:  string(argumentsJSON),
+		Path:           resolved.Path,
+		Ref:            resolved.Ref,
+		Operation:      operation,
+		Content:        content, // Store full content for later execution
+		ContentHash:    contentHash,
+		ContentPreview: contentPreview,
+		PatchJSON:      patchJSON,
+		CommitMessage:  commitMessage,
+		Status:         db.PendingOperationStatusPending,
 	}
 
-	if err := e.apiServices.DB.CreateAIApplicationPendingWrite(pendingWrite); err != nil {
-		return nil, fmt.Errorf("failed to create pending write: %w", err)
+	if err := e.apiServices.DB.CreateAIApplicationPendingOperation(pendingOperation); err != nil {
+		return nil, fmt.Errorf("failed to create pending operation: %w", err)
 	}
 
-	// Encode the pending write ID
-	pendingWriteSqid, _ := e.apiServices.SQIDManager.Encode("ai_application_pending_writes", uint64(pendingWrite.ID))
+	// Encode the pending operation ID
+	pendingOperationSqid, _ := e.apiServices.SQIDManager.Encode(
+		"ai_application_pending_operations",
+		uint64(pendingOperation.ID),
+	)
 
 	return &WriteResult{
-		Path:             BuildUnifiedPath(resolved.Repository.Slug, resolved.Ref, resolved.Path),
-		Operation:        operation,
-		Committed:        false,
-		PendingID:        &pendingWriteSqid,
-		RequiresApproval: true,
+		Path:               BuildUnifiedPath(resolved.Repository.Slug, resolved.Ref, resolved.Path),
+		Operation:          operation,
+		Committed:          false,
+		PendingOperationID: &pendingOperationSqid,
+		RequiresApproval:   true,
 	}, nil
 }
 
-// ExecutePendingWrite executes a previously approved pending write.
-func (e *AIAppToolExecutor) ExecutePendingWrite(
+// ExecutePendingOperation executes a previously approved pending operation.
+func (e *AIAppToolExecutor) ExecutePendingOperation(
 	ctx context.Context,
-	pendingWrite *db.AIApplicationPendingWrite,
+	pendingOperation *db.AIApplicationPendingOperation,
 ) (*WriteResult, error) {
 	// Validate write is enabled
 	writeConfig, err := e.validateWriteEnabled()
@@ -1743,8 +1805,8 @@ func (e *AIAppToolExecutor) ExecutePendingWrite(
 	}
 
 	// Validate operation-specific sub-permissions
-	// These may have changed since the pending write was created
-	switch pendingWrite.Operation {
+	// These may have changed since the pending operation was created
+	switch pendingOperation.Operation {
 	case WriteOperationUpload:
 		if !writeConfig.FileUploadEnabled {
 			return nil, ErrFileUploadNotEnabled
@@ -1760,22 +1822,30 @@ func (e *AIAppToolExecutor) ExecutePendingWrite(
 	}
 
 	// Build unified path
-	unifiedPath := BuildUnifiedPath(pendingWrite.Repository.Slug, pendingWrite.Ref, pendingWrite.Path)
+	unifiedPath := BuildUnifiedPath(pendingOperation.Repository.Slug, pendingOperation.Ref, pendingOperation.Path)
 
 	// Validate the path is still within configured data sources
-	// The data sources may have changed since the pending write was created
-	if pathErr := e.validatePathAccess(pendingWrite.Repository.Slug, pendingWrite.Path, pendingWrite.Ref); pathErr != nil {
-		return nil, ErrWriteAccessDenied
+	// The data sources may have changed since the pending operation was created
+	if pendingOperation.Operation != WriteOperationCommit {
+		if pathErr := e.validatePathAccess(
+			pendingOperation.Repository.Slug,
+			pendingOperation.Path,
+			pendingOperation.Ref,
+		); pathErr != nil {
+			return nil, ErrWriteAccessDenied
+		}
 	}
 
-	// Execute the operation
-	if execErr := e.executePendingWriteOperation(ctx, pendingWrite); execErr != nil {
-		return nil, execErr
+	// Commit-only operations have no content mutation before the commit itself.
+	if pendingOperation.Operation != WriteOperationCommit {
+		if execErr := e.executePendingOperationOperation(ctx, pendingOperation); execErr != nil {
+			return nil, execErr
+		}
 	}
 
 	result := &WriteResult{
 		Path:             unifiedPath,
-		Operation:        pendingWrite.Operation,
+		Operation:        pendingOperation.Operation,
 		Committed:        false,
 		RequiresApproval: false,
 	}
@@ -1783,9 +1853,9 @@ func (e *AIAppToolExecutor) ExecutePendingWrite(
 	// Commit the changes (approval flow always commits)
 	commit, commitErr := e.CommitStagedChanges(
 		ctx,
-		pendingWrite.Repository.Slug,
-		pendingWrite.Ref,
-		pendingWrite.CommitMessage,
+		pendingOperation.Repository.Slug,
+		pendingOperation.Ref,
+		pendingOperation.CommitMessage,
 	)
 	if commitErr != nil {
 		return nil, fmt.Errorf("failed to commit changes: %w", commitErr)
@@ -1801,34 +1871,36 @@ func (e *AIAppToolExecutor) ExecutePendingWrite(
 	return result, nil
 }
 
-// executePendingWriteOperation executes the write operation for a pending write.
-func (e *AIAppToolExecutor) executePendingWriteOperation(
+// executePendingOperationOperation executes the write operation for a pending operation.
+func (e *AIAppToolExecutor) executePendingOperationOperation(
 	ctx context.Context,
-	pendingWrite *db.AIApplicationPendingWrite,
+	pendingOperation *db.AIApplicationPendingOperation,
 ) error {
-	switch pendingWrite.Operation {
+	switch pendingOperation.Operation {
 	case WriteOperationUpload, WriteOperationUpdate:
-		return e.executePendingUpload(ctx, pendingWrite)
+		return e.executePendingUpload(ctx, pendingOperation)
 	case WriteOperationPatch:
-		return e.executePendingPatch(ctx, pendingWrite)
+		return e.executePendingPatch(ctx, pendingOperation)
+	case WriteOperationCommit:
+		return nil
 	default:
-		return fmt.Errorf("unknown operation type: %s", pendingWrite.Operation)
+		return fmt.Errorf("unknown operation type: %s", pendingOperation.Operation)
 	}
 }
 
-// executePendingUpload executes an upload/update operation from a pending write.
+// executePendingUpload executes an upload/update operation from a pending operation.
 func (e *AIAppToolExecutor) executePendingUpload(
 	ctx context.Context,
-	pendingWrite *db.AIApplicationPendingWrite,
+	pendingOperation *db.AIApplicationPendingOperation,
 ) error {
-	if pendingWrite.Content == nil {
-		return errors.New("no content stored for pending write")
+	if pendingOperation.Content == nil {
+		return errors.New("no content stored for pending operation")
 	}
 
 	_, uploadErr := e.apiServices.UploadRepositoryObject(
 		ctx, "en", &e.aiApp.Owner, &e.aiApp.Workspace,
-		&pendingWrite.Repository, pendingWrite.Path, pendingWrite.Ref,
-		bytes.NewReader(pendingWrite.Content), nil,
+		&pendingOperation.Repository, pendingOperation.Path, pendingOperation.Ref,
+		bytes.NewReader(pendingOperation.Content), nil,
 	)
 	if uploadErr != nil {
 		return fmt.Errorf("failed to write file: %w", uploadErr)
@@ -1836,26 +1908,26 @@ func (e *AIAppToolExecutor) executePendingUpload(
 	return nil
 }
 
-// executePendingPatch executes a JSON patch operation from a pending write.
+// executePendingPatch executes a JSON patch operation from a pending operation.
 func (e *AIAppToolExecutor) executePendingPatch(
 	ctx context.Context,
-	pendingWrite *db.AIApplicationPendingWrite,
+	pendingOperation *db.AIApplicationPendingOperation,
 ) error {
-	if pendingWrite.PatchJSON == "" {
-		return errors.New("no patch operations stored for pending write")
+	if pendingOperation.PatchJSON == "" {
+		return errors.New("no patch operations stored for pending operation")
 	}
 
 	var patchOperations []irminmodels.PatchOperation
-	if unmarshalErr := json.Unmarshal([]byte(pendingWrite.PatchJSON), &patchOperations); unmarshalErr != nil {
+	if unmarshalErr := json.Unmarshal([]byte(pendingOperation.PatchJSON), &patchOperations); unmarshalErr != nil {
 		return fmt.Errorf("failed to parse stored patch operations: %w", unmarshalErr)
 	}
 
 	// Read current file content
 	patchContent, readErr := e.GetRepositoryObjectContent(
 		ctx,
-		pendingWrite.Repository.Slug,
-		pendingWrite.Path,
-		pendingWrite.Ref,
+		pendingOperation.Repository.Slug,
+		pendingOperation.Path,
+		pendingOperation.Ref,
 		false,
 	)
 	if readErr != nil {
@@ -1871,7 +1943,7 @@ func (e *AIAppToolExecutor) executePendingPatch(
 	// Upload the patched content
 	_, uploadErr := e.apiServices.UploadRepositoryObject(
 		ctx, "en", &e.aiApp.Owner, &e.aiApp.Workspace,
-		&pendingWrite.Repository, pendingWrite.Path, pendingWrite.Ref,
+		&pendingOperation.Repository, pendingOperation.Path, pendingOperation.Ref,
 		bytes.NewReader(patched), nil,
 	)
 	if uploadErr != nil {

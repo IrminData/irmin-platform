@@ -12,6 +12,7 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { ToolApprovalCard } from './ToolApprovalCard';
 import type { ServerStreamEvent, ServerToolEvent } from './types';
 import { shouldHideTool } from './utils';
 
@@ -125,18 +126,13 @@ export const StreamingMetadata = ({
       )}
 
       {approvalParts.map((part, index) => (
-        <div
+        <ToolApprovalCard
           key={part.toolCallId ?? `approval-${index}`}
-          role='status'
-          className={`
-            mt-4 rounded-md border border-border bg-muted/60 p-3 text-sm
-          `}
-        >
-          <div className='font-medium'>{part.toolName}</div>
-          <div className='mt-1 text-muted-foreground'>
-            {part.approvalPreview || dict.assistant.approvalRequired}
-          </div>
-        </div>
+          toolName={part.toolName}
+          approvalPreview={part.approvalPreview}
+          pendingOperationId={part.pendingOperationId}
+          workspaceSlug={part.workspaceSlug}
+        />
       ))}
 
       {/* Errors only - no system messages or stream-complete */}

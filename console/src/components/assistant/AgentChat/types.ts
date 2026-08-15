@@ -16,6 +16,8 @@ export interface ServerToolEvent {
   input?: Record<string, unknown>;
   output?: string;
   approvalPreview?: string;
+  pendingOperationId?: string;
+  workspaceSlug?: string;
 }
 
 export interface ServerReasoningEvent {

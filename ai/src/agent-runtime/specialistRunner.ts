@@ -76,7 +76,6 @@ function hasSuccessfulSqlExecution(
   messages: BaseMessage[] | undefined,
   finalSql: string
 ): boolean {
-  const expected = new Set(toolCatalog.namesFor(['query.execute']));
   const matchingCallIds = new Set<string>();
   for (const message of messages ?? []) {
     const candidate = message as BaseMessage & {
@@ -90,7 +89,7 @@ function hasSuccessfulSqlExecution(
       if (
         call.id &&
         call.name &&
-        expected.has(call.name) &&
+        toolCatalog.hasCapability(call.name, ['query.execute']) &&
         call.args?.sql === finalSql
       ) {
         matchingCallIds.add(call.id);
@@ -106,7 +105,7 @@ function hasSuccessfulSqlExecution(
     return (
       candidate.getType() === 'tool' &&
       typeof candidate.name === 'string' &&
-      expected.has(candidate.name) &&
+      toolCatalog.hasCapability(candidate.name, ['query.execute']) &&
       typeof candidate.tool_call_id === 'string' &&
       matchingCallIds.has(candidate.tool_call_id) &&
       candidate.status !== 'error'

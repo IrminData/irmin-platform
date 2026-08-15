@@ -7,6 +7,7 @@ import (
 	"fmt"
 
 	"irmin-api/db"
+	"irmin-api/toolregistry"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -20,10 +21,10 @@ func MCPError(message string) *sdkmcp.CallToolResult {
 }
 
 // MCPSuccess creates a standardized success response for MCP tools with JSON data.
-func MCPSuccess(data any) (*sdkmcp.CallToolResult, error) {
+func MCPSuccess(data any) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 	b, err := json.Marshal(data)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal response data: %w", err)
+		return nil, toolregistry.ToolOutput{}, fmt.Errorf("failed to marshal response data: %w", err)
 	}
 
 	return &sdkmcp.CallToolResult{
@@ -31,7 +32,7 @@ func MCPSuccess(data any) (*sdkmcp.CallToolResult, error) {
 			Text: string(b),
 			Meta: sdkmcp.Meta{"mimeType": "application/json"},
 		}},
-	}, nil
+	}, toolregistry.ToolOutput{Data: data}, nil
 }
 
 // ValidateUser checks if the user is authenticated and authorized.

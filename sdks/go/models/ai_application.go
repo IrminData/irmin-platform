@@ -95,7 +95,7 @@ type AIApplication struct {
 // AIApplicationToolLog represents an audit log entry for an AI application tool call.
 type AIApplicationToolLog struct {
 	ID         uint      `json:"id"          example:"123"`
-	ToolName   string    `json:"tool_name"   example:"irmin_execute_sql"`
+	ToolName   string    `json:"tool_name"   example:"irmin_query_execute_sql"`
 	ToolType   string    `json:"tool_type"   example:"builtin"`
 	InputsJSON string    `json:"inputs_json"`
 	Protocol   string    `json:"protocol"    example:"mcp"`
@@ -108,48 +108,68 @@ type AIApplicationToolLog struct {
 	CreatedAt  time.Time `json:"created_at"  example:"2025-01-15T10:30:00Z"`
 
 	// Write-specific audit fields
-	WriteOperation  string  `json:"write_operation,omitempty"   example:"upload"`
-	WriteTargetPath string  `json:"write_target_path,omitempty" example:"/repo/main/data/file.json"`
-	CommitID        string  `json:"commit_id,omitempty"         example:"abc123def456"`
-	PendingWriteID  *string `json:"pending_write_id,omitempty"  example:"pw_1a2b3c4d"`
+	WriteOperation     string  `json:"write_operation,omitempty"      example:"upload"`
+	WriteTargetPath    string  `json:"write_target_path,omitempty"    example:"/repo/main/data/file.json"`
+	CommitID           string  `json:"commit_id,omitempty"            example:"abc123def456"`
+	PendingOperationID *string `json:"pending_operation_id,omitempty" example:"po_1a2b3c4d"`
 }
 
-// PendingWriteStatus represents the status of a pending write operation.
-type PendingWriteStatus string
+// PendingOperationStatus represents the lifecycle of a staged operation.
+type PendingOperationStatus string
 
 const (
-	// PendingWriteStatusPending indicates the write is awaiting approval.
-	PendingWriteStatusPending PendingWriteStatus = "pending"
-	// PendingWriteStatusApproved indicates the write has been approved and executed.
-	PendingWriteStatusApproved PendingWriteStatus = "approved"
-	// PendingWriteStatusRejected indicates the write has been rejected.
-	PendingWriteStatusRejected PendingWriteStatus = "rejected"
+	// PendingOperationStatusPending indicates the operation is awaiting approval.
+	PendingOperationStatusPending PendingOperationStatus = "pending"
+	// PendingOperationStatusExecuting indicates the operation is being executed.
+	PendingOperationStatusExecuting PendingOperationStatus = "executing"
+	// PendingOperationStatusCompleted indicates the operation completed successfully.
+	PendingOperationStatusCompleted PendingOperationStatus = "completed"
+	// PendingOperationStatusFailed indicates the claimed operation failed.
+	PendingOperationStatusFailed PendingOperationStatus = "failed"
+	// PendingOperationStatusRejected indicates the operation has been rejected.
+	PendingOperationStatusRejected PendingOperationStatus = "rejected"
 )
 
-// AIApplicationPendingWrite represents a write operation awaiting approval.
-type AIApplicationPendingWrite struct {
-	ID              string             `json:"id"                        validate:"required,validsqid=ai_application_pending_writes" example:"pw_1a2b3c4d"`
-	AIApplicationID string             `json:"ai_application_id"         validate:"required,validsqid=ai_applications"               example:"ai_8x2m9k4n7p5q"`
-	Repository      string             `json:"repository"                                                                            example:"customer-analytics"`
-	Path            string             `json:"path"                                                                                  example:"/data/customers.json"`
-	Ref             string             `json:"ref"                                                                                   example:"main"`
-	Operation       string             `json:"operation"                                                                             example:"upload"`
-	ContentPreview  string             `json:"content_preview,omitempty"`
-	PatchJSON       string             `json:"patch_json,omitempty"`
-	CommitMessage   string             `json:"commit_message"                                                                        example:"Updated customer data"`
-	Status          PendingWriteStatus `json:"status"                                                                                example:"pending"`
-	ReviewedBy      *User              `json:"reviewed_by,omitempty"`
-	ReviewedAt      *time.Time         `json:"reviewed_at,omitempty"`
-	CreatedAt       time.Time          `json:"created_at"                validate:"required"                                         example:"2025-01-15T10:30:00Z"`
-	UpdatedAt       time.Time          `json:"updated_at"                validate:"required"                                         example:"2025-12-01T14:22:30Z"`
+// AIApplicationPendingOperation represents a tool operation awaiting approval.
+type AIApplicationPendingOperation struct {
+	ID              string                 `json:"id"                        validate:"required,validsqid=ai_application_pending_operations" example:"po_1a2b3c4d"`
+	AIApplicationID string                 `json:"ai_application_id"         validate:"required,validsqid=ai_applications"                   example:"ai_8x2m9k4n7p5q"`
+	Repository      string                 `json:"repository"                                                                                example:"customer-analytics"`
+	ToolName        string                 `json:"tool_name"                                                                                 example:"irmin_repository_object_write"`
+	Risk            string                 `json:"risk"                                                                                      example:"write"`
+	Capability      string                 `json:"capability"                                                                                example:"repository_object.write"`
+	ApprovalPreview string                 `json:"approval_preview"                                                                          example:"Write /data/customers.json"`
+	Path            string                 `json:"path"                                                                                      example:"/data/customers.json"`
+	Ref             string                 `json:"ref"                                                                                       example:"main"`
+	Operation       string                 `json:"operation"                                                                                 example:"upload"`
+	ContentPreview  string                 `json:"content_preview,omitempty"`
+	PatchJSON       string                 `json:"patch_json,omitempty"`
+	CommitMessage   string                 `json:"commit_message"                                                                            example:"Updated customer data"`
+	Status          PendingOperationStatus `json:"status"                                                                                    example:"pending"`
+	ReviewedBy      *User                  `json:"reviewed_by,omitempty"`
+	ReviewedAt      *time.Time             `json:"reviewed_at,omitempty"`
+	ExecutionError  string                 `json:"execution_error,omitempty"`
+	CreatedAt       time.Time              `json:"created_at"                validate:"required"                                             example:"2025-01-15T10:30:00Z"`
+	UpdatedAt       time.Time              `json:"updated_at"                validate:"required"                                             example:"2025-12-01T14:22:30Z"`
 }
 
-// AIApplicationPendingWritesResponse represents a paginated list of pending writes.
-type AIApplicationPendingWritesResponse struct {
-	PendingWrites []AIApplicationPendingWrite `json:"pending_writes"`
-	Total         int64                       `json:"total"          example:"10"`
-	Limit         int                         `json:"limit"          example:"50"`
-	Offset        int                         `json:"offset"         example:"0"`
+// AIApplicationPendingOperationsResponse represents a paginated list of pending operations.
+type AIApplicationPendingOperationsResponse struct {
+	PendingOperations []AIApplicationPendingOperation `json:"pending_operations"`
+	Total             int64                           `json:"total"              example:"10"`
+	Limit             int                             `json:"limit"              example:"50"`
+	Offset            int                             `json:"offset"             example:"0"`
+}
+
+// AIApplicationPendingOperationActionResult is returned after approving or rejecting an operation.
+type AIApplicationPendingOperationActionResult struct {
+	ID        string                 `json:"id"                  validate:"required,validsqid=ai_application_pending_operations"`
+	Status    PendingOperationStatus `json:"status"              validate:"required"`
+	Message   string                 `json:"message"`
+	Operation string                 `json:"operation,omitempty"`
+	Path      string                 `json:"path,omitempty"`
+	Committed bool                   `json:"committed,omitempty"`
+	CommitID  *string                `json:"commit_id,omitempty"`
 }
 
 // AIApplicationToolLogsResponse represents a paginated list of tool logs.
@@ -162,7 +182,7 @@ type AIApplicationToolLogsResponse struct {
 
 // AIApplicationToolStat represents statistics for a specific tool.
 type AIApplicationToolStat struct {
-	ToolName      string  `json:"tool_name"       example:"irmin_execute_sql"`
+	ToolName      string  `json:"tool_name"       example:"irmin_query_execute_sql"`
 	Count         int64   `json:"count"           example:"150"`
 	AvgDurationMs float64 `json:"avg_duration_ms" example:"125.5"`
 	SuccessCount  int64   `json:"success_count"   example:"147"`

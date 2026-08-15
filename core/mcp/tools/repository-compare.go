@@ -4,6 +4,8 @@ import (
 	"context"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -38,26 +40,27 @@ func (mcpTools *MCPTools) RegisterRepositoryCompareTools() {
 	mcpTools.registerMergeRepositoryRefsTool()
 }
 
-// registerCompareRepositoryRefsTool registers the irmin_compare_repository_refs tool for comparing two references in a repository
+// registerCompareRepositoryRefsTool registers the irmin_repository_ref_compare tool for comparing two references in a repository
 func (mcpTools *MCPTools) registerCompareRepositoryRefsTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_compare_repository_refs",
-			Description: "Compare two references (branches, tags, or commit hashes) to see differences in data. Shows which objects were added, modified, or deleted between the base_ref and compare_ref. Returns a diff object with detailed change information. Requires workspace_slug, repository_slug, base_ref (target), and compare_ref (source). Use this before merging branches to preview changes or to analyze data evolution between versions.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args compareRepositoryRefsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_ref_compare",
+		"Compare two references (branches, tags, or commit hashes) to see differences in data. Shows which objects were added, modified, or deleted between the base_ref and compare_ref. Returns a diff object with detailed change information. Requires workspace_slug, repository_slug, base_ref (target), and compare_ref (source). Use this before merging branches to preview changes or to analyze data evolution between versions.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args compareRepositoryRefsArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -70,7 +73,7 @@ func (mcpTools *MCPTools) registerCompareRepositoryRefsTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the diff between the refs
@@ -85,38 +88,39 @@ func (mcpTools *MCPTools) registerCompareRepositoryRefsTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to compare repository refs", "error", err)
-				return helpers.MCPError("Failed to compare repository refs"), struct{}{}, nil
+				return helpers.MCPError("Failed to compare repository refs"), toolregistry.ToolOutput{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(diff)
+			result, resultOutput, err := helpers.MCPSuccess(diff)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerMergeRepositoryRefsTool registers the irmin_merge_repository_refs tool for merging two references in a repository
+// registerMergeRepositoryRefsTool registers the irmin_repository_ref_merge tool for merging two references in a repository
 func (mcpTools *MCPTools) registerMergeRepositoryRefsTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_merge_repository_refs",
-			Description: "Merge changes from one reference into another, creating a merge commit. Integrates data modifications from compare_ref (source) into base_ref (destination). Requires workspace_slug, repository_slug, base_ref, and compare_ref. Optionally specify merge strategy: 'default' (smart merge), 'dest-wins' (base takes precedence), or 'source-wins' (compare takes precedence). Returns the created merge commit. Use this to incorporate feature branch changes into main branches after review and testing.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args mergeRepositoryRefsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_ref_merge",
+		"Merge changes from one reference into another, creating a merge commit. Integrates data modifications from compare_ref (source) into base_ref (destination). Requires workspace_slug, repository_slug, base_ref, and compare_ref. Optionally specify merge strategy: 'default' (smart merge), 'dest-wins' (base takes precedence), or 'source-wins' (compare takes precedence). Returns the created merge commit. Use this to incorporate feature branch changes into main branches after review and testing.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args mergeRepositoryRefsArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -129,7 +133,7 @@ func (mcpTools *MCPTools) registerMergeRepositoryRefsTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Determine the strategy to use
@@ -155,14 +159,14 @@ func (mcpTools *MCPTools) registerMergeRepositoryRefsTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to merge repository refs", "error", err)
-				return helpers.MCPError("Failed to merge repository refs"), struct{}{}, nil
+				return helpers.MCPError("Failed to merge repository refs"), toolregistry.ToolOutput{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(mergeCommit)
+			result, resultOutput, err := helpers.MCPSuccess(mergeCommit)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }

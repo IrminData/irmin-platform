@@ -5,6 +5,8 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
@@ -32,37 +34,38 @@ func (mcpTools *MCPTools) RegisterWorkflowRunsTools() {
 	mcpTools.registerCancelWorkflowRunTool()
 }
 
-// registerCreateWorkflowRunTool registers the irmin_create_workflow_run tool for creating a new workflow run
+// registerCreateWorkflowRunTool registers the irmin_workflow_run_create tool for creating a new workflow run
 func (mcpTools *MCPTools) registerCreateWorkflowRunTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_create_workflow_run",
-			Description: "Manually trigger a workflow execution, creating a new workflow run. The workflow executes asynchronously in the background with progress tracked through status updates and logs. Returns the created workflow run object with execution ID and initial status. Requires workspace_slug and workflow_id (SQID). Use irmin_list_workflow_runs to monitor execution progress and view logs.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createWorkflowRunArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_workflow_run_create",
+		"Manually trigger a workflow execution, creating a new workflow run. The workflow executes asynchronously in the background with progress tracked through status updates and logs. Returns the created workflow run object with execution ID and initial status. Requires workspace_slug and workflow_id (SQID). Use irmin_workflow_run_list to monitor execution progress and view logs.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createWorkflowRunArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workflow
 			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, args.WorkflowID)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Create the workflow run
 			workflowRun, err := mcpTools.apiServices.CreateWorkflowRun(ctx, user, workspace, workflow)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Format the workflow run for the response.
@@ -71,43 +74,44 @@ func (mcpTools *MCPTools) registerCreateWorkflowRunTool() {
 				mcpTools.apiServices.SQIDManager,
 			)
 			if formatErr != nil {
-				return nil, struct{}{}, formatErr
+				return nil, toolregistry.ToolOutput{}, formatErr
 			}
 
-			result, err := helpers.MCPSuccess(formattedRun)
+			result, resultOutput, err := helpers.MCPSuccess(formattedRun)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerCancelWorkflowRunTool registers the irmin_cancel_workflow_run tool for cancelling a workflow run
+// registerCancelWorkflowRunTool registers the irmin_workflow_run_cancel tool for cancelling a workflow run
 func (mcpTools *MCPTools) registerCancelWorkflowRunTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_cancel_workflow_run",
-			Description: "Cancel a currently executing or queued workflow run. Stops the workflow execution and marks the run as cancelled. Cannot cancel completed or failed runs. Requires workspace_slug, workflow_id (SQID), and run_id (SQID). Returns the updated workflow run object with cancelled status. Use this to stop long-running workflows or abort queued executions.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args cancelWorkflowRunArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_workflow_run_cancel",
+		"Cancel a currently executing or queued workflow run. Stops the workflow execution and marks the run as cancelled. Cannot cancel completed or failed runs. Requires workspace_slug, workflow_id (SQID), and run_id (SQID). Returns the updated workflow run object with cancelled status. Use this to stop long-running workflows or abort queued executions.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args cancelWorkflowRunArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workflow
 			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, args.WorkflowID)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Cancel the workflow run
@@ -119,7 +123,7 @@ func (mcpTools *MCPTools) registerCancelWorkflowRunTool() {
 				args.RunID,
 			)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Format the workflow run for the response.
@@ -128,43 +132,44 @@ func (mcpTools *MCPTools) registerCancelWorkflowRunTool() {
 				mcpTools.apiServices.SQIDManager,
 			)
 			if formatErr != nil {
-				return nil, struct{}{}, formatErr
+				return nil, toolregistry.ToolOutput{}, formatErr
 			}
 
-			result, err := helpers.MCPSuccess(formattedRun)
+			result, resultOutput, err := helpers.MCPSuccess(formattedRun)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerListWorkflowRunsTool registers the irmin_list_workflow_runs tool for listing workflow runs in a workspace
+// registerListWorkflowRunsTool registers the irmin_workflow_run_list tool for listing workflow runs in a workspace
 func (mcpTools *MCPTools) registerListWorkflowRunsTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_list_workflow_runs",
-			Description: "List execution history for a specific workflow showing all workflow runs. Returns an array of workflow run objects with execution status (queued, running, completed, failed, cancelled), start/end timestamps, duration, logs, and error details. Supports pagination via per_page and page parameters. Requires workspace_slug and workflow_id (SQID). Use this to monitor workflow execution history, debug failures, or verify successful data operations.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listWorkflowRunsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_workflow_run_list",
+		"List execution history for a specific workflow showing all workflow runs. Returns an array of workflow run objects with execution status (queued, running, completed, failed, cancelled), start/end timestamps, duration, logs, and error details. Supports pagination via per_page and page parameters. Requires workspace_slug and workflow_id (SQID). Use this to monitor workflow execution history, debug failures, or verify successful data operations.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listWorkflowRunsArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workflow
 			workflow, err := mcpTools.apiServices.GetWorkflow(ctx, user, workspace, args.WorkflowID)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workflow runs for the workflow.
@@ -177,7 +182,7 @@ func (mcpTools *MCPTools) registerListWorkflowRunsTool() {
 				args.Page,
 			)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Format the workflow runs for the response.
@@ -187,9 +192,9 @@ func (mcpTools *MCPTools) registerListWorkflowRunsTool() {
 				mcpTools.apiServices.SQIDManager,
 			)
 			if formatErr != nil {
-				return nil, struct{}{}, formatErr
+				return nil, toolregistry.ToolOutput{}, formatErr
 			}
-			result, err := helpers.MCPSuccess(map[string]any{
+			result, resultOutput, err := helpers.MCPSuccess(map[string]any{
 				"data":     formattedRuns,
 				"count":    count,
 				"per_page": args.PerPage,
@@ -197,9 +202,9 @@ func (mcpTools *MCPTools) registerListWorkflowRunsTool() {
 				"total":    count,
 			})
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }

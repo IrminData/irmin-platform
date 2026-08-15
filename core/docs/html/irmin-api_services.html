@@ -14,6 +14,8 @@ const (
 	WriteOperationUpdate = "update"
 	// WriteOperationPatch represents a JSON patch operation.
 	WriteOperationPatch = "patch"
+	// WriteOperationCommit represents committing already staged changes.
+	WriteOperationCommit = "commit"
 )
     Write operation type constants.
 
@@ -225,6 +227,13 @@ func (e *AIAppToolExecutor) CommitStagedChanges(
 ) (*irminmodels.Commit, error)
     CommitStagedChanges commits all staged changes on a branch.
 
+func (e *AIAppToolExecutor) CommitStagedChangesWithApproval(
+	ctx context.Context,
+	repoSlug, ref, message string,
+) (*WriteResult, error)
+    CommitStagedChangesWithApproval honors the AI Application approval policy
+    for explicit commits.
+
 func (e *AIAppToolExecutor) ExecuteCustomTool(
 	ctx context.Context,
 	toolName string,
@@ -232,11 +241,11 @@ func (e *AIAppToolExecutor) ExecuteCustomTool(
 ) (*CustomToolResult, error)
     ExecuteCustomTool executes a custom tool by name.
 
-func (e *AIAppToolExecutor) ExecutePendingWrite(
+func (e *AIAppToolExecutor) ExecutePendingOperation(
 	ctx context.Context,
-	pendingWrite *db.AIApplicationPendingWrite,
+	pendingOperation *db.AIApplicationPendingOperation,
 ) (*WriteResult, error)
-    ExecutePendingWrite executes a previously approved pending write.
+    ExecutePendingOperation executes a previously approved pending operation.
 
 func (e *AIAppToolExecutor) ExecuteSQL(
 	ctx context.Context,
@@ -1932,12 +1941,12 @@ func (t *UsageTracker) TrackSeats(workspaceID uint)
     free.
 
 type WriteResult struct {
-	Path             string  `json:"path"`
-	Operation        string  `json:"operation"`
-	Committed        bool    `json:"committed"`
-	CommitID         *string `json:"commit_id,omitempty"`
-	PendingID        *string `json:"pending_id,omitempty"`
-	RequiresApproval bool    `json:"requires_approval"`
+	Path               string  `json:"path"`
+	Operation          string  `json:"operation"`
+	Committed          bool    `json:"committed"`
+	CommitID           *string `json:"commit_id,omitempty"`
+	PendingOperationID *string `json:"pending_operation_id,omitempty"`
+	RequiresApproval   bool    `json:"requires_approval"`
 }
     WriteResult represents the result of a write operation.
 

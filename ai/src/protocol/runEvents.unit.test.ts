@@ -91,6 +91,37 @@ describe('RunEventV1', () => {
     );
   });
 
+  it('emits a safe approval event for a staged destructive tool', () => {
+    assert.deepEqual(
+      normalizeLangChainEvent({
+        event: 'on_tool_end',
+        run_id: 'tool-2',
+        name: 'irmin_repository_object_delete',
+        data: {
+          output: JSON.stringify({
+            requires_approval: true,
+            pending_operation_id: 'pending-1',
+            approval_preview: 'Delete object',
+            workspace_slug: 'acme',
+            arguments: { token: 'secret' },
+          }),
+        },
+      }),
+      [
+        {
+          type: 'tool.approval_required',
+          data: {
+            toolCallId: 'tool-2',
+            toolName: 'irmin_repository_object_delete',
+            pendingOperationId: 'pending-1',
+            approvalPreview: 'Delete object',
+            workspaceSlug: 'acme',
+          },
+        },
+      ]
+    );
+  });
+
   it('emits monotonic envelopes and exactly one successful terminal event', async () => {
     const controller = new AbortController();
     const stream = createRunEventStream({

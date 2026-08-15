@@ -20,7 +20,8 @@ export function createLazyContextTool(
   const irmin = new IrminCore(authToken);
 
   return new DynamicStructuredTool({
-    name: 'irmin_get_context',
+    name: 'irmin_context_get',
+    metadata: { irminCapability: 'context.read' },
     description:
       'Fetches detailed context about Irmin resources on demand. ' +
       'Use this when you need specific information about a connection, workflow, ' +
@@ -209,7 +210,8 @@ export function createBatchContextTool(
   const irmin = new IrminCore(authToken);
 
   return new DynamicStructuredTool({
-    name: 'irmin_get_batch_context',
+    name: 'irmin_context_batch_get',
+    metadata: { irminCapability: 'context.read' },
     description:
       'Fetches multiple Irmin resources in a single call. ' +
       'More efficient than multiple individual calls when you need several resources.',

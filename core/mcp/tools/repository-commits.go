@@ -4,6 +4,8 @@ import (
 	"context"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -37,26 +39,27 @@ func (mcpTools *MCPTools) RegisterRepositoryCommitsTools() {
 	mcpTools.registerRevertRepositoryUncommittedChangesTool()
 }
 
-// registerListRepositoryCommitsTool registers the irmin_list_repository_commits tool for listing repository commits in a workspace
+// registerListRepositoryCommitsTool registers the irmin_repository_commit_list tool for listing repository commits in a workspace
 func (mcpTools *MCPTools) registerListRepositoryCommitsTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_list_repository_commits",
-			Description: "List commit history for a repository branch. Commits represent snapshots of data at specific points in time, forming the version history. Returns an array of commit objects with SHA, message, author, timestamp, and parent commits. Supports pagination via after cursor and per_page parameters. Requires workspace_slug and repository_slug. Use this to inspect the data lineage and understand what changes were made over time.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoryCommitsArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_commit_list",
+		"List commit history for a repository branch. Commits represent snapshots of data at specific points in time, forming the version history. Returns an array of commit objects with SHA, message, author, timestamp, and parent commits. Supports pagination via after cursor and per_page parameters. Requires workspace_slug and repository_slug. Use this to inspect the data lineage and understand what changes were made over time.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args listRepositoryCommitsArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -69,7 +72,7 @@ func (mcpTools *MCPTools) registerListRepositoryCommitsTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the commits using the service
@@ -85,12 +88,12 @@ func (mcpTools *MCPTools) registerListRepositoryCommitsTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to list repository commits", "error", err)
-				return helpers.MCPError("Failed to list repository commits"), struct{}{}, nil
+				return helpers.MCPError("Failed to list repository commits"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Build the pagination response
 			if lakefsPagination != nil {
-				response, responseErr := helpers.MCPSuccess(irminmodels.IrminAPIResponse{
+				response, responseOutput, responseErr := helpers.MCPSuccess(irminmodels.IrminAPIResponse{
 					Pagination: &irminmodels.IrminAPIPaginationMetadata{
 						Total:   &lakefsPagination.Results,
 						PerPage: &args.PerPage,
@@ -100,44 +103,45 @@ func (mcpTools *MCPTools) registerListRepositoryCommitsTool() {
 					Data: filteredCommits,
 				})
 				if responseErr != nil {
-					return nil, struct{}{}, responseErr
+					return nil, toolregistry.ToolOutput{}, responseErr
 				}
-				return response, struct{}{}, nil
+				return response, responseOutput, nil
 			}
 
-			result, err := helpers.MCPSuccess(irminmodels.IrminAPIResponse{
+			result, resultOutput, err := helpers.MCPSuccess(irminmodels.IrminAPIResponse{
 				Data: filteredCommits,
 			})
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerCreateRepositoryCommitTool registers the irmin_create_repository_commit tool for creating a new commit in a repository
+// registerCreateRepositoryCommitTool registers the irmin_repository_commit_create tool for creating a new commit in a repository
 //
 //nolint:dupl // This is not a duplicate, it's a different tool, with similar flow compared to other tools
 func (mcpTools *MCPTools) registerCreateRepositoryCommitTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_create_repository_commit",
-			Description: "Create a new commit to permanently save all uncommitted changes on a branch. Commits snapshot the current state of all data objects and add them to the version history. Requires workspace_slug, repository_slug, and a descriptive commit message. Optionally specify branch_name (defaults to repository's default branch). Returns the created commit object with SHA. Use this after making data changes to preserve them in the repository history before merging or sharing.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createRepositoryCommitArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_commit_create",
+		"Create a new commit to permanently save all uncommitted changes on a branch. Commits snapshot the current state of all data objects and add them to the version history. Requires workspace_slug, repository_slug, and a descriptive commit message. Optionally specify branch_name (defaults to repository's default branch). Returns the created commit object with SHA. Use this after making data changes to preserve them in the repository history before merging or sharing.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args createRepositoryCommitArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -150,7 +154,7 @@ func (mcpTools *MCPTools) registerCreateRepositoryCommitTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Create the commit using the service
@@ -167,38 +171,39 @@ func (mcpTools *MCPTools) registerCreateRepositoryCommitTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to create repository commit", "error", err)
-				return helpers.MCPError("Failed to create repository commit"), struct{}{}, nil
+				return helpers.MCPError("Failed to create repository commit"), toolregistry.ToolOutput{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(commit)
+			result, resultOutput, err := helpers.MCPSuccess(commit)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }
 
-// registerRevertRepositoryUncommittedChangesTool registers the irmin_revert_repository_uncommitted_changes tool for reverting the uncommitted changes in a repository
+// registerRevertRepositoryUncommittedChangesTool registers the irmin_repository_changes_revert tool for reverting the uncommitted changes in a repository
 func (mcpTools *MCPTools) registerRevertRepositoryUncommittedChangesTool() {
-	sdkmcp.AddTool(
+	toolregistry.Register(
+		mcpTools.registry,
 		mcpTools.server,
-		&sdkmcp.Tool{
-			Name:        "irmin_revert_repository_uncommitted_changes",
-			Description: "Discard all uncommitted changes on a branch, restoring it to the state of the last commit. This operation is destructive and cannot be undone. All pending modifications to data objects will be permanently lost. Requires workspace_slug, repository_slug, and optionally branch_name. Returns success confirmation. Use this to abandon unwanted changes or reset a branch to a clean state.",
-		},
-		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args revertRepositoryUncommittedChangesArgs) (*sdkmcp.CallToolResult, struct{}, error) {
+
+		"irmin_repository_changes_revert",
+		"Discard all uncommitted changes on a branch, restoring it to the state of the last commit. This operation is destructive and cannot be undone. All pending modifications to data objects will be permanently lost. Requires workspace_slug, repository_slug, and optionally branch_name. Returns success confirmation. Use this to abandon unwanted changes or reset a branch to a clean state.",
+
+		func(ctx context.Context, _ *sdkmcp.CallToolRequest, args revertRepositoryUncommittedChangesArgs) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
 			// Validate user
 			user, err := helpers.ValidateUser(ctx, mcpTools.getUser)
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
 
 			// Get the workspace first
 			workspace, err := mcpTools.apiServices.GetWorkspace(ctx, user, args.WorkspaceSlug)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get workspace", "error", err)
-				return helpers.MCPError("Failed to get workspace"), struct{}{}, nil
+				return helpers.MCPError("Failed to get workspace"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Get the repository
@@ -211,7 +216,7 @@ func (mcpTools *MCPTools) registerRevertRepositoryUncommittedChangesTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to get repository", "error", err)
-				return helpers.MCPError("Failed to get repository"), struct{}{}, nil
+				return helpers.MCPError("Failed to get repository"), toolregistry.ToolOutput{}, nil
 			}
 
 			// Revert the uncommitted changes using the service
@@ -227,16 +232,18 @@ func (mcpTools *MCPTools) registerRevertRepositoryUncommittedChangesTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to revert repository uncommitted changes", "error", err)
-				return helpers.MCPError("Failed to revert repository uncommitted changes"), struct{}{}, nil
+				return helpers.MCPError(
+					"Failed to revert repository uncommitted changes",
+				), toolregistry.ToolOutput{}, nil
 			}
 
-			result, err := helpers.MCPSuccess(map[string]string{
+			result, resultOutput, err := helpers.MCPSuccess(map[string]string{
 				"message": "Changes reverted to the previous commit",
 			})
 			if err != nil {
-				return nil, struct{}{}, err
+				return nil, toolregistry.ToolOutput{}, err
 			}
-			return result, struct{}{}, nil
+			return result, resultOutput, nil
 		},
 	)
 }

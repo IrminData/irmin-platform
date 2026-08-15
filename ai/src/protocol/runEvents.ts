@@ -73,6 +73,39 @@ function isInternalModelEvent(event: UnknownRecord): boolean {
   );
 }
 
+function approvalFromOutput(output: unknown): UnknownRecord | undefined {
+  const visit = (value: unknown): UnknownRecord | undefined => {
+    if (typeof value === 'string') {
+      try {
+        return visit(JSON.parse(value));
+      } catch {
+        return undefined;
+      }
+    }
+    if (Array.isArray(value)) {
+      for (const child of value) {
+        const found = visit(child);
+        if (found) return found;
+      }
+      return undefined;
+    }
+    const record = asRecord(value);
+    if (!record) return undefined;
+    if (
+      record.requires_approval === true &&
+      typeof record.pending_operation_id === 'string'
+    ) {
+      return record;
+    }
+    for (const child of Object.values(record)) {
+      const found = visit(child);
+      if (found) return found;
+    }
+    return undefined;
+  };
+  return visit(output);
+}
+
 function completedMessageId(event: unknown): string | undefined {
   const value = asRecord(event);
   if (value?.event !== 'on_chat_model_end') return undefined;
@@ -123,13 +156,29 @@ export function normalizeLangChainEvent(
           data: { toolCallId: runId, toolName: name },
         },
       ];
-    case 'on_tool_end':
+    case 'on_tool_end': {
+      const approval = approvalFromOutput(asRecord(event.data)?.output);
+      if (approval) {
+        return [
+          {
+            type: 'tool.approval_required',
+            data: {
+              toolCallId: runId,
+              toolName: name,
+              pendingOperationId: approval.pending_operation_id,
+              approvalPreview: approval.approval_preview,
+              workspaceSlug: approval.workspace_slug,
+            },
+          },
+        ];
+      }
       return [
         {
           type: 'tool.completed',
           data: { toolCallId: runId, toolName: name },
         },
       ];
+    }
     case 'on_tool_error':
       return [
         {

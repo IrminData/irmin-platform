@@ -244,7 +244,8 @@ func (d *Database) Migrate() error {
 		&AIApplicationTag{},
 		&AIApplicationCustomTool{},
 		&AIApplicationToolLog{},
-		&AIApplicationPendingWrite{},
+		&AIApplicationPendingOperation{},
+		&MCPPendingOperation{},
 		&Template{},
 		&AsyncJob{},
 		&WorkspaceSubscription{},
@@ -372,7 +373,8 @@ func (d *Database) Reset() error {
 		&AIApplicationTag{},
 		&AIApplicationDataSource{},
 		&AIApplicationCustomTool{},
-		&AIApplicationPendingWrite{}, // Must be before ToolLog due to foreign key
+		&AIApplicationPendingOperation{}, // Must be before ToolLog due to foreign key
+		&MCPPendingOperation{},
 		&AIApplicationToolLog{},
 		&AIApplication{},
 		&Role{},

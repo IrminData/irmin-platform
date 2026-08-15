@@ -358,13 +358,13 @@ type AIApplicationDataSource struct {
 }
     AIApplicationDataSource represents a data source for an AI application.
 
-type AIApplicationPendingWrite struct {
+type AIApplicationPendingOperation struct {
 	gorm.Model
 
 	AIApplicationID uint          `json:"ai_application_id" gorm:"index;not null"`
 	AIApplication   AIApplication `json:"ai_application"    gorm:"foreignKey:AIApplicationID"`
 
-	// Link to the tool log entry that created this pending write
+	// Link to the tool log entry that created this pending operation
 	ToolLogID *uint                 `json:"tool_log_id,omitempty"`
 	ToolLog   *AIApplicationToolLog `json:"tool_log,omitempty"    gorm:"foreignKey:ToolLogID"`
 
@@ -375,20 +375,26 @@ type AIApplicationPendingWrite struct {
 	Ref          string     `json:"ref"`
 
 	// Operation details
-	Operation      string `json:"operation"`                                   // "upload", "update", "patch"
-	Content        []byte `json:"-"                         gorm:"type:bytea"` // Full content for file operations (not serialized to JSON)
-	ContentHash    string `json:"content_hash"`                                // Hash reference to staged content
-	ContentPreview string `json:"content_preview,omitempty"`                   // Preview of content for display
-	PatchJSON      string `json:"patch_json,omitempty"      gorm:"type:jsonb"` // For patch operations
-	CommitMessage  string `json:"commit_message"`
+	ToolName        string `json:"tool_name"                 gorm:"not null;index"`
+	Risk            string `json:"risk"                      gorm:"not null"`
+	Capability      string `json:"capability"`
+	ApprovalPreview string `json:"approval_preview"`
+	ArgumentsJSON   string `json:"-"                         gorm:"type:jsonb"`
+	Operation       string `json:"operation"`                                   // "upload", "update", "patch"
+	Content         []byte `json:"-"                         gorm:"type:bytea"` // Full content for file operations (not serialized to JSON)
+	ContentHash     string `json:"content_hash"`                                // Hash reference to staged content
+	ContentPreview  string `json:"content_preview,omitempty"`                   // Preview of content for display
+	PatchJSON       string `json:"patch_json,omitempty"      gorm:"type:jsonb"` // For patch operations
+	CommitMessage   string `json:"commit_message"`
 
 	// Status and review
-	Status       PendingWriteStatus `json:"status"                   gorm:"default:pending;index"`
-	ReviewedByID *uint              `json:"reviewed_by_id,omitempty"`
-	ReviewedBy   *User              `json:"reviewed_by,omitempty"    gorm:"foreignKey:ReviewedByID"`
-	ReviewedAt   *time.Time         `json:"reviewed_at,omitempty"`
+	Status         PendingOperationStatus `json:"status"                    gorm:"default:pending;index"`
+	ReviewedByID   *uint                  `json:"reviewed_by_id,omitempty"`
+	ReviewedBy     *User                  `json:"reviewed_by,omitempty"     gorm:"foreignKey:ReviewedByID"`
+	ReviewedAt     *time.Time             `json:"reviewed_at,omitempty"`
+	ExecutionError string                 `json:"execution_error,omitempty"`
 }
-    AIApplicationPendingWrite represents a write operation awaiting human
+    AIApplicationPendingOperation represents a registry operation awaiting human
     approval.
 
 type AIApplicationTag struct {
@@ -437,10 +443,10 @@ type AIApplicationToolLog struct {
 	ErrorMsg   string `json:"error_msg"`
 
 	// Write-specific audit fields
-	WriteOperation  string `json:"write_operation,omitempty"`   // "upload", "update", "patch"
-	WriteTargetPath string `json:"write_target_path,omitempty"` // Path that was written to
-	CommitID        string `json:"commit_id,omitempty"`         // Commit ID if changes were committed
-	PendingWriteID  *uint  `json:"pending_write_id,omitempty"`  // Link to pending write if approval required
+	WriteOperation     string `json:"write_operation,omitempty"`      // "upload", "update", "patch"
+	WriteTargetPath    string `json:"write_target_path,omitempty"`    // Path that was written to
+	CommitID           string `json:"commit_id,omitempty"`            // Commit ID if changes were committed
+	PendingOperationID *uint  `json:"pending_operation_id,omitempty"` // Link to pending operation if approval required
 }
     AIApplicationToolLog represents an audit log entry for AI Application tool
     calls.
@@ -888,6 +894,8 @@ func (d *Database) AggregateUsageSummaries(periodStart, periodEnd time.Time) err
 
 func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool
 
+func (d *Database) ClaimMCPPendingOperation(id, reviewerID uint) (bool, error)
+
 func (d *Database) Close()
     Close closes the shared database connection pool.
 
@@ -895,8 +903,8 @@ func (d *Database) CountWorkspaceMembersAndInvites(workspaceID uint) (int64, err
     CountWorkspaceMembersAndInvites returns the total number of active members
     and pending invites for a workspace.
 
-func (d *Database) CreateAIApplicationPendingWrite(pw *AIApplicationPendingWrite) error
-    CreateAIApplicationPendingWrite creates a new pending write entry.
+func (d *Database) CreateAIApplicationPendingOperation(pw *AIApplicationPendingOperation) error
+    CreateAIApplicationPendingOperation creates a new pending operation entry.
 
 func (d *Database) CreateAIApplicationToolLog(log *AIApplicationToolLog) error
     CreateAIApplicationToolLog creates a new tool audit log entry.
@@ -915,6 +923,8 @@ func (d *Database) CreateConnectionOAuthSession(tx *gorm.DB, session *Connection
 func (d *Database) CreateConnectionSubscription(subscription *ConnectionSubscription) error
     CreateConnectionSubscription creates a new subscription in the database.
     It automatically generates a webhook token if not provided.
+
+func (d *Database) CreateMCPPendingOperation(operation *MCPPendingOperation) error
 
 func (d *Database) CreateSearchIndexes() error
     CreateSearchIndexes creates indexes to optimize search performance.
@@ -978,9 +988,9 @@ func (d *Database) DeleteInvite(id uint) error
 
 func (d *Database) DeleteObjects(tx *gorm.DB, path *string, repositoryID *uint, ref *string) error
 
-func (d *Database) DeletePendingWritesByAIApplicationID(tx *gorm.DB, aiApplicationID uint) error
-    DeletePendingWritesByAIApplicationID deletes all pending writes for an AI
-    Application.
+func (d *Database) DeletePendingOperationsByAIApplicationID(tx *gorm.DB, aiApplicationID uint) error
+    DeletePendingOperationsByAIApplicationID deletes all pending operations for
+    an AI Application.
 
 func (d *Database) DeleteStoredQuery(tx *gorm.DB, id uint) error
 
@@ -1006,6 +1016,10 @@ func (d *Database) EnsureNotificationTrigger(ctx context.Context) error
     EnsureNotificationTrigger ensures that the workflow run notification trigger
     exists in the database.
 
+func (d *Database) FailPendingOperation(id uint, executionError string) error
+    FailPendingOperation records a terminal execution failure without allowing
+    duplicate execution.
+
 func (d *Database) FindChildObjects(parentID uint) ([]RepositoryObject, error)
     FindChildObjects returns the direct children of the given parent object.
     Use this instead of relying on preloaded Children when traversing nested
@@ -1020,6 +1034,8 @@ func (d *Database) FindObject(path *string, repositoryID *uint, ref *string) (*R
 func (d *Database) FindRepositorySchemaCache(repositoryID uint, path, ref string) (*RepositorySchemaCache, error)
     FindRepositorySchemaCache finds a repository schema cache by repository ID,
     path, and ref.
+
+func (d *Database) FinishMCPPendingOperation(id uint, status PendingOperationStatus, executionError string) error
 
 func (d *Database) GenerateAllPossiblePolicies(
 	workspaceID uint,
@@ -1041,8 +1057,9 @@ func (d *Database) GetAIApplicationByAPIKeyWithContext(ctx context.Context, apiK
 func (d *Database) GetAIApplicationByID(id uint) (*AIApplication, error)
     GetAIApplicationByID retrieves an AI application by its ID.
 
-func (d *Database) GetAIApplicationPendingWriteByID(id uint) (*AIApplicationPendingWrite, error)
-    GetAIApplicationPendingWriteByID retrieves a pending write by its ID.
+func (d *Database) GetAIApplicationPendingOperationByID(id uint) (*AIApplicationPendingOperation, error)
+    GetAIApplicationPendingOperationByID retrieves a pending operation by its
+    ID.
 
 func (d *Database) GetAIApplicationTags(aiApplicationID uint) ([]Tag, error)
     GetAIApplicationTags retrieves all tags for an AI application.
@@ -1226,15 +1243,17 @@ func (d *Database) GetLogEventsForWorkspace(
     maximum number of events to return offset: number of events to skip returns:
     slice of LogEvent, total count of matching events, and error if any
 
+func (d *Database) GetMCPPendingOperation(id uint) (*MCPPendingOperation, error)
+
 func (d *Database) GetOwnerRole() (*Role, error)
 
-func (d *Database) GetPendingWritesByAIApplicationID(
+func (d *Database) GetPendingOperationsByAIApplicationID(
 	aiApplicationID uint,
-	status *PendingWriteStatus,
+	status *PendingOperationStatus,
 	limit, offset int,
-) ([]AIApplicationPendingWrite, int64, error)
-    GetPendingWritesByAIApplicationID retrieves all pending writes for an AI
-    Application.
+) ([]AIApplicationPendingOperation, int64, error)
+    GetPendingOperationsByAIApplicationID retrieves all pending operations for
+    an AI Application.
 
 func (d *Database) GetPgxConn(ctx context.Context) (*pgxpool.Conn, error)
     GetPgxConn returns a pgx connection from the shared pool.
@@ -1470,11 +1489,6 @@ func (d *Database) RemoveUserFromWorkspace(tx *gorm.DB, userID, workspaceID uint
 func (d *Database) Reset() error
     Reset drops all tables to start fresh.
 
-func (d *Database) RevertPendingWriteToPending(id uint) error
-    RevertPendingWriteToPending reverts a pending write back to pending status,
-    clearing any review metadata (reviewed_by_id and reviewed_at). This is used
-    when a pending write approval fails during execution.
-
 func (d *Database) RunRawQuery(sqlQuery string, args ...any) error
     RunRawQuery executes a raw SQL query against the database.
 
@@ -1501,27 +1515,33 @@ func (d *Database) SearchWorkspaceCount(
     SearchWorkspaceCount performs a search and returns only the total count of
     results with timeout protection.
 
+func (d *Database) TransitionMCPPendingOperation(
+	id uint,
+	expected, next PendingOperationStatus,
+	reviewerID uint,
+) (bool, error)
+
 func (d *Database) UpdateConnectionSubscription(subscription *ConnectionSubscription) error
     UpdateConnectionSubscription updates an existing subscription.
 
-func (d *Database) UpdatePendingWriteStatus(
+func (d *Database) UpdatePendingOperationStatus(
 	id uint,
-	status PendingWriteStatus,
+	status PendingOperationStatus,
 	reviewedByID *uint,
 ) error
-    UpdatePendingWriteStatus updates the status of a pending write.
+    UpdatePendingOperationStatus updates the status of a pending operation.
 
-func (d *Database) UpdatePendingWriteStatusAtomic(
+func (d *Database) UpdatePendingOperationStatusAtomic(
 	id uint,
-	expectedStatus PendingWriteStatus,
-	newStatus PendingWriteStatus,
+	expectedStatus PendingOperationStatus,
+	newStatus PendingOperationStatus,
 	reviewedByID *uint,
 ) (bool, error)
-    UpdatePendingWriteStatusAtomic atomically updates the status of a pending
-    write only if it's currently in the expected status. This prevents race
-    conditions where concurrent requests could both execute the same pending
-    write. Returns true if the update was successful (row was modified),
-    false if the status was already changed by another request.
+    UpdatePendingOperationStatusAtomic atomically updates the status of a
+    pending operation only if it's currently in the expected status. This
+    prevents race conditions where concurrent requests could both execute the
+    same pending operation. Returns true if the update was successful (row was
+    modified), false if the status was already changed by another request.
 
 func (d *Database) UpdateWorkspaceUserRoles(
 	tx *gorm.DB,
@@ -1655,6 +1675,26 @@ const (
 	LogEventTypeInfo    LogEventType = "INFO"
 	LogEventTypeWarning LogEventType = "WARNING"
 )
+type MCPPendingOperation struct {
+	gorm.Model
+	WorkspaceID     uint                   `json:"workspace_id"              gorm:"not null;index"`
+	Workspace       Workspace              `json:"workspace"                 gorm:"foreignKey:WorkspaceID"`
+	RequestedByID   uint                   `json:"requested_by_id"           gorm:"not null;index"`
+	RequestedBy     User                   `json:"requested_by"              gorm:"foreignKey:RequestedByID"`
+	ToolName        string                 `json:"tool_name"                 gorm:"not null;index"`
+	Risk            string                 `json:"risk"                      gorm:"not null"`
+	Capability      string                 `json:"capability"`
+	ApprovalPreview string                 `json:"approval_preview"`
+	ArgumentsJSON   string                 `json:"-"                         gorm:"type:jsonb;not null"`
+	Status          PendingOperationStatus `json:"status"                    gorm:"default:pending;index"`
+	ReviewedByID    *uint                  `json:"reviewed_by_id,omitempty"`
+	ReviewedBy      *User                  `json:"reviewed_by,omitempty"     gorm:"foreignKey:ReviewedByID"`
+	ReviewedAt      *time.Time             `json:"reviewed_at,omitempty"`
+	ExecutionError  string                 `json:"execution_error,omitempty"`
+}
+    MCPPendingOperation stores a destructive canonical tool call until a user
+    approves it.
+
 type PatchDirection string
     PatchDirection indicates whether to apply patches to a connection or
     repository
@@ -1663,16 +1703,20 @@ const (
 	PatchDirectionToConnection PatchDirection = "to_connection"
 	PatchDirectionToRepository PatchDirection = "to_repository"
 )
-type PendingWriteStatus string
-    PendingWriteStatus represents the status of a pending write operation.
+type PendingOperationStatus string
+    PendingOperationStatus represents the lifecycle of a staged operation.
 
 const (
-	// PendingWriteStatusPending indicates the write is awaiting approval.
-	PendingWriteStatusPending PendingWriteStatus = "pending"
-	// PendingWriteStatusApproved indicates the write has been approved and executed.
-	PendingWriteStatusApproved PendingWriteStatus = "approved"
-	// PendingWriteStatusRejected indicates the write has been rejected.
-	PendingWriteStatusRejected PendingWriteStatus = "rejected"
+	// PendingOperationStatusPending indicates the operation is awaiting approval.
+	PendingOperationStatusPending PendingOperationStatus = "pending"
+	// PendingOperationStatusExecuting indicates one reviewer has atomically claimed execution.
+	PendingOperationStatusExecuting PendingOperationStatus = "executing"
+	// PendingOperationStatusCompleted indicates the approved operation completed successfully.
+	PendingOperationStatusCompleted PendingOperationStatus = "completed"
+	// PendingOperationStatusFailed indicates the claimed operation failed and cannot be retried in place.
+	PendingOperationStatusFailed PendingOperationStatus = "failed"
+	// PendingOperationStatusRejected indicates the operation has been rejected.
+	PendingOperationStatusRejected PendingOperationStatus = "rejected"
 )
 type PipelineStage struct {
 	gorm.Model

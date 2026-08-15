@@ -23,6 +23,7 @@ import {
 import { useLocale } from '@/context/LocaleContext';
 
 import { getMessageMetadata, getMessageRole } from './storedMessageHelpers';
+import { ToolApprovalCard } from './ToolApprovalCard';
 import {
   isIterationsNumber,
   isServerToolEvent,
@@ -146,6 +147,22 @@ export const MessageMetadata = ({
       </div>
     ) : null;
 
+  const approvalEvents = isServerToolEventsArray(metadata.toolCalls)
+    ? metadata.toolCalls.filter(
+        (event) => event.type === 'tool-approval-required'
+      )
+    : [];
+
+  const approvalElement = approvalEvents.map((event, index) => (
+    <ToolApprovalCard
+      key={`approval-${message.data?.id || message.type}-${event.toolCallId || index}`}
+      toolName={event.toolName}
+      approvalPreview={event.approvalPreview}
+      pendingOperationId={event.pendingOperationId}
+      workspaceSlug={event.workspaceSlug}
+    />
+  ));
+
   const toolCallsElement =
     consolidatedToolCalls.length === 0 ? null : (
       <div className='mt-4 space-y-2'>
@@ -249,6 +266,7 @@ export const MessageMetadata = ({
     return (
       <>
         {toolCallsElement}
+        {approvalElement}
         {iterationsElement}
       </>
     );
@@ -259,6 +277,7 @@ export const MessageMetadata = ({
     <>
       {thinkingElement}
       {toolCallsElement}
+      {approvalElement}
       {iterationsElement}
     </>
   );

@@ -182,20 +182,20 @@ func (c *Client) TransferAIApplication(
 	return &aiApplication, apiResp, nil
 }
 
-// GetAIApplicationPendingWritesOptions contains optional parameters for fetching pending writes.
-type GetAIApplicationPendingWritesOptions struct {
+// GetAIApplicationPendingOperationsOptions contains optional parameters for fetching pending operations.
+type GetAIApplicationPendingOperationsOptions struct {
 	Limit  int
 	Offset int
 }
 
-// GetAIApplicationPendingWrites retrieves pending write operations for an AI application.
-func (c *Client) GetAIApplicationPendingWrites(
+// GetAIApplicationPendingOperations retrieves pending operations for an AI application.
+func (c *Client) GetAIApplicationPendingOperations(
 	ctx context.Context,
 	workspace, aiApplicationID string,
-	opts *GetAIApplicationPendingWritesOptions,
-) (*irminmodels.AIApplicationPendingWritesResponse, *irminmodels.IrminAPIResponse, error) {
+	opts *GetAIApplicationPendingOperationsOptions,
+) (*irminmodels.AIApplicationPendingOperationsResponse, *irminmodels.IrminAPIResponse, error) {
 	endpoint := fmt.Sprintf(
-		"/v1/workspaces/%s/ai-applications/%s/pending-writes",
+		"/v1/workspaces/%s/ai-applications/%s/pending-operations",
 		workspace,
 		aiApplicationID,
 	)
@@ -213,78 +213,78 @@ func (c *Client) GetAIApplicationPendingWrites(
 		endpoint += "?" + params.Encode()
 	}
 
-	var response irminmodels.AIApplicationPendingWritesResponse
+	var response irminmodels.AIApplicationPendingOperationsResponse
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: endpoint,
 	}, &response)
 	if err != nil {
-		return nil, nil, fmt.Errorf("get AI application pending writes error: %w", err)
+		return nil, nil, fmt.Errorf("get AI application pending operations error: %w", err)
 	}
 	return &response, apiResp, nil
 }
 
-// GetAIApplicationPendingWrite retrieves a specific pending write by ID.
-func (c *Client) GetAIApplicationPendingWrite(
+// GetAIApplicationPendingOperation retrieves a specific pending operation by ID.
+func (c *Client) GetAIApplicationPendingOperation(
 	ctx context.Context,
-	workspace, aiApplicationID, pendingWriteID string,
-) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error) {
-	var pendingWrite irminmodels.AIApplicationPendingWrite
+	workspace, aiApplicationID, pendingOperationID string,
+) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error) {
+	var pendingOperation irminmodels.AIApplicationPendingOperation
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodGet,
 		Endpoint: fmt.Sprintf(
-			"/v1/workspaces/%s/ai-applications/%s/pending-writes/%s",
+			"/v1/workspaces/%s/ai-applications/%s/pending-operations/%s",
 			workspace,
 			aiApplicationID,
-			pendingWriteID,
+			pendingOperationID,
 		),
-	}, &pendingWrite)
+	}, &pendingOperation)
 	if err != nil {
-		return nil, nil, fmt.Errorf("get AI application pending write error: %w", err)
+		return nil, nil, fmt.Errorf("get AI application pending operation error: %w", err)
 	}
-	return &pendingWrite, apiResp, nil
+	return &pendingOperation, apiResp, nil
 }
 
-// ApproveAIApplicationPendingWrite approves a pending write operation.
-func (c *Client) ApproveAIApplicationPendingWrite(
+// ApproveAIApplicationPendingOperation approves a pending operation.
+func (c *Client) ApproveAIApplicationPendingOperation(
 	ctx context.Context,
-	workspace, aiApplicationID, pendingWriteID string,
-) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error) {
-	var pendingWrite irminmodels.AIApplicationPendingWrite
+	workspace, aiApplicationID, pendingOperationID string,
+) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error) {
+	var pendingOperation irminmodels.AIApplicationPendingOperationActionResult
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodPost,
 		Endpoint: fmt.Sprintf(
-			"/v1/workspaces/%s/ai-applications/%s/pending-writes/%s/approve",
+			"/v1/workspaces/%s/ai-applications/%s/pending-operations/%s/approve",
 			workspace,
 			aiApplicationID,
-			pendingWriteID,
+			pendingOperationID,
 		),
-	}, &pendingWrite)
+	}, &pendingOperation)
 	if err != nil {
-		return nil, nil, fmt.Errorf("approve AI application pending write error: %w", err)
+		return nil, nil, fmt.Errorf("approve AI application pending operation error: %w", err)
 	}
-	return &pendingWrite, apiResp, nil
+	return &pendingOperation, apiResp, nil
 }
 
-// RejectAIApplicationPendingWrite rejects a pending write operation.
-func (c *Client) RejectAIApplicationPendingWrite(
+// RejectAIApplicationPendingOperation rejects a pending operation.
+func (c *Client) RejectAIApplicationPendingOperation(
 	ctx context.Context,
-	workspace, aiApplicationID, pendingWriteID string,
-) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error) {
-	var pendingWrite irminmodels.AIApplicationPendingWrite
+	workspace, aiApplicationID, pendingOperationID string,
+) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error) {
+	var pendingOperation irminmodels.AIApplicationPendingOperationActionResult
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodPost,
 		Endpoint: fmt.Sprintf(
-			"/v1/workspaces/%s/ai-applications/%s/pending-writes/%s/reject",
+			"/v1/workspaces/%s/ai-applications/%s/pending-operations/%s/reject",
 			workspace,
 			aiApplicationID,
-			pendingWriteID,
+			pendingOperationID,
 		),
-	}, &pendingWrite)
+	}, &pendingOperation)
 	if err != nil {
-		return nil, nil, fmt.Errorf("reject AI application pending write error: %w", err)
+		return nil, nil, fmt.Errorf("reject AI application pending operation error: %w", err)
 	}
-	return &pendingWrite, apiResp, nil
+	return &pendingOperation, apiResp, nil
 }
 
 // GetAIApplicationToolLogsOptions contains optional parameters for fetching tool logs.
