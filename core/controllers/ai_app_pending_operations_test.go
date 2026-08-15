@@ -1,10 +1,11 @@
-package controllers
+package controllers_test
 
 import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"irmin-api/controllers"
 	"irmin-api/db"
 
 	"github.com/gofiber/fiber/v3"
@@ -12,7 +13,7 @@ import (
 
 func TestAIApplicationCredentialCannotApproveOrRejectPendingOperation(t *testing.T) {
 	t.Parallel()
-	api := &APIControllers{}
+	api := &controllers.APIControllers{}
 	app := fiber.New()
 	app.Use(func(c fiber.Ctx) error {
 		c.Locals("ai_application", &db.AIApplication{})

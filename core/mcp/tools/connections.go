@@ -6,9 +6,10 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
-	"irmin-api/toolregistry"
 )
 
 type listConnectionsArgs struct {
@@ -58,7 +59,9 @@ func (mcpTools *MCPTools) RegisterConnectionTools() {
 //
 //nolint:dupl // This is not a duplicate, it's a different tool, with similar flow compared to other tools
 func (mcpTools *MCPTools) registerListConnectionsTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_connection_list",
 		"List all configured connections in a workspace. Connections are configured instances of connectors with stored credentials and settings for accessing external systems. Returns an array of connection objects with ID, name, connector type, configuration status, and metadata. Requires workspace_slug. Use this to discover available data sources and destinations before setting up data workflows.",
@@ -108,7 +111,9 @@ func (mcpTools *MCPTools) registerListConnectionsTool() {
 //
 //nolint:dupl // Similar pattern to other get tools, but for a different resource type
 func (mcpTools *MCPTools) registerGetConnectionTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_connection_get",
 		"Retrieve detailed information about a specific connection. Returns complete connection metadata including name, description, connector type, configuration status, and last tested timestamp. Does not expose sensitive credential values. Requires workspace_slug and connection_id (SQID). Use this to inspect connection details before using it in workflows or queries.",
@@ -152,7 +157,9 @@ func (mcpTools *MCPTools) registerGetConnectionTool() {
 
 // registerCreateConnectionTool registers the irmin_connection_create tool for creating a new connection in a workspace
 func (mcpTools *MCPTools) registerCreateConnectionTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_connection_create",
 		"Create a new connection to an external data source or destination. Requires workspace_slug, name, connector_id (SQID), details (authentication credentials), and settings (connection-specific configuration). Optionally provide description and documentation. Returns the created connection object. Always validate configuration with irmin_connector_configuration_validate before creating to ensure credentials are correct and connectivity works.",
@@ -209,7 +216,9 @@ func (mcpTools *MCPTools) registerCreateConnectionTool() {
 
 // registerUpdateConnectionTool registers the irmin_connection_update tool for updating a connection in a workspace
 func (mcpTools *MCPTools) registerUpdateConnectionTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_connection_update",
 		"Update metadata of an existing connection including name, description, and documentation. Cannot modify credentials or settings through this tool - those must be reconfigured through the connector interface. Requires workspace_slug, connection_id (SQID), and update parameters. Returns the updated connection object. Use this to maintain clear documentation and naming for connections.",
@@ -270,7 +279,9 @@ func (mcpTools *MCPTools) registerUpdateConnectionTool() {
 
 // registerConnectionSchemaTool registers the irmin_connection_schema_get tool for getting the schema of a connection
 func (mcpTools *MCPTools) registerConnectionSchemaTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_connection_schema_get",
 		"Retrieve the data schema available through a connection for a specific operation. Shows available tables, collections, or endpoints with their structure for pull (import) or push (export) operations. Requires workspace_slug, connection_id (SQID), operation_method ('pull' or 'push'), and optionally path to scope the schema query. Returns schema information for the external data source. Use this before configuring workflows to understand available data structures.",

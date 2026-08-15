@@ -5,8 +5,9 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 
-	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 	"irmin-api/toolregistry"
+
+	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 type listWorkflowRunsArgs struct {
@@ -35,7 +36,9 @@ func (mcpTools *MCPTools) RegisterWorkflowRunsTools() {
 
 // registerCreateWorkflowRunTool registers the irmin_workflow_run_create tool for creating a new workflow run
 func (mcpTools *MCPTools) registerCreateWorkflowRunTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_workflow_run_create",
 		"Manually trigger a workflow execution, creating a new workflow run. The workflow executes asynchronously in the background with progress tracked through status updates and logs. Returns the created workflow run object with execution ID and initial status. Requires workspace_slug and workflow_id (SQID). Use irmin_workflow_run_list to monitor execution progress and view logs.",
@@ -85,7 +88,9 @@ func (mcpTools *MCPTools) registerCreateWorkflowRunTool() {
 
 // registerCancelWorkflowRunTool registers the irmin_workflow_run_cancel tool for cancelling a workflow run
 func (mcpTools *MCPTools) registerCancelWorkflowRunTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_workflow_run_cancel",
 		"Cancel a currently executing or queued workflow run. Stops the workflow execution and marks the run as cancelled. Cannot cancel completed or failed runs. Requires workspace_slug, workflow_id (SQID), and run_id (SQID). Returns the updated workflow run object with cancelled status. Use this to stop long-running workflows or abort queued executions.",
@@ -141,7 +146,9 @@ func (mcpTools *MCPTools) registerCancelWorkflowRunTool() {
 
 // registerListWorkflowRunsTool registers the irmin_workflow_run_list tool for listing workflow runs in a workspace
 func (mcpTools *MCPTools) registerListWorkflowRunsTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_workflow_run_list",
 		"List execution history for a specific workflow showing all workflow runs. Returns an array of workflow run objects with execution status (queued, running, completed, failed, cancelled), start/end timestamps, duration, logs, and error details. Supports pagination via per_page and page parameters. Requires workspace_slug and workflow_id (SQID). Use this to monitor workflow execution history, debug failures, or verify successful data operations.",

@@ -1738,10 +1738,11 @@ func (e *AIAppToolExecutor) createPendingOperation(
 	// Create the pending operation record with full content stored
 	toolName := "irmin_repository_object_write"
 	capability := "repository_object.write"
-	if operation == WriteOperationPatch {
+	switch operation {
+	case WriteOperationPatch:
 		toolName = "irmin_repository_object_patch"
 		capability = "repository_object.patch"
-	} else if operation == WriteOperationCommit {
+	case WriteOperationCommit:
 		toolName = "irmin_repository_commit_create"
 		capability = "repository_commit.create"
 	}
@@ -1756,17 +1757,21 @@ func (e *AIAppToolExecutor) createPendingOperation(
 		ToolName:        toolName,
 		Risk:            "write",
 		Capability:      capability,
-		ApprovalPreview: fmt.Sprintf("%s %s", operation, BuildUnifiedPath(resolved.Repository.Slug, resolved.Ref, resolved.Path)),
-		ArgumentsJSON:   string(argumentsJSON),
-		Path:            resolved.Path,
-		Ref:             resolved.Ref,
-		Operation:       operation,
-		Content:         content, // Store full content for later execution
-		ContentHash:     contentHash,
-		ContentPreview:  contentPreview,
-		PatchJSON:       patchJSON,
-		CommitMessage:   commitMessage,
-		Status:          db.PendingOperationStatusPending,
+		ApprovalPreview: fmt.Sprintf(
+			"%s %s",
+			operation,
+			BuildUnifiedPath(resolved.Repository.Slug, resolved.Ref, resolved.Path),
+		),
+		ArgumentsJSON:  string(argumentsJSON),
+		Path:           resolved.Path,
+		Ref:            resolved.Ref,
+		Operation:      operation,
+		Content:        content, // Store full content for later execution
+		ContentHash:    contentHash,
+		ContentPreview: contentPreview,
+		PatchJSON:      patchJSON,
+		CommitMessage:  commitMessage,
+		Status:         db.PendingOperationStatusPending,
 	}
 
 	if err := e.apiServices.DB.CreateAIApplicationPendingOperation(pendingOperation); err != nil {
@@ -1774,7 +1779,10 @@ func (e *AIAppToolExecutor) createPendingOperation(
 	}
 
 	// Encode the pending operation ID
-	pendingOperationSqid, _ := e.apiServices.SQIDManager.Encode("ai_application_pending_operations", uint64(pendingOperation.ID))
+	pendingOperationSqid, _ := e.apiServices.SQIDManager.Encode(
+		"ai_application_pending_operations",
+		uint64(pendingOperation.ID),
+	)
 
 	return &WriteResult{
 		Path:               BuildUnifiedPath(resolved.Repository.Slug, resolved.Ref, resolved.Path),

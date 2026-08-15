@@ -6,10 +6,11 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
-	"irmin-api/toolregistry"
 )
 
 type listScriptsArgs struct {
@@ -50,7 +51,9 @@ func (mcpTools *MCPTools) RegisterScriptsTools() {
 //
 //nolint:dupl // This tool is similar to other tools which list things, but for a different resource
 func (mcpTools *MCPTools) registerListScriptsTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_script_list",
 		"List all stored scripts in a workspace. Scripts are reusable Python or JavaScript code that can process data objects and be used in workflows or executed standalone. Returns an array of script objects with ID, name, language, input/output schema, and metadata. Requires workspace_slug. Use this to discover available scripts for data transformation workflows.",
@@ -98,7 +101,9 @@ func (mcpTools *MCPTools) registerListScriptsTool() {
 
 // registerGetScriptContentTool registers the irmin_script_content_get tool for getting the content of a script in the workspace
 func (mcpTools *MCPTools) registerGetScriptContentTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_script_content_get",
 		"Retrieve the source code of a stored script. Returns the complete script content as a string along with script ID and name. Requires workspace_slug and script_id (SQID). Use this to inspect, debug, or understand script logic before execution or modification.",
@@ -154,7 +159,9 @@ func (mcpTools *MCPTools) registerGetScriptContentTool() {
 //
 //nolint:dupl // Similar pattern to create_query tool, but for a different resource type
 func (mcpTools *MCPTools) registerCreateScriptTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_script_create",
 		"Create a new stored script for data transformation or processing. Scripts can be Python or JavaScript code that accepts data object inputs and produces outputs. Requires workspace_slug and script parameters (name, language, content, input/output schema). Returns the created script object with unique ID. Use irmin_documentation_retrieve with 'irmin' collection to learn about script capabilities and sandbox environment before creating.",
@@ -203,7 +210,9 @@ func (mcpTools *MCPTools) registerCreateScriptTool() {
 
 // registerUpdateScriptTool registers the irmin_script_update tool for updating an existing stored script
 func (mcpTools *MCPTools) registerUpdateScriptTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_script_update",
 		"Modify an existing stored script's code, name, description, or input/output schema. Useful for fixing bugs, adding features, or adjusting script configuration. Requires workspace_slug, script_id (SQID), and update parameters. Returns the updated script object. Use irmin_documentation_retrieve with 'irmin' collection for script development guidance.",
@@ -264,7 +273,9 @@ func (mcpTools *MCPTools) registerUpdateScriptTool() {
 
 // registerExecuteScriptTool registers the irmin_script_execute tool for executing a script in the workspace
 func (mcpTools *MCPTools) registerExecuteScriptTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_script_execute",
 		"Execute a stored script with provided data object inputs in a secure sandbox. Scripts run with resource limits and return output data, metadata, and execution logs including any errors. Requires workspace_slug, script_id (SQID), and inputs array (repository object references). Returns execution results with output data and logs. Use this to transform data, validate data quality, or perform custom data processing operations.",

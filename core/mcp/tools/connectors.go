@@ -6,9 +6,10 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
-	"irmin-api/toolregistry"
 )
 
 type configurationFieldsType string
@@ -38,7 +39,9 @@ func (mcpTools *MCPTools) RegisterConnectorTools() {
 
 // registerListConnectorsTool registers the irmin_connector_list tool for listing connectors available on the platform
 func (mcpTools *MCPTools) registerListConnectorsTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_connector_list",
 		"List all available connector templates for integrating external data sources and destinations. Connectors are pre-built integrations for services like databases (PostgreSQL, MySQL), APIs (REST, GraphQL), cloud storage (S3, GCS), and SaaS platforms. Returns an array of connector objects with ID, name, type, capabilities, and supported operations. Use this to discover available integrations before creating connections.",
@@ -73,7 +76,9 @@ func (mcpTools *MCPTools) registerListConnectorsTool() {
 
 // registerShowRequiredConnectorConfigurationFieldsTool registers the irmin_connector_configuration_fields_get tool for showing the required configuration fields for a connector
 func (mcpTools *MCPTools) registerShowRequiredConnectorConfigurationFieldsTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_connector_configuration_fields_get",
 		"Retrieve the configuration schema for a specific connector, showing required fields for authentication and settings. Returns dynamic field definitions including field names, types, validation rules, and dependencies. Configuration has two parts: 'details' (authentication credentials) and 'settings' (connection-specific options). Requires connector_id (SQID), configuration_type ('details' or 'settings'), and current_configuration (for dynamic field resolution). Use this before creating a connection to understand what configuration values are needed.",
@@ -107,7 +112,9 @@ func (mcpTools *MCPTools) registerShowRequiredConnectorConfigurationFieldsTool()
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Error fetching connection configuration fields", "error", err)
-				return helpers.MCPError("Error fetching connection configuration fields"), toolregistry.ToolOutput{}, nil
+				return helpers.MCPError(
+					"Error fetching connection configuration fields",
+				), toolregistry.ToolOutput{}, nil
 			}
 
 			result, resultOutput, err := helpers.MCPSuccess(configurationFields)
@@ -121,7 +128,9 @@ func (mcpTools *MCPTools) registerShowRequiredConnectorConfigurationFieldsTool()
 
 // registerValidateConnectorConfigurationTool registers the irmin_connector_configuration_validate tool for validating the configuration of a connector
 func (mcpTools *MCPTools) registerValidateConnectorConfigurationTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_connector_configuration_validate",
 		"Test connector configuration values before creating a connection. Validates credentials, checks connectivity, and verifies permissions by making a test request to the external service. Returns validation results with success status and any error messages. Requires connector_id (SQID) and configuration object with details and settings. Always use this tool before creating or updating a connection to catch configuration errors early.",

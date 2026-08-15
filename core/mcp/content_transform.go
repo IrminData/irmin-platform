@@ -291,7 +291,7 @@ func transformExcel(ctx context.Context, content []byte, ext, _ string) (*Conten
 	// Execute query and convert to JSON
 	jsonContent, err := executeQueryToJSON(ctx, readQuery)
 	if err != nil {
-		return nil, fmt.Errorf("%w: failed to convert Excel: %v", ErrUnsupportedBinary, err)
+		return nil, fmt.Errorf("%w: failed to convert Excel: %w", ErrUnsupportedBinary, err)
 	}
 
 	return &ContentTransformResult{

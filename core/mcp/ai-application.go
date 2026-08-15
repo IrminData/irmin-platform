@@ -14,12 +14,13 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/services"
 
+	"irmin-api/toolregistry"
+
 	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	irminutils "github.com/IrminData/irmin-platform/sdks/go/utils"
 	"github.com/gofiber/fiber/v3"
 	adaptor "github.com/gofiber/fiber/v3/middleware/adaptor"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
-	"irmin-api/toolregistry"
 )
 
 // WriteAuditInfo contains write-specific audit information.
@@ -413,7 +414,9 @@ func registerAIAppInfoTool(
 	server *sdkmcp.Server, registry *toolregistry.Registry, aiApp *db.AIApplication,
 	apiServices *services.APIServices, al *AuditLogger,
 ) {
-	toolregistry.Register(registry, server,
+	toolregistry.Register(
+		registry,
+		server,
 
 		"irmin_application_info_get",
 		"Get information about this AI Application, including enabled tools and available data sources.",
@@ -456,7 +459,9 @@ func registerAIAppQueryTool(
 	apiServices *services.APIServices,
 	al *AuditLogger,
 ) {
-	toolregistry.Register(registry, server,
+	toolregistry.Register(
+		registry,
+		server,
 
 		"irmin_query_execute_sql",
 		"Execute a SQL query on the workspace data. Query any repository object as a table using path-based syntax (e.g., SELECT * FROM 'repo/branch/path/file.json'). Returns query results as JSON.",
@@ -493,7 +498,9 @@ func registerAIAppSchemaTool(
 	apiServices *services.APIServices,
 	al *AuditLogger,
 ) {
-	toolregistry.Register(registry, server,
+	toolregistry.Register(
+		registry,
+		server,
 
 		"irmin_repository_object_schema_get",
 		"Get the data schema for a data object, showing column names, data types, and descriptions. Essential for writing SQL queries. Use unified path format: /repo-slug/ref/path/to/file.json",
@@ -505,7 +512,17 @@ func registerAIAppSchemaTool(
 			schema, err := executor.GetSchemaByPath(ctx, args.Path)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_object_schema_get", "builtin", args, startTime, result)
+				logToolCall(
+					ctx,
+					al,
+					apiServices,
+					aiApp,
+					"irmin_repository_object_schema_get",
+					"builtin",
+					args,
+					startTime,
+					result,
+				)
 				return result, toolregistry.OutputFromResult(result), nil
 			}
 
@@ -516,7 +533,17 @@ func registerAIAppSchemaTool(
 				},
 			}
 
-			logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_object_schema_get", "builtin", args, startTime, result)
+			logToolCall(
+				ctx,
+				al,
+				apiServices,
+				aiApp,
+				"irmin_repository_object_schema_get",
+				"builtin",
+				args,
+				startTime,
+				result,
+			)
 			return result, toolregistry.OutputFromResult(result), nil
 		},
 	)
@@ -530,7 +557,9 @@ func registerAIAppListObjectsTool(
 	apiServices *services.APIServices,
 	al *AuditLogger,
 ) {
-	toolregistry.Register(registry, server,
+	toolregistry.Register(
+		registry,
+		server,
 
 		"irmin_repository_object_list",
 		"List data objects (files and folders) at a path. Use unified path format: /repo-slug/ref/folder. If path is empty, lists all available data sources.",
@@ -542,7 +571,17 @@ func registerAIAppListObjectsTool(
 			object, err := executor.ListObjectsByPath(ctx, args.Path)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_object_list", "builtin", args, startTime, result)
+				logToolCall(
+					ctx,
+					al,
+					apiServices,
+					aiApp,
+					"irmin_repository_object_list",
+					"builtin",
+					args,
+					startTime,
+					result,
+				)
 				return result, toolregistry.OutputFromResult(result), nil
 			}
 
@@ -550,7 +589,17 @@ func registerAIAppListObjectsTool(
 			formatted, formatErr := formatter.FormatRepositoryObjectResponse(object, apiServices.SQIDManager)
 			if formatErr != nil {
 				result := mcpError("Failed to format response")
-				logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_object_list", "builtin", args, startTime, result)
+				logToolCall(
+					ctx,
+					al,
+					apiServices,
+					aiApp,
+					"irmin_repository_object_list",
+					"builtin",
+					args,
+					startTime,
+					result,
+				)
 				//nolint:nilerr // Error is communicated via mcpError result with IsError: true
 				return result, toolregistry.OutputFromResult(result), nil
 			}
@@ -576,7 +625,9 @@ func registerAIAppGetContentTool(
 	apiServices *services.APIServices,
 	al *AuditLogger,
 ) {
-	toolregistry.Register(registry, server,
+	toolregistry.Register(
+		registry,
+		server,
 
 		"irmin_repository_object_content_get",
 		"Get the content of a data object. Use unified path format: /repo-slug/ref/path/to/file.json. Supports JSON, CSV, YAML, XML, text files, PDFs (returns extracted text), and tabular data (CSV, Excel, Parquet - returns as JSON).",
@@ -588,7 +639,17 @@ func registerAIAppGetContentTool(
 			content, err := executor.GetContentByPath(ctx, args.Path, true)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_object_content_get", "builtin", args, startTime, result)
+				logToolCall(
+					ctx,
+					al,
+					apiServices,
+					aiApp,
+					"irmin_repository_object_content_get",
+					"builtin",
+					args,
+					startTime,
+					result,
+				)
 				return result, toolregistry.OutputFromResult(result), nil
 			}
 
@@ -631,14 +692,34 @@ func registerAIAppGetContentTool(
 					},
 				}
 
-				logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_object_content_get", "builtin", args, startTime, result)
+				logToolCall(
+					ctx,
+					al,
+					apiServices,
+					aiApp,
+					"irmin_repository_object_content_get",
+					"builtin",
+					args,
+					startTime,
+					result,
+				)
 				return result, toolregistry.OutputFromResult(result), nil
 			}
 
 			// For non-binary files, check if text-based
 			if !irminutils.IsTextMimeType(mimeType) {
 				result := mcpError("Content is not a supported text format")
-				logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_object_content_get", "builtin", args, startTime, result)
+				logToolCall(
+					ctx,
+					al,
+					apiServices,
+					aiApp,
+					"irmin_repository_object_content_get",
+					"builtin",
+					args,
+					startTime,
+					result,
+				)
 				return result, toolregistry.OutputFromResult(result), nil
 			}
 
@@ -654,7 +735,17 @@ func registerAIAppGetContentTool(
 				},
 			}
 
-			logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_object_content_get", "builtin", args, startTime, result)
+			logToolCall(
+				ctx,
+				al,
+				apiServices,
+				aiApp,
+				"irmin_repository_object_content_get",
+				"builtin",
+				args,
+				startTime,
+				result,
+			)
 			return result, toolregistry.OutputFromResult(result), nil
 		},
 	)
@@ -668,7 +759,9 @@ func registerAIAppEmbeddingSearchTool(
 	apiServices *services.APIServices,
 	al *AuditLogger,
 ) {
-	toolregistry.Register(registry, server,
+	toolregistry.Register(
+		registry,
+		server,
 
 		"irmin_embedding_search",
 		`Search for semantically similar content using natural language queries.
@@ -733,7 +826,9 @@ func registerAIAppDocsTool(
 	apiServices *services.APIServices,
 	al *AuditLogger,
 ) {
-	toolregistry.Register(registry, server,
+	toolregistry.Register(
+		registry,
+		server,
 
 		"irmin_documentation_retrieve",
 		"Get documentation for this AI Application, including SQL syntax guide, tool usage instructions, and any custom documentation provided by the workspace administrator.",
@@ -772,7 +867,9 @@ func registerAIAppWriteFileTool(
 	apiServices *services.APIServices,
 	al *AuditLogger,
 ) {
-	toolregistry.Register(registry, server,
+	toolregistry.Register(
+		registry,
+		server,
 
 		"irmin_repository_object_write",
 		"Write or update a file at the specified path. Use unified path format: /repo-slug/ref/path/to/file.json. Supports text content directly, or binary content encoded as base64 (set is_base64 to true).",
@@ -788,7 +885,17 @@ func registerAIAppWriteFileTool(
 				decoded, err := base64.StdEncoding.DecodeString(args.Content)
 				if err != nil {
 					result := mcpError(fmt.Sprintf("Invalid base64 content: %v", err))
-					logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_object_write", "builtin", args, startTime, result)
+					logToolCall(
+						ctx,
+						al,
+						apiServices,
+						aiApp,
+						"irmin_repository_object_write",
+						"builtin",
+						args,
+						startTime,
+						result,
+					)
 					return result, toolregistry.OutputFromResult(result), nil
 				}
 				content = decoded
@@ -799,7 +906,17 @@ func registerAIAppWriteFileTool(
 			writeResult, err := executor.WriteFile(ctx, args.Path, content, args.CommitMessage, false)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_object_write", "builtin", args, startTime, result)
+				logToolCall(
+					ctx,
+					al,
+					apiServices,
+					aiApp,
+					"irmin_repository_object_write",
+					"builtin",
+					args,
+					startTime,
+					result,
+				)
 				return result, toolregistry.OutputFromResult(result), nil
 			}
 
@@ -851,7 +968,9 @@ func registerAIAppPatchFileTool(
 	apiServices *services.APIServices,
 	al *AuditLogger,
 ) {
-	toolregistry.Register(registry, server,
+	toolregistry.Register(
+		registry,
+		server,
 
 		"irmin_repository_object_patch",
 		"Apply JSON Patch operations to a JSON file. Use unified path format: /repo-slug/ref/path/to/file.json. Operations should be a JSON array of patch operations with 'op', 'path', and optionally 'value' or 'from' fields.",
@@ -863,7 +982,17 @@ func registerAIAppPatchFileTool(
 			var operations []irminmodels.PatchOperation
 			if err := json.Unmarshal([]byte(args.Operations), &operations); err != nil {
 				result := mcpError(fmt.Sprintf("Invalid operations JSON: %v", err))
-				logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_object_patch", "builtin", args, startTime, result)
+				logToolCall(
+					ctx,
+					al,
+					apiServices,
+					aiApp,
+					"irmin_repository_object_patch",
+					"builtin",
+					args,
+					startTime,
+					result,
+				)
 				return result, toolregistry.OutputFromResult(result), nil
 			}
 
@@ -872,7 +1001,17 @@ func registerAIAppPatchFileTool(
 			writeResult, err := executor.PatchFile(ctx, args.Path, operations, args.CommitMessage, false)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_object_patch", "builtin", args, startTime, result)
+				logToolCall(
+					ctx,
+					al,
+					apiServices,
+					aiApp,
+					"irmin_repository_object_patch",
+					"builtin",
+					args,
+					startTime,
+					result,
+				)
 				return result, toolregistry.OutputFromResult(result), nil
 			}
 
@@ -923,7 +1062,9 @@ func registerAIAppCommitTool(
 	apiServices *services.APIServices,
 	al *AuditLogger,
 ) {
-	toolregistry.Register(registry, server,
+	toolregistry.Register(
+		registry,
+		server,
 
 		"irmin_repository_commit_create",
 		"Commit staged changes. Use when auto-commit is disabled to batch multiple writes into a single commit. Provide a path prefix to commit changes for a specific repository/branch, or leave empty to commit all staged changes.",
@@ -939,7 +1080,17 @@ func registerAIAppCommitTool(
 				resolved, err := executor.ResolvePath(args.Path)
 				if err != nil {
 					result := mcpError(err.Error())
-					logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_commit_create", "builtin", args, startTime, result)
+					logToolCall(
+						ctx,
+						al,
+						apiServices,
+						aiApp,
+						"irmin_repository_commit_create",
+						"builtin",
+						args,
+						startTime,
+						result,
+					)
 					return result, toolregistry.OutputFromResult(result), nil
 				}
 				repoSlug = resolved.Repository.Slug
@@ -965,7 +1116,17 @@ func registerAIAppCommitTool(
 			writeResult, err := executor.CommitStagedChangesWithApproval(ctx, repoSlug, ref, args.Message)
 			if err != nil {
 				result := mcpError(err.Error())
-				logToolCall(ctx, al, apiServices, aiApp, "irmin_repository_commit_create", "builtin", args, startTime, result)
+				logToolCall(
+					ctx,
+					al,
+					apiServices,
+					aiApp,
+					"irmin_repository_commit_create",
+					"builtin",
+					args,
+					startTime,
+					result,
+				)
 				return result, toolregistry.OutputFromResult(result), nil
 			}
 
@@ -1103,7 +1264,9 @@ func registerCustomNoArgsTool(
 
 	// Capture tool name for closure
 	capturedToolName := tool.Name
-	toolregistry.Register(registry, server,
+	toolregistry.Register(
+		registry,
+		server,
 
 		toolName,
 		description,
@@ -1155,7 +1318,9 @@ func registerCustomEmbeddingSearchTool(
 
 	// Capture tool name for closure
 	capturedToolName := tool.Name
-	toolregistry.Register(registry, server,
+	toolregistry.Register(
+		registry,
+		server,
 
 		toolName,
 		description,

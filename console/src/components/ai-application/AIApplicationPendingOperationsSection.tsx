@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 
 import {
   TbAlertCircle,
@@ -148,7 +148,13 @@ const PendingOperationEntry = memo(function PendingOperationEntry({
         );
       case 'executing':
         return (
-          <span className='inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs text-blue-600 dark:text-blue-400'>
+          <span
+            className='
+              inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2
+              py-0.5 text-xs text-blue-600
+              dark:text-blue-400
+            '
+          >
             <TbClock size={12} />
             Executing
           </span>
@@ -333,26 +339,32 @@ const AIApplicationPendingOperationsSectionContent = () => {
   const refetch = pendingOperationsQuery.refetch;
   const isProcessing = approveMutation.isPending || rejectMutation.isPending;
 
-  // Reset page to last valid page when total decreases (e.g., after approving/rejecting items)
   const totalPages = Math.ceil(total / limit);
-  useEffect(() => {
-    if (total > 0 && page >= totalPages) {
-      setPage(Math.max(0, totalPages - 1));
+
+  const returnToPreviousPageIfLastItem = useCallback(() => {
+    if (page > 0 && pendingOperations.length === 1) {
+      setPage((previousPage) => previousPage - 1);
     }
-  }, [page, total, totalPages]);
+  }, [page, pendingOperations.length]);
 
   const handleApprove = useCallback(
     async (id: string) => {
-      approveMutation.mutate({ pendingOperationId: id });
+      approveMutation.mutate(
+        { pendingOperationId: id },
+        { onSuccess: returnToPreviousPageIfLastItem }
+      );
     },
-    [approveMutation]
+    [approveMutation, returnToPreviousPageIfLastItem]
   );
 
   const handleReject = useCallback(
     async (id: string) => {
-      rejectMutation.mutate({ pendingOperationId: id });
+      rejectMutation.mutate(
+        { pendingOperationId: id },
+        { onSuccess: returnToPreviousPageIfLastItem }
+      );
     },
-    [rejectMutation]
+    [rejectMutation, returnToPreviousPageIfLastItem]
   );
 
   // Avoid an empty card when ordinary-write approval is disabled and nothing is staged.

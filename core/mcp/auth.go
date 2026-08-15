@@ -127,7 +127,7 @@ func validateAuthAndGetUser(parent context.Context, cfg *authConfig, authHeader 
 	user, tokenType, err := cfg.apiServices.IdentifyUserFromToken(ctx, token, "en")
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			cfg.apiServices.Logger.Error("MCP auth: IdentifyUserFromToken timed out")
+			cfg.apiServices.Logger.ErrorContext(ctx, "MCP auth: IdentifyUserFromToken timed out")
 		}
 		return nil, err
 	}
@@ -158,7 +158,7 @@ func validateAuthAndGetUserOrAIApp(
 
 		aiApp, err := cfg.apiServices.DB.GetAIApplicationByAPIKeyWithContext(ctx, token)
 		if err != nil {
-			cfg.apiServices.Logger.Error("Invalid AI Application API key", "error", err)
+			cfg.apiServices.Logger.ErrorContext(ctx, "Invalid AI Application API key", "error", err)
 			return nil, nil, errors.New("invalid AI Application API key")
 		}
 		return nil, aiApp, nil
@@ -171,7 +171,7 @@ func validateAuthAndGetUserOrAIApp(
 	user, tokenType, err := cfg.apiServices.IdentifyUserFromToken(ctx, token, "en")
 	if err != nil {
 		if ctx.Err() == context.DeadlineExceeded {
-			cfg.apiServices.Logger.Error("MCP auth: IdentifyUserFromToken timed out")
+			cfg.apiServices.Logger.ErrorContext(ctx, "MCP auth: IdentifyUserFromToken timed out")
 		}
 		return nil, nil, err
 	}

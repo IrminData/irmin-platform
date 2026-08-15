@@ -1,4 +1,4 @@
-package tools
+package tools_test
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"testing"
 
 	"irmin-api/db"
+	"irmin-api/mcp/tools"
 	"irmin-api/toolregistry"
 
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
@@ -17,9 +18,9 @@ import (
 func TestCanonicalCatalogSnapshot(t *testing.T) {
 	t.Parallel()
 	server := sdkmcp.NewServer(&sdkmcp.Implementation{Name: "snapshot", Version: "1"}, nil)
-	tools := NewMCPTools(server, nil, func(context.Context) (*db.User, bool) { return nil, false })
-	tools.RegisterAll()
-	catalog := tools.Catalog()
+	mcpTools := tools.NewMCPTools(server, nil, func(context.Context) (*db.User, bool) { return nil, false })
+	mcpTools.RegisterAll()
+	catalog := mcpTools.Catalog()
 	if len(catalog) != 53 {
 		t.Fatalf("catalog contains %d tools, want 53", len(catalog))
 	}
@@ -42,10 +43,10 @@ func TestCanonicalCatalogSnapshot(t *testing.T) {
 func TestDestructiveCatalogPolicy(t *testing.T) {
 	t.Parallel()
 	server := sdkmcp.NewServer(&sdkmcp.Implementation{Name: "risk", Version: "1"}, nil)
-	tools := NewMCPTools(server, nil, func(context.Context) (*db.User, bool) { return nil, false })
-	tools.RegisterAll()
+	mcpTools := tools.NewMCPTools(server, nil, func(context.Context) (*db.User, bool) { return nil, false })
+	mcpTools.RegisterAll()
 	var destructive []string
-	for _, descriptor := range tools.Catalog() {
+	for _, descriptor := range mcpTools.Catalog() {
 		if descriptor.Risk == toolregistry.RiskDestructive {
 			destructive = append(destructive, descriptor.Name)
 		}

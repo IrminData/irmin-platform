@@ -12,8 +12,9 @@ import (
 
 	"irmin-api/mcp/helpers"
 
-	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 	"irmin-api/toolregistry"
+
+	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // RetrieveContextRequest represents the request structure for retrieving context
@@ -60,7 +61,9 @@ Parameters:
 
 // registerRetrieveDocsContextTool registers the irmin_documentation_retrieve tool for getting context from documentation
 func (mcpTools *MCPTools) registerRetrieveDocsContextTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_documentation_retrieve",
 		retrieveDocsContextToolDescription,

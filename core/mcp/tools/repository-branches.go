@@ -4,9 +4,10 @@ import (
 	"context"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
-	"irmin-api/toolregistry"
 )
 
 type listRepositoryBranchesArgs struct {
@@ -45,7 +46,9 @@ func (mcpTools *MCPTools) RegisterRepositoryBranchesTools() {
 //
 //nolint:dupl // This is not a duplicate, it's a different tool, with similar flow compared to other tools
 func (mcpTools *MCPTools) registerListRepositoryBranchesTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_branch_list",
 		"List all branches in a repository. Branches provide Git-like version control for isolating data changes before merging. Returns an array of branch objects with name, commit SHA, creation timestamp, and metadata. Requires workspace_slug and repository_slug. Use this to discover available branches before reading or writing data, as most data operations accept a branch parameter.",
@@ -95,7 +98,9 @@ func (mcpTools *MCPTools) registerListRepositoryBranchesTool() {
 
 // registerCreateRepositoryBranchTool registers the irmin_repository_branch_create tool for creating a new branch in a repository
 func (mcpTools *MCPTools) registerCreateRepositoryBranchTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_branch_create",
 		"Create a new branch in a repository for isolated development and testing of data changes. Branches in Irmin work like Git branches, allowing parallel data modifications. Requires workspace_slug, repository_slug, and branch_name. Optionally specify create_from_branch to branch from a non-default branch. Returns the created branch object with commit reference. Use this before making experimental data changes that you may want to merge or discard later.",
@@ -156,7 +161,9 @@ func (mcpTools *MCPTools) registerCreateRepositoryBranchTool() {
 
 // registerDeleteRepositoryBranchTool registers the irmin_repository_branch_delete tool for deleting a branch in a repository
 func (mcpTools *MCPTools) registerDeleteRepositoryBranchTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_branch_delete",
 		"Delete a branch from a repository. This permanently removes the branch reference but does not delete the underlying commit history. Requires workspace_slug, repository_slug, and branch_name. Cannot delete the repository's default branch or branches with uncommitted changes. Returns success confirmation. Use this to clean up merged or abandoned feature branches.",
@@ -220,7 +227,9 @@ func (mcpTools *MCPTools) registerDeleteRepositoryBranchTool() {
 
 // registerGetRepositoryUncommittedChangesTool registers the irmin_repository_changes_get tool for getting the uncommitted changes in a branch in a repository
 func (mcpTools *MCPTools) registerGetRepositoryUncommittedChangesTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_changes_get",
 		"Retrieve uncommitted changes on a specific branch. Shows pending modifications that have been made but not yet committed to the branch history. Returns a diff object showing added, modified, and deleted objects. Requires workspace_slug, repository_slug, and branch_name. Use this to review pending changes before committing them or to check if a branch has uncommitted work.",

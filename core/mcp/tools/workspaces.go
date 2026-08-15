@@ -7,9 +7,10 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
-	"irmin-api/toolregistry"
 )
 
 // RegisterWorkspaceTools registers the tools for workspace management.
@@ -20,7 +21,9 @@ func (mcpTools *MCPTools) RegisterWorkspaceTools() {
 
 // registerListWorkspacesTool registers the irmin_workspace_list tool for listing workspaces accessible to the current user
 func (mcpTools *MCPTools) registerListWorkspacesTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_workspace_list",
 		"List all workspaces accessible to the authenticated user. Returns an array of workspace objects containing name, slug, description, creation date, and associated metadata. Requires authentication via Bearer token. Use this tool at the start of operations to discover available workspaces, as most other Irmin tools require a workspace_slug parameter to specify which workspace to operate on.",
@@ -61,7 +64,9 @@ func (mcpTools *MCPTools) registerListWorkspacesTool() {
 
 // registerCreateWorkspaceTool registers the irmin_workspace_create tool for creating a new workspace
 func (mcpTools *MCPTools) registerCreateWorkspaceTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_workspace_create",
 		"Create a new workspace for the authenticated user. A workspace is a top-level organizational unit that contains repositories, connections, workflows, and queries. Requires a name (alphanumeric with hyphens/underscores) and optional description. Returns the created workspace object with its unique slug identifier. Use this when you need to set up a new isolated environment for data management operations.",

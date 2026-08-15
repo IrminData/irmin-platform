@@ -1,4 +1,4 @@
-package mcp
+package mcp //nolint:testpackage // Verifies the unexported queued audit entry after shutdown.
 
 import (
 	"context"

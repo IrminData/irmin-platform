@@ -4,9 +4,10 @@ import (
 	"context"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
-	"irmin-api/toolregistry"
 )
 
 type listRepositoryTagsArgs struct {
@@ -38,7 +39,9 @@ func (mcpTools *MCPTools) RegisterRepositoryTagsTools() {
 //
 //nolint:dupl // This is not a duplicate, it's a different tool, with similar flow compared to other tools
 func (mcpTools *MCPTools) registerListRepositoryTagsTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_tag_list",
 		"List all tags in a repository. Tags are immutable named references to specific commits, useful for marking releases, milestones, or important data snapshots. Returns an array of tag objects with name and target commit SHA. Requires workspace_slug and repository_slug. Use this to discover available tagged versions for data analysis or rollback operations.",
@@ -90,7 +93,9 @@ func (mcpTools *MCPTools) registerListRepositoryTagsTool() {
 //
 //nolint:dupl // This is not a duplicate, it's a different tool, with similar flow compared to other tools
 func (mcpTools *MCPTools) registerCreateRepositoryTagTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_tag_create",
 		"Create an immutable named tag pointing to a specific commit in the repository. Tags provide human-readable references to important data versions like production releases or quarterly snapshots. Requires workspace_slug, repository_slug, tag_name, and commit_hash. Returns the created tag object. Use this to mark significant data milestones for easy reference in queries and data operations.",
@@ -150,7 +155,9 @@ func (mcpTools *MCPTools) registerCreateRepositoryTagTool() {
 
 // registerDeleteRepositoryTagTool registers the irmin_repository_tag_delete tool for deleting a tag in a repository
 func (mcpTools *MCPTools) registerDeleteRepositoryTagTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_tag_delete",
 		"Delete a tag from a repository. This removes the named reference but does not affect the underlying commit or data. Requires workspace_slug, repository_slug, and tag_name. Returns success confirmation. Use this to clean up obsolete or incorrectly created tags. Cannot be undone, so ensure the tag is no longer needed before deletion.",

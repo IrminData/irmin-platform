@@ -7,9 +7,10 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
-	"irmin-api/toolregistry"
 )
 
 type listQueriesArgs struct {
@@ -50,7 +51,9 @@ func (mcpTools *MCPTools) RegisterQueryTools() {
 //
 //nolint:dupl // This tool is similar to other tools which list things, but for a different resource
 func (mcpTools *MCPTools) registerListQueriesTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_query_list",
 		"List all saved SQL queries in a workspace. Stored queries are reusable SQL statements with names and descriptions for data analysis. Returns an array of query objects with ID, name, SQL statement, and metadata. Requires workspace_slug. Use this to discover available queries before executing them or to find queries to modify.",
@@ -99,7 +102,9 @@ func (mcpTools *MCPTools) registerListQueriesTool() {
 //
 //nolint:dupl // Similar pattern to create_script tool, but for a different resource type
 func (mcpTools *MCPTools) registerCreateQueryTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_query_create",
 		"Save a SQL query for reuse with a descriptive name. Stored queries can be shared and executed by ID, making complex analyses reproducible. Requires workspace_slug and query parameters (name, SQL statement, optional description). Returns the created query object with unique ID. Use irmin_documentation_retrieve with 'duckdb' collection before creating to understand SQL syntax and available functions.",
@@ -148,7 +153,9 @@ func (mcpTools *MCPTools) registerCreateQueryTool() {
 
 // registerUpdateQueryTool registers the irmin_query_update tool for updating an existing stored query
 func (mcpTools *MCPTools) registerUpdateQueryTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_query_update",
 		"Modify an existing stored query's SQL statement, name, or description. Useful for refining queries or fixing errors while preserving the query ID. Requires workspace_slug, query_id (SQID), and update parameters. Returns the updated query object. Use irmin_documentation_retrieve with 'duckdb' collection for SQL syntax reference when modifying queries.",
@@ -209,7 +216,9 @@ func (mcpTools *MCPTools) registerUpdateQueryTool() {
 
 // registerExecuteSQLTool registers the irmin_query_execute_sql tool for executing arbitrary SQL queries
 func (mcpTools *MCPTools) registerExecuteSQLTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_query_execute_sql",
 		"Execute ad-hoc SQL queries on workspace data using DuckDB analytics engine. Query any repository object as a table using path-based syntax (e.g., SELECT * FROM 'repo/branch/path/file.json'). Supports JOINs across multiple objects, aggregations, and complex analytics. Returns query results as JSON with automatic response size limiting for MCP. Requires workspace_slug and sql string. Use irmin_documentation_retrieve with 'duckdb' collection to learn SQL syntax and irmin_repository_object_schema_get to understand table structures.",
@@ -254,7 +263,9 @@ func (mcpTools *MCPTools) registerExecuteSQLTool() {
 
 // registerExecuteQueryTool registers the irmin_query_execute_stored tool for executing stored queries
 func (mcpTools *MCPTools) registerExecuteQueryTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_query_execute_stored",
 		"Execute a previously saved SQL query by its ID. Runs the stored SQL statement against current workspace data and returns results as JSON with automatic response size limiting. Requires workspace_slug and query_id (SQID). Use this for reproducible analyses, scheduled reporting, or executing complex queries without rewriting SQL each time.",

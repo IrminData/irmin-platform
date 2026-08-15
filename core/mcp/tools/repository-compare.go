@@ -4,9 +4,10 @@ import (
 	"context"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
-	"irmin-api/toolregistry"
 )
 
 type compareRepositoryRefsArgs struct {
@@ -41,7 +42,9 @@ func (mcpTools *MCPTools) RegisterRepositoryCompareTools() {
 
 // registerCompareRepositoryRefsTool registers the irmin_repository_ref_compare tool for comparing two references in a repository
 func (mcpTools *MCPTools) registerCompareRepositoryRefsTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_ref_compare",
 		"Compare two references (branches, tags, or commit hashes) to see differences in data. Shows which objects were added, modified, or deleted between the base_ref and compare_ref. Returns a diff object with detailed change information. Requires workspace_slug, repository_slug, base_ref (target), and compare_ref (source). Use this before merging branches to preview changes or to analyze data evolution between versions.",
@@ -99,7 +102,9 @@ func (mcpTools *MCPTools) registerCompareRepositoryRefsTool() {
 
 // registerMergeRepositoryRefsTool registers the irmin_repository_ref_merge tool for merging two references in a repository
 func (mcpTools *MCPTools) registerMergeRepositoryRefsTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_ref_merge",
 		"Merge changes from one reference into another, creating a merge commit. Integrates data modifications from compare_ref (source) into base_ref (destination). Requires workspace_slug, repository_slug, base_ref, and compare_ref. Optionally specify merge strategy: 'default' (smart merge), 'dest-wins' (base takes precedence), or 'source-wins' (compare takes precedence). Returns the created merge commit. Use this to incorporate feature branch changes into main branches after review and testing.",

@@ -584,7 +584,12 @@ func (api *APIControllers) AIApplicationPendingOperations(c fiber.Ctx) error {
 
 	// Get pending operations (only pending status)
 	status := db.PendingOperationStatusPending
-	pendingOperations, total, dbErr := api.DB.GetPendingOperationsByAIApplicationID(aiApplication.ID, &status, limit, offset)
+	pendingOperations, total, dbErr := api.DB.GetPendingOperationsByAIApplicationID(
+		aiApplication.ID,
+		&status,
+		limit,
+		offset,
+	)
 	if dbErr != nil {
 		return api.handleServiceError(
 			c,

@@ -18,6 +18,12 @@ import (
 
 const CatalogVersion = 1
 
+const (
+	minimumCanonicalNameParts = 2
+	executionTimeout          = 5 * time.Minute
+	defaultTimeout            = 30 * time.Second
+)
+
 type Risk string
 
 const (
@@ -35,13 +41,9 @@ type AuditRedaction struct {
 	Fields []string `json:"fields"`
 }
 
-var defaultSecretFields = []string{
-	"api_key", "authorization", "configuration", "content", "password", "secret", "token",
-}
-
 // AuditRedactionFor returns the catalog-owned redaction policy for a tool.
 func AuditRedactionFor(name string) AuditRedaction {
-	fields := append([]string(nil), defaultSecretFields...)
+	fields := []string{"api_key", "authorization", "configuration", "content", "password", "secret", "token"}
 	if strings.HasPrefix(name, "irmin_custom_") {
 		fields = append(fields, "headers")
 	}
@@ -55,7 +57,7 @@ func RedactForAudit(input any, policy AuditRedaction) any {
 		return map[string]any{"redacted": true}
 	}
 	var value any
-	if err := json.Unmarshal(encoded, &value); err != nil {
+	if unmarshalErr := json.Unmarshal(encoded, &value); unmarshalErr != nil {
 		return map[string]any{"redacted": true}
 	}
 	redacted := make(map[string]struct{}, len(policy.Fields))
@@ -128,6 +130,9 @@ type Registry struct {
 	descriptors map[string]Descriptor
 }
 
+// published is the process-wide handler-free catalog used by prompt and API adapters.
+//
+//nolint:gochecknoglobals // Registrations happen across independently constructed MCP servers.
 var published sync.Map
 
 func New() *Registry {
@@ -267,15 +272,15 @@ func Register[In any](
 		) {
 			var input In
 			if len(raw) > 0 {
-				if err := json.Unmarshal(raw, &input); err != nil {
-					return nil, ToolOutput{}, fmt.Errorf("decode %s input: %w", name, err)
+				if unmarshalErr := json.Unmarshal(raw, &input); unmarshalErr != nil {
+					return nil, ToolOutput{}, fmt.Errorf("decode %s input: %w", name, unmarshalErr)
 				}
 			}
 			return handler(ctx, request, input)
 		},
 	}
-	if err := registry.Add(descriptor); err != nil {
-		panic(err)
+	if addErr := registry.Add(descriptor); addErr != nil {
+		panic(addErr)
 	}
 	sdkmcp.AddTool(server, &sdkmcp.Tool{
 		Name:         name,
@@ -315,7 +320,7 @@ func splitName(name string) (string, string) {
 		}
 	}
 	parts := strings.Split(trimmed, "_")
-	if len(parts) < 2 {
+	if len(parts) < minimumCanonicalNameParts {
 		return "unknown", "unknown"
 	}
 	return strings.Join(parts[:len(parts)-1], "_"), parts[len(parts)-1]
@@ -338,7 +343,7 @@ func inferRisk(action string) Risk {
 
 func inferTimeout(action string) time.Duration {
 	if strings.Contains(action, "execute") {
-		return 5 * time.Minute
+		return executionTimeout
 	}
-	return 30 * time.Second
+	return defaultTimeout
 }

@@ -8,11 +8,12 @@ import (
 	"irmin-api/lib"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	irminsqids "github.com/IrminData/irmin-platform/sdks/go/sqids"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
-	"irmin-api/toolregistry"
 )
 
 type listWorkflowsArgs struct {
@@ -61,7 +62,9 @@ func (mcpTools *MCPTools) RegisterWorkflowsTools() {
 
 // registerListWorkflowsTool registers the irmin_workflow_list tool for listing workflows in a workspace
 func (mcpTools *MCPTools) registerListWorkflowsTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_workflow_list",
 		"List all workflows in a workspace. Workflows orchestrate automated data operations like data ingestion from connections, script execution, and data transformations on schedules or triggers. Returns an array of workflow objects with ID, name, workflowable configuration, schedule, execution status, and metadata. Requires workspace_slug. Use this to discover existing automation before creating new workflows or triggering executions.",
@@ -114,7 +117,9 @@ func (mcpTools *MCPTools) registerListWorkflowsTool() {
 
 // registerGetWorkflowTool registers the irmin_workflow_get tool for getting a workflow by ID
 func (mcpTools *MCPTools) registerGetWorkflowTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_workflow_get",
 		"Retrieve detailed information about a specific workflow including its configuration, schedule, last execution status, and complete workflowable definition. Returns comprehensive workflow object with execution history. Requires workspace_slug and workflow_id (SQID). Use this to inspect workflow configuration before modifying it or to debug execution issues.",
@@ -162,7 +167,9 @@ func (mcpTools *MCPTools) registerGetWorkflowTool() {
 
 // registerCreateWorkflowTool registers the irmin_workflow_create tool for creating a new workflow
 func (mcpTools *MCPTools) registerCreateWorkflowTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_workflow_create",
 		"Create a new automated workflow with workflowable action and schedule configuration. Workflows can pull data from connections, execute scripts, or perform other data operations on a schedule. Requires workspace_slug and workflow parameters (name, workflowable config, schedule). Returns the created workflow object. Use irmin_documentation_retrieve with 'irmin' collection to learn about workflow types and configuration options before creating.",
@@ -219,7 +226,9 @@ func (mcpTools *MCPTools) registerCreateWorkflowTool() {
 
 // registerUpdateWorkflowTool registers the irmin_workflow_update tool for updating a workflow
 func (mcpTools *MCPTools) registerUpdateWorkflowTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_workflow_update",
 		"Update basic workflow metadata including name, description, and documentation. Does not modify the workflowable action or schedule configuration - use dedicated tools for those. Requires workspace_slug, workflow_id (SQID), and update parameters. Returns the updated workflow object. Use this to maintain clear documentation for workflows.",
@@ -284,7 +293,9 @@ func (mcpTools *MCPTools) registerUpdateWorkflowTool() {
 
 // registerUpdateWorkflowableConfigTool registers the irmin_workflowable_configuration_update tool for updating the workflowable configuration of a workflow
 func (mcpTools *MCPTools) registerUpdateWorkflowableConfigTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_workflowable_configuration_update",
 		"Update the workflowable action configuration of a workflow, changing what operation it performs. Workflowable defines the actual action (data pull, script execution, etc.) and its parameters. Requires workspace_slug, workflow_id (SQID), and new workflowable configuration. Returns the updated workflow object. Use this to modify workflow behavior while preserving schedule and metadata.",
@@ -354,7 +365,9 @@ func (mcpTools *MCPTools) registerUpdateWorkflowableConfigTool() {
 
 // registerUpdateWorkflowScheduleTool registers the irmin_workflow_schedule_update tool for updating the schedule configuration of a workflow
 func (mcpTools *MCPTools) registerUpdateWorkflowScheduleTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_workflow_schedule_update",
 		"Update the execution schedule of a workflow, controlling when and how often it runs. Supports cron expressions, fixed intervals, and manual-only triggers. Requires workspace_slug, workflow_id (SQID), and new schedule configuration. Returns the updated workflow object. Use this to adjust workflow timing without changing what it does.",
@@ -389,7 +402,9 @@ func (mcpTools *MCPTools) registerUpdateWorkflowScheduleTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to convert schedule model to database schedule", "error", err)
-				return helpers.MCPError("Failed to convert schedule model to database schedule"), toolregistry.ToolOutput{}, nil
+				return helpers.MCPError(
+					"Failed to convert schedule model to database schedule",
+				), toolregistry.ToolOutput{}, nil
 			}
 
 			// Update the schedule configuration

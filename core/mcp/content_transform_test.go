@@ -1,4 +1,4 @@
-package mcp
+package mcp //nolint:testpackage // Boundary tests intentionally exercise package-owned extraction limits.
 
 import (
 	"context"
@@ -19,12 +19,18 @@ func TestTransformContentForLLMBoundsAndCancellation(t *testing.T) {
 	}
 
 	oversized := make([]byte, maxTransformInputBytes+1)
-	if _, err := TransformContentForLLM(context.Background(), oversized, "note.txt"); !errors.Is(err, ErrTransformInputTooLarge) {
+	if _, err := TransformContentForLLM(context.Background(), oversized, "note.txt"); !errors.Is(
+		err,
+		ErrTransformInputTooLarge,
+	) {
 		t.Fatalf("oversized transform error = %v", err)
 	}
 
 	tooMuchOutput := []byte(strings.Repeat("a", maxTransformOutputRunes+1))
-	if _, err := TransformContentForLLM(context.Background(), tooMuchOutput, "note.txt"); !errors.Is(err, ErrTransformOutputTooLarge) {
+	if _, err := TransformContentForLLM(context.Background(), tooMuchOutput, "note.txt"); !errors.Is(
+		err,
+		ErrTransformOutputTooLarge,
+	) {
 		t.Fatalf("output-bound transform error = %v", err)
 	}
 }
@@ -32,7 +38,10 @@ func TestTransformContentForLLMBoundsAndCancellation(t *testing.T) {
 func TestTransformContentForLLMRejectsUnsupportedBinary(t *testing.T) {
 	t.Parallel()
 	content := []byte{'P', 'K', 3, 4, 0, 0, 0, 0}
-	if _, err := TransformContentForLLM(context.Background(), content, "archive.zip"); !errors.Is(err, ErrUnsupportedBinary) {
+	if _, err := TransformContentForLLM(context.Background(), content, "archive.zip"); !errors.Is(
+		err,
+		ErrUnsupportedBinary,
+	) {
 		t.Fatalf("unsupported binary error = %v", err)
 	}
 }

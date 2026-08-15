@@ -4,10 +4,11 @@ import (
 	"context"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	irminmodels "github.com/IrminData/irmin-platform/sdks/go/models"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
-	"irmin-api/toolregistry"
 )
 
 type listRepositoryCommitsArgs struct {
@@ -40,7 +41,9 @@ func (mcpTools *MCPTools) RegisterRepositoryCommitsTools() {
 
 // registerListRepositoryCommitsTool registers the irmin_repository_commit_list tool for listing repository commits in a workspace
 func (mcpTools *MCPTools) registerListRepositoryCommitsTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_commit_list",
 		"List commit history for a repository branch. Commits represent snapshots of data at specific points in time, forming the version history. Returns an array of commit objects with SHA, message, author, timestamp, and parent commits. Supports pagination via after cursor and per_page parameters. Requires workspace_slug and repository_slug. Use this to inspect the data lineage and understand what changes were made over time.",
@@ -120,7 +123,9 @@ func (mcpTools *MCPTools) registerListRepositoryCommitsTool() {
 //
 //nolint:dupl // This is not a duplicate, it's a different tool, with similar flow compared to other tools
 func (mcpTools *MCPTools) registerCreateRepositoryCommitTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_commit_create",
 		"Create a new commit to permanently save all uncommitted changes on a branch. Commits snapshot the current state of all data objects and add them to the version history. Requires workspace_slug, repository_slug, and a descriptive commit message. Optionally specify branch_name (defaults to repository's default branch). Returns the created commit object with SHA. Use this after making data changes to preserve them in the repository history before merging or sharing.",
@@ -180,7 +185,9 @@ func (mcpTools *MCPTools) registerCreateRepositoryCommitTool() {
 
 // registerRevertRepositoryUncommittedChangesTool registers the irmin_repository_changes_revert tool for reverting the uncommitted changes in a repository
 func (mcpTools *MCPTools) registerRevertRepositoryUncommittedChangesTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_changes_revert",
 		"Discard all uncommitted changes on a branch, restoring it to the state of the last commit. This operation is destructive and cannot be undone. All pending modifications to data objects will be permanently lost. Requires workspace_slug, repository_slug, and optionally branch_name. Returns success confirmation. Use this to abandon unwanted changes or reset a branch to a clean state.",
@@ -225,7 +232,9 @@ func (mcpTools *MCPTools) registerRevertRepositoryUncommittedChangesTool() {
 			)
 			if err != nil {
 				mcpTools.apiServices.Logger.Error("Failed to revert repository uncommitted changes", "error", err)
-				return helpers.MCPError("Failed to revert repository uncommitted changes"), toolregistry.ToolOutput{}, nil
+				return helpers.MCPError(
+					"Failed to revert repository uncommitted changes",
+				), toolregistry.ToolOutput{}, nil
 			}
 
 			result, resultOutput, err := helpers.MCPSuccess(map[string]string{

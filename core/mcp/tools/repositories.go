@@ -8,9 +8,10 @@ import (
 	"irmin-api/formatter"
 	"irmin-api/mcp/helpers"
 
+	"irmin-api/toolregistry"
+
 	irmincore "github.com/IrminData/irmin-platform/sdks/go/api"
 	sdkmcp "github.com/modelcontextprotocol/go-sdk/mcp"
-	"irmin-api/toolregistry"
 )
 
 type listRepositoriesArgs struct {
@@ -45,7 +46,9 @@ func (mcpTools *MCPTools) RegisterRepositoryTools() {
 //
 //nolint:dupl // This tool is similar to other tools which list things, but for a different resource
 func (mcpTools *MCPTools) registerListRepositoriesTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_list",
 		"List all repositories in a specified workspace. Repositories are Git-like data stores with versioning capabilities where data objects are stored and queried. Returns an array of repository objects with name, slug, default branch, storage location, and configuration details. Requires workspace_slug parameter. Use this to discover available repositories before performing data operations.",
@@ -92,7 +95,9 @@ func (mcpTools *MCPTools) registerListRepositoriesTool() {
 
 // registerGetRepositoryTool registers the irmin_repository_get tool for getting a repository by slug
 func (mcpTools *MCPTools) registerGetRepositoryTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_get",
 		"Retrieve detailed information about a specific repository by its slug identifier. Returns comprehensive repository metadata including name, description, default branch, storage backend configuration, and version control settings. Requires workspace_slug and repository_slug parameters. Use this to inspect repository configuration before performing operations.",
@@ -142,7 +147,9 @@ func (mcpTools *MCPTools) registerGetRepositoryTool() {
 
 // registerCreateRepositoryTool registers the irmin_repository_create tool for creating a new repository
 func (mcpTools *MCPTools) registerCreateRepositoryTool() {
-	toolregistry.Register(mcpTools.registry, mcpTools.server,
+	toolregistry.Register(
+		mcpTools.registry,
+		mcpTools.server,
 
 		"irmin_repository_create",
 		"Create a new Git-like versioned data repository in a workspace. Repositories store structured and unstructured data with full version control capabilities. Requires workspace_slug and repository configuration (name, storage backend, default branch). Returns the created repository object. Use irmin_documentation_retrieve tool with 'repositories' query before creating to understand configuration options and best practices.",
@@ -203,7 +210,9 @@ func (mcpTools *MCPTools) registerCreateRepositoryTool() {
 func (mcpTools *MCPTools) registerUpdateRepositoryTool() {
 	toolregistry.
 		// Add the update_repository tool for updating an existing repository
-		Register(mcpTools.registry, mcpTools.server,
+		Register(
+			mcpTools.registry,
+			mcpTools.server,
 
 			"irmin_repository_update",
 			"Update metadata and configuration of an existing repository. Allows modification of name, description, and other repository settings while preserving all stored data and version history. Requires workspace_slug, repository_slug, and update parameters. Returns the updated repository object. Cannot change the storage backend or default branch after creation.",
@@ -250,7 +259,10 @@ func (mcpTools *MCPTools) registerUpdateRepositoryTool() {
 				}
 
 				// Format the response using the same formatter as the API
-				formatted, ferr := formatter.FormatRepositoryResponse(updatedRepository, mcpTools.apiServices.SQIDManager)
+				formatted, ferr := formatter.FormatRepositoryResponse(
+					updatedRepository,
+					mcpTools.apiServices.SQIDManager,
+				)
 				if ferr != nil {
 					mcpTools.apiServices.Logger.Error("Failed to format repository", "error", ferr)
 					return nil, toolregistry.ToolOutput{}, fmt.Errorf("failed to format repository response: %w", ferr)
