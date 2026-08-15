@@ -1943,6 +1943,11 @@ const fi = {
     copyMessage: 'Kopioi viesti',
     messageCopied: 'Viesti kopioitu leikepöydälle',
     copyFailed: 'Viestin kopiointi epäonnistui',
+    responseCancelled: 'Käyttäjä peruutti vastauksen',
+    approvalRequired:
+      'Tämä toiminto tarvitsee hyväksyntäsi ennen suorittamista.',
+    runFailed: 'Avustaja ei voinut viimeistellä vastausta.',
+    retryResponse: 'Yritä vastausta uudelleen',
 
     // Tool and Reasoning Elements
     iteration: 'Iteraatio',

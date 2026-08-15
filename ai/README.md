@@ -234,6 +234,27 @@ pnpm test:eval:hyde
 pnpm test:eval:vectorization
 ```
 
+### Run protocol and telemetry
+
+The streaming agent endpoint returns `application/x-ndjson` using the versioned
+Irmin `RunEventV1` envelope. Provider and LangChain events, raw reasoning, and
+reasoning metadata are server-only. Each assistant run writes prompt-free
+operational telemetry to `model_runs`; user ratings are stored separately in
+`message_feedback`.
+
+Detailed model-run telemetry defaults to a 90-day retention window:
+
+```bash
+pnpm telemetry:prune
+```
+
+Before launch, conversation and LangGraph checkpoint data can be reset only
+with an explicit acknowledgement:
+
+```bash
+IRMIN_PRELAUNCH_RESET_ACK=RESET_IRMIN_PRELAUNCH_AI_DATA pnpm db:reset:prelaunch-ai
+```
+
 Live test utilities live in `src/tests/`:
 
 - `assistant-agent.test.ts` – Agent listing, configuration, Anthropic reasoning streams, conversation CRUD, info endpoints (non-streaming assertions are skipped because thinking tokens require streaming)

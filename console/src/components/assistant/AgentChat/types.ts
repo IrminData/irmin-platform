@@ -6,11 +6,16 @@ interface ServerTextEvent {
 }
 
 export interface ServerToolEvent {
-  type: 'tool-input-start' | 'tool-input-available' | 'tool-output-available';
+  type:
+    | 'tool-input-start'
+    | 'tool-input-available'
+    | 'tool-output-available'
+    | 'tool-approval-required';
   toolCallId?: string;
   toolName?: string;
   input?: Record<string, unknown>;
   output?: string;
+  approvalPreview?: string;
 }
 
 export interface ServerReasoningEvent {

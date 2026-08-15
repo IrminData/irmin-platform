@@ -13,6 +13,7 @@ import {
 } from '@/types/ai/responses';
 
 import { BaseClient } from './BaseClient';
+import { conversationFeedbackUrl } from './conversationFeedbackUrl';
 
 interface ListConversationsParams {
   page?: number;
@@ -31,6 +32,33 @@ interface ListConversationsWithCursorParams {
 }
 
 export class ConversationsClient extends BaseClient {
+  async getFeedback(id: string): Promise<MessageFeedback[]> {
+    const response = await fetch(conversationFeedbackUrl(this.baseUrl, id), {
+      headers: this.getHeaders(),
+    });
+    if (!response.ok)
+      throw new Error(`Failed to load feedback: ${response.status}`);
+    return (await response.json()) as MessageFeedback[];
+  }
+
+  async setFeedback(
+    id: string,
+    messageId: string,
+    input: { runId?: string; rating: 1 | -1; reason?: string }
+  ): Promise<MessageFeedback> {
+    const response = await fetch(
+      conversationFeedbackUrl(this.baseUrl, id, messageId),
+      {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(input),
+      }
+    );
+    if (!response.ok)
+      throw new Error(`Failed to save feedback: ${response.status}`);
+    return (await response.json()) as MessageFeedback;
+  }
+
   async listConversations(params: ListConversationsParams = {}) {
     const searchParams = new URLSearchParams();
 
@@ -185,4 +213,11 @@ export class ConversationsClient extends BaseClient {
 
     return messages;
   }
+}
+
+interface MessageFeedback {
+  messageId: string;
+  runId?: string | null;
+  rating: number;
+  reason?: string | null;
 }

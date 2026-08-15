@@ -53,6 +53,7 @@ export class AgentsClient extends BaseClient {
   ): Promise<{
     stream: ReadableStream<Uint8Array>;
     conversationId?: string;
+    runId?: string;
   }> {
     const validatedRequest = AIAgentExecuteRequestSchema.parse(request);
 
@@ -75,9 +76,13 @@ export class AgentsClient extends BaseClient {
       response.headers.get('X-Conversation-Id') ||
       response.headers.get('x-conversation-id') ||
       undefined;
+    const runId =
+      response.headers.get('X-Run-Id') ||
+      response.headers.get('x-run-id') ||
+      undefined;
 
     // Return raw stream - parsing will be done in Next.js API route
-    return { stream, conversationId };
+    return { stream, conversationId, runId };
   }
 
   async getAgentConfig(agentId: string) {

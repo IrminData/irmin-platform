@@ -1,9 +1,16 @@
 import type { StoredMessage } from '@langchain/core/messages';
 
-import {
-  extractTextFromContent,
-  extractThinkingFromContent,
-} from './langchainStreamTypes';
+function extractTextFromContent(content: unknown[]): string {
+  return content
+    .map((block) => {
+      if (typeof block !== 'object' || block === null) return '';
+      const value = block as Record<string, unknown>;
+      return value.type === 'text' && typeof value.text === 'string'
+        ? value.text
+        : '';
+    })
+    .join('');
+}
 
 /**
  * Get role from StoredMessage type
@@ -56,21 +63,13 @@ export function getMessageType(
     return 'tool_call';
   }
 
-  // Check content for text and thinking blocks
+  // Browser-visible stored messages contain text only; provider reasoning is
+  // stripped by the AI runtime before serialization.
   const rawContent = message.data?.content;
   if (Array.isArray(rawContent)) {
-    // Extract both text and thinking blocks
     const textContent = extractTextFromContent(rawContent);
-    const thinkingBlocks = extractThinkingFromContent(rawContent);
-
-    // If there's text content, it's a text message (thinking blocks shown via metadata)
     if (textContent.trim().length > 0) {
       return 'text';
-    }
-
-    // Only return 'reasoning' if there are thinking blocks but no text
-    if (thinkingBlocks.length > 0) {
-      return 'reasoning';
     }
   }
 
@@ -93,28 +92,6 @@ export function getMessageMetadata(
   const responseMetadata =
     (message.data?.response_metadata as Record<string, unknown>) || {};
   const metadata: Record<string, unknown> = { ...responseMetadata };
-
-  // Extract thinking blocks from multiple possible locations:
-  // 1. From content array (LangChain content blocks with type: 'thinking')
-  // 2. From response_metadata.thinkingSteps (our streaming format)
-  // 3. From response_metadata.thinking (alternative format)
-  const rawContent = message.data?.content;
-  if (Array.isArray(rawContent)) {
-    const thinkingBlocks = extractThinkingFromContent(rawContent);
-    if (thinkingBlocks.length > 0) {
-      metadata.thinkingSteps = thinkingBlocks;
-    }
-  }
-
-  // Also check response_metadata for thinking (may already be there from streaming)
-  if (!metadata.thinkingSteps && responseMetadata.thinking) {
-    const thinking = responseMetadata.thinking;
-    if (typeof thinking === 'string') {
-      metadata.thinkingSteps = [thinking];
-    } else if (Array.isArray(thinking)) {
-      metadata.thinkingSteps = thinking;
-    }
-  }
 
   // Extract tool calls if they exist
   const additionalKwargs = message.data?.additional_kwargs as

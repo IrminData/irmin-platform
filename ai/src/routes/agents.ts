@@ -1,5 +1,9 @@
 import { AgentsManager } from '@/agents';
+import { db, modelRuns } from '@/database';
+import { createRunEventStream } from '@/protocol/runEvents';
+import { eq } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
+import { ulid } from 'ulid';
 
 import { reportAIUsage } from '@/services/usageReporter';
 
@@ -15,7 +19,7 @@ import {
 
 import { sendInternalServerError, sendNotFoundError } from '@/utils/errors';
 import { sendOkResponse } from '@/utils/responses';
-import { applyStreamingHeaders, createDeferredStream } from '@/utils/streaming';
+import { applyStreamingHeaders } from '@/utils/streaming';
 
 export async function agentRoutes(fastify: FastifyInstance) {
   const agentsManager = (
@@ -140,14 +144,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
       },
     },
     async (request, reply) => {
-      const timings = {
-        start: Date.now(),
-        validated: 0,
-        conversationReady: 0,
-        streamStarted: 0,
-        agentReady: 0,
-        firstChunk: 0,
-      };
+      const startedAt = Date.now();
 
       // Parse and validate request early (fast, synchronous)
       let agentRequest: AgentRequest;
@@ -160,8 +157,6 @@ export async function agentRoutes(fastify: FastifyInstance) {
         sendInternalServerError(reply, errorMessage, fastify.log);
         return;
       }
-      timings.validated = Date.now();
-
       const { agentId } = request.params;
       const runController = new AbortController();
       const abortRun = () => {
@@ -208,7 +203,6 @@ export async function agentRoutes(fastify: FastifyInstance) {
           agentInput
         );
         conversation = result.conversation;
-        timings.conversationReady = Date.now();
       } catch (error) {
         const errorMessage =
           error instanceof Error
@@ -228,37 +222,25 @@ export async function agentRoutes(fastify: FastifyInstance) {
         return;
       }
 
-      // STREAM-FIRST: Create deferred stream and send headers with conversation ID
-      const deferredStream = createDeferredStream({ onCancel: abortRun });
-
-      applyStreamingHeaders(reply, {
-        'X-Agent-Id': agentId,
-        'X-Conversation-Id': conversation.id,
+      const runId = ulid();
+      await db.insert(modelRuns).values({
+        runId,
+        conversationId: conversation.id,
+        workspaceSlug: workspaceContext.workspace.slug,
+        userId: authContext.user.id,
+        role: 'assistant',
+        profileVersion: 'legacy-direct-v1',
+        status: 'running',
       });
 
-      // Send the readable stream to the client immediately
-      reply.send(deferredStream.readable);
-      timings.streamStarted = Date.now();
-
-      // Push initial "thinking" event so client knows we're processing
-      deferredStream.pushEvent({
-        event: 'stream_start',
-        data: {
-          status: 'initializing',
-          agentId,
-          conversationId: conversation.id,
-          message: 'Agent is preparing...',
-        },
-      });
-
-      fastify.log.info(
-        `[Agent Timing] Stream started: validation=${timings.validated - timings.start}ms, conversation=${timings.conversationReady - timings.validated}ms, total=${timings.streamStarted - timings.start}ms`
-      );
-
-      // Execute agent in background and pipe results to the deferred stream
-      // Pass the pre-created conversation to avoid duplicate DB calls
-      (async () => {
-        try {
+      let firstTokenRecorded = false;
+      const runStream = createRunEventStream({
+        runId,
+        agentId,
+        conversationId: conversation.id,
+        signal: runController.signal,
+        onCancel: abortRun,
+        source: async () => {
           const response = await agentsManager.executeAgent(
             agentId,
             agentInput,
@@ -266,77 +248,69 @@ export async function agentRoutes(fastify: FastifyInstance) {
               ReturnType<typeof agentsManager.getOrCreateConversation>
             >['conversation']
           );
-          timings.agentReady = Date.now();
-
-          // Report AI usage (fire-and-forget)
           reportAIUsage(workspaceContext.workspace.id).catch(() => undefined);
-
-          fastify.log.info(
-            `[Agent Timing] Agent ready: agentExecution=${timings.agentReady - timings.streamStarted}ms, totalToAgent=${timings.agentReady - timings.start}ms`
-          );
-
-          // Push metadata event (conversation ID already in headers, but also in stream for compatibility)
-          deferredStream.pushEvent({
-            event: 'metadata',
-            data: {
-              conversationId: response.conversationId,
-              agentId,
-            },
-          });
-
-          if (response.agentResponse.stream) {
-            // Pipe the agent's stream to the deferred stream
-            fastify.log.info(
-              `[Agent Timing] Starting stream pipe: timeToStreamStart=${Date.now() - timings.start}ms`
-            );
-            await deferredStream.pipeFrom(response.agentResponse.stream, () => {
-              timings.firstChunk = Date.now();
-              fastify.log.info(
-                `[Agent Timing] First LLM token received: timeToFirstToken=${timings.firstChunk - timings.start}ms`
-              );
-            });
-          } else {
-            // Non-streaming response - push messages as single event
-            deferredStream.pushEvent({
-              event: 'agent_response',
-              data: {
-                messages: response.agentResponse.messages?.map((m) =>
-                  m.toDict()
-                ),
-                metadata: response.agentResponse.metadata,
-              },
-            });
+          if (!response.agentResponse.stream) {
+            throw new Error('Agent did not return a stream');
+          }
+          return response.agentResponse.stream;
+        },
+        onEvent: async (event) => {
+          if (event.type === 'message.delta' && !firstTokenRecorded) {
+            firstTokenRecorded = true;
+            await db
+              .update(modelRuns)
+              .set({ timeToFirstTokenMs: Date.now() - startedAt })
+              .where(eq(modelRuns.runId, runId));
+            return;
           }
 
-          // Signal completion
-          deferredStream.pushEvent({
-            event: 'stream_end',
-            data: { status: 'complete' },
-          });
-        } catch (error) {
-          const errorMessage =
-            error instanceof Error ? error.message : 'Unknown error';
-          fastify.log.error('Agent streaming error: %s', errorMessage);
+          if (event.type === 'usage') {
+            const usage = event.data as {
+              inputTokens?: number;
+              outputTokens?: number;
+              totalTokens?: number;
+            };
+            await db
+              .update(modelRuns)
+              .set({
+                inputTokens: usage.inputTokens,
+                outputTokens: usage.outputTokens,
+                totalTokens: usage.totalTokens,
+              })
+              .where(eq(modelRuns.runId, runId));
+            return;
+          }
 
-          // Push sanitized error event to the stream (avoid leaking stack traces or internal details)
-          const isNotFound = errorMessage.includes('not found');
-          deferredStream.pushEvent({
-            event: 'error',
-            data: {
-              message: isNotFound
-                ? errorMessage
-                : 'An internal error occurred while processing your request',
-              type: isNotFound ? 'not_found' : 'internal_error',
-            },
-          });
-        } finally {
-          // Always close the stream when done
-          deferredStream.close();
-        }
-      })();
+          if (
+            event.type === 'run.completed' ||
+            event.type === 'run.failed' ||
+            event.type === 'run.cancelled'
+          ) {
+            await db
+              .update(modelRuns)
+              .set({
+                status: event.type.slice('run.'.length),
+                messageId:
+                  event.type === 'run.completed'
+                    ? (event.data as { messageId?: string }).messageId
+                    : undefined,
+                latencyMs: Date.now() - startedAt,
+                errorCode:
+                  event.type === 'run.failed' ? 'internal_error' : undefined,
+                completedAt: new Date(),
+                updatedAt: new Date(),
+              })
+              .where(eq(modelRuns.runId, runId));
+          }
+        },
+      });
 
-      // Return reply to signal Fastify we're handling the response (keeps stream open)
-      return reply;
+      applyStreamingHeaders(reply, {
+        'X-Agent-Id': agentId,
+        'X-Conversation-Id': conversation.id,
+        'X-Run-Id': runId,
+      });
+      return reply.send(runStream);
     }
   );
 

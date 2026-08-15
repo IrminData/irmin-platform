@@ -113,6 +113,7 @@ const AgentChat = ({
   const conversationUpdateTimeoutRef = useRef<ReturnType<
     typeof setTimeout
   > | null>(null);
+  const previousConversationIdRef = useRef(conversationID);
   const [input, setInput] = useState('');
   const [currentConversationId, setCurrentConversationId] = useState<
     string | null
@@ -124,7 +125,7 @@ const AgentChat = ({
 
   // Use extracted hooks
   const streamingState = useStreamingState();
-  const { renderMessageActions } = useMessageActions();
+  const { renderMessageActions } = useMessageActions(currentConversationId);
 
   // Use agent hooks for conversation management and agent execution
   const shouldEnableQueries =
@@ -143,6 +144,14 @@ const AgentChat = ({
     }
     return aiConversationMessagesQuery.data;
   }, [aiConversationMessagesQuery.data, currentConversationId]);
+  const visibleMessages =
+    localMessages.length > 0 ? localMessages : initialMessages;
+  const appendMessage = (message: StoredMessage) => {
+    setLocalMessages((messages) => [
+      ...(messages.length > 0 ? messages : initialMessages),
+      message,
+    ]);
+  };
 
   // Group all assistant messages, tool_calls, and tool_results between user messages together
   // This ensures multi-turn agent interactions (thinking → tool call → result → response) appear in one box
@@ -150,7 +159,7 @@ const AgentChat = ({
     const groups: StoredMessage[][] = [];
     let currentAssistantGroup: StoredMessage[] = [];
 
-    for (const message of localMessages) {
+    for (const message of visibleMessages) {
       const role = getMessageRole(message);
 
       if (role === 'user') {
@@ -173,32 +182,17 @@ const AgentChat = ({
     }
 
     return groups;
-  }, [localMessages]);
+  }, [visibleMessages]);
 
-  // Sync conversation switches and initial-message hydration during render
-  const [prevConversationID, setPrevConversationID] = useState(conversationID);
-  if (conversationID !== prevConversationID) {
-    setPrevConversationID(conversationID);
-    if (conversationID !== currentConversationId) {
-      // Only clear messages if we're switching between two different non-null conversation IDs
-      if (
-        conversationID &&
-        currentConversationId &&
-        conversationID !== currentConversationId
-      ) {
-        setLocalMessages([]);
-      }
-      setCurrentConversationId(conversationID || null);
+  useEffect(() => {
+    if (conversationID === previousConversationIdRef.current) return;
+    const previous = previousConversationIdRef.current;
+    previousConversationIdRef.current = conversationID;
+    if (conversationID && previous && conversationID !== previous) {
+      setLocalMessages([]);
     }
-  }
-  const [prevInitialMessages, setPrevInitialMessages] =
-    useState(initialMessages);
-  if (initialMessages !== prevInitialMessages) {
-    setPrevInitialMessages(initialMessages);
-    if (initialMessages.length > 0 && localMessages.length === 0) {
-      setLocalMessages(initialMessages);
-    }
-  }
+    setCurrentConversationId(conversationID || null);
+  }, [conversationID]);
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -230,7 +224,7 @@ const AgentChat = ({
           tool_call_id: undefined,
         },
       };
-      setLocalMessages((prev) => [...prev, userMessage]);
+      appendMessage(userMessage);
 
       const agentRequest = {
         message: text,
@@ -250,19 +244,29 @@ const AgentChat = ({
         response.stream &&
         typeof (response.stream as ReadableStream).getReader === 'function'
       ) {
-        const { content, parts } = await processStream(
+        const { content, parts, status, messageId } = await processStream(
           response.stream as ReadableStream,
           requestController.signal,
           streamingState.setStreamingMessage,
           streamingState.setStreamingParts
         );
 
+        if (status === 'failed') {
+          const failure = parts.find((part) => part.type === 'stream-error');
+          throw new Error(
+            (failure as { error?: string } | undefined)?.error ||
+              dict.assistant.error
+          );
+        }
+        if (status !== 'completed') return;
+
         const assistantMessage = createAssistantMessage(
           content,
           parts,
-          agentId
+          agentId,
+          messageId
         );
-        setLocalMessages((prev) => [...prev, assistantMessage]);
+        appendMessage(assistantMessage);
       }
 
       if (!currentConversationId && response.conversationId) {
@@ -292,7 +296,7 @@ const AgentChat = ({
           agentId,
           `assistant-error-${Date.now()}`
         );
-        setLocalMessages((prev) => [...prev, errorMessage]);
+        appendMessage(errorMessage);
       }
     } finally {
       streamingState.resetStreamingState();
@@ -346,7 +350,7 @@ const AgentChat = ({
       if (streamingState.streamingMessage.trim()) {
         const cancelledMessage = createAssistantMessage(
           streamingState.streamingMessage.trim() +
-            '\n\n[Response cancelled by user]',
+            `\n\n[${dict.assistant.responseCancelled}]`,
           streamingState.streamingParts,
           agentId,
           `assistant-cancelled-${Date.now()}`
@@ -360,7 +364,7 @@ const AgentChat = ({
         } else {
           cancelledMessage.data.response_metadata = { cancelled: true };
         }
-        setLocalMessages((prev) => [...prev, cancelledMessage]);
+        appendMessage(cancelledMessage);
       }
 
       streamingState.resetStreamingState();
@@ -545,7 +549,7 @@ const AgentChat = ({
           {(streamingState.isStreaming ||
             executeAgentStreamMutation.isPending) && <Loader />}
 
-          {(!currentConversationId || localMessages.length === 0) &&
+          {(!currentConversationId || visibleMessages.length === 0) &&
             !streamingState.isStreaming &&
             !executeAgentStreamMutation.isPending && (
               <div

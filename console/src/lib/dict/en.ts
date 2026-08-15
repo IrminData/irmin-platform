@@ -1952,6 +1952,10 @@ const en = {
     copyMessage: 'Copy message',
     messageCopied: 'Message copied to clipboard',
     copyFailed: 'Failed to copy message',
+    responseCancelled: 'Response cancelled by user',
+    approvalRequired: 'This operation needs your approval before it can run.',
+    runFailed: 'The assistant could not complete this response.',
+    retryResponse: 'Retry response',
 
     // Tool and Reasoning Elements
     iteration: 'Iteration',
