@@ -46,9 +46,7 @@ const envSchema = z.object({
     .min(1, 'OpenRouter API key is required to run inference'),
   OPENROUTER_SITE_URL: z.string().url().default('https://irmin.co'),
   OPENROUTER_SITE_NAME: z.string().default('Irmin'),
-  OPENROUTER_PROVIDER_ALLOWLIST: z
-    .string()
-    .default('Anthropic,OpenAI,Google AI Studio'),
+  OPENROUTER_PROVIDER_ALLOWLIST: z.string().default('Anthropic,OpenAI,Google'),
   AI_INFERENCE_BACKEND: z
     .enum(['canary', 'openrouter', 'anthropic'])
     .default('openrouter'),
