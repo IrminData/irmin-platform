@@ -144,7 +144,7 @@
     "postcss-nested": "^8.0.0",
     "postcss-preset-env": "^11.3.2",
     "prettier": "^3.9.6",
-    "require-in-the-middle": "7.5.2",
+    "require-in-the-middle": "8.0.1",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.2",
     "typedoc": "^0.28.20",
