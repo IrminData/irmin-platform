@@ -203,6 +203,8 @@ const AgentChat = ({
 
     let responseConversationId: string | null = null;
     let requestController: AbortController | null = null;
+    let streamedContent = '';
+    let streamedParts: ServerStreamEvent[] = [];
 
     try {
       setInput('');
@@ -248,8 +250,14 @@ const AgentChat = ({
         const { content, parts, status, messageId } = await processStream(
           response.stream as ReadableStream,
           requestController.signal,
-          streamingState.setStreamingMessage,
-          streamingState.setStreamingParts
+          (content) => {
+            streamedContent = content;
+            streamingState.setStreamingMessage(content);
+          },
+          (parts) => {
+            streamedParts = parts;
+            streamingState.setStreamingParts(parts);
+          }
         );
 
         if (status === 'failed') {
@@ -288,25 +296,21 @@ const AgentChat = ({
       if (requestController?.signal.aborted) return;
       console.error('Error sending message:', error);
 
-      // If there was streaming content, preserve it even on error
-      if (streamingState.streamingMessage.trim()) {
-        const errorMessage = createAssistantMessage(
-          streamingState.streamingMessage.trim() ||
-            '[Response interrupted due to error]',
-          [
-            ...streamingState.streamingParts.filter(
-              (p) => p.type === 'stream-error' || p.type === 'error'
-            ),
-            {
-              type: 'error',
-              error: error instanceof Error ? error.message : 'Unknown error',
-            },
-          ],
-          agentId,
-          `assistant-error-${Date.now()}`
-        );
-        appendMessage(errorMessage);
-      }
+      const errorMessage = createAssistantMessage(
+        streamedContent || dict.assistant.error,
+        [
+          ...streamedParts.filter(
+            (part) => part.type === 'stream-error' || part.type === 'error'
+          ),
+          {
+            type: 'error',
+            error: error instanceof Error ? error.message : 'Unknown error',
+          },
+        ],
+        agentId,
+        `assistant-error-${Date.now()}`
+      );
+      appendMessage(errorMessage);
     } finally {
       streamingState.resetStreamingState();
       setPendingUserMessage(null);

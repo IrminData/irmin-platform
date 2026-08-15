@@ -106,8 +106,18 @@ func OutputFromResult(result *sdkmcp.CallToolResult) ToolOutput {
 	return ToolOutput{Data: data}
 }
 
-type Handler func(context.Context, *sdkmcp.CallToolRequest, json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
-type ApprovalStager func(context.Context, Descriptor, *sdkmcp.CallToolRequest, json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
+type Handler func(
+	context.Context,
+	*sdkmcp.CallToolRequest,
+	json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
+
+type ApprovalStager func(
+	context.Context,
+	Descriptor,
+	*sdkmcp.CallToolRequest,
+	json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
 
 var ErrApprovalRequired = errors.New("destructive tool requires authenticated approval")
 
@@ -171,11 +181,6 @@ type Registry struct {
 	stager      ApprovalStager
 }
 
-// published is the process-wide handler-free catalog used by prompt and API adapters.
-//
-//nolint:gochecknoglobals // Registrations happen across independently constructed MCP servers.
-var published sync.Map
-
 func New(stager ...ApprovalStager) *Registry {
 	registry := &Registry{descriptors: make(map[string]Descriptor)}
 	if len(stager) > 0 {
@@ -194,20 +199,7 @@ func (r *Registry) Add(descriptor Descriptor) error {
 		return fmt.Errorf("tool %q already registered", descriptor.Name)
 	}
 	r.descriptors[descriptor.Name] = descriptor
-	contract := descriptor
-	contract.Handler = nil
-	published.Store(descriptor.Name, contract)
 	return nil
-}
-
-// Published returns the latest handler-free contract registered for a canonical name.
-func Published(name string) (Descriptor, bool) {
-	value, ok := published.Load(name)
-	if !ok {
-		return Descriptor{}, false
-	}
-	descriptor, ok := value.(Descriptor)
-	return descriptor, ok
 }
 
 func (r *Registry) List() []Descriptor {
@@ -288,6 +280,31 @@ func ValidateDescriptor(descriptor Descriptor) error {
 	return nil
 }
 
+// Describe returns the canonical policy metadata shared by registration, prompts, and audit adapters.
+func Describe(name, description string) Descriptor {
+	domain, action := splitName(name)
+	risk := inferRisk(action)
+	if description == "" {
+		description = strings.ReplaceAll(strings.TrimPrefix(name, "irmin_"), "_", " ")
+	}
+	return Descriptor{
+		Name:            name,
+		CatalogVersion:  CatalogVersion,
+		Domain:          domain,
+		Action:          action,
+		Description:     description,
+		Summary:         description,
+		ApprovalPreview: fmt.Sprintf("%s %s", action, strings.ReplaceAll(domain, "_", " ")),
+		Risk:            risk,
+		Capability:      inferCapability(domain, action, risk),
+		Cancellation: CancellationPolicy{
+			Cancellable: true,
+			TimeoutMS:   inferTimeout(action).Milliseconds(),
+		},
+		AuditRedaction: AuditRedactionFor(name),
+	}
+}
+
 // Register binds one typed handler to both the MCP SDK and the canonical registry.
 func Register[In any](
 	registry *Registry,
@@ -306,38 +323,21 @@ func Register[In any](
 		panic(fmt.Sprintf("derive output schema for %s: %v", name, err))
 	}
 	outputSchema.AdditionalProperties = &jsonschema.Schema{Not: &jsonschema.Schema{}}
-	domain, action := splitName(name)
-	risk := inferRisk(action)
-	descriptor := Descriptor{
-		Name:            name,
-		CatalogVersion:  CatalogVersion,
-		Domain:          domain,
-		Action:          action,
-		Description:     description,
-		Summary:         description,
-		ApprovalPreview: fmt.Sprintf("%s %s", action, strings.ReplaceAll(domain, "_", " ")),
-		Risk:            risk,
-		Capability:      inferCapability(domain, action, risk),
-		InputSchema:     inputSchema,
-		OutputSchema:    outputSchema,
-		Cancellation: CancellationPolicy{
-			Cancellable: true,
-			TimeoutMS:   inferTimeout(action).Milliseconds(),
-		},
-		AuditRedaction: AuditRedactionFor(name),
-		Handler: func(ctx context.Context, request *sdkmcp.CallToolRequest, raw json.RawMessage) (
-			*sdkmcp.CallToolResult,
-			ToolOutput,
-			error,
-		) {
-			var input In
-			if len(raw) > 0 {
-				if unmarshalErr := json.Unmarshal(raw, &input); unmarshalErr != nil {
-					return nil, ToolOutput{}, fmt.Errorf("decode %s input: %w", name, unmarshalErr)
-				}
+	descriptor := Describe(name, description)
+	descriptor.InputSchema = inputSchema
+	descriptor.OutputSchema = outputSchema
+	descriptor.Handler = func(ctx context.Context, request *sdkmcp.CallToolRequest, raw json.RawMessage) (
+		*sdkmcp.CallToolResult,
+		ToolOutput,
+		error,
+	) {
+		var input In
+		if len(raw) > 0 {
+			if unmarshalErr := json.Unmarshal(raw, &input); unmarshalErr != nil {
+				return nil, ToolOutput{}, fmt.Errorf("decode %s input: %w", name, unmarshalErr)
 			}
-			return handler(ctx, request, input)
-		},
+		}
+		return handler(ctx, request, input)
 	}
 	if addErr := registry.Add(descriptor); addErr != nil {
 		panic(addErr)

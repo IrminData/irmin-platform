@@ -39,6 +39,8 @@ export interface ModelProfile {
 }
 
 export interface InferenceTelemetry {
+  /** Unique persisted row identifier for this individual model invocation. */
+  callId?: string;
   requestedModel: string;
   resolvedModel?: string;
   resolvedProvider?: string;

@@ -791,8 +791,10 @@ func (api *APIServices) createCustomToolFromRequest(
 	if exists {
 		return nil, fmt.Errorf("%w: custom tool with name '%s' already exists", ErrInvalidRequest, req.Name)
 	}
-	if err := ensureCanonicalCustomToolNameUnique(tx, req.Name, aiApplicationID, nil); err != nil {
-		return nil, err
+	if canonicalErr := ensureCanonicalCustomToolNameUnique(
+		tx, req.Name, aiApplicationID, nil,
+	); canonicalErr != nil {
+		return nil, canonicalErr
 	}
 
 	tool := &db.AIApplicationCustomTool{
@@ -954,8 +956,10 @@ func (api *APIServices) updateExistingCustomTool(
 	if exists {
 		return 0, fmt.Errorf("%w: custom tool with name '%s' already exists", ErrInvalidRequest, ct.Name)
 	}
-	if err := ensureCanonicalCustomToolNameUnique(tx, ct.Name, aiApplicationID, &toolIDUint); err != nil {
-		return 0, err
+	if canonicalErr := ensureCanonicalCustomToolNameUnique(
+		tx, ct.Name, aiApplicationID, &toolIDUint,
+	); canonicalErr != nil {
+		return 0, canonicalErr
 	}
 
 	if updateErr := api.updateCustomToolFromRequest(tx, workspace, toolIDUint, ct); updateErr != nil {

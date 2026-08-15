@@ -12776,7 +12776,7 @@ func NewAuditLogger() *AuditLogger
 NewAuditLogger creates an AuditLogger and starts the background drain worker.
 
 <a name="RegisterAIAppMCP"></a>
-### func [RegisterAIAppMCP](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L216>)
+### func [RegisterAIAppMCP](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L213>)
 
 ```go
 func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices) *AuditLogger
@@ -17401,7 +17401,7 @@ Package toolregistry owns the canonical Irmin tool contract.
   - [func AuditRedactionFor\(name string\) AuditRedaction](<#AuditRedactionFor>)
 - [type CancellationPolicy](<#CancellationPolicy>)
 - [type Descriptor](<#Descriptor>)
-  - [func Published\(name string\) \(Descriptor, bool\)](<#Published>)
+  - [func Describe\(name, description string\) Descriptor](<#Describe>)
 - [type Handler](<#Handler>)
 - [type Registry](<#Registry>)
   - [func New\(stager ...ApprovalStager\) \*Registry](<#New>)
@@ -17431,7 +17431,7 @@ var ErrApprovalRequired = errors.New("destructive tool requires authenticated ap
 ```
 
 <a name="CanonicalCustomName"></a>
-## func [CanonicalCustomName](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L267>)
+## func [CanonicalCustomName](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L249>)
 
 ```go
 func CanonicalCustomName(label string) string
@@ -17449,7 +17449,7 @@ func RedactForAudit(input any, policy AuditRedaction) any
 RedactForAudit recursively replaces descriptor\-selected fields before persistence.
 
 <a name="Register"></a>
-## func [Register](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L292-L298>)
+## func [Register](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L299-L305>)
 
 ```go
 func Register[In any](registry *Registry, server *sdkmcp.Server, name string, description string, handler sdkmcp.ToolHandlerFor[In, ToolOutput])
@@ -17458,7 +17458,7 @@ func Register[In any](registry *Registry, server *sdkmcp.Server, name string, de
 Register binds one typed handler to both the MCP SDK and the canonical registry.
 
 <a name="ValidateDescriptor"></a>
-## func [ValidateDescriptor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L275>)
+## func [ValidateDescriptor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L257>)
 
 ```go
 func ValidateDescriptor(descriptor Descriptor) error
@@ -17549,14 +17549,14 @@ type Descriptor struct {
 }
 ```
 
-<a name="Published"></a>
-### func [Published](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L204>)
+<a name="Describe"></a>
+### func [Describe](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L274>)
 
 ```go
-func Published(name string) (Descriptor, bool)
+func Describe(name, description string) Descriptor
 ```
 
-Published returns the latest handler\-free contract registered for a canonical name.
+Describe returns the canonical policy metadata shared by registration, prompts, and audit adapters.
 
 <a name="Handler"></a>
 ## type [Handler](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L109>)
@@ -17579,7 +17579,7 @@ type Registry struct {
 ```
 
 <a name="New"></a>
-### func [New](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L179>)
+### func [New](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L174>)
 
 ```go
 func New(stager ...ApprovalStager) *Registry
@@ -17588,7 +17588,7 @@ func New(stager ...ApprovalStager) *Registry
 
 
 <a name="Registry.Add"></a>
-### func \(\*Registry\) [Add](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L187>)
+### func \(\*Registry\) [Add](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L182>)
 
 ```go
 func (r *Registry) Add(descriptor Descriptor) error
@@ -17597,7 +17597,7 @@ func (r *Registry) Add(descriptor Descriptor) error
 
 
 <a name="Registry.Execute"></a>
-### func \(\*Registry\) [Execute](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L232-L237>)
+### func \(\*Registry\) [Execute](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L214-L219>)
 
 ```go
 func (r *Registry) Execute(ctx context.Context, name string, request *sdkmcp.CallToolRequest, arguments json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
@@ -17606,7 +17606,7 @@ func (r *Registry) Execute(ctx context.Context, name string, request *sdkmcp.Cal
 
 
 <a name="Registry.Get"></a>
-### func \(\*Registry\) [Get](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L225>)
+### func \(\*Registry\) [Get](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L207>)
 
 ```go
 func (r *Registry) Get(name string) (Descriptor, bool)
@@ -17615,7 +17615,7 @@ func (r *Registry) Get(name string) (Descriptor, bool)
 
 
 <a name="Registry.List"></a>
-### func \(\*Registry\) [List](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L213>)
+### func \(\*Registry\) [List](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L195>)
 
 ```go
 func (r *Registry) List() []Descriptor

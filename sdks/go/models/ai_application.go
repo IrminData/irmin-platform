@@ -163,8 +163,8 @@ type AIApplicationPendingOperationsResponse struct {
 
 // AIApplicationPendingOperationActionResult is returned after approving or rejecting an operation.
 type AIApplicationPendingOperationActionResult struct {
-	ID        string                 `json:"id"        validate:"required,validsqid=ai_application_pending_operations"`
-	Status    PendingOperationStatus `json:"status"    validate:"required"`
+	ID        string                 `json:"id"                  validate:"required,validsqid=ai_application_pending_operations"`
+	Status    PendingOperationStatus `json:"status"              validate:"required"`
 	Message   string                 `json:"message"`
 	Operation string                 `json:"operation,omitempty"`
 	Path      string                 `json:"path,omitempty"`

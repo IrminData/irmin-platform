@@ -72,12 +72,13 @@ export class ProfiledInferenceGateway implements InferenceGateway {
     // The top-level assistant call owns the HTTP run row created by the route.
     // Middleware and one-shot role calls are separate model runs so they cannot
     // overwrite the assistant's telemetry record.
-    const runId =
+    const fallbackRunId =
       role === 'assistant' && context.runId ? context.runId : ulid();
     return {
       ...context,
-      runId,
+      runId: fallbackRunId,
       onTelemetry: async (telemetry) => {
+        const runId = telemetry.callId ?? fallbackRunId;
         try {
           const [{ db, modelRuns }, { eq }] = await Promise.all([
             import('@/database'),

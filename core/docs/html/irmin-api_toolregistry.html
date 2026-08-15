@@ -77,9 +77,9 @@ type Descriptor struct {
 	Handler         Handler            `json:"-"`
 }
 
-func Published(name string) (Descriptor, bool)
-    Published returns the latest handler-free contract registered for a
-    canonical name.
+func Describe(name, description string) Descriptor
+    Describe returns the canonical policy metadata shared by registration,
+    prompts, and audit adapters.
 
 type Handler func(context.Context, *sdkmcp.CallToolRequest, json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
 

@@ -14,6 +14,8 @@ import (
 	adaptor "github.com/gofiber/fiber/v3/middleware/adaptor"
 )
 
+const pendingOperationPathParts = 2
+
 func registerPendingOperationRoutes(
 	app *fiber.App,
 	apiServices *services.APIServices,
@@ -44,7 +46,7 @@ func handlePendingOperation(
 		return
 	}
 	parts := strings.Split(strings.Trim(r.URL.Path, "/"), "/")
-	if len(parts) < 2 {
+	if len(parts) < pendingOperationPathParts {
 		writePendingOperationError(w, http.StatusBadRequest, "invalid pending operation path")
 		return
 	}

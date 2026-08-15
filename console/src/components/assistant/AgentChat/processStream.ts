@@ -19,6 +19,17 @@ function partsFromState(state: RunState): ServerStreamEvent[] {
   );
 
   for (const tool of Object.values(state.tools)) {
+    if (tool.status === 'approval_required') {
+      parts.push({
+        type: 'tool-approval-required',
+        toolCallId: tool.id,
+        toolName: tool.name,
+        approvalPreview: tool.approvalPreview,
+        pendingOperationId: tool.pendingOperationId,
+        workspaceSlug: tool.workspaceSlug,
+      });
+      continue;
+    }
     parts.push({
       type: 'tool-input-available',
       toolCallId: tool.id,
@@ -40,15 +51,6 @@ function partsFromState(state: RunState): ServerStreamEvent[] {
       });
     } else if (tool.status === 'failed') {
       parts.push({ type: 'stream-error', error: tool.error });
-    } else if (tool.status === 'approval_required') {
-      parts.push({
-        type: 'tool-approval-required',
-        toolCallId: tool.id,
-        toolName: tool.name,
-        approvalPreview: tool.approvalPreview,
-        pendingOperationId: tool.pendingOperationId,
-        workspaceSlug: tool.workspaceSlug,
-      });
     }
   }
 

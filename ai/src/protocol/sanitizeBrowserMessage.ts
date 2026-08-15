@@ -7,7 +7,7 @@ function record(value: unknown): UnknownRecord | undefined {
 }
 
 /** Remove provider reasoning artifacts from a serialized message sent to a browser. */
-export function sanitizeBrowserMessage(message: unknown): unknown {
+export function sanitizeBrowserMessage<T>(message: T): T {
   const copy = structuredClone(message);
   const root = record(copy);
   const data = record(root?.data);

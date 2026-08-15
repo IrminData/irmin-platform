@@ -156,9 +156,6 @@ func logToolCallWithWriteInfo(
 	inputsJSON := "{}"
 	if inputs != nil {
 		redaction := toolregistry.AuditRedactionFor(toolName)
-		if descriptor, ok := toolregistry.Published(toolName); ok {
-			redaction = descriptor.AuditRedaction
-		}
 		redactedInputs := toolregistry.RedactForAudit(inputs, redaction)
 		if jsonBytes, err := json.Marshal(redactedInputs); err == nil {
 			inputsJSON = string(jsonBytes)

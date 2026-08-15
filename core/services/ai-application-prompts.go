@@ -153,10 +153,7 @@ func generateWriteToolsSubsection(writeConfig *db.AIApplicationWriteConfig) stri
 }
 
 func promptToolLine(name string) string {
-	descriptor, ok := toolregistry.Published(name)
-	if !ok {
-		return fmt.Sprintf("\n- **%s**", name)
-	}
+	descriptor := toolregistry.Describe(name, "")
 	return fmt.Sprintf("\n- **%s** [%s] - %s", descriptor.Name, descriptor.Risk, descriptor.Summary)
 }
 

@@ -59,4 +59,29 @@ describe('run reducer', () => {
     const started = reduceRunEvent(initialRunState, event(1, 'run.started'));
     assert.equal(finalizeRunState(started).error?.code, 'missing_terminal');
   });
+
+  it('stores only the approval handle and preview for destructive tools', () => {
+    const started = reduceRunEvent(initialRunState, event(1, 'run.started'));
+    const pending = reduceRunEvent(
+      started,
+      event(2, 'tool.approval_required', {
+        toolCallId: 'tool-1',
+        toolName: 'irmin_repository_object_delete',
+        pendingOperationId: 'pending-1',
+        approvalPreview: 'delete repository object',
+        workspaceSlug: 'workspace-a',
+      })
+    );
+    assert.deepEqual(pending.tools['tool-1'], {
+      id: 'tool-1',
+      name: 'irmin_repository_object_delete',
+      status: 'approval_required',
+      input: undefined,
+      output: undefined,
+      error: undefined,
+      pendingOperationId: 'pending-1',
+      approvalPreview: 'delete repository object',
+      workspaceSlug: 'workspace-a',
+    });
+  });
 });
