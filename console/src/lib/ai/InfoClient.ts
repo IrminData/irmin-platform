@@ -1,5 +1,4 @@
 import {
-  AIModelsResponseSchema,
   AIUserInfoResponseSchema,
   AIWorkspaceInfoResponseSchema,
 } from '@/types/ai/responses';
@@ -21,13 +20,5 @@ export class InfoClient extends BaseClient {
     });
 
     return this.handleResponse(response, AIWorkspaceInfoResponseSchema);
-  }
-
-  async listModels() {
-    const response = await fetch(`${this.baseUrl}/api/info/models`, {
-      headers: this.getHeaders(),
-    });
-
-    return this.handleResponse(response, AIModelsResponseSchema);
   }
 }

@@ -4,7 +4,7 @@ This file provides guidance to coding agents (Claude Code, Gemini CLI, etc.) whe
 
 ## Project Overview
 
-Irmin AI is a LangChain-powered AI service (Fastify + TypeScript) providing streaming agents, vector embeddings, and RAG capabilities. Production chat inference goes through OpenRouter using version-controlled roles; direct OpenAI remains embeddings-only. Direct Anthropic is a temporary emergency rollback path during rollout.
+Irmin AI is a LangChain-powered AI service (Fastify + TypeScript) providing streaming agents, vector embeddings, and RAG capabilities. Chat inference targets OpenRouter using version-controlled roles; direct Anthropic exists temporarily for canary baseline/rollback, and direct OpenAI remains embeddings-only.
 
 ## Development Commands
 
@@ -42,7 +42,7 @@ docker compose up -d                  # Full stack
 
 ### Core Services Layer (`src/services/`)
 
-- **inference/** - Deep gateway, OpenRouter/direct rollback adapters, reviewed role profiles, privacy controls, and prompt-free model-run telemetry
+- **inference/** - Deep OpenRouter gateway, reviewed role profiles, privacy controls, and prompt-free model-run telemetry
 - **agent.ts** - LangGraph wrapper with Postgres checkpointer for persistent agent memory
 - **tools.ts** - Request-scoped MCP tool client that loads Irmin tools when JWT is provided
 - **analytics.ts** - Event logging to PostgreSQL (model usage, vector ops, errors)
@@ -106,7 +106,7 @@ All routes (except `/health`) require `Authorization: Bearer <token>` + `X-Works
 - `/api/conversations` - CRUD for conversations
 - `/api/embeddings/*` - Vector collection management and search
 - `/api/system/*` - Admin endpoints (require `AI_API_SYSTEM_TOKEN`)
-- `/api/info/*` - User, workspace, models, tools metadata
+- `/api/info/*` - User, workspace, model-profile, and tool metadata
 
 ### Middleware (`src/middleware/`)
 
@@ -138,6 +138,10 @@ All data is scoped by `workspaceSlug` + `userId`:
 - `llmToolSelectorMiddleware` - Filters tools by context (max 10, preserves core tools)
 - Ordered model fallback is owned by the versioned OpenRouter role profile, never agent middleware
 
+For model/profile changes, provider admission, release rollout or rollback,
+telemetry retention, and pre-launch resets, follow
+`../docs/ai-runtime-operations.md` through its stated completion gate.
+
 ## Testing
 
 Tests live in `src/tests/` and run with tsx:
@@ -164,8 +168,9 @@ Copy `.env.example` to `.env` and configure:
 
 **Optional:**
 
-- `ANTHROPIC_API_KEY` - Temporary emergency rollback only
-- `OPENROUTER_PROVIDER_ALLOWLIST`, `OPENROUTER_CANARY_PERCENT`, `AI_INFERENCE_BACKEND` - Reviewed rollout controls
+- `OPENROUTER_PROVIDER_ALLOWLIST` - Reviewed ZDR provider restriction
+- `AI_INFERENCE_BACKEND`, `AI_OPENROUTER_CANARY_PERCENT` - Deterministic rollout and forced backend control
+- `ANTHROPIC_API_KEY` - Temporary; required only for canary/direct rollback and removed after the healthy 100% release
 - `QDRANT_URL`, `QDRANT_PORT`, `QDRANT_API_KEY` - Vector database (defaults to localhost:6333)
 - `IRMIN_API_BASE_URL` - Irmin Core API for MCP tools
 - `LANGSMITH_TRACING`, `LANGSMITH_API_KEY` - LLM observability

@@ -5,6 +5,11 @@
 No cost-optimized candidate is promoted by this change. The default remains
 Claude Sonnet 4.6, routed through OpenRouter. This is the required fallback when
 no candidate has a reviewed result set that clears every promotion gate.
+Profile `irmin-balanced@2026-08-15.2` therefore uses that baseline for every
+role and configures no unevaluated fallback. Direct Anthropic remains only as
+the temporary deterministic-canary baseline and emergency rollback until one
+healthy release after 100% OpenRouter; Groq is removed and direct OpenAI remains
+embeddings-only.
 
 ## Fixed matrix
 
@@ -25,14 +30,21 @@ no candidate has a reviewed result set that clears every promotion gate.
 
 ## Evidence status
 
-The hermetic corpus and promotion algorithm are version controlled. Live
-OpenRouter measurements were not run while preparing this change because this
-checkout has no explicitly supplied evaluation credentials and live evaluation
-spends provider credits. A reviewer must run the opt-in live matrix, attach the
-prompt-free result artifact, and update this report before changing a profile
-away from the baseline.
+The hermetic corpus and promotion algorithm are version controlled. This
+release does not include an approved live OpenRouter result artifact, so no
+candidate can be promoted away from the baseline. A reviewer must run the
+opt-in credentialed matrix, attach the prompt-free result artifact, and update
+this report before changing the active profile.
 
 The required corpus covers assistant/RAG/tool selection, executable SQL,
 compiling Go, prompt injection, unauthorized tools, malformed tool output, and
 provider failures. Results must contain only task IDs, scores, safety flags,
 latency, tokens, and cost—never prompts, responses, reasoning, or tool payloads.
+
+## Release status
+
+The inference and evaluation machinery is deployable, but model promotion is
+intentionally still open. Completion requires a credentialed matrix run plus
+the 5%, 25%, and 100% internal release holds documented in
+`../../docs/ai-runtime-operations.md`; source changes alone cannot manufacture that
+production evidence.

@@ -76,6 +76,7 @@ export function createHydeSearchTool(
           metrics: result.metrics,
         });
       } catch (error) {
+        if (config?.signal?.aborted) throw config.signal.reason;
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         return JSON.stringify({
@@ -152,6 +153,7 @@ export function createDuckDbHydeSearchTool(): DynamicStructuredTool {
           metrics: result.metrics,
         });
       } catch (error) {
+        if (config?.signal?.aborted) throw config.signal.reason;
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         return JSON.stringify({

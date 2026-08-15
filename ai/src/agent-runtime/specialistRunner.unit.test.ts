@@ -75,6 +75,31 @@ describe('specialist runner', () => {
     );
   });
 
+  it('rejects SQL changed after an earlier successful execution', () => {
+    const result = specialistRunner.acceptSql({
+      messages: [
+        new AIMessage({
+          content: '',
+          tool_calls: [
+            {
+              id: 'call-a',
+              name: 'irmin_query_execute_sql',
+              args: { sql: 'SELECT 1;' },
+            },
+          ],
+        }),
+        new ToolMessage({
+          content: '{"success":true}',
+          tool_call_id: 'call-a',
+          name: 'irmin_query_execute_sql',
+          status: 'success',
+        }),
+        new AIMessage('SELECT 2;'),
+      ],
+    });
+    assert.equal(result.kind, 'clarification');
+  });
+
   it('formats and compiles Go before accepting it', async () => {
     const result = await specialistRunner.acceptGo({
       messages: [

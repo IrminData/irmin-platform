@@ -6,8 +6,8 @@ LangChain-powered (Fastify, TypeScript) AI agents API for Irmin with OpenRouter 
 
 ## What it does
 
-- Version-controlled inference roles routed through OpenRouter with reviewed ZDR providers, ordered model fallbacks, exact usage/cost telemetry, and a temporary direct-Anthropic rollback path
-- Request-scoped MCP tool access so the assistant agent can load Irmin MCP tools whenever a bearer token is supplied
+- Version-controlled inference roles targeting OpenRouter with reviewed ZDR providers, deterministic canary assignment, a temporary direct-Anthropic rollback, reviewed ordered fallbacks, and exact OpenRouter usage/cost telemetry
+- Request-scoped MCP tool access pinned to the authenticated request's selected workspace
 - Persisted agent memory via LangGraph Postgres checkpointing to keep multi-turn conversations aligned with the database
 - Versioned `RunEventV1` NDJSON streaming that isolates browsers from LangChain/provider payloads and exposes curated progress instead of raw reasoning
 - Workspace-isolated conversations & analytics with automatic title generation and token usage tracking
@@ -38,7 +38,7 @@ See `.env.example` for the full list of Sentry env vars:
 Ensure you have the following installed:
 
 - Node.js (24.x)
-- pnpm (10.22.0+). See [pnpm Installation Guide](https://pnpm.io/installation) for installation details.
+- pnpm (11.18.0+). See [pnpm Installation Guide](https://pnpm.io/installation) for installation details.
 
 ## Quick Start
 
@@ -136,10 +136,11 @@ Streaming responses are emitted as newline-delimited `RunEventV1` envelopes. Eve
 
 - `run.started`, `message.delta`, and curated `reasoning.summary`
 - `tool.started`, `tool.completed`, `tool.failed`, and `tool.approval_required`
-- `usage`
 - exactly one terminal `run.completed`, `run.failed`, or `run.cancelled`
 
-Raw reasoning and provider response structures remain server-side. Browser cancellation aborts the model stream and cancellable tools.
+Raw reasoning, tool arguments/results, exact usage, and provider response
+structures remain server-side. Browser cancellation aborts the model stream,
+nested inference, compilation, and cancellable tools.
 
 Use `/api/agents/:agentId/stream` for real-time output. Non-streaming endpoints return `AgentResponse` objects for synchronous agents (query, scripting), while the assistant returns an empty `content` field because output is streamed.
 
@@ -167,9 +168,9 @@ Adding a new var: update `.env.example` and the Zod schema in `src/config/env.ts
 
 ### Model-profile governance
 
-Profiles are reviewed in Git in `src/inference/profiles.ts`; `/api/info/model-profile` is read-only. New OpenRouter providers require a reviewed config change recording provider identity, operator, ZDR evidence, review date, supported capabilities, and rollback owner. Live evaluations are opt-in and must not run in hermetic CI.
+Profiles are reviewed in Git in `src/inference/profiles.ts`; `/api/info/model-profile` is the read-only runtime catalog. New OpenRouter providers require a reviewed config change recording provider identity, operator, ZDR evidence, review date, supported capabilities, and rollback owner. Live evaluations are opt-in and must not run in hermetic CI.
 
-Promotion requires no safety/tool-authorization regression, task success within two points of baseline, at least 40% lower median model cost, and p95 latency no more than 20% worse. Rollout uses deterministic workspace/conversation buckets at 5%, 25%, then 100%, held for one internal release cycle at each stage. `AI_INFERENCE_BACKEND=direct-anthropic` is the temporary emergency rollback during this rollout.
+Promotion requires no safety/tool-authorization regression, task success within two points of baseline, at least 40% lower median model cost, and p95 latency no more than 20% worse. Until a result set clears every gate, every active role uses Claude Sonnet 4.6 through OpenRouter with no unevaluated fallback. Roll back by restoring the last reviewed profile or release; direct provider credentials are not supported. See [AI runtime operations](../docs/ai-runtime-operations.md).
 
 ## Commands
 
@@ -193,7 +194,7 @@ The system scripts framework handles operational jobs with zero configuration.
 
 **Available script**
 
-- `vectorize-docs` – Fetches Groq/OpenAI SDK documentation from GitHub, ingests local `llm-docs/*.md`, chunks content, uploads vectors to the `irmin-docs` system collection, and prunes stale chunks when `replaceMode` is enabled.
+- `vectorize-docs` – Fetches Irmin SDK and DuckDB documentation, ingests local `llm-docs/*.md`, chunks content, uploads vectors to the `irmin-docs` system collection, and prunes stale chunks when `replaceMode` is enabled.
 
 See [src/scripts/README.md](src/scripts/README.md) for execution details.
 
@@ -250,7 +251,9 @@ reasoning metadata are server-only. Each assistant run writes prompt-free
 operational telemetry to `model_runs`; user ratings are stored separately in
 `message_feedback`.
 
-Detailed model-run telemetry defaults to a 90-day retention window:
+Detailed model-run telemetry defaults to a 90-day retention window. Pruning first
+rolls prompt-free daily metrics into `model_run_daily_metrics`, then deletes the
+detailed rows in the same transaction:
 
 ```bash
 pnpm telemetry:prune
@@ -276,7 +279,17 @@ Live test utilities live in `src/tests/`:
 
 ### Inference gateway
 
-`InferenceGateway` resolves stable roles from a Git-reviewed profile, constructs the OpenRouter model with strict provider/privacy policy, and installs prompt-free telemetry callbacks. Callers never supply model IDs or provider options. See [src/inference](src/inference) and `GET /api/info/model-profile`.
+`InferenceGateway` resolves stable roles from a Git-reviewed profile, selects
+the rollout-assigned backend, applies strict OpenRouter provider/privacy policy,
+and installs prompt-free telemetry callbacks. Callers never supply model IDs or
+provider options. See [src/inference](src/inference) and
+`GET /api/info/model-profile`.
+
+`AI_INFERENCE_BACKEND=canary` assigns the configured percentage to OpenRouter
+by stable workspace/conversation hash and leaves the remainder on the temporary
+direct Anthropic baseline. Use `openrouter` after the rollout or `anthropic`
+only for emergency rollback. Canary and rollback modes require
+`ANTHROPIC_API_KEY`; remove that adapter and key after the healthy 100% release.
 
 ### MCP (tools) service
 
@@ -285,7 +298,7 @@ See [src/services/tools.ts](src/services/tools.ts).
 
 ### Analytics service
 
-Persists structured analytics events (model usage, vector ops, errors) to PostgreSQL and associates them with AI models when possible.
+Persists structured operational events (vector operations, errors, and workflow outcomes) to PostgreSQL. Model usage and cost belong to prompt-free `model_runs` telemetry.
 See [src/services/analytics.ts](src/services/analytics.ts).
 
 ### SystemPromptBuilder service
@@ -341,7 +354,8 @@ PostgreSQL (via Drizzle ORM) stores conversation metadata, prompt-free model tel
 **Schema highlights**
 
 - `conversations` – Workspace + user scoped threads with optional `agentId`
-- `model_runs` – Resolved provider/model, role/profile, tokens, exact OpenRouter cost, latency, and terminal status; never prompts or tool payloads
+- `model_runs` – One row per model call, linked to its HTTP parent run when present, with resolved provider/model, role/profile, tokens, exact OpenRouter cost, latency, and terminal status; never prompts or tool payloads
+- `model_run_daily_metrics` – Long-lived prompt-free daily usage, cost, latency, status, and missing-usage aggregates
 - `message_feedback` – User-owned rating and optional reason for a message/run
 - `vector_collections` – Tracks Qdrant collections, counts, and metadata
 - `analytics` – Event log for key operations
@@ -356,6 +370,7 @@ PostgreSQL (via Drizzle ORM) stores conversation metadata, prompt-free model tel
 
 - Requests require `Authorization` and `X-Workspace-Slug`
 - Middleware enforces user/workspace membership
+- MCP execution rejects any model-selected workspace different from the request workspace
 - Agents verify conversations belong to the caller
 - Vector collections respect workspace membership and creator ownership
 

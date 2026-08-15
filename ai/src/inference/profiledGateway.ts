@@ -1,6 +1,3 @@
-import { createHash } from 'node:crypto';
-import { ulid } from 'ulid';
-
 import type {
   InferenceAdapter,
   InferenceGateway,
@@ -8,14 +5,24 @@ import type {
   ModelProfile,
   ModelRole,
 } from './types';
-import { inferenceSignal } from './types';
 
 interface GatewayOptions {
   profile: ModelProfile;
   openRouter: InferenceAdapter;
-  directAnthropic: InferenceAdapter;
-  backend: 'openrouter' | 'direct-anthropic';
-  canaryPercent: number;
+  directAnthropic?: InferenceAdapter;
+  rollout?: {
+    backend: 'canary' | 'openrouter' | 'anthropic';
+    openRouterPercentage: number;
+  };
+}
+
+function stableRolloutBucket(value: string): number {
+  let hash = 2166136261;
+  for (let index = 0; index < value.length; index += 1) {
+    hash ^= value.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) % 100;
 }
 
 export class ProfiledInferenceGateway implements InferenceGateway {
@@ -27,14 +34,10 @@ export class ProfiledInferenceGateway implements InferenceGateway {
 
   modelFor(role: ModelRole, runContext: InferenceRunContext = {}) {
     const roleProfile = this.profile.roles[role];
-    const useOpenRouter = this.useOpenRouter(runContext);
-    const adapter = useOpenRouter
-      ? this.options.openRouter
-      : this.options.directAnthropic;
-    return adapter.modelFor(
+    return this.adapterFor(runContext).modelFor(
       role,
       roleProfile,
-      this.withPersistentTelemetry(role, runContext, useOpenRouter)
+      this.withPersistentTelemetry(role, runContext)
     );
   }
 
@@ -45,7 +48,12 @@ export class ProfiledInferenceGateway implements InferenceGateway {
     runContext: InferenceRunContext = {}
   ): Promise<T> {
     const model = this.modelFor(role, runContext);
-    const signal = inferenceSignal(this.profile, role, runContext.signal);
+    const timeoutSignal = AbortSignal.timeout(
+      this.profile.roles[role].timeoutMs
+    );
+    const signal = runContext.signal
+      ? AbortSignal.any([runContext.signal, timeoutSignal])
+      : timeoutSignal;
     if (structuredSchema) {
       return (await model
         .withStructuredOutput(structuredSchema)
@@ -54,58 +62,31 @@ export class ProfiledInferenceGateway implements InferenceGateway {
     return (await model.invoke(messages, { signal })) as T;
   }
 
-  private useOpenRouter(runContext: InferenceRunContext): boolean {
-    if (this.options.backend === 'direct-anthropic') return false;
-    if (this.options.canaryPercent >= 100) return true;
-    if (this.options.canaryPercent <= 0) return false;
-    const key = `${runContext.workspaceSlug ?? 'system'}:${runContext.conversationId ?? 'one-shot'}`;
-    const bucket =
-      createHash('sha256').update(key).digest().readUInt32BE(0) % 100;
-    return bucket < this.options.canaryPercent;
-  }
-
   private withPersistentTelemetry(
     role: ModelRole,
-    context: InferenceRunContext,
-    expectOpenRouterCost: boolean
+    context: InferenceRunContext
   ): InferenceRunContext {
-    // The top-level assistant call owns the HTTP run row created by the route.
-    // Middleware and one-shot role calls are separate model runs so they cannot
-    // overwrite the assistant's telemetry record.
-    const fallbackRunId =
-      role === 'assistant' && context.runId ? context.runId : ulid();
     return {
       ...context,
-      runId: fallbackRunId,
       onTelemetry: async (telemetry) => {
-        const runId = telemetry.callId ?? fallbackRunId;
+        const modelCallId = telemetry.modelCallId;
         try {
           const [{ db, modelRuns }, { eq }] = await Promise.all([
             import('@/database'),
             import('drizzle-orm'),
           ]);
           if (telemetry.status === 'started') {
-            await db
-              .insert(modelRuns)
-              .values({
-                runId,
-                conversationId: context.conversationId,
-                workspaceSlug: context.workspaceSlug ?? 'system',
-                userId: context.userId ?? 'system',
-                role,
-                profileVersion: this.profile.version,
-                requestedModel: telemetry.requestedModel,
-                status: 'running',
-              })
-              .onConflictDoUpdate({
-                target: modelRuns.runId,
-                set: {
-                  role,
-                  profileVersion: this.profile.version,
-                  requestedModel: telemetry.requestedModel,
-                  updatedAt: new Date(),
-                },
-              });
+            await db.insert(modelRuns).values({
+              runId: modelCallId,
+              parentRunId: context.runId,
+              conversationId: context.conversationId,
+              workspaceSlug: context.workspaceSlug ?? 'system',
+              userId: context.userId ?? 'system',
+              role,
+              profileVersion: this.profile.version,
+              requestedModel: telemetry.requestedModel,
+              status: 'running',
+            });
           } else {
             await db
               .update(modelRuns)
@@ -127,16 +108,19 @@ export class ProfiledInferenceGateway implements InferenceGateway {
                 completedAt: new Date(),
                 updatedAt: new Date(),
               })
-              .where(eq(modelRuns.runId, runId));
-            if (expectOpenRouterCost && telemetry.status === 'completed') {
-              if (telemetry.cost === undefined) {
+              .where(eq(modelRuns.runId, modelCallId));
+            if (telemetry.status === 'completed') {
+              if (
+                telemetry.backend === 'openrouter' &&
+                telemetry.cost === undefined
+              ) {
                 console.error(
-                  `[InferenceTelemetry] Missing OpenRouter cost for run ${runId}`
+                  `[InferenceTelemetry] Missing OpenRouter cost for model call ${modelCallId}`
                 );
               }
               if (!telemetry.resolvedProvider) {
                 console.error(
-                  `[InferenceTelemetry] Missing resolved provider for run ${runId}`
+                  `[InferenceTelemetry] Missing resolved provider for model call ${modelCallId}`
                 );
               }
             }
@@ -147,8 +131,36 @@ export class ProfiledInferenceGateway implements InferenceGateway {
             error
           );
         }
-        await context.onTelemetry?.(telemetry);
+        try {
+          await context.onTelemetry?.(telemetry);
+        } catch (error) {
+          console.error('[InferenceTelemetry] Consumer callback failed', error);
+        }
       },
     };
+  }
+
+  private adapterFor(context: InferenceRunContext): InferenceAdapter {
+    const rollout = this.options.rollout ?? {
+      backend: 'openrouter' as const,
+      openRouterPercentage: 100,
+    };
+    if (rollout.backend === 'openrouter') return this.options.openRouter;
+    if (rollout.backend === 'anthropic') {
+      if (!this.options.directAnthropic) {
+        throw new Error('Direct Anthropic rollback is not configured');
+      }
+      return this.options.directAnthropic;
+    }
+    const key = `${context.workspaceSlug ?? 'system'}:${context.conversationId ?? 'one-shot'}`;
+    if (stableRolloutBucket(key) < rollout.openRouterPercentage) {
+      return this.options.openRouter;
+    }
+    if (!this.options.directAnthropic) {
+      throw new Error(
+        'OpenRouter canary requires the direct Anthropic adapter'
+      );
+    }
+    return this.options.directAnthropic;
   }
 }

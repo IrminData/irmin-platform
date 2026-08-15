@@ -34,9 +34,12 @@ export class ScriptingAgent extends BaseAgent {
         input.authToken,
         input.workspace.slug
       );
-      const mcpClient = toolsService.createClient({
-        ...mcpConfig,
-      });
+      const mcpClient = toolsService.createClient(
+        {
+          ...mcpConfig,
+        },
+        input.workspace.slug
+      );
       const mcpTools = await toolsService.getTools(mcpClient);
 
       const filteredTools = toolCatalog.select(mcpTools, [
@@ -89,7 +92,7 @@ export class ScriptingAgent extends BaseAgent {
     const response = await super.execute(input, conversationId);
     return {
       ...response,
-      specialistResult: await specialistRunner.acceptGo(response),
+      specialistResult: await specialistRunner.acceptGo(response, input.signal),
     };
   }
 }

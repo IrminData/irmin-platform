@@ -218,6 +218,7 @@ export function createRunEventStream({
   const encoder = new TextEncoder();
   let sequence = 0;
   let sourceReader: ReadableStreamDefaultReader<unknown> | undefined;
+  let cancelSource: (() => void) | undefined;
   let terminal = false;
   let messageId: string | undefined;
 
@@ -253,6 +254,10 @@ export function createRunEventStream({
 
           const stream = await source();
           sourceReader = stream.getReader();
+          cancelSource = () => {
+            void sourceReader?.cancel(signal.reason).catch(() => undefined);
+          };
+          signal.addEventListener('abort', cancelSource, { once: true });
           while (!terminal) {
             if (signal.aborted) {
               await sourceReader.cancel(signal.reason).catch(() => undefined);
@@ -288,6 +293,7 @@ export function createRunEventStream({
             // The consumer may already have cancelled the stream.
           }
         } finally {
+          if (cancelSource) signal.removeEventListener('abort', cancelSource);
           sourceReader?.releaseLock();
         }
       })();

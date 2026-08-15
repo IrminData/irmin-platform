@@ -64,6 +64,27 @@
       "when": 1786750975244,
       "tag": "0008_pretty_patriot",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1786792347501,
+      "tag": "0009_robust_nemesis",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1786792587618,
+      "tag": "0010_little_red_skull",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1786809198709,
+      "tag": "0011_sad_star_brand",
+      "breakpoints": true
     }
   ]
 }

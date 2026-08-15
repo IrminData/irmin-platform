@@ -381,6 +381,7 @@ export async function conversationRoutes(fastify: FastifyInstance) {
         // Serialize LangChain messages using their toJSON method
         // LangChain messages have a toDict() method that properly serializes them
         const serializedHistory = agentHistory
+          .filter((msg) => msg.getType() !== 'system')
           .map((msg) => {
             if (typeof msg.toDict === 'function') {
               return sanitizeBrowserMessage(msg.toDict());

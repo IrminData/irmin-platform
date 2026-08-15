@@ -627,6 +627,7 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
 
           return hypotheticalContent || null;
         } catch (error) {
+          if (signal?.aborted) throw signal.reason;
           // Log the error but return null for graceful fallback to direct query
           analyticsService.logEvent({
             eventType: 'hypothetical_generation_error',
@@ -708,6 +709,8 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
       const searchQuery = hypotheticalContent || query;
       const usedHypothetical = !!hypotheticalContent;
 
+      if (signal?.aborted) throw signal.reason;
+
       if (!hypotheticalContent) {
         analyticsService.logEvent({
           eventType: 'hypothetical_fallback',
@@ -771,6 +774,7 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
         },
       };
     } catch (error) {
+      if (options.signal?.aborted) throw options.signal.reason;
       analyticsService.logEvent({
         eventType: 'hypothetical_context_retrieval',
         eventData: {

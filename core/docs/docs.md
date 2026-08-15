@@ -1001,7 +1001,7 @@ func (api *APIControllers) AIAppAPIWriteFile(c fiber.Ctx) error
 AIAppAPIWriteFile godoc @Summary Write or update a file @Description Write or update a file at the specified path. Use unified path format: /\{repository\-slug\}/\{ref\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param body body object true "Write request with path \(required\), content \(required\), commit\_message \(optional\), auto\_commit \(optional\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Write result" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing required fields" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- write not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/write \[post\]
 
 <a name="APIControllers.AIApplicationPendingOperationApprove"></a>
-### func \(\*APIControllers\) [AIApplicationPendingOperationApprove](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L752>)
+### func \(\*APIControllers\) [AIApplicationPendingOperationApprove](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L753>)
 
 ```go
 func (api *APIControllers) AIApplicationPendingOperationApprove(c fiber.Ctx) error
@@ -1010,7 +1010,7 @@ func (api *APIControllers) AIApplicationPendingOperationApprove(c fiber.Ctx) err
 AIApplicationPendingOperationApprove godoc @Summary Approve a pending operation @Description Approve a pending operation, executing the write @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_operation path string true "Pending operation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending operation completed" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 409 \{object\} irminmodels.IrminAPIResponse "Conflict \- already processed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-operations/\{pending\_operation\}/approve \[post\]
 
 <a name="APIControllers.AIApplicationPendingOperationReject"></a>
-### func \(\*APIControllers\) [AIApplicationPendingOperationReject](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L889>)
+### func \(\*APIControllers\) [AIApplicationPendingOperationReject](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L900>)
 
 ```go
 func (api *APIControllers) AIApplicationPendingOperationReject(c fiber.Ctx) error
@@ -1019,7 +1019,7 @@ func (api *APIControllers) AIApplicationPendingOperationReject(c fiber.Ctx) erro
 AIApplicationPendingOperationReject godoc @Summary Reject a pending operation @Description Reject a pending operation @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_operation path string true "Pending operation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending operation rejected" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 409 \{object\} irminmodels.IrminAPIResponse "Conflict \- already processed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-operations/\{pending\_operation\}/reject \[post\]
 
 <a name="APIControllers.AIApplicationPendingOperationShow"></a>
-### func \(\*APIControllers\) [AIApplicationPendingOperationShow](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L665>)
+### func \(\*APIControllers\) [AIApplicationPendingOperationShow](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L666>)
 
 ```go
 func (api *APIControllers) AIApplicationPendingOperationShow(c fiber.Ctx) error
@@ -1028,7 +1028,7 @@ func (api *APIControllers) AIApplicationPendingOperationShow(c fiber.Ctx) error
 AIApplicationPendingOperationShow godoc @Summary Get a specific pending operation @Description Get details of a specific pending operation @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_operation path string true "Pending operation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending operation retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-operations/\{pending\_operation\} \[get\]
 
 <a name="APIControllers.AIApplicationPendingOperations"></a>
-### func \(\*APIControllers\) [AIApplicationPendingOperations](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L550>)
+### func \(\*APIControllers\) [AIApplicationPendingOperations](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L551>)
 
 ```go
 func (api *APIControllers) AIApplicationPendingOperations(c fiber.Ctx) error
@@ -1037,7 +1037,7 @@ func (api *APIControllers) AIApplicationPendingOperations(c fiber.Ctx) error
 AIApplicationPendingOperations godoc @Summary Get AI application pending operations @Description Get pending operations awaiting approval for this AI application @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param limit query int false "Limit \(default 50, max 200\)" @Param offset query int false "Offset \(default 0\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending operations retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-operations \[get\]
 
 <a name="APIControllers.AIApplicationToolLogStats"></a>
-### func \(\*APIControllers\) [AIApplicationToolLogStats](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L499>)
+### func \(\*APIControllers\) [AIApplicationToolLogStats](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L500>)
 
 ```go
 func (api *APIControllers) AIApplicationToolLogStats(c fiber.Ctx) error
@@ -1046,7 +1046,7 @@ func (api *APIControllers) AIApplicationToolLogStats(c fiber.Ctx) error
 AIApplicationToolLogStats godoc @Summary Get AI application tool statistics @Description Get aggregated statistics for tool usage in this AI application @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AIApplicationToolLogStats\} "Tool stats retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/tool\-logs/stats \[get\]
 
 <a name="APIControllers.AIApplicationToolLogs"></a>
-### func \(\*APIControllers\) [AIApplicationToolLogs](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L407>)
+### func \(\*APIControllers\) [AIApplicationToolLogs](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L408>)
 
 ```go
 func (api *APIControllers) AIApplicationToolLogs(c fiber.Ctx) error
@@ -1055,7 +1055,7 @@ func (api *APIControllers) AIApplicationToolLogs(c fiber.Ctx) error
 AIApplicationToolLogs godoc @Summary List AI application tool audit logs @Description Get audit logs for all tool calls made through this AI application @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param tool\_name query string false "Filter by tool name" @Param limit query int false "Maximum number of logs to return \(default 50\)" @Param offset query int false "Number of logs to skip for pagination" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AIApplicationToolLogsResponse\} "Tool logs retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/tool\-logs \[get\]
 
 <a name="APIControllers.AIApplicationsDestroy"></a>
-### func \(\*APIControllers\) [AIApplicationsDestroy](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L274>)
+### func \(\*APIControllers\) [AIApplicationsDestroy](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L275>)
 
 ```go
 func (api *APIControllers) AIApplicationsDestroy(c fiber.Ctx) error
@@ -1064,7 +1064,7 @@ func (api *APIControllers) AIApplicationsDestroy(c fiber.Ctx) error
 AIApplicationsDestroy godoc @Summary Delete AI application @Description Delete an AI application and all its related data @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Success 200 \{object\} irminmodels.IrminAPIResponse "AI application deleted successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\} \[delete\]
 
 <a name="APIControllers.AIApplicationsIndex"></a>
-### func \(\*APIControllers\) [AIApplicationsIndex](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L32>)
+### func \(\*APIControllers\) [AIApplicationsIndex](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L33>)
 
 ```go
 func (api *APIControllers) AIApplicationsIndex(c fiber.Ctx) error
@@ -1073,7 +1073,7 @@ func (api *APIControllers) AIApplicationsIndex(c fiber.Ctx) error
 AIApplicationsIndex godoc @Summary List AI applications @Description Get all AI applications in the workspace with permission\-based access @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=\[\]irminmodels.AIApplication\} "AI applications retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Workspace not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications \[get\]
 
 <a name="APIControllers.AIApplicationsShow"></a>
-### func \(\*APIControllers\) [AIApplicationsShow](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L85>)
+### func \(\*APIControllers\) [AIApplicationsShow](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L86>)
 
 ```go
 func (api *APIControllers) AIApplicationsShow(c fiber.Ctx) error
@@ -1082,7 +1082,7 @@ func (api *APIControllers) AIApplicationsShow(c fiber.Ctx) error
 AIApplicationsShow godoc @Summary Get AI application details @Description Get details of a specific AI application including its configuration and data sources @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AIApplication\} "AI application details retrieved successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "AI application not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\} \[get\]
 
 <a name="APIControllers.AIApplicationsStore"></a>
-### func \(\*APIControllers\) [AIApplicationsStore](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L136>)
+### func \(\*APIControllers\) [AIApplicationsStore](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L137>)
 
 ```go
 func (api *APIControllers) AIApplicationsStore(c fiber.Ctx) error
@@ -1091,7 +1091,7 @@ func (api *APIControllers) AIApplicationsStore(c fiber.Ctx) error
 AIApplicationsStore godoc @Summary Create AI application @Description Create a new AI application with specified configuration and data sources @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param body body irmincore.CreateAIApplicationRequest true "AI application creation request" @Success 201 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.AIApplication\} "AI application created successfully" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- invalid AI application configuration" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications \[post\]
 
 <a name="APIControllers.AIApplicationsUpdate"></a>
-### func \(\*APIControllers\) [AIApplicationsUpdate](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L198>)
+### func \(\*APIControllers\) [AIApplicationsUpdate](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L199>)
 
 ```go
 func (api *APIControllers) AIApplicationsUpdate(c fiber.Ctx) error
@@ -2268,7 +2268,7 @@ func (api *APIControllers) TestConnection(c fiber.Ctx) error
 TestConnection godoc @Summary Test connection @Description Test an existing connection using its stored credentials @Tags connections @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param connection\_slug path string true "Connection ID" @Success 200 \{object\} irminmodels.IrminAPIResponse\{data=irminmodels.ConnectorConfigurationValidationResult\} "Connection tested successfully" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Connection not found" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/connections/\{connection\_slug\}/test \[post\]
 
 <a name="APIControllers.TransferAIApplicationOwnership"></a>
-### func \(\*APIControllers\) [TransferAIApplicationOwnership](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L330>)
+### func \(\*APIControllers\) [TransferAIApplicationOwnership](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L331>)
 
 ```go
 func (api *APIControllers) TransferAIApplicationOwnership(c fiber.Ctx) error
@@ -7311,6 +7311,7 @@ import "irmin-api/duckdb"
 - [func GetContentTypeFromExtension\(extension string\) string](<#GetContentTypeFromExtension>)
 - [func GetRequiredExtensions\(options \*ReadOptions\) \[\]string](<#GetRequiredExtensions>)
 - [func GetSupportedFormats\(\) \[\]string](<#GetSupportedFormats>)
+- [func InstallRuntimeExtensions\(ctx context.Context, skipOptional bool, logger \*slog.Logger\) error](<#InstallRuntimeExtensions>)
 - [func IsFormatSupported\(filePathOrMIMEType string\) bool](<#IsFormatSupported>)
 - [func IsStructuredFormat\(extension string\) bool](<#IsStructuredFormat>)
 - [type ColumnSchema](<#ColumnSchema>)
@@ -7382,6 +7383,15 @@ func GetSupportedFormats() []string
 ```
 
 GetSupportedFormats returns a list of all supported file extensions.
+
+<a name="InstallRuntimeExtensions"></a>
+## func [InstallRuntimeExtensions](<https://github.com/IrminData/irmin-platform/blob/main/core/duckdb/duckdb.go#L33-L37>)
+
+```go
+func InstallRuntimeExtensions(ctx context.Context, skipOptional bool, logger *slog.Logger) error
+```
+
+InstallRuntimeExtensions installs DuckDB extensions once during process or image startup. Request\-scoped clients only load the already installed files.
 
 <a name="IsFormatSupported"></a>
 ## func [IsFormatSupported](<https://github.com/IrminData/irmin-platform/blob/main/core/duckdb/readOptions.go#L418>)
@@ -7465,7 +7475,7 @@ type QueryClient struct {
 ```
 
 <a name="NewQueryClient"></a>
-### func [NewQueryClient](<https://github.com/IrminData/irmin-platform/blob/main/core/duckdb/duckdb.go#L26>)
+### func [NewQueryClient](<https://github.com/IrminData/irmin-platform/blob/main/core/duckdb/duckdb.go#L69>)
 
 ```go
 func NewQueryClient(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Logger) (*QueryClient, error)
@@ -7474,7 +7484,7 @@ func NewQueryClient(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Log
 NewQueryClient creates a new client for querying data from LakeFS. It configures the DuckDB connection with the required S3 / LakeFS settings. Returns the client and an error if encountered.
 
 <a name="QueryClient.Close"></a>
-### func \(\*QueryClient\) [Close](<https://github.com/IrminData/irmin-platform/blob/main/core/duckdb/duckdb.go#L128>)
+### func \(\*QueryClient\) [Close](<https://github.com/IrminData/irmin-platform/blob/main/core/duckdb/duckdb.go#L155>)
 
 ```go
 func (c *QueryClient) Close() error
@@ -7483,7 +7493,7 @@ func (c *QueryClient) Close() error
 Close closes the DuckDB connection held by the client.
 
 <a name="QueryClient.ExecuteNonQuery"></a>
-### func \(\*QueryClient\) [ExecuteNonQuery](<https://github.com/IrminData/irmin-platform/blob/main/core/duckdb/duckdb.go#L118>)
+### func \(\*QueryClient\) [ExecuteNonQuery](<https://github.com/IrminData/irmin-platform/blob/main/core/duckdb/duckdb.go#L145>)
 
 ```go
 func (c *QueryClient) ExecuteNonQuery(ctx context.Context, query string, args ...any) (sql.Result, error)
@@ -7494,7 +7504,7 @@ ExecuteNonQuery executes a SQL statement that does not return rows \(such as INS
 query: the SQL statement to execute. args: optional arguments for the statement.
 
 <a name="QueryClient.ExecuteQuery"></a>
-### func \(\*QueryClient\) [ExecuteQuery](<https://github.com/IrminData/irmin-platform/blob/main/core/duckdb/duckdb.go#L105>)
+### func \(\*QueryClient\) [ExecuteQuery](<https://github.com/IrminData/irmin-platform/blob/main/core/duckdb/duckdb.go#L132>)
 
 ```go
 func (c *QueryClient) ExecuteQuery(ctx context.Context, query string, args ...any) (*sql.Rows, error)
@@ -12382,7 +12392,7 @@ func SkipIfNoTestRepository(t *testing.T, database *db.Database, workspaceID uin
 SkipIfNoTestRepository skips the test if the test repository is not available.
 
 <a name="TeardownTestSuite"></a>
-## func [TeardownTestSuite](<https://github.com/IrminData/irmin-platform/blob/main/core/lib/test_suite.go#L101>)
+## func [TeardownTestSuite](<https://github.com/IrminData/irmin-platform/blob/main/core/lib/test_suite.go#L105>)
 
 ```go
 func TeardownTestSuite()
@@ -14636,6 +14646,7 @@ import "irmin-api/services"
 - [Variables](<#variables>)
 - [func BuildUnifiedPath\(repoSlug, ref, pathWithinRepo string\) string](<#BuildUnifiedPath>)
 - [func CalculateObjectTotalSize\(database \*db.Database, object \*db.RepositoryObject\) \(int64, error\)](<#CalculateObjectTotalSize>)
+- [func CleanupWriteResult\(ctx context.Context, result \*WriteResult\) error](<#CleanupWriteResult>)
 - [func CollectObjectFiles\(database \*db.Database, dataEngine \*engine.Client, object \*db.RepositoryObject, workspace \*db.Workspace, repo \*db.Repository, ref string, files map\[string\]\[\]byte\) error](<#CollectObjectFiles>)
 - [func GetInternalErrorMessage\(err error\) string](<#GetInternalErrorMessage>)
 - [func GetTranslationKeyForError\(err error\) string](<#GetTranslationKeyForError>)
@@ -15054,6 +15065,15 @@ func CalculateObjectTotalSize(database *db.Database, object *db.RepositoryObject
 
 CalculateObjectTotalSize recursively calculates the total size of an object and its children. Children are fetched from the database on\-the\-fly to support arbitrarily nested directories.
 
+<a name="CleanupWriteResult"></a>
+## func [CleanupWriteResult](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1957>)
+
+```go
+func CleanupWriteResult(ctx context.Context, result *WriteResult) error
+```
+
+CleanupWriteResult releases any isolated branch retained until durable pending\-operation completion has been recorded.
+
 <a name="CollectObjectFiles"></a>
 ## func [CollectObjectFiles](<https://github.com/IrminData/irmin-platform/blob/main/core/services/zip_helpers.go#L19-L27>)
 
@@ -15156,7 +15176,7 @@ func NewAIAppToolExecutor(aiApp *db.AIApplication, apiServices *APIServices) *AI
 NewAIAppToolExecutor creates a new AIAppToolExecutor.
 
 <a name="AIAppToolExecutor.CommitStagedChanges"></a>
-### func \(\*AIAppToolExecutor\) [CommitStagedChanges](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1633-L1636>)
+### func \(\*AIAppToolExecutor\) [CommitStagedChanges](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1634-L1637>)
 
 ```go
 func (e *AIAppToolExecutor) CommitStagedChanges(ctx context.Context, repoSlug, ref, message string) (*irminmodels.Commit, error)
@@ -15165,7 +15185,7 @@ func (e *AIAppToolExecutor) CommitStagedChanges(ctx context.Context, repoSlug, r
 CommitStagedChanges commits all staged changes on a branch.
 
 <a name="AIAppToolExecutor.CommitStagedChangesWithApproval"></a>
-### func \(\*AIAppToolExecutor\) [CommitStagedChangesWithApproval](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1667-L1670>)
+### func \(\*AIAppToolExecutor\) [CommitStagedChangesWithApproval](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1668-L1671>)
 
 ```go
 func (e *AIAppToolExecutor) CommitStagedChangesWithApproval(ctx context.Context, repoSlug, ref, message string) (*WriteResult, error)
@@ -15183,7 +15203,7 @@ func (e *AIAppToolExecutor) ExecuteCustomTool(ctx context.Context, toolName stri
 ExecuteCustomTool executes a custom tool by name.
 
 <a name="AIAppToolExecutor.ExecutePendingOperation"></a>
-### func \(\*AIAppToolExecutor\) [ExecutePendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1797-L1800>)
+### func \(\*AIAppToolExecutor\) [ExecutePendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1798-L1801>)
 
 ```go
 func (e *AIAppToolExecutor) ExecutePendingOperation(ctx context.Context, pendingOperation *db.AIApplicationPendingOperation) (*WriteResult, error)
@@ -15327,7 +15347,7 @@ func (e *AIAppToolExecutor) ListRepositoryObjects(ctx context.Context, repoSlug,
 ListRepositoryObjects lists objects in a repository path. Returns the raw db.RepositoryObject which can be formatted by the caller.
 
 <a name="AIAppToolExecutor.PatchFile"></a>
-### func \(\*AIAppToolExecutor\) [PatchFile](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1537-L1543>)
+### func \(\*AIAppToolExecutor\) [PatchFile](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1538-L1544>)
 
 ```go
 func (e *AIAppToolExecutor) PatchFile(ctx context.Context, unifiedPath string, operations []irminmodels.PatchOperation, commitMessage string, autoCommit bool) (*WriteResult, error)
@@ -15372,7 +15392,7 @@ func (e *AIAppToolExecutor) SearchEmbeddingsByPath(ctx context.Context, query st
 SearchEmbeddingsByPath performs vector similarity search, optionally filtered by a unified path. If pathFilter is empty, searches across all embedding files in all data sources. If pathFilter is provided, searches only in the specified embedding file.
 
 <a name="AIAppToolExecutor.WriteFile"></a>
-### func \(\*AIAppToolExecutor\) [WriteFile](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1445-L1451>)
+### func \(\*AIAppToolExecutor\) [WriteFile](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1446-L1452>)
 
 ```go
 func (e *AIAppToolExecutor) WriteFile(ctx context.Context, unifiedPath string, content []byte, commitMessage string, autoCommit bool) (*WriteResult, error)
@@ -17286,7 +17306,7 @@ func (t *UsageTracker) TrackSeats(workspaceID uint)
 TrackSeats emits a seat\-count usage event for the given workspace. The quantity is \(member \+ pending invite count\) \- 1, since the first seat is free.
 
 <a name="WriteResult"></a>
-## type [WriteResult](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1400-L1407>)
+## type [WriteResult](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1400-L1408>)
 
 WriteResult represents the result of a write operation.
 
@@ -17298,6 +17318,7 @@ type WriteResult struct {
     CommitID           *string `json:"commit_id,omitempty"`
     PendingOperationID *string `json:"pending_operation_id,omitempty"`
     RequiresApproval   bool    `json:"requires_approval"`
+    // contains filtered or unexported fields
 }
 ```
 
@@ -18194,7 +18215,7 @@ type CoreAPIEnv struct {
     S3Region                     string // Region of the S3-compatible object store
     S3AccessKeyID                string // Access key ID for the S3-compatible object store
     S3AccessSecret               string // Secret access key for the S3-compatible object store
-    SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
+    SkipOptionalDuckDBExtensions bool   // Skip optional DuckDB extension installation/loading at startup
     DaytonaAPIKey                string // API key for Daytona sandbox service
     DaytonaAPIURL                string // Base URL for Daytona sandbox service API
     DaytonaTarget                string // Daytona region target (e.g. "eu", "us"); empty => org default

@@ -1,4 +1,3 @@
-import { StoredMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 
 // Agent request schema
@@ -13,7 +12,6 @@ export const AgentRequestSchema = z.object({
 
 // Agent response schema
 export const AgentResponseSchema = z.object({
-  messages: z.array(z.custom<StoredMessage>()).optional(),
   conversationId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
   specialistResult: z

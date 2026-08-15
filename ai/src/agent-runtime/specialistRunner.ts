@@ -41,7 +41,10 @@ export class SpecialistRunner {
     return { kind: 'sql', sql: cleaned };
   }
 
-  async acceptGo(response: AgentResponse): Promise<SpecialistResult> {
+  async acceptGo(
+    response: AgentResponse,
+    signal?: AbortSignal
+  ): Promise<SpecialistResult> {
     const content = stripFence(lastContent(response.messages));
     if (
       !/\bpackage\s+main\b/.test(content) ||
@@ -50,7 +53,7 @@ export class SpecialistRunner {
       return { kind: 'clarification', message: content };
     }
     try {
-      return { kind: 'go', code: await formatAndCompileGo(content) };
+      return { kind: 'go', code: await formatAndCompileGo(content, signal) };
     } catch (error) {
       return {
         kind: 'clarification',
@@ -133,7 +136,10 @@ function balancedSql(sql: string): boolean {
   return quote === undefined && parentheses === 0;
 }
 
-async function formatAndCompileGo(source: string): Promise<string> {
+async function formatAndCompileGo(
+  source: string,
+  signal?: AbortSignal
+): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), 'irmin-specialist-go-'));
   const sourcePath = path.join(directory, 'main.go');
   const modulePath = path.resolve(process.cwd(), '../sdks/go');
@@ -153,11 +159,15 @@ async function formatAndCompileGo(source: string): Promise<string> {
         `module irmin-specialist-check\n\ngo 1.26.5\n\n${sdkRequirement}\n`
       ),
     ]);
-    await execFileAsync('gofmt', ['-w', sourcePath], { timeout: 10_000 });
+    await execFileAsync('gofmt', ['-w', sourcePath], {
+      timeout: 10_000,
+      signal,
+    });
     await execFileAsync('go', ['build', '-o', 'compiled-check', '.'], {
       cwd: directory,
       timeout: 60_000,
       env: { ...process.env, CGO_ENABLED: '0', GOWORK: 'off' },
+      signal,
     });
     return await readFile(sourcePath, 'utf8');
   } finally {

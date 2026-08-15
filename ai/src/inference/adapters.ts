@@ -22,6 +22,42 @@ interface OpenRouterAdapterOptions {
   reviewedProviders: readonly string[];
 }
 
+interface DirectAnthropicAdapterOptions {
+  apiKey: string;
+}
+
+/** Temporary rollback adapter retained only for the staged OpenRouter rollout. */
+export class DirectAnthropicAdapter implements InferenceAdapter {
+  constructor(private readonly options: DirectAnthropicAdapterOptions) {}
+
+  modelFor(
+    _role: ModelRole,
+    roleProfile: ModelRoleProfile,
+    runContext: InferenceRunContext
+  ): BaseChatModel {
+    const model = roleProfile.primaryModel.replace(/^anthropic\//, '');
+    if (model === roleProfile.primaryModel) {
+      throw new Error(
+        `Direct Anthropic rollback cannot serve ${roleProfile.primaryModel}`
+      );
+    }
+    return new ChatAnthropic({
+      apiKey: this.options.apiKey,
+      model,
+      maxTokens: roleProfile.maxOutputTokens,
+      callbacks: [
+        new InferenceTelemetryCallback(
+          roleProfile.primaryModel,
+          runContext,
+          undefined,
+          [model],
+          'anthropic'
+        ),
+      ],
+    });
+  }
+}
+
 export class OpenRouterAdapter implements InferenceAdapter {
   constructor(private readonly options: OpenRouterAdapterOptions) {
     const unreviewed = options.providerAllowlist.filter(
@@ -67,7 +103,8 @@ export class OpenRouterAdapter implements InferenceAdapter {
         new InferenceTelemetryCallback(
           roleProfile.primaryModel,
           runContext,
-          (generationId) => this.resolveGeneration(generationId),
+          (generationId) =>
+            this.resolveGeneration(generationId, runContext.signal),
           models
         ),
       ],
@@ -75,17 +112,21 @@ export class OpenRouterAdapter implements InferenceAdapter {
   }
 
   private async resolveGeneration(
-    generationId: string
+    generationId: string,
+    signal?: AbortSignal
   ): Promise<ResolvedGenerationUsage | undefined> {
     for (const delayMs of [0, 250, 750]) {
+      if (signal?.aborted) return undefined;
       if (delayMs) {
-        await new Promise((resolve) => setTimeout(resolve, delayMs));
+        await abortableDelay(delayMs, signal);
       }
       const response = await fetch(
         `https://openrouter.ai/api/v1/generation?id=${encodeURIComponent(generationId)}`,
         {
           headers: { Authorization: `Bearer ${this.options.apiKey}` },
-          signal: AbortSignal.timeout(5_000),
+          signal: signal
+            ? AbortSignal.any([signal, AbortSignal.timeout(5_000)])
+            : AbortSignal.timeout(5_000),
         }
       );
       if (response.status === 404) continue;
@@ -115,37 +156,29 @@ export class OpenRouterAdapter implements InferenceAdapter {
   }
 }
 
+async function abortableDelay(
+  delayMs: number,
+  signal?: AbortSignal
+): Promise<void> {
+  if (!signal) {
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+    return;
+  }
+  await new Promise<void>((resolve) => {
+    const timeout = setTimeout(finish, delayMs);
+    signal.addEventListener('abort', finish, { once: true });
+    function finish() {
+      clearTimeout(timeout);
+      signal?.removeEventListener('abort', finish);
+      resolve();
+    }
+  });
+}
+
 function finiteNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value)
     ? value
     : undefined;
-}
-
-export class DirectAnthropicAdapter implements InferenceAdapter {
-  constructor(private readonly apiKey?: string) {}
-
-  modelFor(
-    _role: ModelRole,
-    roleProfile: ModelRoleProfile,
-    runContext: InferenceRunContext
-  ): BaseChatModel {
-    if (!this.apiKey) {
-      throw new Error(
-        'ANTHROPIC_API_KEY is required for direct-anthropic rollback'
-      );
-    }
-    return new ChatAnthropic({
-      apiKey: this.apiKey,
-      model: roleProfile.directAnthropicModel,
-      maxTokens: roleProfile.maxOutputTokens,
-      callbacks: [
-        new InferenceTelemetryCallback(
-          roleProfile.directAnthropicModel,
-          runContext
-        ),
-      ],
-    });
-  }
 }
 
 export class FakeInferenceAdapter implements InferenceAdapter {

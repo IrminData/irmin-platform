@@ -36,17 +36,17 @@ func generateCreateViewSQL(
 		return "", fmt.Errorf("unsupported file type %s: %w", fileName, readOptsErr)
 	}
 
-	// Install required extensions
+	// Load extensions installed at process startup.
 	requiredExtensions := duckdb.GetRequiredExtensions(readOptions)
 	for _, ext := range requiredExtensions {
-		installSQL := fmt.Sprintf("INSTALL %s; LOAD %s;", ext, ext)
-		if _, installErr := qc.ExecuteNonQuery(ctx, installSQL); installErr != nil {
+		loadSQL := fmt.Sprintf("LOAD %s;", ext)
+		if _, loadErr := qc.ExecuteNonQuery(ctx, loadSQL); loadErr != nil {
 			// For some extensions like avro, delta, iceberg, we want to fail
 			// if they can't be loaded since there's no fallback
 			if ext != "httpfs" {
 				return "", fmt.Errorf(
 					"%s format is not supported on this platform - DuckDB %s extension could not be loaded: %w",
-					ext, ext, installErr,
+					ext, ext, loadErr,
 				)
 			}
 		}
@@ -78,7 +78,7 @@ func generateExcelViewSQL(
 	escapedPath := strings.ReplaceAll(tmpFilePath, "'", "''")
 
 	// Tier 1: Try spatial extension with st_read
-	_, spatialErr := qc.ExecuteNonQuery(ctx, "INSTALL spatial; LOAD spatial;")
+	_, spatialErr := qc.ExecuteNonQuery(ctx, "LOAD spatial;")
 	if spatialErr == nil {
 		createViewSQL := fmt.Sprintf(
 			"CREATE OR REPLACE TEMPORARY VIEW %s AS SELECT * FROM st_read('%s');",
@@ -91,7 +91,7 @@ func generateExcelViewSQL(
 	}
 
 	// Tier 2: Try excel extension with st_read
-	_, excelErr := qc.ExecuteNonQuery(ctx, "INSTALL excel; LOAD excel;")
+	_, excelErr := qc.ExecuteNonQuery(ctx, "LOAD excel;")
 	if excelErr == nil {
 		createViewSQL := fmt.Sprintf(
 			"CREATE OR REPLACE TEMPORARY VIEW %s AS SELECT * FROM st_read('%s');",

@@ -56,6 +56,13 @@ never commit populated environment files:
 Existing deployments and runtime configuration remain project-specific. See
 the README in each project before running or deploying it.
 
+AI inference is moving to OpenRouter through a deterministic canary; the
+temporary direct Anthropic adapter exists only as the rollout baseline and
+rollback. Direct OpenAI credentials in `ai/` remain embeddings-only.
+Model-profile review, ZDR admission, release sequencing, rollback, telemetry
+retention, and the guarded pre-launch reset are documented in
+[AI runtime operations](docs/ai-runtime-operations.md).
+
 ## Validation
 
 Run the default hermetic local gate:

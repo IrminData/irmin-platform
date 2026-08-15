@@ -94,9 +94,12 @@ class ToolCacheService {
     workspaceSlug: string
   ): Promise<DynamicStructuredTool[]> {
     const mcpConfig = toolsService.getIrminMCPConfig(authToken, workspaceSlug);
-    const mcpClient = toolsService.createClient({
-      ...mcpConfig,
-    });
+    const mcpClient = toolsService.createClient(
+      {
+        ...mcpConfig,
+      },
+      workspaceSlug
+    );
     return toolsService.getTools(mcpClient);
   }
 

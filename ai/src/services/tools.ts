@@ -6,8 +6,34 @@ import {
 import { env } from '@/config/env';
 import { TIMEOUTS } from '@/config/timeouts';
 
+type IrminToolDescriptor = Record<string, unknown> & {
+  name: string;
+  risk?: 'read' | 'write' | 'destructive';
+};
+
+/** Rejects model-selected workspace arguments outside the active request. */
+export function bindToolArgsToWorkspace(
+  args: unknown,
+  selectedWorkspaceSlug: string
+): { args: Record<string, unknown> } | undefined {
+  if (typeof args !== 'object' || args === null) return;
+  const values = args as Record<string, unknown>;
+  if (
+    Object.hasOwn(values, 'workspace_slug') &&
+    values.workspace_slug !== selectedWorkspaceSlug
+  ) {
+    throw new Error('Tool workspace does not match the selected workspace');
+  }
+  if (Object.hasOwn(values, 'workspace_slug')) {
+    return { args: { ...values, workspace_slug: selectedWorkspaceSlug } };
+  }
+}
+
 class ToolsService {
-  createClient(mcpServers: ClientConfig['mcpServers']) {
+  createClient(
+    mcpServers: ClientConfig['mcpServers'],
+    selectedWorkspaceSlug: string
+  ) {
     // Create client and connect to server
     return new MultiServerMCPClient({
       // Global tool configuration options
@@ -20,6 +46,11 @@ class ToolsService {
 
       // Use standardized content block format in tool outputs
       useStandardContentBlocks: true,
+
+      // A model may choose arguments, but it may never switch the workspace
+      // selected by the authenticated application request.
+      beforeToolCall: ({ args }) =>
+        bindToolArgsToWorkspace(args, selectedWorkspaceSlug),
 
       // Server configuration
       mcpServers,
@@ -51,10 +82,8 @@ class ToolsService {
     return tools;
   }
 
-  private extractDescriptors(
-    value: unknown
-  ): Array<Record<string, unknown> & { name: string }> {
-    const found: Array<Record<string, unknown> & { name: string }> = [];
+  private extractDescriptors(value: unknown): IrminToolDescriptor[] {
+    const found: IrminToolDescriptor[] = [];
     const visit = (candidate: unknown) => {
       if (Array.isArray(candidate)) {
         for (const item of candidate) visit(item);
@@ -67,7 +96,7 @@ class ToolsService {
         typeof record.capability === 'string' &&
         typeof record.catalog_version === 'number'
       ) {
-        found.push(record as Record<string, unknown> & { name: string });
+        found.push(record as IrminToolDescriptor);
         return;
       }
       for (const child of Object.values(record)) visit(child);

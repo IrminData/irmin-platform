@@ -20,6 +20,49 @@ type QueryClient struct {
 	logger *slog.Logger
 }
 
+func requiredExtensions() []string {
+	return []string{"httpfs", "excel", "spatial"}
+}
+
+func optionalExtensions() []string {
+	return []string{"avro", "delta", "iceberg", "autocomplete", "vss"}
+}
+
+// InstallRuntimeExtensions installs DuckDB extensions once during process or
+// image startup. Request-scoped clients only load the already installed files.
+func InstallRuntimeExtensions(
+	ctx context.Context,
+	skipOptional bool,
+	logger *slog.Logger,
+) error {
+	database, err := sql.Open("duckdb", "")
+	if err != nil {
+		return fmt.Errorf("open DuckDB extension installer: %w", err)
+	}
+	defer database.Close()
+	for _, extension := range requiredExtensions() {
+		if _, installErr := database.ExecContext(ctx, "INSTALL "+extension); installErr != nil {
+			return fmt.Errorf("install required DuckDB extension %s: %w", extension, installErr)
+		}
+	}
+	if skipOptional {
+		return nil
+	}
+	for _, extension := range optionalExtensions() {
+		if _, installErr := database.ExecContext(ctx, "INSTALL "+extension); installErr != nil {
+			logger.WarnContext(
+				ctx,
+				"failed to install optional DuckDB extension",
+				"extension",
+				extension,
+				"error",
+				installErr,
+			)
+		}
+	}
+	return nil
+}
+
 // NewQueryClient creates a new client for querying data from LakeFS.
 // It configures the DuckDB connection with the required S3 / LakeFS settings.
 // Returns the client and an error if encountered.
@@ -30,8 +73,8 @@ func NewQueryClient(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Log
 		return nil, fmt.Errorf("failed to open DuckDB connection: %w", err)
 	}
 
-	// Install and load HTTPFS extension (required for S3/LakeFS access).
-	_, err = db.ExecContext(ctx, "INSTALL httpfs; LOAD httpfs;")
+	// Runtime extensions are installed at process/image startup.
+	_, err = db.ExecContext(ctx, "LOAD httpfs;")
 	if err != nil {
 		return nil, fmt.Errorf("failed to install and load httpfs extension: %w", err)
 	}
@@ -40,15 +83,7 @@ func NewQueryClient(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Log
 
 	// Only try to install optional extensions if SkipOptionalExtensions is false
 	if !env.SkipOptionalDuckDBExtensions {
-		optionalExtensions := []string{
-			"spatial",      // Provides Excel file reading capabilities via st_read()
-			"avro",         // Support for Apache Avro files
-			"delta",        // Support for Delta Lake format
-			"iceberg",      // Support for Apache Iceberg format
-			"autocomplete", // Enhanced autocomplete functionality
-			"vss",          // Vector Similarity Search for embeddings
-		}
-		client.installOptionalExtensions(ctx, optionalExtensions, logger)
+		client.loadOptionalExtensions(ctx, append([]string{"spatial"}, optionalExtensions()...), logger)
 	} else {
 		logger.DebugContext(ctx, "skipping optional extensions installation")
 	}
@@ -76,23 +111,15 @@ func NewQueryClient(ctx context.Context, env *utils.CoreAPIEnv, logger *slog.Log
 	return client, nil
 }
 
-// installOptionalExtensions attempts to install and load optional DuckDB extensions.
-// It logs warnings for any failures but doesn't return errors since these are optional.
-func (c *QueryClient) installOptionalExtensions(ctx context.Context, extensions []string, logger *slog.Logger) {
+// loadOptionalExtensions attempts to load extensions installed at startup.
+func (c *QueryClient) loadOptionalExtensions(ctx context.Context, extensions []string, logger *slog.Logger) {
 	for _, ext := range extensions {
-		installQuery := fmt.Sprintf("INSTALL %s;", ext)
 		loadQuery := fmt.Sprintf("LOAD %s;", ext)
-
-		_, installErr := c.db.ExecContext(ctx, installQuery)
-		if installErr == nil {
-			_, loadErr := c.db.ExecContext(ctx, loadQuery)
-			if loadErr != nil {
-				logger.WarnContext(ctx, "failed to load extension", "extension", ext, "error", loadErr)
-			} else {
-				logger.DebugContext(ctx, "successfully loaded extension", "extension", ext)
-			}
+		_, loadErr := c.db.ExecContext(ctx, loadQuery)
+		if loadErr != nil {
+			logger.WarnContext(ctx, "failed to load extension", "extension", ext, "error", loadErr)
 		} else {
-			logger.WarnContext(ctx, "failed to install extension", "extension", ext, "error", installErr)
+			logger.DebugContext(ctx, "successfully loaded extension", "extension", ext)
 		}
 	}
 }

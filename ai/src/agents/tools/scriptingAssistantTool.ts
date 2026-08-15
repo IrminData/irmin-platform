@@ -105,7 +105,7 @@ export function createScriptingAssistantTool(
 
         const result =
           response.specialistResult ??
-          (await specialistRunner.acceptGo(response));
+          (await specialistRunner.acceptGo(response, config?.signal));
         return JSON.stringify(
           result.kind === 'go'
             ? { success: true, script: result.code }
@@ -118,6 +118,7 @@ export function createScriptingAssistantTool(
               }
         );
       } catch (error) {
+        if (config?.signal?.aborted) throw config.signal.reason;
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         return JSON.stringify({

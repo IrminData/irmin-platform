@@ -5039,15 +5039,15 @@ type AIApplicationPendingOperation struct {
 ```
 
 <a name="AIApplicationPendingOperationActionResult"></a>
-## type [AIApplicationPendingOperationActionResult](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L165-L173>)
+## type [AIApplicationPendingOperationActionResult](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L159-L167>)
 
-AIApplicationPendingOperationActionResult is returned after approving or rejecting an operation.
+AIApplicationPendingOperationActionResult is returned by approve and reject commands. It intentionally differs from the complete pending\-operation resource returned by the read endpoints.
 
 ```go
 type AIApplicationPendingOperationActionResult struct {
-    ID        string                 `json:"id"                  validate:"required,validsqid=ai_application_pending_operations"`
+    ID        string                 `json:"id"                  validate:"required"`
     Status    PendingOperationStatus `json:"status"              validate:"required"`
-    Message   string                 `json:"message"`
+    Message   string                 `json:"message"             validate:"required"`
     Operation string                 `json:"operation,omitempty"`
     Path      string                 `json:"path,omitempty"`
     Committed bool                   `json:"committed,omitempty"`
@@ -5056,7 +5056,7 @@ type AIApplicationPendingOperationActionResult struct {
 ```
 
 <a name="AIApplicationPendingOperationsResponse"></a>
-## type [AIApplicationPendingOperationsResponse](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L157-L162>)
+## type [AIApplicationPendingOperationsResponse](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L170-L175>)
 
 AIApplicationPendingOperationsResponse represents a paginated list of pending operations.
 
@@ -5118,7 +5118,7 @@ type AIApplicationToolLog struct {
 ```
 
 <a name="AIApplicationToolLogStats"></a>
-## type [AIApplicationToolLogStats](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L193-L199>)
+## type [AIApplicationToolLogStats](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L195-L201>)
 
 AIApplicationToolLogStats represents aggregated statistics for tool calls.
 
@@ -5133,7 +5133,7 @@ type AIApplicationToolLogStats struct {
 ```
 
 <a name="AIApplicationToolLogsResponse"></a>
-## type [AIApplicationToolLogsResponse](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L176-L181>)
+## type [AIApplicationToolLogsResponse](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L178-L183>)
 
 AIApplicationToolLogsResponse represents a paginated list of tool logs.
 
@@ -5147,7 +5147,7 @@ type AIApplicationToolLogsResponse struct {
 ```
 
 <a name="AIApplicationToolStat"></a>
-## type [AIApplicationToolStat](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L184-L190>)
+## type [AIApplicationToolStat](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L186-L192>)
 
 AIApplicationToolStat represents statistics for a specific tool.
 

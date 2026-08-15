@@ -2,7 +2,6 @@ import { AgentsManager } from '@/agents';
 import { conversations, db, modelRuns } from '@/database';
 import { MODEL_PROFILE } from '@/inference';
 import { createRunEventStream } from '@/protocol/runEvents';
-import { sanitizeBrowserMessage } from '@/protocol/sanitizeBrowserMessage';
 import { eq } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 import { ulid } from 'ulid';
@@ -90,13 +89,6 @@ export async function agentRoutes(fastify: FastifyInstance) {
         // Report AI usage (fire-and-forget)
         reportAIUsage(workspaceContext.workspace.id).catch(() => undefined);
 
-        // Keep the non-streaming boundary as strict as conversation reloads:
-        // provider metadata and reasoning artifacts never reach the browser.
-        const serializedMessages =
-          response.agentResponse.messages?.map((message) =>
-            sanitizeBrowserMessage(message.toDict())
-          ) ?? [];
-
         // Add conversation ID to response headers
         reply.header('X-Conversation-Id', response.conversationId);
         reply.header('X-Agent-Id', agentId);
@@ -105,8 +97,9 @@ export async function agentRoutes(fastify: FastifyInstance) {
           reply,
           AgentResponseSchema,
           {
-            ...response.agentResponse,
-            messages: serializedMessages,
+            conversationId: response.conversationId,
+            metadata: response.agentResponse.metadata,
+            specialistResult: response.agentResponse.specialistResult,
           },
           fastify.log
         );
@@ -285,23 +278,6 @@ export async function agentRoutes(fastify: FastifyInstance) {
             return;
           }
 
-          if (event.type === 'usage') {
-            const usage = event.data as {
-              inputTokens?: number;
-              outputTokens?: number;
-              totalTokens?: number;
-            };
-            await db
-              .update(modelRuns)
-              .set({
-                inputTokens: usage.inputTokens,
-                outputTokens: usage.outputTokens,
-                totalTokens: usage.totalTokens,
-              })
-              .where(eq(modelRuns.runId, runId));
-            return;
-          }
-
           if (
             event.type === 'run.completed' ||
             event.type === 'run.failed' ||
@@ -323,15 +299,20 @@ export async function agentRoutes(fastify: FastifyInstance) {
               })
               .where(eq(modelRuns.runId, runId));
             if (event.type === 'run.completed') {
-              await titleGenerationService.updateConversationTitleIfNeeded(
-                conversation.id,
-                {
+              void titleGenerationService
+                .updateConversationTitleIfNeeded(conversation.id, {
                   message: agentRequest.message,
                   aiResponse: assistantText,
                   user: authContext.user,
                   workspace: workspaceContext.workspace,
-                }
-              );
+                  signal: runController.signal,
+                })
+                .catch((error: unknown) => {
+                  fastify.log.warn(
+                    { error, conversationId: conversation.id },
+                    'Conversation title generation failed'
+                  );
+                });
             }
           }
         },

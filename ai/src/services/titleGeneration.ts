@@ -12,6 +12,7 @@ interface TitleGenerationOptions {
   workspace: { slug: string };
   conversationId?: string;
   aiResponse?: string; // Optional AI response content to help generate better titles
+  signal?: AbortSignal;
 }
 
 interface TitleGenerationResult {
@@ -105,6 +106,7 @@ Return only the title, nothing else.`;
           workspaceSlug: options.workspace.slug,
           conversationId: options.conversationId,
           userId: options.user.id,
+          signal: options.signal,
         }
       );
 

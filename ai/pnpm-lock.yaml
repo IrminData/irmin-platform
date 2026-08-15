@@ -27,8 +27,8 @@ importers:
         specifier: ^6.1.1
         version: 6.1.1
       '@langchain/anthropic':
-        specifier: ^1.5.2
-        version: 1.5.2(@langchain/core@1.2.8(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(openai@6.49.0(zod@4.4.3)))
+        specifier: ^1.5.5
+        version: 1.5.5(@langchain/core@1.2.8(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(openai@6.49.0(zod@4.4.3)))
       '@langchain/core':
         specifier: ^1.2.8
         version: 1.2.8(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(openai@6.49.0(zod@4.4.3))
@@ -512,11 +512,11 @@ packages:
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
 
-  '@langchain/anthropic@1.5.2':
-    resolution: {integrity: sha512-lYOHo5BpRbgmQVSggwPLhBNFtatiAFlVirY44tnfocx5tQKfeLYo5emqPwNwcNBuw236sr0tsDxZcmbLASN/GA==}
+  '@langchain/anthropic@1.5.5':
+    resolution: {integrity: sha512-OeWrKNqx4kgJBfpFAbT/wVzeGibAwVdmI9+DifkI/U3ejpVuUpISdSEVvnRIT0aqlk+sf2EI362Rt8FiJwxIDg==}
     engines: {node: '>=20'}
     peerDependencies:
-      '@langchain/core': ^1.2.3
+      '@langchain/core': ^1.2.6
 
   '@langchain/core@1.2.8':
     resolution: {integrity: sha512-ppi2UaCYKqM4LEY8NWQ/JZ0Of0MAngHRvclceVeEQklcD/M6QKanlHPWblDnLO2m4vz7987b1Z4r33Ps6lf/ig==}
@@ -3390,7 +3390,7 @@ snapshots:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
 
-  '@langchain/anthropic@1.5.2(@langchain/core@1.2.8(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(openai@6.49.0(zod@4.4.3)))':
+  '@langchain/anthropic@1.5.5(@langchain/core@1.2.8(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(openai@6.49.0(zod@4.4.3)))':
     dependencies:
       '@anthropic-ai/sdk': 0.115.0(zod@4.4.3)
       '@langchain/core': 1.2.8(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(openai@6.49.0(zod@4.4.3))

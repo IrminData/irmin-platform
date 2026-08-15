@@ -110,6 +110,7 @@ export function createQueryAssistantTool(
               }
         );
       } catch (error) {
+        if (config?.signal?.aborted) throw config.signal.reason;
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         return JSON.stringify({

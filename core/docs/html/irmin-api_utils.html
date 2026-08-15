@@ -302,7 +302,7 @@ type CoreAPIEnv struct {
 	S3Region                     string // Region of the S3-compatible object store
 	S3AccessKeyID                string // Access key ID for the S3-compatible object store
 	S3AccessSecret               string // Secret access key for the S3-compatible object store
-	SkipOptionalDuckDBExtensions bool   // Flag to skip installation of optional DuckDB extensions
+	SkipOptionalDuckDBExtensions bool   // Skip optional DuckDB extension installation/loading at startup
 	DaytonaAPIKey                string // API key for Daytona sandbox service
 	DaytonaAPIURL                string // Base URL for Daytona sandbox service API
 	DaytonaTarget                string // Daytona region target (e.g. "eu", "us"); empty =&gt; org default

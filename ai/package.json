@@ -42,7 +42,7 @@
     "@fastify/rate-limit": "^11.2.0",
     "@fastify/swagger": "^9.8.1",
     "@fastify/swagger-ui": "^6.1.1",
-    "@langchain/anthropic": "^1.5.2",
+    "@langchain/anthropic": "^1.5.5",
     "@langchain/core": "^1.2.8",
     "@langchain/langgraph-checkpoint-postgres": "^1.0.4",
     "@langchain/mcp-adapters": "^1.1.3",

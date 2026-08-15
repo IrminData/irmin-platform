@@ -29,10 +29,13 @@ export class QueryAgent extends BaseAgent {
         input.authToken,
         input.workspace.slug
       );
-      const mcpClient = toolsService.createClient({
-        // Add MCP servers here...
-        ...mcpConfig,
-      });
+      const mcpClient = toolsService.createClient(
+        {
+          // Add MCP servers here...
+          ...mcpConfig,
+        },
+        input.workspace.slug
+      );
       const mcpTools = await toolsService.getTools(mcpClient);
 
       const filteredTools = toolCatalog.select(mcpTools, [

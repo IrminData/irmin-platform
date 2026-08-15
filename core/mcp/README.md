@@ -9,11 +9,13 @@ attach endpoint.
 
 ## Features
 
-- Workspace management: create new workspaces for data organisation
-- Resource access: read user profile and workspace information
-- Authentication: secure access using API tokens or Clerk JWT tokens
-- Streamable HTTP transport: real-time communication with AI models using the MCP Streamable HTTP specification
-- HTTP single-step attach endpoint: `GET /mcp/attach` for clients that need a simplified connection flow (e.g., Langflow HTTP transport)
+- One canonical `ToolDescriptor` registry for MCP, AI Application execution,
+  prompt documentation, Console metadata, and workspace catalogs
+- Strict `irmin_<domain>_<action>` schemas and structured results
+- Capability and risk policy (`read`, `write`, `destructive`) independent of
+  literal tool names
+- Authenticated, workspace-isolated Streamable HTTP transport
+- Atomic human approval for AI Application pending operations
 
 ## Endpoints
 
@@ -41,6 +43,11 @@ The token can be:
 - A JWT token from Clerk authentication
 
 System tokens are not permitted for MCP access.
+
+Origin-bearing requests must exactly match `MCP_ALLOWED_ORIGINS`; an empty
+allowlist rejects all such browser requests. Authenticated machine clients may
+omit `Origin`. Forwarded IP headers are accepted only from
+`MCP_TRUSTED_PROXY_CIDRS`.
 
 ## Quick start
 
@@ -115,30 +122,47 @@ application. We expose two routes:
   - Proxies GET requests to the base path, allowing the SDK handler to manage initialization and SSE automatically
 
 ### Adding new tools
-1. Create a new tool function in `mcp/tools/`
-2. Register it in `mcp/tools/register.go` via `RegisterAll`
-3. Tools receive authenticated user context and can access all API services
+
+1. Add the handler and one `toolregistry.Descriptor` in `mcp/tools/`.
+2. Register it through `toolregistry.Register`; direct SDK registration is not
+   an application extension point.
+3. Use strict input/output schemas, choose the risk and capability, set timeout
+   and cancellation behavior, and declare audit redaction.
+4. Update the deterministic catalog snapshot and tests.
+
+AI Application destructive tools always stage a pending operation. Ordinary AI
+Application writes stage only when explicit write approval is enabled. Only an
+authenticated workspace user may approve or reject; AI Application credentials
+cannot self-approve.
+
+The user MCP endpoint stages destructive operations without running their
+handlers. Chat receives only the pending-operation handle and descriptor
+preview. An authenticated user in the bound workspace can approve or reject;
+approval claims the operation once and replays the registered handler with an
+internal approval context. Machine and AI Application credentials cannot
+self-approve.
 
 ### Adding new resources
-1. Create a new resource function in `mcp/resources/`
-2. Register it in `mcp/resources/register.go` via `RegisterAll`
-3. Resources provide read-only access with proper authentication
+
+1. Create a resource function in `mcp/resources/`.
+2. Add it to `MCPResources.RegisterAll` in `resources.go`.
+3. Preserve authenticated, read-only workspace access.
 
 ### Project structure
 
 ```
 mcp/
-├── server.go        # Wire-up for MCP server and routes
-├── auth.go          # Auth plumbing (Bearer, user context)
-├── http.go          # Wrapper and mounting of the SDK HTTP handler
-├── attach.go        # /mcp/attach single-step Streamable HTTP endpoint
+├── ai-application.go # AI Application MCP and pending-operation integration
+├── auth.go           # Bearer, workspace, proxy, and request context
+├── http.go           # Origin policy and SDK HTTP mounting
 ├── tools/
-│   ├── register.go  # Tool registration
-│   └── workspaces.go
+│   ├── tools.go      # Deterministic canonical registration
+│   └── *.go          # Domain handlers and descriptors
 └── resources/
-    ├── register.go  # Resource registration
-    ├── profile.go
-    └── workspaces.go
+    └── *.go          # Read-only MCP resources
+
+../toolregistry/
+└── registry.go       # Descriptor contract, generated catalog, and redaction
 ```
 
 ## SDK
@@ -165,12 +189,16 @@ the older HTTP+SSE transport. Key features:
   `Cache-Control: no-cache`, `Connection: keep-alive`
 - If you terminate TLS or use a CDN, ensure it supports long-lived connections
   and does not buffer `text/event-stream` responses
+- Configure the proxy CIDRs before relying on `Forwarded` or
+  `X-Forwarded-For`; untrusted peers are identified by the socket address
 
 ## Testing matrix
 
 - curl to `/mcp/attach` (HTTP-only, single-step Streamable HTTP) — should stream SSE
 - `npx mcp-remote` to `/mcp` (full Streamable HTTP flow) — should connect and print MCP capabilities
 - MCP Inspector to `/mcp` — should connect with Bearer auth
+- `go test ./toolregistry ./mcp/tools ./mcp` — descriptor snapshots,
+  initialize/list/call conformance, policy, redaction, cancellation, and bounds
 
 ## References
 

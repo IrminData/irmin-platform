@@ -1404,6 +1404,7 @@ type WriteResult struct {
 	CommitID           *string `json:"commit_id,omitempty"`
 	PendingOperationID *string `json:"pending_operation_id,omitempty"`
 	RequiresApproval   bool    `json:"requires_approval"`
+	cleanup            func(context.Context) error
 }
 
 // validateWriteEnabled checks if write operations are enabled and configured.
@@ -1837,20 +1838,18 @@ func (e *AIAppToolExecutor) ExecutePendingOperation(
 	}
 
 	// Commit-only operations have no content mutation before the commit itself.
-	if pendingOperation.Operation != WriteOperationCommit {
-		if execErr := e.executePendingOperationOperation(ctx, pendingOperation); execErr != nil {
-			return nil, execErr
-		}
-	}
-
 	result := &WriteResult{
 		Path:             unifiedPath,
 		Operation:        pendingOperation.Operation,
 		Committed:        false,
 		RequiresApproval: false,
 	}
+	if pendingOperation.Operation != WriteOperationCommit {
+		return e.executePendingOperationAtomically(ctx, pendingOperation, result)
+	}
 
-	// Commit the changes (approval flow always commits)
+	// A commit-only approval intentionally commits already staged changes on
+	// the requested ref; content operations use an isolated branch below.
 	commit, commitErr := e.CommitStagedChanges(
 		ctx,
 		pendingOperation.Repository.Slug,
@@ -1869,6 +1868,97 @@ func (e *AIAppToolExecutor) ExecutePendingOperation(
 	_ = writeConfig // Used for potential future enhancements
 
 	return result, nil
+}
+
+func (e *AIAppToolExecutor) executePendingOperationAtomically(
+	ctx context.Context,
+	pendingOperation *db.AIApplicationPendingOperation,
+	result *WriteResult,
+) (*WriteResult, error) {
+	temporaryRef := fmt.Sprintf("irmin-pending-%d", pendingOperation.ID)
+	branch, err := e.apiServices.CreateRepositoryBranch(
+		ctx,
+		"en",
+		&e.aiApp.Owner,
+		&e.aiApp.Workspace,
+		&pendingOperation.Repository,
+		irmincore.CreateBranchRequest{Name: temporaryRef, From: pendingOperation.Ref},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("create isolated pending-operation branch: %w", err)
+	}
+	published := false
+	defer func() {
+		if !published {
+			if deleteErr := e.cleanupPendingOperationBranch(context.WithoutCancel(ctx), pendingOperation, branch); deleteErr != nil {
+				e.apiServices.Logger.WarnContext(ctx, "Failed to clean pending-operation branch", "error", deleteErr)
+			}
+		}
+	}()
+
+	isolated := *pendingOperation
+	isolated.Ref = temporaryRef
+	if execErr := e.executePendingOperationOperation(ctx, &isolated); execErr != nil {
+		return nil, execErr
+	}
+	if _, commitErr := e.CommitStagedChanges(
+		ctx,
+		pendingOperation.Repository.Slug,
+		temporaryRef,
+		pendingOperation.CommitMessage,
+	); commitErr != nil {
+		return nil, fmt.Errorf("commit isolated pending operation: %w", commitErr)
+	}
+
+	commit, mergeErr := e.apiServices.MergeRepositoryRefs(
+		ctx,
+		"en",
+		&e.aiApp.Owner,
+		&e.aiApp.Workspace,
+		&pendingOperation.Repository,
+		irmincore.MergeRefsRequest{
+			BaseRef:     pendingOperation.Ref,
+			CompareRef:  temporaryRef,
+			Description: pendingOperation.CommitMessage,
+			Strategy:    "default",
+		},
+	)
+	if mergeErr != nil {
+		return nil, fmt.Errorf("publish pending operation: %w", mergeErr)
+	}
+	result.Committed = true
+	if commit != nil {
+		result.CommitID = &commit.Hash
+	}
+	result.cleanup = func(cleanupContext context.Context) error {
+		return e.cleanupPendingOperationBranch(cleanupContext, pendingOperation, branch)
+	}
+	published = true
+	return result, nil
+}
+
+func (e *AIAppToolExecutor) cleanupPendingOperationBranch(
+	ctx context.Context,
+	pendingOperation *db.AIApplicationPendingOperation,
+	branch *irminmodels.Branch,
+) error {
+	return e.apiServices.DeleteRepositoryBranch(
+		ctx,
+		"en",
+		&e.aiApp.Owner,
+		&e.aiApp.Workspace,
+		&pendingOperation.Repository,
+		branch,
+	)
+}
+
+// CleanupWriteResult releases any isolated branch retained until durable
+// pending-operation completion has been recorded.
+func CleanupWriteResult(ctx context.Context, result *WriteResult) error {
+	if result == nil || result.cleanup == nil {
+		return nil
+	}
+	return result.cleanup(ctx)
 }
 
 // executePendingOperationOperation executes the write operation for a pending operation.

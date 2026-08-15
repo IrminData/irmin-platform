@@ -28,3 +28,16 @@
   lockfile and task runner; preserve independent lockfiles until then.
 - [x] Add deployment path filters after current provider integrations are
   inventoried.
+
+## AI runtime operations
+
+- [ ] Run the credentialed OpenRouter candidate matrix and attach the
+  prompt-free result artifact before promoting any model away from Claude
+  Sonnet 4.6.
+- [ ] Complete one internal release cycle at each 5%, 25%, and 100% promoted
+  profile stage with no elevated terminal, malformed-stream, or missing-usage
+  rate.
+- [ ] After one healthy release at 100% OpenRouter, remove the temporary direct
+  Anthropic adapter, credential, package, and rollback backend modes.
+- [x] Add generic pending-operation staging and authenticated one-time replay
+  for destructive tools on the user MCP endpoint and Agent chat.

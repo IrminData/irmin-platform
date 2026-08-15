@@ -20,7 +20,6 @@ interface ModelCapabilities {
 export interface ModelRoleProfile {
   primaryModel: string;
   fallbackModels: readonly string[];
-  directAnthropicModel: string;
   capabilities: ModelCapabilities;
   maxInputTokens: number;
   maxOutputTokens: number;
@@ -39,8 +38,8 @@ export interface ModelProfile {
 }
 
 export interface InferenceTelemetry {
-  /** Unique persisted row identifier for this individual model invocation. */
-  callId?: string;
+  modelCallId: string;
+  backend: 'openrouter' | 'anthropic';
   requestedModel: string;
   resolvedModel?: string;
   resolvedProvider?: string;
@@ -59,7 +58,6 @@ export interface InferenceRunContext {
   conversationId?: string;
   runId?: string;
   userId?: string;
-  /** Cancels this model call in addition to the configured role timeout. */
   signal?: AbortSignal;
   onTelemetry?: (telemetry: InferenceTelemetry) => void | Promise<void>;
 }

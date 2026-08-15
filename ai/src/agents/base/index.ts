@@ -49,7 +49,7 @@ export abstract class BaseAgent implements BaseAgentInterface {
    * Subclasses can override to add custom context (e.g., vector search)
    *
    * NOTE: Upfront vector search is DISABLED to reduce latency.
-   * The agent has access to irmin_documentation_hyde_search and irmin_documentation_retrieve tools
+   * The agent receives documentation tools selected by capability.
    * for on-demand documentation retrieval when needed.
    * This saves ~1.5s (embedding API call) on every request.
    *

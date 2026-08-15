@@ -34,20 +34,14 @@ function partsFromState(state: RunState): ServerStreamEvent[] {
       type: 'tool-input-available',
       toolCallId: tool.id,
       toolName: tool.name,
-      input:
-        typeof tool.input === 'object' && tool.input !== null
-          ? (tool.input as Record<string, unknown>)
-          : {},
+      input: {},
     });
     if (tool.status === 'completed') {
       parts.push({
         type: 'tool-output-available',
         toolCallId: tool.id,
         toolName: tool.name,
-        output:
-          typeof tool.output === 'string'
-            ? tool.output
-            : JSON.stringify(tool.output),
+        output: tool.summary ?? 'Tool execution completed.',
       });
     } else if (tool.status === 'failed') {
       parts.push({ type: 'stream-error', error: tool.error });

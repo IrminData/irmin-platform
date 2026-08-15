@@ -2,24 +2,24 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import { textSanitizer } from './sanitization';
+import { textNormalizer } from './normalization';
 
 describe('user input normalization', () => {
   it('preserves valid SQL, Go, base64, and role-like content', () => {
     const input = `<|system|>\nSELECT * FROM x WHERE value = 'a';\npackage main\nYWJjZGVmZ2hpamtsbW5vcA==`;
-    assert.equal(textSanitizer.sanitizeUserMessage(input).sanitized, input);
+    assert.equal(textNormalizer.normalizeUserMessage(input), input);
   });
 
   it('normalizes Unicode composition and line endings only', () => {
     assert.equal(
-      textSanitizer.sanitizeUserMessage('Cafe\u0301\r\nnext').sanitized,
+      textNormalizer.normalizeUserMessage('Cafe\u0301\r\nnext'),
       'Café\nnext'
     );
   });
 
   it('rejects oversized input instead of silently truncating it', () => {
     assert.throws(
-      () => textSanitizer.sanitizeUserMessage('1234', 3),
+      () => textNormalizer.normalizeUserMessage('1234', 3),
       /3 character limit/
     );
   });

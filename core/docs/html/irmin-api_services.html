@@ -147,6 +147,10 @@ func CalculateObjectTotalSize(database *db.Database, object *db.RepositoryObject
     and its children. Children are fetched from the database on-the-fly to
     support arbitrarily nested directories.
 
+func CleanupWriteResult(ctx context.Context, result *WriteResult) error
+    CleanupWriteResult releases any isolated branch retained until durable
+    pending-operation completion has been recorded.
+
 func CollectObjectFiles(
 	database *db.Database,
 	dataEngine *engine.Client,
@@ -1947,6 +1951,7 @@ type WriteResult struct {
 	CommitID           *string `json:"commit_id,omitempty"`
 	PendingOperationID *string `json:"pending_operation_id,omitempty"`
 	RequiresApproval   bool    `json:"requires_approval"`
+	// Has unexported fields.
 }
     WriteResult represents the result of a write operation.
 

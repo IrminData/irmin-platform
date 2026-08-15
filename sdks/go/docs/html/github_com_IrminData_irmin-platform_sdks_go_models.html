@@ -86,16 +86,17 @@ type AIApplicationPendingOperation struct {
     AIApplicationPendingOperation represents a tool operation awaiting approval.
 
 type AIApplicationPendingOperationActionResult struct {
-	ID        string                 `json:"id"                  validate:"required,validsqid=ai_application_pending_operations"`
+	ID        string                 `json:"id"                  validate:"required"`
 	Status    PendingOperationStatus `json:"status"              validate:"required"`
-	Message   string                 `json:"message"`
+	Message   string                 `json:"message"             validate:"required"`
 	Operation string                 `json:"operation,omitempty"`
 	Path      string                 `json:"path,omitempty"`
 	Committed bool                   `json:"committed,omitempty"`
 	CommitID  *string                `json:"commit_id,omitempty"`
 }
-    AIApplicationPendingOperationActionResult is returned after approving or
-    rejecting an operation.
+    AIApplicationPendingOperationActionResult is returned by approve and reject
+    commands. It intentionally differs from the complete pending-operation
+    resource returned by the read endpoints.
 
 type AIApplicationPendingOperationsResponse struct {
 	PendingOperations []AIApplicationPendingOperation `json:"pending_operations"`

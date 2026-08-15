@@ -37,9 +37,11 @@ ENV NODE_OPTIONS="--max-old-space-size=8192"
 
 # App files
 COPY --from=build /app/dist /app/dist
+COPY --from=build /app/scripts /app/scripts
+COPY --from=build /app/src/config /app/src/config
 COPY --from=build /app/src/database /app/src/database
 COPY --from=build /app/llm-docs /app/llm-docs
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json ./
 COPY --from=deps /app/node_modules /app/node_modules
 
 # Change ownership to non-root user

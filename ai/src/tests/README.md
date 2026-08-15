@@ -11,10 +11,8 @@ The `src/tests` directory contains executable TypeScript utilities that exercise
    TEST_WORKSPACE_SLUG=<workspace-slug>
    IRMIN_API_BASE_URL=http://localhost:3000
    DATABASE_URL=postgres://...
-   OPENAI_API_KEY=...
    OPENROUTER_API_KEY=...
    OPENAI_API_KEY=... # embeddings
-   ANTHROPIC_API_KEY=... # only while rollback traffic is non-zero
    QDRANT_URL=http://localhost:6333
 ```
 
@@ -45,7 +43,7 @@ npx tsx src/tests/retrieval.test.ts
 - Retrieves the assistant config (`GET /api/agents/assistant/config`)
 - Streams the assistant agent and records `RunEventV1` envelopes (`POST /api/agents/assistant/stream`)
 - Creates/updates/deletes conversations and verifies title generation
-- Exercises `GET /api/info/user`, `/api/info/workspace`, `/api/info/models`, `/api/info/tools`
+- Exercises `GET /api/info/user`, `/api/info/workspace`, `/api/info/model-profile`, `/api/info/tools`
 - Raw reasoning/provider payloads are never expected in client events
 
 ### `hypothetical-retrieval.test.ts`

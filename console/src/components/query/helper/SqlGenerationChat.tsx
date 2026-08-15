@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { TbSend, TbTrash } from 'react-icons/tb';
 
-import { getMessageContent } from '@/components/assistant/AgentChat/storedMessageHelpers';
 import { Response } from '@/components/ui/ai-elements/response';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -145,26 +144,25 @@ export function SqlGenerationChat({
           setConversationId(conversationIdHeader);
         }
 
-        // Query agent returns JSON with messages array
         const data: AIAgentExecuteResponse = await response.json();
-
-        // Extract the last AI message from the messages array
-        if (data.messages && data.messages.length > 0) {
-          const lastMessage = data.messages[data.messages.length - 1];
-          const content = getMessageContent(lastMessage);
-
-          if (content.trim()) {
-            const assistantMessage: ChatMessage = {
+        const result = data.specialistResult;
+        const content =
+          result?.kind === 'sql'
+            ? result.sql
+            : result?.kind === 'clarification'
+              ? result.message
+              : '';
+        if (!content.trim()) {
+          setError(dict.queryHelper.sqlGeneration.error);
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            {
               id: `assistant-${Date.now()}`,
               role: 'assistant',
-              content: content.trim(),
-            };
-            setMessages((prev) => [...prev, assistantMessage]);
-          } else {
-            setError(dict.queryHelper.sqlGeneration.error);
-          }
-        } else {
-          setError(dict.queryHelper.sqlGeneration.error);
+              content,
+            },
+          ]);
         }
       } catch (err) {
         const errorMessage =
