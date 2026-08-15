@@ -11,7 +11,7 @@ This repository contains the code for Irmin Console frontend, built using Next.j
 Ensure you have the following installed:
 
 - Node.js (24.x)
-- pnpm (10.24.0+). See [pnpm Installation Guide](https://pnpm.io/installation) for installation details.
+- pnpm (11.18.0+). See [pnpm Installation Guide](https://pnpm.io/installation) for installation details.
 
 ## Environment Configuration (.env)
 
@@ -37,7 +37,7 @@ Any variable prefixed with `NEXT_PUBLIC_` is exposed to the browser by Next.js a
 
 ### Accessing env vars in code
 
-Don't read `process.env.*` directly. All vars are Zod-validated at startup and exposed through two loaders in [`src/config/`](src/config):
+Don't read `process.env.*` directly. All vars are Zod-validated at startup and exposed through [`env.client.ts`](src/config/env.client.ts) and [`env.server.ts`](src/config/env.server.ts):
 
 - `clientEnv` from `env.client.ts` — `NEXT_PUBLIC_*` vars, importable anywhere.
 - `env` from `env.server.ts` — `clientEnv` plus server-only secrets; guarded by `server-only` so client imports fail the build.
@@ -138,12 +138,12 @@ When documenting code, use TypeDoc comments. TypeDoc comments should be placed a
 To generate the TypeDoc documentation, run:
 
 ```
-pnpm docs
+pnpm run docs
 ```
 
-Please make sure to document all functions and types you create, especially if they are exported. This will help other developers understand the codebase and use the functions you have created. Make sure that the `pnpm docs` command runs without errors or warnings before creating a pull request.
+Please make sure to document all functions and types you create, especially if they are exported. This will help other developers understand the codebase and use the functions you have created. Make sure that the `pnpm run docs` command runs without errors or warnings before creating a pull request.
 
-The documentation will be generated in the `public/frontend-docs` directory. The middleware is setup to serve the documentation at `/tsdocs` and to require dev password to access it, see [middleware.ts](src/middleware.ts) for more information.
+The documentation will be generated in the `public/frontend-docs` directory. The request proxy serves the documentation at `/tsdocs` and requires the development password; see [proxy.ts](src/proxy.ts) for more information.
 
 See [TypeDoc website](https://typedoc.org/) for more information on TypeDoc.
 

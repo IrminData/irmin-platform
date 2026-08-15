@@ -10,7 +10,6 @@ import {
   useState,
 } from 'react';
 
-import { IoInformationCircle } from 'react-icons/io5';
 import {
   TbArrowDown,
   TbArrowUp,
@@ -18,6 +17,7 @@ import {
   TbChevronRight,
   TbDatabaseExport,
   TbDatabaseImport,
+  TbInfoCircle,
   TbTrash,
 } from 'react-icons/tb';
 
@@ -390,9 +390,7 @@ function Stage({
   return (
     <div
       className={`
-        relative z-10 rounded-lg border border-foreground/20 bg-card shadow-xs
-        transition-shadow
-        hover:shadow-md
+        relative z-10 rounded-[2px] border border-foreground/20 bg-card
       `}
     >
       <div className='flex items-center justify-between gap-4 p-4'>
@@ -407,11 +405,16 @@ function Stage({
               onToggleCollapse?.(newCollapsed);
             }}
             className='size-8 shrink-0'
+            aria-label={
+              isCollapsed ? dict.common.showDetails : dict.common.hideDetails
+            }
+            aria-expanded={!isCollapsed}
+            aria-controls={!isCollapsed ? `pipeline-stage-${index}` : undefined}
           >
             {isCollapsed ? (
-              <TbChevronRight className='size-5' />
+              <TbChevronRight className='size-5' aria-hidden='true' />
             ) : (
-              <TbChevronDown className='size-5' />
+              <TbChevronDown className='size-5' aria-hidden='true' />
             )}
           </Button>
 
@@ -480,8 +483,9 @@ function Stage({
                 size='icon'
                 className='size-8'
                 title={dict.workflow.pipeline.moveUp}
+                aria-label={dict.workflow.pipeline.moveUp}
               >
-                <TbArrowUp className='size-4' />
+                <TbArrowUp className='size-4' aria-hidden='true' />
               </Button>
             )}
             {moveStageDown && (
@@ -492,8 +496,9 @@ function Stage({
                 size='icon'
                 className='size-8'
                 title={dict.workflow.pipeline.moveDown}
+                aria-label={dict.workflow.pipeline.moveDown}
               >
-                <TbArrowDown className='size-4' />
+                <TbArrowDown className='size-4' aria-hidden='true' />
               </Button>
             )}
             {removeStage && (
@@ -507,8 +512,9 @@ function Stage({
                   hover:text-destructive
                 `}
                 title={dict.common.remove}
+                aria-label={dict.common.remove}
               >
-                <TbTrash className='size-4' />
+                <TbTrash className='size-4' aria-hidden='true' />
               </Button>
             )}
           </div>
@@ -516,7 +522,10 @@ function Stage({
       </div>
 
       {!isCollapsed && (
-        <div className='space-y-4 border-t bg-background p-4'>
+        <div
+          id={`pipeline-stage-${index}`}
+          className='space-y-4 border-t border-border bg-background p-4'
+        >
           <div className='flex flex-col gap-2'>
             <Label htmlFor={`type-select-${index}`}>
               {dict.repository.objects.type}
@@ -750,12 +759,11 @@ function Stage({
             ] && (
               <div
                 className={`
-                  flex items-start gap-3 rounded-lg border border-accent/30
+                  flex items-start gap-3 rounded-[2px] border border-accent/30
                   bg-accent/10 p-3
-                  dark:border-accent-foreground dark:bg-accent/10
                 `}
               >
-                <IoInformationCircle
+                <TbInfoCircle
                   className={`mt-0.5 size-5 shrink-0 text-accent`}
                 />
                 <p className={`text-sm text-foreground`}>
@@ -797,7 +805,7 @@ function Stage({
                 sm:grid-cols-2
               `}
             >
-              <div className='flex items-center space-x-2 rounded-md border p-3'>
+              <div className='flex items-center space-x-2 rounded-[2px] border p-3'>
                 <Switch
                   id={`write-${index}`}
                   checked={stage.write}
@@ -833,7 +841,7 @@ function Stage({
                 </div>
               </div>
 
-              <div className='flex items-center space-x-2 rounded-md border p-3'>
+              <div className='flex items-center space-x-2 rounded-[2px] border p-3'>
                 <Switch
                   id={`read-${index}`}
                   checked={stage.read}
@@ -913,7 +921,7 @@ function Stage({
                 return (
                   <div
                     className='
-                      mt-2 rounded-md border border-dashed
+                      mt-2 rounded-[2px] border border-dashed
                       border-muted-foreground/30 p-3
                     '
                   >
@@ -1478,7 +1486,7 @@ function Stage({
 
                   <div
                     className={`
-                      flex items-center space-x-2 rounded-md border p-3
+                      flex items-center space-x-2 rounded-[2px] border p-3
                     `}
                   >
                     <Switch
@@ -1504,7 +1512,7 @@ function Stage({
 
                   <div
                     className={`
-                      flex items-center space-x-2 rounded-md border p-3
+                      flex items-center space-x-2 rounded-[2px] border p-3
                     `}
                   >
                     <Switch
@@ -1743,8 +1751,11 @@ function Stage({
                     }}
                     disabled={readOnly}
                     className={`
-                      w-full rounded-md border border-input bg-background px-3
-                      py-2 text-sm
+                      w-full rounded-[2px] border border-input bg-background
+                      px-3 py-2 text-base
+                      focus-visible:outline-2 focus-visible:outline-offset-2
+                      focus-visible:outline-accent
+                      md:text-sm
                     `}
                   />
                 </div>
@@ -1753,7 +1764,9 @@ function Stage({
               <div className='flex flex-col gap-2'>
                 <Label>{dict.workflow.pipeline.validationSchema}</Label>
                 <div
-                  className={`rounded-md border border-input bg-background p-3`}
+                  className={`
+                    rounded-[2px] border border-input bg-background p-3
+                  `}
                 >
                   <ObjectSchemaBuilder
                     value={stage.validation_schema}
@@ -1976,8 +1989,12 @@ function Stage({
                                   });
                                 }}
                                 className='size-8 shrink-0'
+                                aria-label={`${dict.common.remove}: ${dict.workflow.pipeline.transformFieldRename}`}
                               >
-                                <TbTrash className='size-4' />
+                                <TbTrash
+                                  className='size-4'
+                                  aria-hidden='true'
+                                />
                               </Button>
                             )}
                           </div>
@@ -2308,7 +2325,7 @@ function Stage({
                     {showAdvancedEmbeddings && (
                       <div
                         className={`
-                          grid gap-4 rounded-lg border bg-muted/30 p-4
+                          grid gap-4 rounded-[2px] border bg-muted/30 p-4
                         `}
                       >
                         {/* Dimensions */}
@@ -2563,16 +2580,10 @@ function Stage({
               {/* Patch Stage Explanation */}
               <div
                 className={`
-                  rounded-md border border-blue-200 bg-blue-50 p-4
-                  dark:border-blue-800 dark:bg-blue-950
+                  rounded-[2px] border border-chart-2/30 bg-chart-2/10 p-4
                 `}
               >
-                <p
-                  className={`
-                    text-sm text-blue-800
-                    dark:text-blue-200
-                  `}
-                >
+                <p className={`text-sm text-foreground`}>
                   {dict.workflow.pipeline.patchStageExplanation}
                 </p>
               </div>

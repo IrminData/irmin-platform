@@ -9,6 +9,7 @@ import { TbArrowLeft, TbPencil, TbTrash } from 'react-icons/tb';
 
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import { ContentWrapper } from '@/components/ui/ContentWrapper';
+import DisplayTitle from '@/components/ui/display-title';
 import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import { QueryError } from '@/components/ui/error/QueryError';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
@@ -65,7 +66,8 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
   const handleDeleteTag = useCallback(async () => {
     const confirmed = await irminConfirm(
       'warning',
-      dict.common.areYouSureYouWantToDelete
+      dict.common.areYouSureYouWantToDelete,
+      dict.workspace.deleteTag
     );
 
     if (confirmed && tag) {
@@ -79,6 +81,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
     irminConfirm,
     deleteWorkspaceTagMutation,
     dict.common.areYouSureYouWantToDelete,
+    dict.workspace.deleteTag,
     tag,
     router,
   ]);
@@ -157,10 +160,10 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
           </ButtonWithTooltip>
           <div className='flex items-center gap-2'>
             <div
-              className='size-8 rounded-full border border-gray-300'
+              className='size-8 rounded-full border border-border'
               style={{ backgroundColor: tag.color }}
             />
-            <h1 className='text-xl font-medium'>{tag.name}</h1>
+            <DisplayTitle>{tag.name}</DisplayTitle>
           </div>
         </div>
 
@@ -200,12 +203,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Queries */}
             {assets?.queries && assets.queries.length > 0 && (
               <div>
-                <h3
-                  className={`
-                    mb-3 pl-2 text-gray-700
-                    dark:text-gray-300
-                  `}
-                >
+                <h3 className={`mb-3 pl-2 text-foreground`}>
                   {dict.consoleNavigation.queries} ({assets.queries.length})
                 </h3>
                 <Table>
@@ -240,12 +238,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Scripts */}
             {assets?.scripts && assets.scripts.length > 0 && (
               <div>
-                <h3
-                  className={`
-                    mb-3 pl-2 text-gray-700
-                    dark:text-gray-300
-                  `}
-                >
+                <h3 className={`mb-3 pl-2 text-foreground`}>
                   {dict.consoleNavigation.scripts} ({assets.scripts.length})
                 </h3>
                 <Table>
@@ -280,12 +273,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Repositories */}
             {assets?.repositories && assets.repositories.length > 0 && (
               <div>
-                <h3
-                  className={`
-                    mb-3 pl-2 text-gray-700
-                    dark:text-gray-300
-                  `}
-                >
+                <h3 className={`mb-3 pl-2 text-foreground`}>
                   {dict.repository.repositories} ({assets.repositories.length})
                 </h3>
                 <Table>
@@ -320,12 +308,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Workflows */}
             {assets?.workflows && assets.workflows.length > 0 && (
               <div>
-                <h3
-                  className={`
-                    mb-3 pl-2 text-gray-700
-                    dark:text-gray-300
-                  `}
-                >
+                <h3 className={`mb-3 pl-2 text-foreground`}>
                   {dict.workflow.workflows} ({assets.workflows.length})
                 </h3>
                 <Table>
@@ -360,12 +343,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {/* Connections */}
             {assets?.connections && assets.connections.length > 0 && (
               <div>
-                <h3
-                  className={`
-                    mb-3 pl-2 text-gray-700
-                    dark:text-gray-300
-                  `}
-                >
+                <h3 className={`mb-3 pl-2 text-foreground`}>
                   {dict.connections.connections} ({assets.connections.length})
                 </h3>
                 <Table>
@@ -401,12 +379,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
             {assets?.repository_objects &&
               assets.repository_objects.length > 0 && (
                 <div>
-                  <h3
-                    className={`
-                      mb-3 pl-2 text-gray-700
-                      dark:text-gray-300
-                    `}
-                  >
+                  <h3 className={`mb-3 pl-2 text-foreground`}>
                     {dict.repository.objects.objects} (
                     {assets.repository_objects.length})
                   </h3>
@@ -440,12 +413,7 @@ const WorkspaceTagSection = ({ tagId }: { tagId: string }) => {
               )}
           </div>
         ) : (
-          <p
-            className={`
-              py-12 text-center text-2xl text-gray-600
-              dark:text-gray-400
-            `}
-          >
+          <p className={`py-12 text-center text-2xl text-muted-foreground`}>
             {dict.list.noItemsFound}
           </p>
         )}

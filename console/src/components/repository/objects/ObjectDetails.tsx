@@ -5,7 +5,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
-import { IoClose } from 'react-icons/io5';
 import {
   TbCheck,
   TbCheckbox,
@@ -20,6 +19,7 @@ import {
   TbTrash,
   TbUpload,
   TbVectorTriangle,
+  TbX,
 } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,8 @@ import {
   useWorkspaceTags,
 } from '@/hooks/api';
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
+
+import { formatTimestamp } from '@/utils/formatTimestamp';
 
 import type { ObjectSchema } from '@/types/core/ObjectSchema';
 import type { RepositoryObject } from '@/types/core/RepositoryObject';
@@ -133,7 +135,7 @@ export default function ObjectDetails({
     createSignedURLMutation,
   } = useRepositoryObject(repository.slug, currentRef, selectedObject?.path);
   const { irminModal, irminConfirm, irminAlert } = usePopup();
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
 
   const { downloadObjectAsZipMutation } = useRepositoryObjectContent(
     repository.slug,
@@ -264,7 +266,8 @@ export default function ObjectDetails({
     if (!selectedObject || immutable) return;
     const confirmed = await irminConfirm(
       'warning',
-      `${dict.fileNavigator.deleteConfirmation} object: ${selectedObject.path}?`
+      `${dict.fileNavigator.deleteConfirmation} object: ${selectedObject.path}?`,
+      dict.fileNavigator.deleteObject
     );
     if (!confirmed) return;
     await deleteObjectMutation.mutateAsync({
@@ -517,15 +520,14 @@ export default function ObjectDetails({
   return (
     <div
       className={`
-        mb-4 flex w-full min-w-0 flex-col overflow-hidden rounded-lg border
-        border-card bg-background text-xs
+        mb-4 flex w-full min-w-0 flex-col overflow-hidden rounded-[2px] border
+        border-border bg-background text-xs
         md:max-w-xs
       `}
     >
       <div
         className={`
-          flex items-center justify-between border-b border-gray-200 p-2 py-4
-          dark:border-gray-800
+          flex items-center justify-between border-b border-border p-2 py-4
         `}
       >
         <p className='text-sm'>{selectedObject.name}</p>
@@ -534,19 +536,15 @@ export default function ObjectDetails({
             variant='ghost'
             size='sm'
             onClick={closeDetails}
-            icon={<IoClose className='size-6' />}
+            aria-label={dict.common.close}
+            icon={<TbX className='size-6' />}
             className='h-5 p-0'
           />
         )}
       </div>
       <div className='flex flex-col gap-2 p-2'>
         {canViewTags && (
-          <div
-            className={`
-              border-b border-gray-200 pb-4
-              dark:border-gray-800
-            `}
-          >
+          <div className={`border-b border-border pb-4`}>
             <WorkspaceTagSelector
               selectedTags={selectedTags}
               onTagsChange={handleUpdateTags}
@@ -560,18 +558,15 @@ export default function ObjectDetails({
           selectedObjectSchema?.sql_selector) && (
           <div className='mt-2 flex w-full flex-col gap-2'>
             <div className='flex flex-col gap-1'>
-              <span className='text-[10px] text-muted-foreground'>
-                Placeholder (recommended):
+              <span className='text-[11px] text-muted-foreground'>
+                {dict.repository.objects.sqlPlaceholderRecommended}:
               </span>
               <div
-                className={`
-                  flex items-center gap-1 rounded-sm bg-gray-100 p-1
-                  dark:bg-gray-800
-                `}
+                className={`flex items-center gap-1 rounded-[2px] bg-muted p-1`}
               >
                 <code
                   className={`
-                    flex-1 overflow-x-auto px-1 font-mono text-[10px]
+                    flex-1 overflow-x-auto px-1 font-mono text-[11px]
                     whitespace-nowrap
                   `}
                 >
@@ -594,9 +589,12 @@ export default function ObjectDetails({
                     }, 2000);
                   }}
                   title={selectorCopied ? dict.common.copied : dict.common.copy}
+                  aria-label={
+                    selectorCopied ? dict.common.copied : dict.common.copy
+                  }
                   icon={
                     selectorCopied ? (
-                      <TbCheck size={12} className='text-green-500' />
+                      <TbCheck size={12} className='text-success' />
                     ) : (
                       <TbCopy size={12} />
                     )
@@ -608,18 +606,17 @@ export default function ObjectDetails({
               selectedObjectSchema?.s3_path_selector ||
               (workspaceSlug && selectedObject.repository_slug)) && (
               <div className='flex flex-col gap-1'>
-                <span className='text-[10px] text-muted-foreground'>
-                  Alternative S3 path:
+                <span className='text-[11px] text-muted-foreground'>
+                  {dict.repository.objects.alternativeS3Path}:
                 </span>
                 <div
                   className={`
-                    flex items-center gap-1 rounded-sm bg-gray-100 p-1
-                    dark:bg-gray-800
+                    flex items-center gap-1 rounded-[2px] bg-muted p-1
                   `}
                 >
                   <code
                     className={`
-                      flex-1 overflow-x-auto px-1 font-mono text-[10px]
+                      flex-1 overflow-x-auto px-1 font-mono text-[11px]
                       whitespace-nowrap
                     `}
                   >
@@ -643,6 +640,7 @@ export default function ObjectDetails({
                       await navigator.clipboard.writeText(s3Path);
                     }}
                     title={dict.common.copy}
+                    aria-label={dict.common.copy}
                     icon={<TbCopy size={12} />}
                   />
                 </div>
@@ -680,7 +678,7 @@ export default function ObjectDetails({
           <div className='flex w-full justify-between gap-1'>
             <span className='font-semibold'>{dict.common.lastModified}:</span>
             <span className='text-right'>
-              {new Date(selectedObject.last_modified).toLocaleString()}
+              {formatTimestamp(selectedObject.last_modified, locale)}
             </span>
           </div>
         )}
@@ -688,8 +686,8 @@ export default function ObjectDetails({
         {selectedObject.is_pointer && selectedObject.pointer_target && (
           <div
             className={`
-              mt-2 flex w-full flex-col gap-2 rounded-md border border-accent/30
-              bg-accent/5 p-2
+              mt-2 flex w-full flex-col gap-2 rounded-[2px] border
+              border-accent/30 bg-accent/5 p-2
             `}
           >
             <div className='flex items-center gap-1.5 text-accent'>
@@ -740,7 +738,7 @@ export default function ObjectDetails({
                 <Link
                   href={`${baseUrl.replace(repository.slug, selectedObject.pointer_target.target_repository)}/object?path=${encodeURIComponent(selectedObject.pointer_target.target_path)}&ref=${encodeURIComponent(selectedObject.pointer_target.target_ref)}`}
                   className={`
-                    mt-1 flex items-center justify-center gap-1 rounded-md
+                    mt-1 flex items-center justify-center gap-1 rounded-[2px]
                     bg-accent/10 px-2 py-1.5 text-center text-xs font-medium
                     text-accent transition-colors
                     hover:bg-accent/20
@@ -770,12 +768,7 @@ export default function ObjectDetails({
               </div>
             </>
           )}
-        <hr
-          className={`
-            border-gray-200
-            dark:border-gray-800
-          `}
-        />
+        <hr className={`border-border`} />
         <div className='flex w-full flex-col gap-1'>
           {/** Buttons for all possible actions for the object */}
           {selectedObject.type === 'group' && setCurrentPath ? (

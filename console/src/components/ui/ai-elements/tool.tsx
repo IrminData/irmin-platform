@@ -20,6 +20,8 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { cn } from '@/utils/tw';
 
 import { CodeBlock } from './code-block';
@@ -29,7 +31,7 @@ export type ToolProps = ComponentProps<typeof Collapsible>;
 export const Tool = ({ className, ...props }: ToolProps) => (
   <Collapsible
     className={cn(
-      'mb-4 w-full max-w-full overflow-hidden rounded-md border',
+      'mb-4 w-full max-w-full overflow-hidden rounded-[2px] border',
       className
     )}
     {...props}
@@ -42,25 +44,18 @@ export type ToolHeaderProps = {
   className?: string;
 };
 
-const getStatusBadge = (status: ToolUIPart['state']) => {
-  const labels = {
-    'input-streaming': 'Pending',
-    'input-available': 'Running',
-    'approval-requested': 'Approval Requested',
-    'approval-responded': 'Approval Responded',
-    'output-available': 'Completed',
-    'output-error': 'Error',
-    'output-denied': 'Denied',
-  } as const;
-
+const getStatusBadge = (
+  status: ToolUIPart['state'],
+  labels: Record<ToolUIPart['state'], string>
+) => {
   const icons = {
     'input-streaming': <TbCircle className='size-4' />,
     'input-available': <TbClock className='size-4 animate-pulse' />,
-    'approval-requested': <TbClock className='size-4 text-amber-600' />,
-    'approval-responded': <TbCheck className='size-4 text-blue-600' />,
-    'output-available': <TbCheck className='size-4 text-green-600' />,
-    'output-error': <TbX className='size-4 text-red-600' />,
-    'output-denied': <TbX className='size-4 text-orange-600' />,
+    'approval-requested': <TbClock className='size-4 text-warning' />,
+    'approval-responded': <TbCheck className='size-4 text-chart-2' />,
+    'output-available': <TbCheck className='size-4 text-success' />,
+    'output-error': <TbX className='size-4 text-destructive' />,
+    'output-denied': <TbX className='size-4 text-warning' />,
   } as const;
 
   return (
@@ -76,29 +71,42 @@ export const ToolHeader = ({
   type,
   state,
   ...props
-}: ToolHeaderProps) => (
-  <CollapsibleTrigger
-    className={cn(
-      'flex w-full items-center justify-between gap-4 p-3',
-      className
-    )}
-    {...props}
-  >
-    <div className='flex items-center gap-2'>
-      <TbTools className='size-4 text-muted-foreground' />
-      <span className='text-sm font-medium'>
-        {type.startsWith('tool-') ? type.slice(5) : type}
-      </span>
-      {getStatusBadge(state)}
-    </div>
-    <TbChevronDown
-      className={`
-        size-4 text-muted-foreground transition-transform
-        group-data-[state=open]:rotate-180
-      `}
-    />
-  </CollapsibleTrigger>
-);
+}: ToolHeaderProps) => {
+  const { dict } = useLocale();
+  const statusLabels: Record<ToolUIPart['state'], string> = {
+    'input-streaming': dict.assistant.toolStatus.pending,
+    'input-available': dict.assistant.toolStatus.running,
+    'approval-requested': dict.assistant.toolStatus.approvalRequested,
+    'approval-responded': dict.assistant.toolStatus.approvalResponded,
+    'output-available': dict.assistant.toolStatus.completed,
+    'output-error': dict.assistant.toolStatus.error,
+    'output-denied': dict.assistant.toolStatus.denied,
+  };
+
+  return (
+    <CollapsibleTrigger
+      className={cn(
+        'flex w-full items-center justify-between gap-4 p-3',
+        className
+      )}
+      {...props}
+    >
+      <div className='flex items-center gap-2'>
+        <TbTools className='size-4 text-muted-foreground' />
+        <span className='text-sm font-medium'>
+          {type.startsWith('tool-') ? type.slice(5) : type}
+        </span>
+        {getStatusBadge(state, statusLabels)}
+      </div>
+      <TbChevronDown
+        className={`
+          size-4 text-muted-foreground transition-transform
+          group-data-[state=open]:rotate-180
+        `}
+      />
+    </CollapsibleTrigger>
+  );
+};
 
 export type ToolContentProps = ComponentProps<typeof CollapsibleContent>;
 
@@ -121,20 +129,24 @@ export type ToolInputProps = Omit<ComponentProps<'div'>, 'children' | 'ref'> & {
   input: ToolUIPart['input'];
 };
 
-export const ToolInput = ({ className, input, ...props }: ToolInputProps) => (
-  <div className={cn('space-y-2 overflow-hidden p-4', className)} {...props}>
-    <h4
-      className={`
-        text-xs font-medium tracking-wide text-muted-foreground uppercase
-      `}
-    >
-      Parameters
-    </h4>
-    <div className='overflow-hidden rounded-md bg-muted/50'>
-      <CodeBlock code={JSON.stringify(input, null, 2)} language='json' />
+export const ToolInput = ({ className, input, ...props }: ToolInputProps) => {
+  const { dict } = useLocale();
+
+  return (
+    <div className={cn('space-y-2 overflow-hidden p-4', className)} {...props}>
+      <h4
+        className={`
+          text-xs font-medium tracking-wide text-muted-foreground uppercase
+        `}
+      >
+        {dict.assistant.toolParameters}
+      </h4>
+      <div className='overflow-hidden rounded-[2px] bg-muted/50'>
+        <CodeBlock code={JSON.stringify(input, null, 2)} language='json' />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export type ToolOutputProps = Omit<
   ComponentProps<'div'>,
@@ -150,6 +162,8 @@ export const ToolOutput = ({
   errorText,
   ...props
 }: ToolOutputProps) => {
+  const { dict } = useLocale();
+
   if (!(output || errorText)) {
     return null;
   }
@@ -161,12 +175,12 @@ export const ToolOutput = ({
           text-xs font-medium tracking-wide text-muted-foreground uppercase
         `}
       >
-        {errorText ? 'Error' : 'Result'}
+        {errorText ? dict.assistant.error : dict.assistant.toolResult}
       </h4>
       <div
         className={cn(
           `
-            max-w-full overflow-x-auto rounded-md text-xs
+            max-w-full overflow-x-auto rounded-[2px] text-xs
             [&_table]:w-full
           `,
           errorText

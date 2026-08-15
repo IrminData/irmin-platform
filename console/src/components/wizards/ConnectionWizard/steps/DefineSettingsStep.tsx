@@ -202,7 +202,6 @@ export default function DefineSettingsStep({
           autoComplete: 'off',
           autoCorrect: 'off',
           autoSave: 'off',
-          autoFocus: true,
         }}
       />
 

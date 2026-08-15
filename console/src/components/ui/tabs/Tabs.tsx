@@ -12,6 +12,8 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import type { TabDetails } from '@/types/internal/Tabs';
 
 /**
@@ -22,6 +24,7 @@ import type { TabDetails } from '@/types/internal/Tabs';
  * This component is used to display large tabs with content
  */
 export default function Tabs({ tabs }: { tabs: TabDetails[] }) {
+  const { dict } = useLocale();
   const router = useRouter();
   const pathname = usePathname();
   const [activeTab, setActiveTab] = useState(tabs[0].slug ?? '');
@@ -87,7 +90,7 @@ export default function Tabs({ tabs }: { tabs: TabDetails[] }) {
                 `}
                 size='sm'
                 variant={'outline'}
-                aria-label={`Switch to ${tab.name} tab`}
+                aria-label={dict.common.switchToTab.replace('{tab}', tab.name)}
                 onClick={() => {
                   startTransition(() => {
                     setActiveTab(tab.slug ?? tab.name);

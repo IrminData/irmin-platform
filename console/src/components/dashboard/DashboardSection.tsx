@@ -256,7 +256,7 @@ const DashboardSection = () => {
               lg:max-h-[550px] lg:flex-row
             `}
           >
-            <div className={`w-full overflow-hidden rounded-xl border`}>
+            <div className={`w-full overflow-hidden rounded-[2px] border`}>
               <AssistantSection
                 compact={true}
                 noBorder={true}
@@ -307,7 +307,7 @@ const DashboardSection = () => {
                 emptyStateAction={{
                   label: dict.repository.createNewRepository,
                   href: `${workspaceUrl}/repositories?create`,
-                  variant: 'gradient',
+                  variant: 'accent',
                 }}
                 hideCreateNewButton={!isResourceAllowed('repository', 'create')}
               />
@@ -328,7 +328,7 @@ const DashboardSection = () => {
                 emptyStateAction={{
                   label: dict.connections.create.createNewConnection,
                   href: `${workspaceUrl}/connections?create`,
-                  variant: 'gradient',
+                  variant: 'accent',
                 }}
                 hideCreateNewButton={!isResourceAllowed('connection', 'create')}
               />
@@ -349,7 +349,7 @@ const DashboardSection = () => {
                 emptyStateAction={{
                   label: dict.workflow.create.createNewWorkflow,
                   href: `${workspaceUrl}/workflows?create`,
-                  variant: 'gradient',
+                  variant: 'accent',
                 }}
                 hideCreateNewButton={!isResourceAllowed('workflow', 'create')}
               />
@@ -370,7 +370,7 @@ const DashboardSection = () => {
                 emptyStateAction={{
                   label: dict.aiApplication.createAIApplication,
                   href: `${workspaceUrl}/ai-applications?create`,
-                  variant: 'gradient',
+                  variant: 'accent',
                 }}
                 hideCreateNewButton={
                   !isResourceAllowed('ai_application', 'create')

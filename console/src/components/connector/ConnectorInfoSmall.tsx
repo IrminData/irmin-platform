@@ -93,7 +93,7 @@ const ConnectorInfoSmall = ({ connector }: { connector: Connector }) => {
             {dict.common.readMore}
           </Button>
         </div>
-        <p className='text-sm text-gray-500'>{connector.description}</p>
+        <p className='text-sm text-muted-foreground'>{connector.description}</p>
       </div>
       <ConnectorInfoModal
         connector={connector}

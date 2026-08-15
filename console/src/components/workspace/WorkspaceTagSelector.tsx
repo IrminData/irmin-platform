@@ -112,7 +112,7 @@ export function WorkspaceTagSelector({
       {/* Selected Tags Display */}
       <div
         className={`
-          flex w-full flex-wrap gap-2 rounded-lg border border-border
+          flex w-full flex-wrap gap-2 rounded-[2px] border border-border
           bg-background p-3
           ${loading || disabled ? 'opacity-60' : ''}
         `}
@@ -131,7 +131,8 @@ export function WorkspaceTagSelector({
               onClick={() => handleGoToTag(tag)}
               showDelete
               onDelete={() => handleRemoveTag(tag)}
-              className={loading || disabled ? 'cursor-not-allowed' : ''}
+              removeLabel={dict.common.remove}
+              disabled={loading || disabled}
             />
           ))
         )}
@@ -184,7 +185,7 @@ export function WorkspaceTagSelector({
                         disabled={loading || disabled}
                         onClick={() => handleSelectTag(tag)}
                         className={`
-                          flex w-full items-center gap-2 rounded-md p-2
+                          flex w-full items-center gap-2 rounded-[2px] p-2
                           text-left transition-colors
                           hover:bg-accent
                         `}
@@ -212,7 +213,7 @@ export function WorkspaceTagSelector({
                   disabled={loading || disabled}
                   onClick={() => setShowCreateTag(true)}
                   className={`
-                    flex w-full items-center gap-2 rounded-md p-2 text-left
+                    flex w-full items-center gap-2 rounded-[2px] p-2 text-left
                     text-sm transition-colors
                     hover:bg-accent
                   `}

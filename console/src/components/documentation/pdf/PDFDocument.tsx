@@ -2,6 +2,8 @@
 
 import { Document, Link, Page, Text, View } from '@react-pdf/renderer';
 
+import type { Dictionary } from '@/lib/dict';
+
 import type { AIApplication } from '@/types/core/AIApplication';
 import type { Connection } from '@/types/core/Connection';
 import type { Repository } from '@/types/core/Repository';
@@ -9,9 +11,14 @@ import type { StoredScript } from '@/types/core/Script';
 import type { StoredQuery } from '@/types/core/StoredQuery';
 import type { Workflow } from '@/types/core/Workflow';
 
-import { ownerText, tagsText } from './helpers';
+import {
+  formatPDFNumber,
+  ownerText,
+  tagsText,
+  workflowTypeText,
+} from './helpers';
 import { MarkdownContent } from './markdownToPdf';
-import { styles } from './styles';
+import { PDF_COLORS, styles } from './styles';
 
 interface WorkspaceStats {
   repositories: number;
@@ -36,6 +43,7 @@ export interface DocumentationPDFProps {
     company?: string;
   } | null;
   locale: string;
+  dict: Dictionary;
   stats: WorkspaceStats;
   repositories: Repository[];
   connections: Connection[];
@@ -55,6 +63,7 @@ export default function PDFDocument({
   workspace,
   profile,
   locale,
+  dict,
   stats,
   repositories,
   connections,
@@ -73,10 +82,10 @@ export default function PDFDocument({
       <Page size='A4' style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.logoText}>IRMIN</Text>
+          <Text style={styles.logoText}>Irmin</Text>
           {profile && (
             <Text style={styles.headerMeta}>
-              Created by: {ownerText(profile)}
+              {dict.catalog.createdBy}: {ownerText(profile)}
             </Text>
           )}
           <Text style={styles.headerMeta}>
@@ -85,58 +94,90 @@ export default function PDFDocument({
         </View>
 
         {/* Summary */}
-        <Text style={styles.sectionTitle}>Workspace summary</Text>
+        <Text style={styles.sectionTitle}>{dict.catalog.summaryTitle}</Text>
         <View style={styles.summaryCard}>
           <Text style={styles.summaryTitle}>
             {workspace.name}{' '}
             <Text style={styles.summarySlug}>({workspace.slug})</Text>
           </Text>
 
-          <Text style={[styles.groupTitle, { marginTop: 12 }]}>Resources</Text>
+          <Text style={[styles.groupTitle, { marginTop: 12 }]}>
+            {dict.common.resources}
+          </Text>
           <View style={styles.statsGrid}>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{stats.repositories}</Text>
-              <Text style={styles.statLabel}>Repositories</Text>
+              <Text style={styles.statNumber}>
+                {formatPDFNumber(stats.repositories, locale)}
+              </Text>
+              <Text style={styles.statLabel}>
+                {dict.repository.repositories}
+              </Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{stats.connections}</Text>
-              <Text style={styles.statLabel}>Connections</Text>
+              <Text style={styles.statNumber}>
+                {formatPDFNumber(stats.connections, locale)}
+              </Text>
+              <Text style={styles.statLabel}>
+                {dict.connections.connections}
+              </Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{stats.workflows}</Text>
-              <Text style={styles.statLabel}>Workflows</Text>
+              <Text style={styles.statNumber}>
+                {formatPDFNumber(stats.workflows, locale)}
+              </Text>
+              <Text style={styles.statLabel}>{dict.workflow.workflows}</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{stats.scripts}</Text>
-              <Text style={styles.statLabel}>Scripts</Text>
+              <Text style={styles.statNumber}>
+                {formatPDFNumber(stats.scripts, locale)}
+              </Text>
+              <Text style={styles.statLabel}>
+                {dict.consoleNavigation.scripts}
+              </Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{stats.queries}</Text>
-              <Text style={styles.statLabel}>Queries</Text>
+              <Text style={styles.statNumber}>
+                {formatPDFNumber(stats.queries, locale)}
+              </Text>
+              <Text style={styles.statLabel}>{dict.query.queries}</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{stats.aiApplications}</Text>
-              <Text style={styles.statLabel}>AI Applications</Text>
+              <Text style={styles.statNumber}>
+                {formatPDFNumber(stats.aiApplications, locale)}
+              </Text>
+              <Text style={styles.statLabel}>
+                {dict.consoleNavigation.aiApplications}
+              </Text>
             </View>
           </View>
 
-          <Text style={styles.groupTitle}>Workflows</Text>
+          <Text style={styles.groupTitle}>{dict.workflow.workflows}</Text>
           <View style={styles.statsGrid}>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{stats.importWorkflows}</Text>
-              <Text style={styles.statLabel}>Import</Text>
+              <Text style={styles.statNumber}>
+                {formatPDFNumber(stats.importWorkflows, locale)}
+              </Text>
+              <Text style={styles.statLabel}>{dict.workflow.import}</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{stats.exportWorkflows}</Text>
-              <Text style={styles.statLabel}>Export</Text>
+              <Text style={styles.statNumber}>
+                {formatPDFNumber(stats.exportWorkflows, locale)}
+              </Text>
+              <Text style={styles.statLabel}>{dict.workflow.export}</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{stats.actionWorkflows}</Text>
-              <Text style={styles.statLabel}>Action</Text>
+              <Text style={styles.statNumber}>
+                {formatPDFNumber(stats.actionWorkflows, locale)}
+              </Text>
+              <Text style={styles.statLabel}>{dict.workflow.action}</Text>
             </View>
             <View style={styles.statBox}>
-              <Text style={styles.statNumber}>{stats.pipelineWorkflows}</Text>
-              <Text style={styles.statLabel}>Pipeline</Text>
+              <Text style={styles.statNumber}>
+                {formatPDFNumber(stats.pipelineWorkflows, locale)}
+              </Text>
+              <Text style={styles.statLabel}>
+                {dict.workflow.pipeline.pipeline}
+              </Text>
             </View>
           </View>
         </View>
@@ -144,9 +185,11 @@ export default function PDFDocument({
         {/* Repositories */}
         {repositories.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>Repositories</Text>
+            <Text style={styles.sectionTitle}>
+              {dict.repository.repositories}
+            </Text>
             <Text style={styles.sectionDescription}>
-              Ownership details, tags, and repository documentation.
+              {dict.catalog.repositorySectionDescription}
             </Text>
             {repositories.map((repo) => {
               const relatedWfs = repositoryWorkflows.get(repo.slug) ?? [];
@@ -164,18 +207,20 @@ export default function PDFDocument({
                     </Text>
                   )}
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Owner</Text>
+                    <Text style={styles.fieldLabel}>{dict.common.owner}</Text>
                     <Text style={styles.fieldValue}>
                       {ownerText(repo.owner)}
                     </Text>
                   </View>
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Default branch</Text>
+                    <Text style={styles.fieldLabel}>
+                      {dict.catalog.defaultBranch}
+                    </Text>
                     <Text style={styles.fieldValue}>{repo.default_branch}</Text>
                   </View>
                   {tagsText(repo.tags) && (
                     <View style={styles.fieldRow}>
-                      <Text style={styles.fieldLabel}>Tags</Text>
+                      <Text style={styles.fieldLabel}>{dict.common.tags}</Text>
                       <Text style={styles.fieldValue}>
                         {tagsText(repo.tags)}
                       </Text>
@@ -183,7 +228,9 @@ export default function PDFDocument({
                   )}
                   {relatedWfs.length > 0 && (
                     <View style={styles.fieldRow}>
-                      <Text style={styles.fieldLabel}>Related workflows</Text>
+                      <Text style={styles.fieldLabel}>
+                        {dict.catalog.relatedWorkflows}
+                      </Text>
                       <Text style={styles.fieldValue}>
                         {relatedWfs.map((w) => w.name).join(', ')}
                       </Text>
@@ -191,7 +238,9 @@ export default function PDFDocument({
                   )}
                   {repo.documentation && repo.documentation.length > 0 && (
                     <View style={styles.notesSection}>
-                      <Text style={styles.notesHeading}>Notes</Text>
+                      <Text style={styles.notesHeading}>
+                        {dict.catalog.notesHeading}
+                      </Text>
                       <MarkdownContent content={repo.documentation} />
                     </View>
                   )}
@@ -204,9 +253,11 @@ export default function PDFDocument({
         {/* Connections */}
         {connections.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>Connections</Text>
+            <Text style={styles.sectionTitle}>
+              {dict.connections.connections}
+            </Text>
             <Text style={styles.sectionDescription}>
-              Connection ownership, connector types, tags, and documentation.
+              {dict.catalog.connectionSectionDescription}
             </Text>
             {connections.map((conn) => (
               <View key={conn.id} style={styles.card} wrap={false}>
@@ -220,24 +271,28 @@ export default function PDFDocument({
                   <Text style={styles.cardDescription}>{conn.description}</Text>
                 )}
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Connector</Text>
+                  <Text style={styles.fieldLabel}>
+                    {dict.connectors.connector}
+                  </Text>
                   <Text style={styles.fieldValue}>
                     {conn.connector?.name ?? ''}
                   </Text>
                 </View>
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Owner</Text>
+                  <Text style={styles.fieldLabel}>{dict.common.owner}</Text>
                   <Text style={styles.fieldValue}>{ownerText(conn.owner)}</Text>
                 </View>
                 {tagsText(conn.tags) && (
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Tags</Text>
+                    <Text style={styles.fieldLabel}>{dict.common.tags}</Text>
                     <Text style={styles.fieldValue}>{tagsText(conn.tags)}</Text>
                   </View>
                 )}
                 {conn.documentation && conn.documentation.length > 0 && (
                   <View style={styles.notesSection}>
-                    <Text style={styles.notesHeading}>Notes</Text>
+                    <Text style={styles.notesHeading}>
+                      {dict.catalog.notesHeading}
+                    </Text>
                     <MarkdownContent content={conn.documentation} />
                   </View>
                 )}
@@ -249,9 +304,9 @@ export default function PDFDocument({
         {/* Workflows */}
         {workflows.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>Workflows</Text>
+            <Text style={styles.sectionTitle}>{dict.workflow.workflows}</Text>
             <Text style={styles.sectionDescription}>
-              Workflow ownership, status, tags, and related resources.
+              {dict.catalog.workflowSectionDescription}
             </Text>
             {workflows.map((wf) => (
               <View key={wf.id} style={styles.card} wrap={false}>
@@ -265,38 +320,42 @@ export default function PDFDocument({
                   <Text style={styles.cardDescription}>{wf.description}</Text>
                 )}
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Type</Text>
+                  <Text style={styles.fieldLabel}>
+                    {dict.catalog.pdfTypeLabel}
+                  </Text>
                   <Text style={styles.fieldValue}>
-                    {wf.type
-                      ? wf.type.charAt(0).toUpperCase() + wf.type.slice(1)
-                      : ''}
+                    {workflowTypeText(wf.type, dict)}
                   </Text>
                 </View>
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Status</Text>
+                  <Text style={styles.fieldLabel}>{dict.list.status}</Text>
                   <Text style={styles.fieldValue}>{wf.status ?? ''}</Text>
                 </View>
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Owner</Text>
+                  <Text style={styles.fieldLabel}>{dict.common.owner}</Text>
                   <Text style={styles.fieldValue}>{ownerText(wf.owner)}</Text>
                 </View>
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Scheduled</Text>
+                  <Text style={styles.fieldLabel}>
+                    {dict.catalog.scheduleLabel}
+                  </Text>
                   <Text style={styles.fieldValue}>
                     {wf.schedule?.triggers && wf.schedule.triggers.length > 0
-                      ? 'Yes'
-                      : 'Not scheduled'}
+                      ? dict.workflow.scheduled
+                      : dict.workflow.notScheduled}
                   </Text>
                 </View>
                 {tagsText(wf.tags) && (
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Tags</Text>
+                    <Text style={styles.fieldLabel}>{dict.common.tags}</Text>
                     <Text style={styles.fieldValue}>{tagsText(wf.tags)}</Text>
                   </View>
                 )}
                 {wf.documentation && wf.documentation.length > 0 && (
                   <View style={styles.notesSection}>
-                    <Text style={styles.notesHeading}>Notes</Text>
+                    <Text style={styles.notesHeading}>
+                      {dict.catalog.notesHeading}
+                    </Text>
                     <MarkdownContent content={wf.documentation} />
                   </View>
                 )}
@@ -308,16 +367,18 @@ export default function PDFDocument({
         {/* Scripts */}
         {scripts.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>Scripts</Text>
+            <Text style={styles.sectionTitle}>
+              {dict.consoleNavigation.scripts}
+            </Text>
             <Text style={styles.sectionDescription}>
-              Executable scripts for data processing and automation.
+              {dict.catalog.scriptSectionDescription}
             </Text>
             {scripts.map((script) => (
               <View key={script.id} style={styles.card} wrap={false}>
                 <Text
                   style={[
                     styles.cardTitle,
-                    { textDecoration: 'none', color: '#111827' },
+                    { textDecoration: 'none', color: PDF_COLORS.ink },
                   ]}
                 >
                   {script.name}
@@ -328,20 +389,22 @@ export default function PDFDocument({
                   </Text>
                 )}
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Language</Text>
+                  <Text style={styles.fieldLabel}>
+                    {dict.catalog.pdfLanguageLabel}
+                  </Text>
                   <Text style={styles.fieldValue}>
                     {script.language ?? 'go'}
                   </Text>
                 </View>
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Owner</Text>
+                  <Text style={styles.fieldLabel}>{dict.common.owner}</Text>
                   <Text style={styles.fieldValue}>
                     {ownerText(script.owner)}
                   </Text>
                 </View>
                 {tagsText(script.tags) && (
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Tags</Text>
+                    <Text style={styles.fieldLabel}>{dict.common.tags}</Text>
                     <Text style={styles.fieldValue}>
                       {tagsText(script.tags)}
                     </Text>
@@ -355,10 +418,11 @@ export default function PDFDocument({
         {/* AI Applications */}
         {aiApplications.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>AI Applications</Text>
+            <Text style={styles.sectionTitle}>
+              {dict.consoleNavigation.aiApplications}
+            </Text>
             <Text style={styles.sectionDescription}>
-              AI Applications connected to this workspace, their data sources
-              and custom tools.
+              {dict.catalog.aiApplicationSectionDescription}
             </Text>
             {aiApplications.map((app) => {
               const dataSourceSlugs = Array.from(
@@ -389,16 +453,18 @@ export default function PDFDocument({
                     </Text>
                   )}
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Owner</Text>
+                    <Text style={styles.fieldLabel}>{dict.common.owner}</Text>
                     <Text style={styles.fieldValue}>
                       {ownerText(app.owner)}
                     </Text>
                   </View>
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Data sources</Text>
+                    <Text style={styles.fieldLabel}>
+                      {dict.catalog.aiApplicationDataSources}
+                    </Text>
                     <Text style={styles.fieldValue}>
                       {dataSourceSlugs.length === 0
-                        ? 'None'
+                        ? dict.catalog.aiApplicationNoDataSources
                         : dataSourceSlugs
                             .map(
                               (slug) => repositoryNameBySlug.get(slug) ?? slug
@@ -407,21 +473,38 @@ export default function PDFDocument({
                     </Text>
                   </View>
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Custom tools</Text>
+                    <Text style={styles.fieldLabel}>
+                      {dict.catalog.aiApplicationCustomTools}
+                    </Text>
                     <Text style={styles.fieldValue}>
-                      {storedQueryCount} stored queries, {workflowToolCount}{' '}
-                      workflows, {embeddingCount} embedding searches
+                      {dict.catalog.aiApplicationCustomToolsBreakdown
+                        .replace(
+                          '{storedQueries}',
+                          formatPDFNumber(storedQueryCount, locale)
+                        )
+                        .replace(
+                          '{workflows}',
+                          formatPDFNumber(workflowToolCount, locale)
+                        )
+                        .replace(
+                          '{embeddings}',
+                          formatPDFNumber(embeddingCount, locale)
+                        )}
                     </Text>
                   </View>
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Access</Text>
+                    <Text style={styles.fieldLabel}>
+                      {dict.catalog.pdfAccessLabel}
+                    </Text>
                     <Text style={styles.fieldValue}>
-                      {writeEnabled ? 'Read/Write' : 'Read only'}
+                      {writeEnabled
+                        ? dict.catalog.aiApplicationWriteEnabled
+                        : dict.catalog.aiApplicationReadOnly}
                     </Text>
                   </View>
                   {tagsText(app.tags) && (
                     <View style={styles.fieldRow}>
-                      <Text style={styles.fieldLabel}>Tags</Text>
+                      <Text style={styles.fieldLabel}>{dict.common.tags}</Text>
                       <Text style={styles.fieldValue}>
                         {tagsText(app.tags)}
                       </Text>
@@ -429,7 +512,9 @@ export default function PDFDocument({
                   )}
                   {app.documentation && app.documentation.length > 0 && (
                     <View style={styles.notesSection}>
-                      <Text style={styles.notesHeading}>Notes</Text>
+                      <Text style={styles.notesHeading}>
+                        {dict.catalog.notesHeading}
+                      </Text>
                       <MarkdownContent content={app.documentation} />
                     </View>
                   )}
@@ -442,16 +527,16 @@ export default function PDFDocument({
         {/* Queries */}
         {queries.length > 0 && (
           <View>
-            <Text style={styles.sectionTitle}>Queries</Text>
+            <Text style={styles.sectionTitle}>{dict.query.queries}</Text>
             <Text style={styles.sectionDescription}>
-              Saved SQL queries for data analysis and reporting.
+              {dict.catalog.querySectionDescription}
             </Text>
             {queries.map((query) => (
               <View key={query.id} style={styles.card} wrap={false}>
                 <Text
                   style={[
                     styles.cardTitle,
-                    { textDecoration: 'none', color: '#111827' },
+                    { textDecoration: 'none', color: PDF_COLORS.ink },
                   ]}
                 >
                   {query.name}
@@ -462,14 +547,14 @@ export default function PDFDocument({
                   </Text>
                 )}
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Owner</Text>
+                  <Text style={styles.fieldLabel}>{dict.common.owner}</Text>
                   <Text style={styles.fieldValue}>
                     {ownerText(query.owner)}
                   </Text>
                 </View>
                 {tagsText(query.tags) && (
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Tags</Text>
+                    <Text style={styles.fieldLabel}>{dict.common.tags}</Text>
                     <Text style={styles.fieldValue}>
                       {tagsText(query.tags)}
                     </Text>

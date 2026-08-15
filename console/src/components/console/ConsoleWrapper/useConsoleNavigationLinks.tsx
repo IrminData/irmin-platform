@@ -6,16 +6,16 @@ import { usePathname } from 'next/navigation';
 
 import { clientEnv } from '@/config/env.client';
 
-import { GoWorkflow } from 'react-icons/go';
-import { MdCode } from 'react-icons/md';
 import {
   TbBook,
   TbBrain,
   TbChevronLeft,
+  TbCode,
   TbDatabase,
   TbFile,
   TbHelp,
   TbLayoutDashboard,
+  TbPlugConnected,
   TbRun,
   TbSql,
 } from 'react-icons/tb';
@@ -35,7 +35,7 @@ const websiteURL = clientEnv.NEXT_PUBLIC_WEBSITE_URL;
  *
  * This hook is used to get the console navigation links.
  * The links are defined in the code and are used in the console navigation component.
- * Uses {@link useIAM} to interact with the user's identity and APIs.
+ * Uses `useResourceAllowed` to hide navigation the user cannot access.
  *
  * @returns Console navigation links sorted by sections
  */
@@ -85,7 +85,7 @@ const useConsoleNavigationLinks = (): {
         {
           title: dict.connections.connections,
           href: `${workspaceUrl}/connections`,
-          icon: <GoWorkflow />,
+          icon: <TbPlugConnected />,
           hide: !isResourceAllowed('connection', 'read'),
         },
         {
@@ -154,7 +154,7 @@ const useConsoleNavigationLinks = (): {
       {
         title: dict.consoleNavigation.developerDocs,
         href: `${websiteURL}/${locale}/docs`,
-        icon: <MdCode />,
+        icon: <TbCode />,
         props: {
           target: '_blank',
         },

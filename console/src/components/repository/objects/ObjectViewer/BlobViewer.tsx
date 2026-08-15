@@ -94,12 +94,7 @@ const BlobViewer = ({
     );
   } else {
     return (
-      <div
-        className={`
-          w-full pt-4 pb-12 text-center text-gray-600
-          dark:text-gray-400
-        `}
-      >
+      <div className={`w-full pt-4 pb-12 text-center text-muted-foreground`}>
         <p
           className={`
             text-sm

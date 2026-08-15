@@ -110,10 +110,11 @@ export default function ScriptHelper({
       </SheetTrigger>
       <SheetContent
         className={`
-          flex w-[400px] flex-col overflow-hidden
+          flex w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] flex-col
+          overflow-hidden
           focus:outline-none
           focus-visible:outline-none
-          sm:w-[540px]
+          sm:w-[540px] sm:max-w-[540px]
         `}
       >
         <SheetHeader>
@@ -176,7 +177,7 @@ export default function ScriptHelper({
             className='mt-4 flex-1 overflow-y-auto pb-12'
           >
             <section className='mb-4 px-2'>
-              <div className='rounded-md border bg-card p-2'>
+              <div className='rounded-[2px] border bg-card p-2'>
                 <div className='mb-2 flex items-center justify-between'>
                   <h3 className='text-sm font-semibold'>
                     {dict.scriptHelper.poweredBy}
@@ -186,8 +187,11 @@ export default function ScriptHelper({
                     target='_blank'
                     rel='noopener noreferrer'
                     className={`
-                      flex items-center gap-1 text-xs text-accent
-                      hover:underline
+                      flex items-center gap-1 text-xs text-foreground underline
+                      decoration-accent decoration-1 underline-offset-4
+                      transition-[text-decoration-thickness] duration-150
+                      ease-out
+                      hover:decoration-2
                     `}
                   >
                     {dict.scriptHelper.sdkDocs}
@@ -201,7 +205,7 @@ export default function ScriptHelper({
             </section>
 
             <section className='mb-4 px-2'>
-              <div className='rounded-md border bg-card p-2'>
+              <div className='rounded-[2px] border bg-card p-2'>
                 <h3 className='mb-2 text-sm font-semibold'>
                   {dict.scriptHelper.contractTitle}
                 </h3>
@@ -223,7 +227,7 @@ export default function ScriptHelper({
 
             <section className='mb-4 px-2'>
               <Collapsible defaultOpen>
-                <div className='rounded-md border bg-card'>
+                <div className='rounded-[2px] border bg-card'>
                   <CollapsibleTrigger asChild>
                     <Button
                       variant='ghost'
@@ -270,7 +274,7 @@ func main() {
 
             <section className='mb-4 px-2'>
               <Collapsible>
-                <div className='rounded-md border bg-card'>
+                <div className='rounded-[2px] border bg-card'>
                   <CollapsibleTrigger asChild>
                     <Button
                       variant='ghost'
@@ -316,7 +320,7 @@ for _, name := range inputs {
 
             <section className='mb-4 px-2'>
               <Collapsible>
-                <div className='rounded-md border bg-card'>
+                <div className='rounded-[2px] border bg-card'>
                   <CollapsibleTrigger asChild>
                     <Button
                       variant='ghost'
@@ -334,7 +338,7 @@ for _, name := range inputs {
                     </p>
                     <div
                       className={`
-                        rounded-md bg-muted p-2 font-mono text-xs break-all
+                        rounded-[2px] bg-muted p-2 font-mono text-xs break-all
                       `}
                     >
                       {`$["workspace;repository;object.json@ref"]`}
@@ -393,7 +397,7 @@ function ExampleItem({
   explanation?: string;
 }) {
   return (
-    <div className='rounded-md border bg-card'>
+    <div className='rounded-[2px] border bg-card'>
       <div
         className={`
           flex items-center justify-between border-b bg-muted/30 px-3 py-1.5

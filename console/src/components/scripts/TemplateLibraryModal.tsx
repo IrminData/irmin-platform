@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 import { TbChevronRight, TbInfoCircle, TbSearch } from 'react-icons/tb';
 
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -190,54 +189,61 @@ export function TemplateLibraryModal({
                   </div>
                 ) : (
                   filteredTemplates.map((template) => (
-                    <div
+                    <button
+                      type='button'
                       key={template.id}
+                      aria-pressed={selectedTemplate?.id === template.id}
+                      onClick={() => handleTemplateSelect(template)}
                       className={`
-                        cursor-pointer rounded-lg border bg-card p-4
+                        w-full cursor-pointer appearance-none rounded-[2px]
+                        border bg-card p-4 text-left
                         transition-[border-color,background-color]
                         hover:border-primary/50 hover:bg-accent/5
+                        focus-visible:outline-2 focus-visible:outline-offset-2
+                        focus-visible:outline-accent
                         ${
                           selectedTemplate?.id === template.id
                             ? `border-primary bg-accent/10`
                             : ''
                         }
                       `}
-                      onClick={() => handleTemplateSelect(template)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          handleTemplateSelect(template);
-                        }
-                      }}
-                      role='button'
-                      tabIndex={0}
                     >
-                      <div className='flex items-start justify-between'>
-                        <div>
-                          <h3 className='font-medium'>{template.title}</h3>
-                          <p
+                      <span className='flex items-start justify-between'>
+                        <span>
+                          <span className='block font-medium'>
+                            {template.title}
+                          </span>
+                          <span
                             className={`
-                              mt-1 line-clamp-2 text-sm text-muted-foreground
+                              mt-1 line-clamp-2 block text-sm
+                              text-muted-foreground
                             `}
                           >
                             {template.description}
-                          </p>
-                        </div>
-                        <TbChevronRight className='text-muted-foreground' />
-                      </div>
+                          </span>
+                        </span>
+                        <TbChevronRight
+                          aria-hidden='true'
+                          className='shrink-0 text-muted-foreground'
+                        />
+                      </span>
                       {template.tags.length > 0 && (
-                        <div className='mt-3 flex flex-wrap gap-2'>
+                        <span className='mt-3 flex flex-wrap gap-2'>
                           {template.tags.map((tag) => (
-                            <Badge
+                            <span
                               key={tag}
-                              variant='secondary'
-                              className='text-xs'
+                              className={`
+                                inline-flex rounded-[2px] border border-border
+                                bg-secondary px-1.5 py-0.5 text-xs font-medium
+                                text-secondary-foreground
+                              `}
                             >
                               {tag}
-                            </Badge>
+                            </span>
                           ))}
-                        </div>
+                        </span>
                       )}
-                    </div>
+                    </button>
                   ))
                 )}
               </div>
@@ -251,7 +257,7 @@ export function TemplateLibraryModal({
             {selectedTemplate ? (
               <div className='flex flex-1 flex-col overflow-hidden'>
                 <div className='flex-1 overflow-y-auto px-6 pb-6'>
-                  <div className='mb-4 rounded-lg border bg-card p-4'>
+                  <div className='mb-4 rounded-[2px] border bg-card p-4'>
                     <div className='flex items-center justify-between'>
                       <h3 className='font-medium'>{selectedTemplate.title}</h3>
                       <Button
@@ -343,8 +349,8 @@ export function TemplateLibraryModal({
                       </h4>
                       <pre
                         className={`
-                          max-h-96 overflow-auto rounded-lg border bg-muted p-4
-                          font-mono text-xs
+                          max-h-96 overflow-auto rounded-[2px] border bg-muted
+                          p-4 font-mono text-xs
                         `}
                       >
                         {filledContent}
@@ -354,7 +360,11 @@ export function TemplateLibraryModal({
                 </div>
 
                 <div className='flex gap-2 border-t p-6'>
-                  <Button className='flex-1' onClick={() => handleAction(true)}>
+                  <Button
+                    variant='accent'
+                    className='flex-1'
+                    onClick={() => handleAction(true)}
+                  >
                     {dict.common.templates.createNew}
                   </Button>
                   <Button

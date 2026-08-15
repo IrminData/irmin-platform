@@ -28,9 +28,9 @@ import type { PolicyAction, PolicyResource } from '@/types/core/Policy';
 
 import { POLICY_ACTIONS } from './constants';
 
-const RESOURCE_GROUPS: { label: string; resources: PolicyResource[] }[] = [
+const RESOURCE_GROUPS = [
   {
-    label: 'Repository',
+    labelKey: 'repository',
     resources: [
       'repository',
       'repository_branch',
@@ -39,18 +39,21 @@ const RESOURCE_GROUPS: { label: string; resources: PolicyResource[] }[] = [
       'repository_object',
     ],
   },
-  { label: 'Workflow', resources: ['workflow', 'workflow_run'] },
-  { label: 'Connection', resources: ['connection'] },
-  { label: 'Query', resources: ['query'] },
-  { label: 'Script', resources: ['script'] },
-  { label: 'AI Application', resources: ['ai_application'] },
-  { label: 'Workspace', resources: ['workspace', 'workspace_tag'] },
-  { label: 'User', resources: ['user', 'invite'] },
-  { label: 'Policy', resources: ['policy'] },
-  { label: 'Audit Log', resources: ['audit_log'] },
-  { label: 'Billing', resources: ['billing'] },
-  { label: 'Docs', resources: ['documentation'] },
-];
+  { labelKey: 'workflow', resources: ['workflow', 'workflow_run'] },
+  { labelKey: 'connection', resources: ['connection'] },
+  { labelKey: 'query', resources: ['query'] },
+  { labelKey: 'script', resources: ['script'] },
+  { labelKey: 'aiApplication', resources: ['ai_application'] },
+  { labelKey: 'workspace', resources: ['workspace', 'workspace_tag'] },
+  { labelKey: 'user', resources: ['user', 'invite'] },
+  { labelKey: 'policy', resources: ['policy'] },
+  { labelKey: 'auditLog', resources: ['audit_log'] },
+  { labelKey: 'billing', resources: ['billing'] },
+  { labelKey: 'docs', resources: ['documentation'] },
+] as const satisfies readonly {
+  labelKey: string;
+  resources: readonly PolicyResource[];
+}[];
 
 type AccessLevel = 'full' | 'partial' | 'none' | 'denied';
 
@@ -61,7 +64,7 @@ function getAccessLevel(
     action: PolicyAction;
     resource: PolicyResource;
   }[],
-  resources: PolicyResource[]
+  resources: readonly PolicyResource[]
 ): AccessLevel {
   const relevant = rolePolicies.filter((p) => resources.includes(p.resource));
 
@@ -96,19 +99,23 @@ function AccessCell({ level }: { level: AccessLevel }) {
 
   const config = {
     full: {
-      icon: <TbCheck className='size-4 text-green-500' />,
+      icon: <TbCheck aria-hidden='true' className='size-4 text-success' />,
       label: dict.policy.permissionOverview.fullAccess,
     },
     partial: {
-      icon: <div className='size-2 rounded-full bg-yellow-500' />,
+      icon: (
+        <div aria-hidden='true' className='size-2 rounded-full bg-warning' />
+      ),
       label: dict.policy.permissionOverview.partialAccess,
     },
     none: {
-      icon: <TbMinus className='size-4 text-muted-foreground' />,
+      icon: (
+        <TbMinus aria-hidden='true' className='size-4 text-muted-foreground' />
+      ),
       label: dict.policy.permissionOverview.noAccess,
     },
     denied: {
-      icon: <TbX className='size-4 text-destructive' />,
+      icon: <TbX aria-hidden='true' className='size-4 text-destructive' />,
       label: dict.policy.permissionOverview.denied,
     },
   };
@@ -117,8 +124,17 @@ function AccessCell({ level }: { level: AccessLevel }) {
 
   return (
     <Tooltip>
-      <TooltipTrigger asChild>
-        <div className='flex items-center justify-center'>{icon}</div>
+      <TooltipTrigger
+        type='button'
+        aria-label={label}
+        className={`
+          inline-flex size-6 cursor-help items-center justify-center
+          rounded-[2px]
+          focus-visible:outline-2 focus-visible:outline-offset-2
+          focus-visible:outline-accent
+        `}
+      >
+        {icon}
       </TooltipTrigger>
       <TooltipContent>{label}</TooltipContent>
     </Tooltip>
@@ -165,8 +181,12 @@ export default function RolePermissionOverview() {
                 {dict.policy.principalRole}
               </TableHead>
               {RESOURCE_GROUPS.map((group) => (
-                <TableHead key={group.label} className='text-center text-xs'>
-                  {group.label}
+                <TableHead key={group.labelKey} className='text-center text-xs'>
+                  {
+                    dict.policy.permissionOverview.resourceGroups[
+                      group.labelKey
+                    ]
+                  }
                 </TableHead>
               ))}
             </TableRow>
@@ -178,13 +198,13 @@ export default function RolePermissionOverview() {
                   {row.role.role}
                   {row.isOwner && (
                     <span className='ml-1 text-xs text-muted-foreground'>
-                      (owner)
+                      {dict.policy.permissionOverview.ownerSuffix}
                     </span>
                   )}
                 </TableCell>
                 {row.levels.map((level, idx) => (
                   <TableCell
-                    key={RESOURCE_GROUPS[idx].label}
+                    key={RESOURCE_GROUPS[idx].labelKey}
                     className='text-center'
                   >
                     <AccessCell level={level} />

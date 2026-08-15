@@ -81,7 +81,8 @@ const ConnectionOAuthCard = () => {
   const handleDisconnect = useCallback(async () => {
     const confirmed = await irminConfirm(
       'warning',
-      dict.connections.oauth.confirmDisconnect
+      dict.connections.oauth.confirmDisconnect,
+      dict.connections.oauth.disconnect
     );
     if (!confirmed) return;
     try {
@@ -112,7 +113,7 @@ const ConnectionOAuthCard = () => {
           {!isLoading &&
             (connected ? (
               needsRefresh ? (
-                <Badge variant='outline' className='border-amber-500/50'>
+                <Badge variant='outline' className='border-warning/50'>
                   {dict.connections.oauth.statusBadgeNeedsRefresh}
                 </Badge>
               ) : (
@@ -129,7 +130,7 @@ const ConnectionOAuthCard = () => {
       </CardHeader>
       <CardContent className='space-y-4'>
         {isLoading ? (
-          <div className='h-16 w-full animate-pulse rounded-sm bg-muted' />
+          <div className='h-16 w-full animate-pulse rounded-[2px] bg-muted' />
         ) : connected ? (
           <div className='space-y-3 text-sm'>
             <div className='flex flex-col gap-1'>
@@ -169,7 +170,7 @@ const ConnectionOAuthCard = () => {
                       <li
                         key={s}
                         className={`
-                          rounded-sm border bg-muted/40 px-2 py-0.5 font-mono
+                          rounded-[2px] border bg-muted/40 px-2 py-0.5 font-mono
                           text-xs
                         `}
                       >
@@ -183,8 +184,8 @@ const ConnectionOAuthCard = () => {
         ) : (
           <div
             className={`
-              flex items-start gap-2 rounded-sm border border-amber-500/40
-              bg-amber-500/10 p-3 text-sm
+              flex items-start gap-2 rounded-[2px] border border-warning/40
+              bg-warning/10 p-3 text-sm
             `}
           >
             <TbAlertCircle
@@ -207,7 +208,12 @@ const ConnectionOAuthCard = () => {
 
         {canUpdate && (
           <div className='flex flex-wrap gap-2'>
-            <Button size='sm' onClick={handleReconnect} disabled={reconnecting}>
+            <Button
+              size='sm'
+              variant='accent'
+              onClick={handleReconnect}
+              disabled={reconnecting}
+            >
               <TbRefresh aria-hidden='true' className='mr-1.5 size-4' />
               {connected
                 ? dict.connections.oauth.reconnect

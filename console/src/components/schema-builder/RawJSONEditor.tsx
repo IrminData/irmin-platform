@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -20,6 +20,8 @@ export default function RawJSONEditor({
   const { dict } = useLocale();
   const [jsonString, setJsonString] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const editorId = useId();
+  const errorId = `${editorId}-error`;
 
   // Sync jsonString when value prop changes from parent during render.
   // Only update if the content actually differs to avoid reformatting during user typing.
@@ -79,23 +81,30 @@ export default function RawJSONEditor({
 
   return (
     <div className='flex flex-col gap-2'>
+      <label className='sr-only' htmlFor={editorId}>
+        {dict.schemaBuilder.rawJson}
+      </label>
       <textarea
+        id={editorId}
         className={`
-          min-h-[400px] w-full rounded-md border border-input bg-background px-3
-          py-2 font-mono text-sm ring-offset-background
+          min-h-[400px] w-full rounded-[2px] border border-input bg-background
+          px-3 py-2 font-mono text-base ring-offset-background
           placeholder:text-muted-foreground
           focus-visible:ring-2 focus-visible:ring-ring
           focus-visible:ring-offset-2 focus-visible:outline-none
           disabled:cursor-not-allowed disabled:opacity-50
-          ${error ? 'border-red-500' : ''}
+          md:text-sm
+          ${error ? 'border-destructive' : ''}
         `}
         value={jsonString}
         onChange={(e) => handleChange(e.target.value)}
         disabled={disabled}
         spellCheck={false}
+        aria-invalid={Boolean(error)}
+        aria-describedby={error ? errorId : undefined}
       />
       {error && (
-        <p className='text-sm text-red-500'>
+        <p id={errorId} role='alert' className='text-sm text-destructive'>
           {dict.schemaBuilder.invalidJson}: {error}
         </p>
       )}

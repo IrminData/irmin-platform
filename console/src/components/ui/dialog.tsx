@@ -1,10 +1,12 @@
 'use client';
 
-import type * as React from 'react';
+import * as React from 'react';
 
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 
 import { TbX } from 'react-icons/tb';
+
+import { useLocale } from '@/context/LocaleContext';
 
 import { cn } from '@/utils/tw';
 
@@ -41,9 +43,11 @@ function DialogOverlay({
       data-slot='dialog-overlay'
       className={cn(
         `
-          fixed inset-0 z-50 bg-black/50
-          data-[state=closed]:animate-out data-[state=closed]:fade-out-0
-          data-[state=open]:animate-in data-[state=open]:fade-in-0
+          fixed inset-0 z-50 bg-overlay/50
+          data-[state=closed]:animate-out data-[state=closed]:duration-100
+          data-[state=closed]:ease-in data-[state=closed]:fade-out-0
+          data-[state=open]:animate-in data-[state=open]:duration-150
+          data-[state=open]:ease-out data-[state=open]:fade-in-0
         `,
         className
       )}
@@ -56,10 +60,17 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  closeLabel,
+  onOpenAutoFocus,
+  onCloseAutoFocus,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean;
+  closeLabel?: string;
 }) {
+  const { dict } = useLocale();
+  const returnFocusRef = React.useRef<HTMLElement | null>(null);
+
   return (
     <DialogPortal data-slot='dialog-portal'>
       <DialogOverlay />
@@ -68,16 +79,36 @@ function DialogContent({
         className={cn(
           `
             fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)]
-            translate-[-50%] gap-4 rounded-lg border bg-background p-6 shadow-lg
-            duration-200
-            data-[state=closed]:animate-out data-[state=closed]:fade-out-0
-            data-[state=closed]:zoom-out-95
-            data-[state=open]:animate-in data-[state=open]:fade-in-0
-            data-[state=open]:zoom-in-95
+            translate-[-50%] gap-4 rounded-[2px] border border-border
+            bg-background p-6
+            data-[state=closed]:animate-out data-[state=closed]:duration-100
+            data-[state=closed]:ease-in data-[state=closed]:fade-out-0
+            data-[state=open]:animate-in data-[state=open]:duration-150
+            data-[state=open]:ease-out data-[state=open]:fade-in-0
             sm:max-w-lg
           `,
           className
         )}
+        onOpenAutoFocus={(event) => {
+          const activeElement = document.activeElement;
+          returnFocusRef.current =
+            activeElement instanceof HTMLElement &&
+            activeElement !== document.body
+              ? activeElement
+              : null;
+          onOpenAutoFocus?.(event);
+        }}
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          if (event.defaultPrevented) return;
+
+          const returnTarget = returnFocusRef.current;
+          if (returnTarget?.isConnected) {
+            event.preventDefault();
+            returnTarget.focus({ preventScroll: true });
+          }
+          returnFocusRef.current = null;
+        }}
         {...props}
       >
         {children}
@@ -85,20 +116,18 @@ function DialogContent({
           <DialogPrimitive.Close
             data-slot='dialog-close'
             className={`
-              absolute top-4 right-4 rounded-xs opacity-70
-              ring-offset-background transition-opacity
+              absolute top-4 right-4 rounded-[2px] opacity-70 transition-opacity
+              duration-150 ease-out
               hover:opacity-100
-              focus:ring-2 focus:ring-ring focus:ring-offset-2
-              focus:outline-hidden
+              focus-visible:outline-2 focus-visible:outline-offset-2
+              focus-visible:outline-accent
               disabled:pointer-events-none
-              data-[state=open]:bg-accent
-              data-[state=open]:text-muted-foreground
               [&_svg]:pointer-events-none [&_svg]:shrink-0
               [&_svg:not([class*='size-'])]:size-4
             `}
           >
             <TbX />
-            <span className='sr-only'>Close</span>
+            <span className='sr-only'>{closeLabel ?? dict.common.close}</span>
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>

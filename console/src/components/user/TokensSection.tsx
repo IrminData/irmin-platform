@@ -4,8 +4,7 @@ import { useCallback } from 'react';
 
 import { clientEnv } from '@/config/env.client';
 
-import { IoInformationCircle } from 'react-icons/io5';
-import { TbTrash } from 'react-icons/tb';
+import { TbInfoCircle, TbTrash } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
@@ -71,12 +70,12 @@ export default function TokensSection() {
       {/* Explainer section */}
       <div
         className={`
-          mb-4 flex items-start gap-3 rounded-lg border border-accent/30
+          mb-4 flex items-start gap-3 rounded-[2px] border border-accent/30
           bg-accent/10 p-3
           dark:border-accent-foreground dark:bg-accent/10
         `}
       >
-        <IoInformationCircle className={`mt-0.5 size-5 shrink-0 text-accent`} />
+        <TbInfoCircle className={`mt-0.5 size-5 shrink-0 text-accent`} />
         <div className={`flex-1 text-sm text-foreground`}>
           <p>{dict.tokens.explainer}</p>
           <a
@@ -84,8 +83,10 @@ export default function TokensSection() {
             target='_blank'
             rel='noopener noreferrer'
             className={`
-              mt-1 inline-block text-accent underline
-              hover:no-underline
+              mt-1 inline-block text-foreground underline decoration-accent
+              decoration-1 underline-offset-4
+              transition-[text-decoration-thickness] duration-150 ease-out
+              hover:decoration-2
             `}
           >
             {dict.tokens.learnMoreApiDocs}
@@ -94,7 +95,7 @@ export default function TokensSection() {
       </div>
       {/* Row with the create token button */}
       <div className='mb-4 flex flex-row items-center justify-end px-2'>
-        <Button size='sm' variant='default' onClick={handleCreateToken}>
+        <Button size='sm' variant='accent' onClick={handleCreateToken}>
           {dict.tokens.createAPIToken}
         </Button>
       </div>
@@ -117,7 +118,7 @@ export default function TokensSection() {
           action={{
             label: dict.tokens.createAPIToken,
             onClick: handleCreateToken,
-            variant: 'gradient',
+            variant: 'accent',
           }}
           className='py-16'
         />
@@ -127,12 +128,7 @@ export default function TokensSection() {
       {credentialsQuery.data?.data?.length && !credentialsQuery.isLoading ? (
         <Table className='min-w-full'>
           <TableHeader>
-            <TableRow
-              className={`
-                border-b
-                dark:border-gray-800
-              `}
-            >
+            <TableRow className={`border-b border-border`}>
               <TableHead
                 className={`
                   px-4 py-2 text-left text-xs font-normal
@@ -163,24 +159,13 @@ export default function TokensSection() {
             {credentialsQuery.data?.data?.map((token) => (
               <TableRow
                 key={`user-api-token-${token.id}`}
-                className={`
-                  h-14 border-b
-                  dark:border-gray-800
-                `}
+                className={`h-14 border-b border-border`}
               >
-                <TableCell
-                  className={`
-                    px-4 py-2 text-sm text-gray-700
-                    dark:text-gray-400
-                  `}
-                >
+                <TableCell className={`px-4 py-2 text-sm text-foreground`}>
                   {token.name}
                 </TableCell>
                 <TableCell
-                  className={`
-                    px-4 py-2 text-sm text-gray-700
-                    dark:text-gray-400
-                  `}
+                  className={`px-4 py-2 text-sm text-muted-foreground`}
                 >
                   {formatTimestamp(token.expiry, locale)}
                 </TableCell>
@@ -193,7 +178,7 @@ export default function TokensSection() {
                     <ButtonWithTooltip
                       size='icon'
                       variant='secondary'
-                      aria-label='Revoke token'
+                      aria-label={dict.tokens.revokeToken}
                       icon={<TbTrash size={14} />}
                       tooltip={dict.tokens.revokeToken}
                       onClick={() =>

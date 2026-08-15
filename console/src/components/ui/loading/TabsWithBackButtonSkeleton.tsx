@@ -23,8 +23,8 @@ const TabsWithBackButtonSkeleton = ({
         px-4
       `}
     >
-      {/* Back button stub — matches ButtonWithTooltip size='lg' rounded-full */}
-      <LoadingSkeleton className='size-11 shrink-0 rounded-full' />
+      {/* Back button stub — matches ButtonWithTooltip size='lg'. */}
+      <LoadingSkeleton className='size-11 shrink-0' />
       <div
         className={`
           flex w-full flex-row gap-0 border-border
@@ -34,11 +34,11 @@ const TabsWithBackButtonSkeleton = ({
         {Array.from({ length: tabCount }).map((_, i) => (
           <LoadingSkeleton
             key={`tab-${i}`}
-            className='h-11 w-28 shrink-0 rounded-t-md'
+            className='h-11 w-28 shrink-0 rounded-t-[2px]'
           />
         ))}
         {showMore && (
-          <LoadingSkeleton className='ml-1 h-11 w-20 shrink-0 rounded-t-md' />
+          <LoadingSkeleton className='ml-1 h-11 w-20 shrink-0 rounded-t-[2px]' />
         )}
       </div>
     </div>

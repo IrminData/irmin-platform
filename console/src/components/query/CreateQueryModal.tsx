@@ -83,7 +83,7 @@ export default function CreateSavedQueryModal({
             <>
               <Input {...field} disabled={isSubmitting} />
               {errors.queryName && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.queryName.message}
                 </p>
               )}
@@ -108,7 +108,7 @@ export default function CreateSavedQueryModal({
                 disabled={isSubmitting}
               />
               {errors.queryDescription && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.queryDescription.message}
                 </p>
               )}
@@ -128,7 +128,7 @@ export default function CreateSavedQueryModal({
       </div>
 
       <Button
-        variant='default'
+        variant='accent'
         size='sm'
         className='w-full'
         type='submit'

@@ -7,8 +7,8 @@
  * Token conventions:
  *  - Semantic shadcn tokens (`--background`, `--foreground`, …) are the
  *    canonical source. Everything below derives from them.
- *  - Legacy `irmin-*` palette names are kept as aliases only so existing
- *    callers don't break. New code must use semantic tokens.
+ *  - Legacy `irmin-*` palette names remain as compatibility aliases only;
+ *    current Console call sites use semantic tokens.
  */
 
 /* Enable dark mode variant */
@@ -43,13 +43,16 @@
   --muted-foreground: 180 5% 38%;
 
   --accent: 72 80% 32%; /* lime — AA against cream */
-  --accent-foreground: 42 30% 95%;
+  /* Ink on lime is 4.9:1; cream on lime is only 3.2:1 at body sizes. */
+  --accent-foreground: 180 10% 10%;
 
-  --destructive: 0 70% 50%;
+  /* Tuned to keep both destructive text and filled controls above AA. */
+  --destructive: 0 70% 47%;
   --destructive-foreground: 42 30% 95%;
 
-  --success: 145 45% 40%;
-  --warning: 38 85% 50%;
+  --success: 145 45% 34%;
+  --warning: 38 85% 32%;
+  --overlay: 170 8% 4%; /* fixed near-black scrim */
 
   /*
    * Warmer, more present border so hairline rules and form underlines
@@ -94,11 +97,13 @@
   --accent: 72 88% 62%; /* brighter lime for dark */
   --accent-foreground: 170 8% 6%;
 
-  --destructive: 0 65% 55%;
-  --destructive-foreground: 42 28% 92%;
+  /* Bright red reads on ink; ink text reads on the same filled red. */
+  --destructive: 0 65% 58%;
+  --destructive-foreground: 170 8% 6%;
 
   --success: 145 40% 55%;
   --warning: 38 80% 60%;
+  --overlay: 170 8% 4%; /* fixed near-black scrim */
 
   --border: 170 6% 16%;
   --input: 170 6% 18%;
@@ -109,6 +114,21 @@
   --chart-3: 25 80% 62%;
   --chart-4: 280 45% 68%;
   --chart-5: 42 30% 62%;
+}
+
+/* Honor the user's request for stronger separation without changing layout. */
+@media (prefers-contrast: more) {
+  :root {
+    --muted-foreground: 180 8% 27%;
+    --border: 180 6% 55%;
+    --input: 180 6% 50%;
+  }
+
+  .dark {
+    --muted-foreground: 42 18% 78%;
+    --border: 42 10% 38%;
+    --input: 42 10% 44%;
+  }
 }
 
 /* Tailwind v4 Theme Configuration */
@@ -146,6 +166,7 @@
   --color-destructive-foreground: hsla(var(--destructive-foreground));
   --color-success: hsla(var(--success));
   --color-warning: hsla(var(--warning));
+  --color-overlay: hsla(var(--overlay));
   --color-border: hsla(var(--border));
   --color-input: hsla(var(--input));
   --color-ring: hsla(var(--ring));

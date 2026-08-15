@@ -58,8 +58,7 @@ export default function BranchSelector({
     >
       <span
         className={`
-          absolute -top-2 z-10 w-full pr-12 pl-2 text-xs text-gray-800
-          dark:text-gray-400
+          absolute -top-2 z-10 w-full pr-12 pl-2 text-xs text-foreground
         `}
       >
         {label ?? dict.repository.branches.branch}

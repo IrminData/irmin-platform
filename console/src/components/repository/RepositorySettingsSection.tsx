@@ -66,7 +66,8 @@ const RepositorySettingsSectionContent = () => {
         if (data.owner !== repository.owner.id) {
           const confirmed = await irminConfirm(
             'warning',
-            `${dict.common.areYouSureYouWantToTransferOwnership} (${repository.name})`
+            `${dict.common.areYouSureYouWantToTransferOwnership} (${repository.name})`,
+            dict.users.transferOwnership
           );
           if (confirmed) {
             await transferRepositoryMutation.mutateAsync(data.owner);
@@ -94,7 +95,8 @@ const RepositorySettingsSectionContent = () => {
   const handleDeleteRepository = useCallback(async () => {
     const confirmed = await irminConfirm(
       'warning',
-      `${dict.common.areYouSureYouWantToDelete} (${repository.name})`
+      `${dict.common.areYouSureYouWantToDelete} (${repository.name})`,
+      dict.repository.settings.deleteRepository
     );
     if (!confirmed) return;
     await deleteRepositoryMutation.mutateAsync(repository.slug);
@@ -268,7 +270,7 @@ const RepositorySettingsSectionContent = () => {
         fieldConfiguration={fieldConfiguration}
         deleteItem={handleDeleteRepository}
         deleteItemLoading={deleteRepositoryMutation.isPending}
-        itemName='Repository'
+        itemName={dict.repository.repository}
         submitButtonLabel={dict.common.save}
         deleteButtonLabel={dict.repository.settings.deleteRepository}
         dangerZoneMessage={dict.repository.settings.deletionNote}
@@ -279,12 +281,7 @@ const RepositorySettingsSectionContent = () => {
         additionalContentRight={
           <>
             {canViewTags && (
-              <div
-                className={`
-                  border-b border-gray-200 pb-4
-                  dark:border-gray-800
-                `}
-              >
+              <div className={`border-b border-border pb-4`}>
                 <WorkspaceTagSelector
                   selectedTags={selectedTags}
                   onTagsChange={handleUpdateTags}

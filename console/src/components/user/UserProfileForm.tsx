@@ -95,7 +95,7 @@ export default function UserProfileForm() {
           <Avatar className='size-24'>
             <AvatarImage
               src={previewUrl || profile?.profile_picture || undefined}
-              alt='Profile picture'
+              alt={dict.users.profilePicture}
             />
             <AvatarFallback>
               {profile?.first_name?.[0]}
@@ -122,7 +122,7 @@ export default function UserProfileForm() {
                 }
               }}
               className={`
-                file:mr-4 file:rounded-full file:border-0 file:bg-primary
+                file:mr-4 file:rounded-[2px] file:border-0 file:bg-primary
                 file:px-4 file:py-2 file:text-sm file:font-semibold
                 file:text-primary-foreground
                 hover:file:bg-primary/90
@@ -147,7 +147,7 @@ export default function UserProfileForm() {
                 className='w-full'
               />
               {errors.first_name && (
-                <p className='text-sm text-red-500'>
+                <p className='text-sm text-destructive'>
                   {errors.first_name.message}
                 </p>
               )}
@@ -164,7 +164,7 @@ export default function UserProfileForm() {
                 className='w-full'
               />
               {errors.last_name && (
-                <p className='text-sm text-red-500'>
+                <p className='text-sm text-destructive'>
                   {errors.last_name.message}
                 </p>
               )}
@@ -187,7 +187,7 @@ export default function UserProfileForm() {
               className='w-full'
             />
             {errors.email && (
-              <p className='text-sm text-red-500'>{errors.email.message}</p>
+              <p className='text-sm text-destructive'>{errors.email.message}</p>
             )}
           </div>
           <div className='flex flex-col gap-2'>
@@ -219,7 +219,7 @@ export default function UserProfileForm() {
             }
             className='w-full'
             size={'sm'}
-            variant={'default'}
+            variant='accent'
           >
             {dict.users.updateProfile}
           </Button>

@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from 'react';
 
-import { IoAdd } from 'react-icons/io5';
+import { TbPlus } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import { QueryError } from '@/components/ui/error/QueryError';
@@ -112,7 +112,8 @@ function RepositoryBranchesSectionContent() {
     async (branch: string) => {
       const confirmed = await irminConfirm(
         'warning',
-        dict.repository.branches.confirmDeleteBranch
+        dict.repository.branches.confirmDeleteBranch,
+        dict.repository.branches.deleteBranch
       );
       if (!confirmed) return;
       await deleteBranchMutation.mutateAsync(branch);
@@ -123,10 +124,7 @@ function RepositoryBranchesSectionContent() {
   if (!canViewBranches) {
     return (
       <div
-        className={`
-          w-full rounded-lg border border-gray-200 bg-card px-2 py-8
-          dark:border-gray-800
-        `}
+        className={`w-full rounded-[2px] border border-border bg-card px-2 py-8`}
       >
         <p
           className={`
@@ -168,9 +166,9 @@ function RepositoryBranchesSectionContent() {
       {canCreateBranch && (
         <div className='mb-4 flex flex-row items-center justify-end gap-4'>
           <Button
-            variant='default'
+            variant='accent'
             size='sm'
-            icon={<IoAdd size={18} />}
+            icon={<TbPlus size={18} />}
             onClick={() => {
               showCreateBranchModal();
             }}

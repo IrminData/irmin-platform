@@ -22,8 +22,8 @@ interface AIApplicationCardProps {
  *
  * Hover state echoes the WorkspaceCard pattern for consistency across the
  * console's primary tile surfaces: border transitions to a desaturated
- * Irmin Green, shadow lifts modestly (xs → sm), the brain icon gains full
- * opacity, and a small diagonal arrow slides in as an "open in app" affordance.
+ * Irmin Green and the brain icon gains full opacity, while a small diagonal
+ * arrow slides in as an "open in app" affordance.
  */
 export default function AIApplicationCard({
   aiApplication,
@@ -51,15 +51,16 @@ export default function AIApplicationCard({
     <Link
       href={`/${locale}/workspace/${workspaceSlug}/ai-applications/${aiApplication.id}`}
       className={`
-        group block h-full rounded-xl
-        focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none
+        group block h-full rounded-[2px]
+        focus-visible:outline-2 focus-visible:outline-offset-2
+        focus-visible:outline-accent
       `}
     >
       <Card
         className={`
-          relative flex h-full flex-col transition-[border-color,box-shadow]
-          duration-150 ease-in-out
-          hover:border-irmin-green-500/40 hover:shadow-sm
+          relative flex h-full flex-col transition-[border-color] duration-150
+          ease-in-out
+          hover:border-accent/40
         `}
       >
         <CardHeader className='pb-2'>

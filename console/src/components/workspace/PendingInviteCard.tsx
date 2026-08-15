@@ -8,6 +8,8 @@ import { useLocale } from '@/context/LocaleContext';
 
 import { useInvite } from '@/hooks/api';
 
+import { formatDate } from '@/utils/formatTimestamp';
+
 import type { Invite } from '@/types/core/Invite';
 
 /**
@@ -17,7 +19,7 @@ import type { Invite } from '@/types/core/Invite';
  * @param props.invite - The invite to display
  */
 const PendingInviteCard = ({ invite }: { invite: Invite }) => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const { acceptInviteMutation, declineInviteMutation } = useInvite(invite.id, {
     skipDeclineNavigation: true,
     skipQuery: true,
@@ -27,12 +29,12 @@ const PendingInviteCard = ({ invite }: { invite: Invite }) => {
     `${invite.invited_by.first_name} ${invite.invited_by.last_name}`.trim() ||
     invite.invited_by.email;
 
-  const expiresDate = new Date(invite.expires_at).toLocaleDateString();
+  const expiresDate = formatDate(invite.expires_at, locale);
 
   return (
     <div
       className={`
-        flex items-center justify-between gap-4 rounded-lg border
+        flex items-center justify-between gap-4 rounded-[2px] border
         border-primary/20 bg-primary/5 p-4
       `}
     >
@@ -61,6 +63,7 @@ const PendingInviteCard = ({ invite }: { invite: Invite }) => {
             : dict.invite.decline}
         </Button>
         <Button
+          variant='accent'
           size='sm'
           onClick={() => acceptInviteMutation.mutate(invite.id)}
           disabled={

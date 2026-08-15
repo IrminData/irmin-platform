@@ -1,18 +1,25 @@
 'use client';
 
-import { IoClose } from 'react-icons/io5';
 import {
   TbDownload,
   TbEdit,
   TbMail,
   TbUpload,
   TbWebhook,
+  TbX,
 } from 'react-icons/tb';
 
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Separator } from '@/components/ui/separator';
 import {
   Tooltip,
@@ -41,53 +48,52 @@ function ConnectorInfoModal({
 }: ConnectorInfoModalProps) {
   const { dict } = useLocale();
 
-  if (!isOpen) return null;
-
   return (
-    <div
-      className={`
-        fixed inset-0 z-50 flex items-center justify-center backdrop-blur-xs
-      `}
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
     >
-      <div
-        className='absolute inset-0 bg-black/20'
-        onClick={onClose}
-        onKeyDown={(e) => {
-          if (e.key === 'Escape') {
-            onClose();
-          }
-        }}
-        role='button'
-        tabIndex={0}
-        aria-label='Close modal'
-      />
-      <div
+      <DialogContent
+        showCloseButton={false}
         className={`
-          relative mx-4 max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg
-          border bg-background shadow-lg
+          flex max-h-[calc(100dvh-2rem)] flex-col gap-0 overflow-hidden p-0
+          sm:max-w-2xl
         `}
       >
         {/* Header */}
-        <div
+        <DialogHeader
           className={`
-            sticky top-0 z-10 flex items-center justify-between border-b
-            bg-background p-6
+            flex-row items-center justify-between border-b border-border px-6
+            py-4 text-left
           `}
         >
-          <h2 className='text-xl font-semibold'>{dict.connectors.connector}</h2>
-          <ButtonWithTooltip
-            size='icon'
-            variant='ghost'
-            className='rounded-full'
-            onClick={onClose}
-            aria-label='Close modal'
-            tooltip='Close modal'
-            icon={<IoClose size={20} />}
-          />
-        </div>
+          <div className='min-w-0'>
+            <DialogTitle>{dict.connectors.connector}</DialogTitle>
+            <DialogDescription className='mt-1 truncate'>
+              {connector.name}
+            </DialogDescription>
+          </div>
+          <DialogClose asChild>
+            <Button
+              type='button'
+              size='icon'
+              variant='ghost'
+              className={`
+                shrink-0
+                focus-visible:outline-2 focus-visible:outline-offset-2
+                focus-visible:outline-accent
+              `}
+              aria-label={dict.common.close}
+              title={dict.common.close}
+              icon={<TbX aria-hidden='true' className='size-5' />}
+            />
+          </DialogClose>
+        </DialogHeader>
 
         {/* Content */}
-        <div className='flex flex-col space-y-4 p-6'>
+        <div className='flex flex-col gap-4 overflow-y-auto p-6'>
           {/* Connector Header */}
           <div className='mb-4 flex items-center space-x-4'>
             <Avatar className='size-16'>
@@ -105,7 +111,9 @@ function ConnectorInfoModal({
               >
                 {connector.name}
               </h3>
-              <p className='text-sm text-gray-500'>{connector.description}</p>
+              <p className='text-sm text-muted-foreground'>
+                {connector.description}
+              </p>
             </div>
           </div>
 
@@ -133,7 +141,7 @@ function ConnectorInfoModal({
                     hover:underline
                   `}
                 >
-                  <TbMail className='mr-1 size-4' />
+                  <TbMail aria-hidden='true' className='mr-1 size-4 shrink-0' />
                   {connector.author_email}
                 </a>
               </div>
@@ -173,27 +181,36 @@ function ConnectorInfoModal({
                 let icon = null;
                 switch (capability) {
                   case 'pull':
-                    icon = <TbDownload className='mr-1' />;
+                    icon = <TbDownload aria-hidden='true' className='mr-1' />;
                     break;
                   case 'push':
-                    icon = <TbUpload className='mr-1' />;
+                    icon = <TbUpload aria-hidden='true' className='mr-1' />;
                     break;
                   case 'apply_patch':
-                    icon = <TbEdit className='mr-1' />;
+                    icon = <TbEdit aria-hidden='true' className='mr-1' />;
                     break;
                   case 'patch_event':
-                    icon = <TbWebhook className='mr-1' />;
+                    icon = <TbWebhook aria-hidden='true' className='mr-1' />;
                     break;
                 }
 
                 return (
                   <TooltipProvider key={capability}>
                     <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Badge variant='secondary'>
-                          {icon}
-                          {capability}
-                        </Badge>
+                      <TooltipTrigger
+                        type='button'
+                        className={`
+                          inline-flex items-center rounded-[2px] border
+                          border-border bg-secondary px-1.5 py-0.5 text-[11px]
+                          font-medium tracking-[0.02em]
+                          text-secondary-foreground transition-colors
+                          duration-150
+                          focus-visible:outline-2 focus-visible:outline-offset-2
+                          focus-visible:outline-accent
+                        `}
+                      >
+                        {icon}
+                        {capability}
                       </TooltipTrigger>
                       <TooltipContent>
                         <p>
@@ -238,8 +255,8 @@ function ConnectorInfoModal({
             </div>
           )}
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 

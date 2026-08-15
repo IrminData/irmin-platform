@@ -4,8 +4,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import { notFound } from 'next/navigation';
 
-import { AiOutlinePlayCircle } from 'react-icons/ai';
-import { TbBookmark, TbChevronUp } from 'react-icons/tb';
+import { TbBookmark, TbChevronUp, TbPlayerPlay } from 'react-icons/tb';
 
 import { ContentTooLargeError } from '@/lib/core/errors';
 
@@ -172,16 +171,13 @@ export default function RepositoryObjectSection({
         {canQuery && (
           <div
             className={`
-              w-full max-w-full overflow-hidden rounded-md border
-              border-gray-100 bg-background
-              dark:border-gray-800
+              w-full max-w-full overflow-hidden rounded-[2px] border
+              border-border bg-background
             `}
           >
             <div
               className={`
-                flex w-full flex-row items-center justify-between bg-gray-100
-                pl-4
-                dark:bg-gray-800
+                flex w-full flex-row items-center justify-between bg-muted pl-4
               `}
             >
               <div
@@ -212,7 +208,7 @@ export default function RepositoryObjectSection({
                   variant='accent'
                   className='float-end m-1 shadow-none'
                   size='sm'
-                  icon={<AiOutlinePlayCircle />}
+                  icon={<TbPlayerPlay />}
                   loading={queryLoading}
                   onClick={runCurrentQuery}
                 >
@@ -248,7 +244,9 @@ export default function RepositoryObjectSection({
               <div className='flex-1'>
                 {repositoryObjectContentQuery.isLoading ? (
                   <div
-                    className={`rounded-lg border border-card bg-background p-8`}
+                    className={`
+                      rounded-[2px] border border-border bg-background p-8
+                    `}
                   >
                     <LoadingSkeleton className='h-96 w-full' />
                   </div>
@@ -261,7 +259,9 @@ export default function RepositoryObjectSection({
                   // the server's tier-based download path (which
                   // doesn't have the inline-preview cap).
                   <div
-                    className={`rounded-lg border border-card bg-background p-8`}
+                    className={`
+                      rounded-[2px] border border-border bg-background p-8
+                    `}
                   >
                     <DataSizeWarning
                       dataSize={repositoryObjectContentQuery.error.sizeBytes}
@@ -285,17 +285,19 @@ export default function RepositoryObjectSection({
                   </div>
                 ) : repositoryObjectContentQuery.error ? (
                   <div
-                    className={`rounded-lg border border-card bg-background p-8`}
+                    className={`
+                      rounded-[2px] border border-border bg-background p-8
+                    `}
                   >
                     <QueryError
                       error={repositoryObjectContentQuery.error}
                       onRetry={() => repositoryObjectContentQuery.refetch()}
-                      title='Error loading object content'
+                      title={dict.repository.objects.objectContentErrorTitle}
                       size='sm'
                     />
                   </div>
                 ) : (
-                  <div className='rounded-lg border border-card bg-background'>
+                  <div className='rounded-[2px] border border-border bg-background'>
                     {selectedObject && (
                       <ObjectViewer
                         object={selectedObject}

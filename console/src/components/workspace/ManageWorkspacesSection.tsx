@@ -4,7 +4,7 @@ import { useMemo, useState } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 
-import { IoAdd } from 'react-icons/io5';
+import { TbPlus } from 'react-icons/tb';
 
 import { inviteInboxQueryKey } from '@/lib/queryKeys';
 
@@ -93,8 +93,8 @@ const ManageWorkspacesSection = () => {
     return (
       <SafeComponent
         level='section'
-        title='Workspace Error'
-        description='Failed to load workspace management'
+        titleKey='workspaceManagementTitle'
+        descriptionKey='workspaceManagementDescription'
       >
         <div className='h-full'>
           <div className='relative container mx-auto max-w-3xl px-4 py-28'>
@@ -113,8 +113,8 @@ const ManageWorkspacesSection = () => {
   return (
     <SafeComponent
       level='section'
-      title='Workspace Management'
-      description='Failed to load workspace management interface'
+      titleKey='workspaceManagementTitle'
+      descriptionKey='workspaceManagementDescription'
     >
       <div className='h-full'>
         <div className='relative container mx-auto max-w-4xl px-4 py-16'>
@@ -160,7 +160,7 @@ const ManageWorkspacesSection = () => {
               </p>
             </div>
             <Button
-              variant='gradient'
+              variant='accent'
               size='sm'
               onClick={() => setIsCreateModalOpen(true)}
               className='
@@ -168,7 +168,7 @@ const ManageWorkspacesSection = () => {
                 sm:self-end
               '
             >
-              <IoAdd className='size-4' aria-hidden='true' />
+              <TbPlus className='size-4' aria-hidden='true' />
               {dict.workspaceSwitcher.createNewWorkspace}
             </Button>
           </div>
@@ -181,7 +181,7 @@ const ManageWorkspacesSection = () => {
               ))}
             </div>
           ) : workspaceList.length === 0 ? (
-            <div className='rounded-xl bg-card py-8'>
+            <div className='rounded-[2px] bg-card py-8'>
               <EmptyState
                 title={dict.workspaceSwitcher.createFirstWorkspace}
                 description={

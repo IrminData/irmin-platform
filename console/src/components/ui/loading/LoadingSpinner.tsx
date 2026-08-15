@@ -1,17 +1,21 @@
-import React from 'react';
-
 /**
- * Loading spinner component
+ * Loading spinner with a localized accessible status label.
  */
-const LoadingSpinner = () => {
+const LoadingSpinner = ({ label }: { label: string }) => {
   return (
-    <div className='flex h-full max-h-screen items-center justify-center py-16'>
+    <div
+      role='status'
+      aria-busy='true'
+      aria-live='polite'
+      className='flex h-full max-h-screen items-center justify-center py-16'
+    >
       <div
+        aria-hidden='true'
         className={`
-          size-16 animate-spin rounded-full border-4 border-t-4 border-accent/20
-          border-t-irmin-green-500
+          size-8 animate-spin rounded-full border-2 border-muted border-t-accent
         `}
       />
+      <span className='sr-only'>{label}</span>
     </div>
   );
 };

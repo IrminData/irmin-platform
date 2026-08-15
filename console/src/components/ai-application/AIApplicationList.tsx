@@ -5,6 +5,8 @@ import { TbBrain } from 'react-icons/tb';
 import { EmptyState } from '@/components/ui/EmptyState';
 import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import type { AIApplication } from '@/types/core/AIApplication';
 
 import AIApplicationCard from './AIApplicationCard';
@@ -15,7 +17,7 @@ interface AIApplicationListProps {
   emptyStateAction?: {
     label: string;
     onClick: () => void;
-    variant?: 'default' | 'gradient';
+    variant?: 'accent' | 'default';
   };
   hideActionButton?: boolean;
 }
@@ -29,6 +31,8 @@ export default function AIApplicationList({
   emptyStateAction,
   hideActionButton = false,
 }: AIApplicationListProps) {
+  const { dict } = useLocale();
+
   if (loading) {
     return (
       <div
@@ -49,8 +53,8 @@ export default function AIApplicationList({
     return (
       <EmptyState
         icon={<TbBrain size={48} />}
-        title='No AI Applications'
-        description='Create your first AI Application to enable LLM agents to access your workspace data through MCP and REST APIs.'
+        title={dict.list.emptyState.aiApplications.title}
+        description={dict.list.emptyState.aiApplications.description}
         action={emptyStateAction}
         hideActionButton={hideActionButton}
       />

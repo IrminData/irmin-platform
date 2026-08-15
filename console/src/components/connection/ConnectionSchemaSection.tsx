@@ -45,7 +45,7 @@ const ConnectionSchemaSection = ({
     );
   }
   return (
-    <div className='min-h-96 w-full overflow-y-scroll rounded-sm bg-background'>
+    <div className='min-h-96 w-full overflow-y-scroll rounded-[2px] bg-background'>
       <SchemaViewer
         key={`${connectionID}:${operationMethod ?? 'pull'}`}
         schema={connectionSchemaQuery.data.data}

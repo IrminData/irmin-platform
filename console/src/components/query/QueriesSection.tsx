@@ -11,11 +11,11 @@ import {
 
 import { useSearchParams } from 'next/navigation';
 
-import { AiOutlinePlayCircle } from 'react-icons/ai';
 import {
   TbChevronRight,
   TbFile,
   TbPencil,
+  TbPlayerPlay,
   TbSearch,
   TbShield,
   TbTemplate,
@@ -30,6 +30,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { QueryError } from '@/components/ui/error/QueryError';
 import SafeComponent from '@/components/ui/error/SafeComponent';
+import { Input } from '@/components/ui/input';
 import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
@@ -257,7 +258,8 @@ function QueriesSectionContent() {
       ) {
         const confirmed = await irminConfirm(
           'warning',
-          dict.scripts.unsavedChangesDiscard
+          dict.scripts.unsavedChangesDiscard,
+          dict.common.discardChanges
         );
         if (!confirmed) return;
       }
@@ -393,7 +395,8 @@ function QueriesSectionContent() {
       if (!selectedQuery) return;
       const confirmed = await irminConfirm(
         'warning',
-        `${dict.common.areYouSureYouWantToDelete}: ${selectedQuery.name}`
+        `${dict.common.areYouSureYouWantToDelete}: ${selectedQuery.name}`,
+        dict.query.deleteQuery
       );
       if (!confirmed) return;
       const res = await deleteStoredQueryMutation.mutateAsync(selectedQuery.id);
@@ -412,7 +415,8 @@ function QueriesSectionContent() {
       if (isDraftQuery && editorContent.trim()) {
         const confirmed = await irminConfirm(
           'warning',
-          dict.scripts.unsavedChangesDiscard
+          dict.scripts.unsavedChangesDiscard,
+          dict.common.discardChanges
         );
         if (!confirmed) return;
       }
@@ -438,8 +442,8 @@ function QueriesSectionContent() {
   return (
     <SafeComponent
       level='section'
-      title='Query Interface Error'
-      description='Failed to load query interface'
+      titleKey='queriesInterfaceTitle'
+      descriptionKey='queriesInterfaceDescription'
     >
       <div className='flex size-full flex-col bg-background'>
         <div
@@ -458,7 +462,7 @@ function QueriesSectionContent() {
             <div className='flex flex-col gap-2 p-2'>
               <Button
                 className='w-full'
-                variant={'default'}
+                variant='accent'
                 onClick={() => handleCreateQuery()}
               >
                 {dict.query.newQuery}
@@ -473,27 +477,14 @@ function QueriesSectionContent() {
               </Button>
             </div>
             <div className='border-b p-2'>
-              <div className='relative'>
-                <TbSearch
-                  className={`
-                    absolute top-1/2 left-2 -translate-y-1/2
-                    text-muted-foreground
-                  `}
-                  size={16}
-                />
-                <input
-                  type='text'
-                  placeholder={dict.query.searchQueries}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`
-                    w-full rounded-md border border-border bg-background py-1.5
-                    pr-2 pl-8 text-sm transition-colors
-                    focus:border-primary focus:ring-1 focus:ring-primary
-                    focus:outline-none
-                  `}
-                />
-              </div>
+              <Input
+                type='search'
+                placeholder={dict.query.searchQueries}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                icon={<TbSearch aria-hidden='true' />}
+                aria-label={dict.query.searchQueries}
+              />
             </div>
             {storedQueriesQuery.isLoading && (
               <ListSkeleton items={6} className='p-2' />
@@ -513,19 +504,11 @@ function QueriesSectionContent() {
               filteredQueries.length === 0 && (
                 <div className='p-4'>
                   <div className='py-8 text-center'>
-                    <h3
-                      className={`
-                        mb-2 text-lg font-medium text-gray-700
-                        dark:text-gray-300
-                      `}
-                    >
+                    <h3 className={`mb-2 text-lg font-medium text-foreground`}>
                       {dict.list.emptyState.queries.title}
                     </h3>
                     <p
-                      className={`
-                        mx-auto mb-4 max-w-sm text-gray-500
-                        dark:text-gray-400
-                      `}
+                      className={`mx-auto mb-4 max-w-sm text-muted-foreground`}
                     >
                       {dict.list.emptyState.queries.description}
                     </p>
@@ -536,39 +519,44 @@ function QueriesSectionContent() {
               <div
                 key={`query-${query.id}`}
                 className={`
-                  flex cursor-pointer flex-row items-center justify-between
-                  gap-2 border-b border-border p-4 transition-colors
+                  border-b border-border transition-colors
                   hover:bg-card
                   ${selectedQuery?.id === query.id ? `bg-card` : ''}
                 `}
-                onClick={() => handleSelectQuery(query)}
-                role='button'
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    handleSelectQuery(query);
-                  }
-                }}
               >
-                <div className='flex flex-col gap-1'>
-                  <p className='text-sm'>{query.name}</p>
-                  <p className='text-xs text-foreground/50'>
-                    {query.description}
-                  </p>
-                  {/* Display tags if they exist */}
-                  {query.tags && query.tags.length > 0 && (
-                    <div className='mt-1'>
-                      <WorkspaceTagDisplay
-                        tags={query.tags}
-                        maxVisible={3}
-                        size='sm'
-                      />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <TbChevronRight size={22} />
-                </div>
+                <button
+                  type='button'
+                  aria-current={
+                    selectedQuery?.id === query.id ? 'true' : undefined
+                  }
+                  onClick={() => handleSelectQuery(query)}
+                  className={`
+                    flex w-full appearance-none flex-row items-center
+                    justify-between gap-2 bg-transparent p-4 text-left
+                    focus-visible:outline-2 focus-visible:-outline-offset-2
+                    focus-visible:outline-accent
+                  `}
+                >
+                  <span className='flex min-w-0 flex-col gap-1'>
+                    <span className='text-sm'>{query.name}</span>
+                    <span className='text-xs text-foreground/50'>
+                      {query.description}
+                    </span>
+                  </span>
+                  <TbChevronRight
+                    aria-hidden='true'
+                    className='size-5 shrink-0'
+                  />
+                </button>
+                {query.tags && query.tags.length > 0 && (
+                  <div className='px-4 pb-4'>
+                    <WorkspaceTagDisplay
+                      tags={query.tags}
+                      maxVisible={3}
+                      size='sm'
+                    />
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -598,7 +586,7 @@ function QueriesSectionContent() {
                 />
                 {isDraftQuery && !selectedQuery && (
                   <Button
-                    variant='default'
+                    variant='accent'
                     size='sm'
                     icon={<TbFile />}
                     onClick={handleSaveAsQuery}
@@ -609,7 +597,7 @@ function QueriesSectionContent() {
                 )}
                 {selectedQuery && (
                   <Button
-                    variant='default'
+                    variant='accent'
                     size='sm'
                     icon={<TbFile />}
                     onClick={handleSaveQuery}
@@ -621,7 +609,7 @@ function QueriesSectionContent() {
                 <Button
                   variant='accent'
                   size='sm'
-                  icon={<AiOutlinePlayCircle />}
+                  icon={<TbPlayerPlay aria-hidden='true' />}
                   onClick={handleRunQuery}
                   loading={queryLoading}
                 >
@@ -660,8 +648,9 @@ function QueriesSectionContent() {
                 size={'icon'}
                 variant={'ghost'}
                 onClick={() => setSelectedQuery(null)}
-                icon={<TbX size={22} />}
+                icon={<TbX aria-hidden='true' size={22} />}
                 className='absolute top-2 right-2'
+                aria-label={dict.common.close}
               />
               <Badge className='mt-2'>{dict.query.selectedQuery}</Badge>
               <p className='text-sm'>{selectedQuery.name}</p>
@@ -671,12 +660,7 @@ function QueriesSectionContent() {
 
               {/* Tags section */}
               {canViewTags && (
-                <div
-                  className={`
-                    mb-4 border-b border-gray-200 pb-4
-                    dark:border-gray-800
-                  `}
-                >
+                <div className={`mb-4 border-b border-border pb-4`}>
                   <WorkspaceTagSelector
                     selectedTags={selectedTags}
                     onTagsChange={handleUpdateTags}

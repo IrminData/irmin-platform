@@ -17,8 +17,8 @@ function Textarea({ className, ...props }: React.ComponentProps<'textarea'>) {
           border-input bg-transparent px-0 py-2.5 text-base transition-colors
           duration-150 outline-none
           placeholder:text-muted-foreground/70
-          focus:border-accent
-          focus-visible:border-accent
+          focus:border-b-2 focus:border-accent
+          focus-visible:border-b-2 focus-visible:border-accent
           disabled:cursor-not-allowed disabled:opacity-50
           aria-invalid:border-destructive
           md:text-sm

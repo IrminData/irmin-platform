@@ -32,6 +32,8 @@ export default function WizardButton({
         border-border bg-transparent px-2 py-2.5 text-left
         transition-[background-color,border-color] duration-150
         hover:border-accent/60 hover:bg-muted/40
+        focus-visible:outline-2 focus-visible:outline-offset-2
+        focus-visible:outline-accent
       `}
       aria-label={title}
       type='button'
@@ -42,14 +44,14 @@ export default function WizardButton({
       <span className='min-w-0 flex-1'>
         <span
           className={`
-            block truncate text-sm font-medium text-foreground transition-colors
-            duration-150
+            block text-sm font-medium text-pretty text-foreground
+            transition-colors duration-150
             group-hover:text-accent
           `}
         >
           {title}
         </span>
-        <span className='block truncate text-xs text-muted-foreground'>
+        <span className='block text-xs/relaxed text-pretty text-muted-foreground'>
           {description}
         </span>
       </span>

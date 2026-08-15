@@ -7,7 +7,7 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 const FormPageSkeleton = () => {
   return (
     <div className='relative container mx-auto max-w-lg px-4 py-24'>
-      <div className='rounded-lg border border-border bg-card p-4 shadow-xs'>
+      <div className='rounded-[2px] border border-border bg-card p-4'>
         <div className='mb-8 flex flex-col items-center gap-4 text-center'>
           <LoadingSkeleton className='h-8 w-48' />
           <LoadingSkeleton className='h-4 w-64 max-w-full' />
@@ -17,16 +17,16 @@ const FormPageSkeleton = () => {
           {Array.from({ length: 4 }).map((_, i) => (
             <div key={`field-${i}`} className='flex flex-col gap-2'>
               <LoadingSkeleton className='h-4 w-20' />
-              <LoadingSkeleton className='h-10 w-full rounded-md' />
+              <LoadingSkeleton className='h-10 w-full rounded-[2px]' />
             </div>
           ))}
 
           <div className='flex items-center gap-3'>
-            <LoadingSkeleton className='size-5 rounded-sm' />
+            <LoadingSkeleton className='size-5 rounded-[2px]' />
             <LoadingSkeleton className='h-4 w-40' />
           </div>
 
-          <LoadingSkeleton className='h-12 w-full rounded-md' />
+          <LoadingSkeleton className='h-12 w-full rounded-[2px]' />
 
           <div className='flex justify-center gap-4'>
             <LoadingSkeleton className='h-4 w-24' />

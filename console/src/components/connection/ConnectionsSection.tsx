@@ -2,12 +2,12 @@
 
 import { useCallback, useMemo, useState } from 'react';
 
-import { IoAdd } from 'react-icons/io5';
-import { TbSearch } from 'react-icons/tb';
+import { TbPlus, TbSearch } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
 import { QueryError } from '@/components/ui/error/QueryError';
+import { Input } from '@/components/ui/input';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -73,13 +73,18 @@ export default function ConnectionsSection({
 
   return (
     <div className='relative container mx-auto max-w-7xl px-4 py-8'>
-      <div className='my-4 flex flex-row items-center justify-between gap-4'>
+      <div
+        className={`
+          my-4 flex flex-col items-stretch gap-4
+          sm:flex-row sm:items-center sm:justify-between
+        `}
+      >
         <DisplayTitle>{dict.connections.connections}</DisplayTitle>
         <Button
-          variant='gradient'
+          variant='accent'
           size='lg'
           onClick={() => openModal()}
-          icon={<IoAdd size={25} />}
+          icon={<TbPlus aria-hidden='true' size={25} />}
           disabled={!isResourceAllowed('connection', 'create')}
         >
           {dict.connections.create.createNewConnection}
@@ -90,26 +95,15 @@ export default function ConnectionsSection({
         closeModal={closeModal}
       />
       <div className='py-4'>
-        <div
-          className={`
-            mb-4 flex w-full items-center gap-2 rounded-md bg-gray-100 p-2
-            text-gray-900
-            focus:outline-hidden
-            dark:bg-gray-800 dark:text-gray-200
-          `}
-        >
-          <TbSearch />
-          <input
-            type='text'
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={`
-              w-full bg-transparent p-2
-              focus:outline-hidden
-            `}
-            placeholder={dict.list.searchPlaceholder}
-          />
-        </div>
+        <Input
+          type='search'
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className='mb-4'
+          icon={<TbSearch aria-hidden='true' />}
+          aria-label={dict.list.searchPlaceholder}
+          placeholder={dict.list.searchPlaceholder}
+        />
         {connectionsQuery.error ? (
           <QueryError
             error={connectionsQuery.error}
@@ -126,7 +120,7 @@ export default function ConnectionsSection({
                 ? {
                     label: dict.connections.create.createNewConnection,
                     onClick: openModal,
-                    variant: 'gradient',
+                    variant: 'accent',
                   }
                 : undefined
             }

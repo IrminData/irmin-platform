@@ -21,7 +21,7 @@ const SkeletonFormField = ({
 }) => (
   <div className='flex flex-col gap-2'>
     <LoadingSkeleton className='h-4 w-24' />
-    <LoadingSkeleton className='h-10 w-full rounded-md' />
+    <LoadingSkeleton className='h-10 w-full rounded-[2px]' />
     {withHelpText && <LoadingSkeleton className='h-3 w-40' />}
   </div>
 );
@@ -29,7 +29,7 @@ const SkeletonFormField = ({
 const SkeletonButton = ({ fullWidth = true }: { fullWidth?: boolean }) => (
   <LoadingSkeleton
     className={`
-      h-12 rounded-md
+      h-12 rounded-[2px]
       ${fullWidth ? 'w-full' : 'w-32'}
     `}
   />
@@ -39,7 +39,7 @@ const SkeletonConnectorCard = () => (
   <div
     className={`
       flex w-max max-w-[50%] flex-row items-center justify-start gap-4
-      rounded-lg bg-muted/40 px-4 py-2
+      rounded-[2px] bg-muted/40 px-4 py-2
     `}
   >
     <LoadingSkeleton className='size-12 rounded-full' />
@@ -63,7 +63,10 @@ export const ConnectionCreationSkeleton = ({
       <div className='flex w-full flex-col gap-6'>
         <div className='flex w-full flex-wrap gap-2 border-b border-border pb-4'>
           {Array.from({ length: 4 }).map((_, i) => (
-            <LoadingSkeleton key={`cat-${i}`} className='h-8 w-20 rounded-md' />
+            <LoadingSkeleton
+              key={`cat-${i}`}
+              className='h-8 w-20 rounded-[2px]'
+            />
           ))}
         </div>
 
@@ -91,7 +94,7 @@ export const ConnectionCreationSkeleton = ({
         {Array.from({ length: 5 }).map((_, i) => (
           <LoadingSkeleton
             key={`cat-alt-${i}`}
-            className='h-8 w-16 rounded-md'
+            className='h-8 w-16 rounded-[2px]'
           />
         ))}
       </div>

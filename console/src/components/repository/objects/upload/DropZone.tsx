@@ -4,8 +4,6 @@ import { memo, useCallback, useRef, useState } from 'react';
 
 import { TbUpload } from 'react-icons/tb';
 
-import { Button } from '@/components/ui/button';
-
 import { useLocale } from '@/context/LocaleContext';
 
 interface DropZoneProps {
@@ -84,18 +82,19 @@ const DropZone = ({ onFilesAdded, disabled = false }: DropZoneProps) => {
     <div
       className={`
         flex min-h-[160px] w-full cursor-pointer flex-col items-center
-        justify-center rounded-lg border-2 border-dashed p-6 transition-colors
+        justify-center rounded-[2px] border-2 border-dashed p-6
+        transition-colors
         ${
           isDragOver
-            ? 'border-irmin-blue-500 bg-irmin-blue-500/10'
+            ? 'border-accent bg-accent/10'
             : `
-              border-gray-300
-              hover:border-gray-400
-              dark:border-gray-600
-              dark:hover:border-gray-500
+              border-border
+              hover:border-foreground/40
             `
         }
         ${disabled ? 'cursor-not-allowed opacity-50' : ''}
+        focus-visible:outline-2 focus-visible:outline-offset-2
+        focus-visible:outline-accent
       `}
       onDragEnter={handleDragActive}
       onDragLeave={handleDragLeave}
@@ -106,32 +105,29 @@ const DropZone = ({ onFilesAdded, disabled = false }: DropZoneProps) => {
       tabIndex={disabled ? -1 : 0}
       onKeyDown={(e) => {
         if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
           handleBrowseClick();
         }
       }}
       aria-label={dropZoneText}
+      aria-disabled={disabled || undefined}
     >
-      <TbUpload className='mb-3 size-10 text-gray-400' />
-      <p
+      <TbUpload
+        className='mb-3 size-10 text-muted-foreground'
+        aria-hidden='true'
+      />
+      <p className={`mb-2 text-sm text-muted-foreground`}>{dropZoneText}</p>
+      <span
+        aria-hidden='true'
         className={`
-          mb-2 text-sm text-gray-600
-          dark:text-gray-400
+          pointer-events-none inline-flex h-11 items-center justify-center
+          rounded-[2px] bg-secondary px-4 text-xs font-medium
+          text-secondary-foreground
+          md:h-9
         `}
       >
-        {dropZoneText}
-      </p>
-      <Button
-        type='button'
-        variant='secondary'
-        size='sm'
-        disabled={disabled}
-        onClick={(e) => {
-          e.stopPropagation();
-          handleBrowseClick();
-        }}
-      >
         {dict.repository.objects.uploadFiles.browseFiles}
-      </Button>
+      </span>
 
       {/* Hidden file input */}
       <input

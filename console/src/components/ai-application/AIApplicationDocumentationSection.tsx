@@ -53,7 +53,7 @@ const AIApplicationDocumentationSectionContent = () => {
     >
       <Button
         size='default'
-        variant='default'
+        variant='accent'
         type='submit'
         disabled={
           !isResourceAllowed('ai_application', 'update', aiApplication.id)

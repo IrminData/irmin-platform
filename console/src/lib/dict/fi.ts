@@ -5,7 +5,7 @@ const fi = {
   // === CORE APPLICATION ===
   common: {
     // Basic actions
-    loading: 'Ladataan...',
+    loading: 'Ladataan…',
     cancel: 'Peruuta',
     confirm: 'Vahvista',
     save: 'Tallenna',
@@ -16,6 +16,7 @@ const fi = {
     update: 'Päivitä',
     add: 'Lisää',
     remove: 'Poista',
+    discardChanges: 'Hylkää muutokset',
     download: 'Lataa',
     back: 'Takaisin',
     next: 'Seuraava',
@@ -27,6 +28,10 @@ const fi = {
     tryAgain: 'Yritä uudelleen',
     hideAdvancedOption: 'Piilota lisäasetukset',
     showAdvancedOptions: 'Näytä lisäasetukset',
+    item: 'Kohde',
+    deleteNamed: 'Poista {item}',
+    permanentDeleteDescription:
+      'Toimintoa ei voi perua. Kohteen poistaminen poistaa sen pysyvästi.',
 
     // Error display
     pageNotFoundDescription:
@@ -39,6 +44,13 @@ const fi = {
     copied: 'Kopioitu',
     visual: 'Visuaalinen',
     stackTrace: 'Virheen seuranta',
+    actionFailedDescription:
+      'Toimintoa ei voitu suorittaa. Yritä uudelleen tai päivitä sivu, jos ongelma jatkuu.',
+    sectionLoadingError:
+      'Lataamisen aikana tapahtui virhe. Yritä päivittää sivu.',
+    componentLoadingError: 'Lataamisen aikana tapahtui virhe.',
+    genericErrorDescription: 'Tapahtui virhe.',
+    genericErrorRetryDescription: 'Tapahtui virhe. Yritä uudelleen.',
 
     // Search and navigation
     search: 'Hae',
@@ -46,7 +58,19 @@ const fi = {
     noResults: 'Ei tuloksia',
     loadMore: 'Lataa lisää',
     more: 'Lisää',
+    notifications: 'Ilmoitukset',
     selectAll: 'Valitse kaikki',
+    skipToMainContent: 'Siirry pääsisältöön',
+    commandPalette: 'Komentovalikko',
+    commandPaletteDescription: 'Hae suoritettavaa komentoa…',
+    switchToTab: 'Siirry välilehdelle {tab}',
+    copyCode: 'Kopioi koodi',
+    scrollToBottom: 'Vieritä loppuun',
+    codeEditor: 'Koodieditori',
+    resizeEditor: 'Muuta editorin kokoa',
+    selectResultFile: 'Valitse tulostiedosto',
+    enableAnimations: 'Ota animaatiot käyttöön',
+    disableAnimations: 'Poista animaatiot käytöstä',
 
     // Status and feedback
     success: 'Onnistui',
@@ -62,6 +86,10 @@ const fi = {
     of: '/',
     page: 'Sivu',
     clearFilters: 'Tyhjennä suodattimet',
+    paginationLabel: 'Sivutus',
+    previousPage: 'Siirry edelliselle sivulle',
+    nextPage: 'Siirry seuraavalle sivulle',
+    morePages: 'Lisää sivuja',
 
     // Content
     name: 'Nimi',
@@ -77,10 +105,23 @@ const fi = {
     color: 'Väri',
     owner: 'Omistaja',
     tags: 'Tagit',
+    from: 'Lähde',
+    to: 'Kohde',
+    sortedAscending: '{label}, lajiteltu nousevasti',
+    sortedDescending: '{label}, lajiteltu laskevasti',
+    notSorted: '{label}, lajittelematon',
 
     // Forms
     fieldRequired: 'Kenttä on pakollinen',
     fieldInvalid: 'Kenttä on virheellinen',
+    fieldRequiredNamed: '{field} on pakollinen',
+    fieldMinimum: 'Pienin sallittu arvo on {value}',
+    fieldMaximum: 'Suurin sallittu arvo on {value}',
+    fieldRequiredWith:
+      '{field} on pakollinen, kun liittyvässä kentässä on arvo',
+    fieldInvalidEmail: 'Anna kelvollinen sähköpostiosoite',
+    fieldInvalidInteger: 'Anna kelvollinen kokonaisluku',
+    fieldInvalidNumber: 'Anna kelvollinen numero',
     resetForm: 'Tyhjennä lomake',
     pleaseFixErrors: 'Korjaa virheet yllä',
 
@@ -108,7 +149,7 @@ const fi = {
     templates: {
       title: 'Mallikirjasto',
       description: 'Valitse malli aloittaaksesi nopeasti',
-      searchTemplates: 'Etsi malleja...',
+      searchTemplates: 'Etsi malleja…',
       noTemplatesFound: 'Malleja ei löytynyt',
       noPlaceholders: 'Ei täytettäviä paikkamerkkejä tässä mallissa',
       selectTemplate: 'Valitse malli',
@@ -177,6 +218,26 @@ const fi = {
       connectionTitle: 'Yhteyden näyttäminen epäonnistui',
       connectionDescription:
         'Jotain meni pieleen yhteyden näyttämisessä. Yritä päivittää sivu.',
+      queriesInterfaceTitle: 'Kyselykäyttöliittymän lataaminen epäonnistui',
+      queriesInterfaceDescription:
+        'Kyselykäyttöliittymän lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      scriptsInterfaceTitle: 'Skriptikäyttöliittymän lataaminen epäonnistui',
+      scriptsInterfaceDescription:
+        'Skriptikäyttöliittymän lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      workflowsInterfaceTitle:
+        'Työnkulkujen käyttöliittymän lataaminen epäonnistui',
+      workflowsInterfaceDescription:
+        'Työnkulkujen käyttöliittymän lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      aiApplicationsInterfaceTitle:
+        'Tekoälysovellusten käyttöliittymän lataaminen epäonnistui',
+      aiApplicationsInterfaceDescription:
+        'Tekoälysovellusten käyttöliittymän lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      workspaceManagementTitle: 'Työtilojen hallinnan lataaminen epäonnistui',
+      workspaceManagementDescription:
+        'Työtilojen hallinnan lataamisessa tapahtui virhe. Yritä päivittää sivu.',
+      cronGeneratorTitle: 'Cron-generaattorin lataaminen epäonnistui',
+      cronGeneratorDescription:
+        'Cron-generaattorin lataamisessa tapahtui virhe. Yritä päivittää sivu.',
 
       // Query failure (network / server error) — shown with a Retry button
       failedToLoadRepository: 'Arkiston lataaminen epäonnistui',
@@ -393,19 +454,24 @@ const fi = {
     advancedSearch: 'Edistynyt haku',
     searchDescription:
       'Hae data-arkistoista, prosesseista, yhteyksistä ja muusta',
-    searchPlaceholder: 'Hae mitä tahansa...',
+    searchPlaceholder: 'Hae mitä tahansa…',
     contentTypes: 'Sisältötyypit',
     fromDate: 'Alkaen',
     toDate: 'Päättyen',
     resultsPerPage: 'Tuloksia per sivu',
-    noResultsFound: 'Ei tuloksia',
+    noResultsFor: 'Ei tuloksia haulle ”{query}”',
     tryAdjustingFilters: 'Kokeile muuttaa hakutermejä tai suodattimia',
+    clearSearch: 'Tyhjennä haku',
+    resetFilters: 'Nollaa suodattimet',
     startSearching: 'Aloita hakeminen',
     startSearchingDescription:
       'Syötä hakutermi yllä löytääksesi data-arkistoja, prosesseja, yhteyksiä ja muuta',
-    searchingText: 'Haetaan...',
-    resultsFoundFor: 'tulosta löytyi haulle',
-    resultFoundFor: 'tulos löytyi haulle',
+    searchingText: 'Haetaan…',
+    resultsFoundForQuery: '{count} tulosta haulle ”{query}”',
+    resultFoundForQuery: '1 tulos haulle ”{query}”',
+    structuredObjects: 'Rakenteiset objektit',
+    binaryObjects: 'Binääriobjektit',
+    groupObjects: 'Ryhmäobjektit',
   },
 
   // === NAVIGATION ===
@@ -536,22 +602,31 @@ const fi = {
     pendingWritesDescription:
       'Tarkista ja hyväksy AI-agenttien kirjoitusoperaatiot',
     noPendingWrites: 'Ei odottavia kirjoituksia tarkistettavaksi',
+    pendingStatus: 'Odottaa',
+    approvedStatus: 'Hyväksytty',
+    rejectedStatus: 'Hylätty',
+    commitMessage: 'Viesti',
+    rejectWrite: 'Hylkää',
+    approveWrite: 'Hyväksy',
+    reviewedByOn: 'Tarkistanut {name}, {date}',
+    pendingWritesShowing: 'Näytetään {start}–{end} / {total}',
     howToConnect: 'Kuinka yhdistää',
-    howToConnectMcpPrefix: 'Käytä ',
-    howToConnectMcpBold: 'MCP-päätepistettä',
-    howToConnectMcpSuffix:
-      ' yhdistääksesi Cursorin, Claude Desktopin tai muiden MCP-asiakkaiden kanssa.',
-    howToConnectApiKeyPrefix: 'Sisällytä ',
-    howToConnectApiKeyBold: 'API-avain',
-    howToConnectApiKeySuffix: ' Bearer-tunnisteena Authorization-otsikkoon.',
+    howToConnectMcp:
+      '{mcpEndpoint} yhdistää Cursorin, Claude Desktopin tai muun MCP-asiakkaan tähän AI-sovellukseen.',
+    howToConnectApiKey:
+      '{apiKey} lähetetään Bearer-tunnisteena Authorization-otsakkeessa.',
     howToConnectTools:
-      'Ota käyttöön tiettyjä työkaluja alta paljastaaksesi ominaisuuksia AI-agentillesi.',
+      'Ota alta käyttöön työkalut, joita AI-agentti voi käyttää.',
     apiReference: 'API-viite',
     toolsControlDescription:
       'Hallitse, mitkä ominaisuudet paljastetaan MCP-palvelimen kautta.',
     hideApiKey: 'Piilota API-avain',
     showApiKey: 'Näytä API-avain',
     copyApiKey: 'Kopioi API-avain',
+    copyMcpEndpoint: 'Kopioi MCP-päätepiste',
+    copyRestApiEndpoint: 'Kopioi REST API -päätepiste',
+    claudeDesktopConfig: 'Claude Desktop -määritys',
+    copyConfiguration: 'Kopioi määritys',
     // Custom Tools
     customTools: 'Mukautetut työkalut',
     customToolsDescription:
@@ -605,11 +680,13 @@ const fi = {
     deletionNote:
       'Työtilan poistaminen poistaa kaiken siihen liittyvän datan. Tätä toimintoa ei voi peruuttaa.',
     deleteWorkspace: 'Poista työtila',
+    deleteTag: 'Poista tunniste',
     billingCurrentPlan: 'Nykyinen tilaus',
     billingManageBilling: 'Hallitse laskutusta',
     billingAddPaymentMethod: 'Lisää maksutapa',
     billingFreeUser: 'Ilmainen — käyttörajoitukset voimassa',
-    billingSubscribed: 'Tilattu — rajoittamaton käyttö',
+    billingSubscribed:
+      'Maksutapa lisätty — käyttöperusteinen laskutus on käytössä',
     billingCancelled:
       'Peruutettu — käyttörajoitukset voimaan jakson päättyessä',
     billingPastDue: 'Maksuongelma — päivitä maksutapasi',
@@ -646,7 +723,7 @@ const fi = {
     billingCreditPerMeter: 'Krediitti per mittari',
     billingBannerTitle: 'Ilmaisversio',
     billingBannerDescription:
-      'Lisää maksutapa avataksesi rajoittamattoman käytön',
+      'Lisää maksutapa poistaaksesi ilmaispaketin käyttörajat ja ottaaksesi käyttöperusteisen laskutuksen käyttöön',
     billingBannerAction: 'Määritä laskutus',
     billingLimitsResetIn: 'Rajat nollautuvat {n} päivän kuluttua',
     billingInfo: 'Laskutustiedot',
@@ -764,6 +841,7 @@ const fi = {
       newBranchName: 'Uuden haaran nimi',
       fromBranch: 'Haarasta',
       confirmDeleteBranch: 'Oletko varma, että haluat poistaa tämän haaran?',
+      deleteBranch: 'Poista haara',
     },
     tags: {
       tags: 'Tagit',
@@ -771,6 +849,7 @@ const fi = {
       newTagName: 'Uuden tagin nimi',
       fromCommit: 'Commitista',
       confirmDeleteTag: 'Oletko varma, että haluat poistaa tämän tagin?',
+      deleteTag: 'Poista tagi',
       currentlyViewing: 'Nykyinen näkymä',
     },
     commit: {
@@ -803,12 +882,18 @@ const fi = {
     },
     compare: {
       compare: 'Vertaa',
+      accessErrorTitle: 'Data-arkiston käyttöoikeusvirhe',
+      accessErrorDescription:
+        'Sinulla ei ole oikeutta vertailla tätä data-arkistoa.',
+      interfaceErrorTitle: 'Data-arkiston vertailuvirhe',
+      interfaceErrorDescription:
+        'Data-arkiston vertailua ei voitu ladata. Yritä päivittää sivu.',
       switchDirection: 'Vaihda suuntaa',
       baseBranch: 'Pohjaviittaus',
       compareBranch: 'Vertailuviittaus',
       customRef: 'Mukautettu viittaus',
       enterCustomRef: 'Syötä tagin nimi tai commit hash',
-      customRefPlaceholder: 'esim. v1.0.0 tai abc123...',
+      customRefPlaceholder: 'esim. v1.0.0 tai abc123…',
       merge: 'Sulauta',
       into: 'haaraan',
       comparing: 'Verrataan',
@@ -850,6 +935,7 @@ const fi = {
         dropZone: 'Pudota tiedostot tähän tai napsauta valitaksesi',
         browseFiles: 'Selaa tiedostoja',
         addMore: 'Lisää tiedostoja',
+        removeFromQueue: 'Poista tiedosto latausjonosta',
         uploadingTo: 'Ladataan kohteeseen:',
         startUpload: 'Lataa {count} tiedostoa',
         done: 'Valmis',
@@ -863,8 +949,8 @@ const fi = {
         },
         status: {
           pending: 'Odottaa',
-          checking: 'Tarkistetaan...',
-          uploading: 'Ladataan...',
+          checking: 'Tarkistetaan…',
+          uploading: 'Ladataan…',
           completed: 'Ladattu',
           failed: 'Epäonnistui',
           skipped: 'Ohitettu',
@@ -881,9 +967,15 @@ const fi = {
       currentName: 'Nykyinen nimi',
       type: 'Tyyppi',
       contentType: 'Sisältötyyppi',
+      mime: 'MIME',
+      schemaItems: 'Alkiot',
+      schemaObjectSummaryOne: 'Objekti, jolla on 1 ominaisuus',
+      schemaObjectSummaryOther: 'Objekti, jolla on {count} ominaisuutta',
+      schemaArraySummary: 'Taulukko, jonka alkioiden tyyppi on {type}',
       view: 'Näytä',
       unsupportedContentType: 'Sisältötyyppiä ei tueta',
       contentUnavailable: 'Objektin sisältö ei ole saatavilla',
+      objectContentErrorTitle: 'Objektin sisällön lataaminen epäonnistui',
       viewRendered: 'Renderöity',
       viewSource: 'Lähdekoodi',
       contentTooLarge:
@@ -954,11 +1046,21 @@ const fi = {
       embeddingsDimensions: 'Dimensiot',
       embeddingsChunkSize: 'Palan koko',
       embeddingsOverlap: 'Päällekkäisyys',
+      embeddingsCharactersPerChunk: 'Merkkejä palassa (100–4 000)',
+      embeddingsOverlapRange: 'Palojen päällekkäisyys (0–500)',
+      embeddingsAutoModelDefault: 'Automaattinen (mallin oletus)',
+      embeddingsLeaveEmptyModelDefault:
+        'Jätä tyhjäksi käyttääksesi mallin oletusta.',
+      embeddingsSummary: 'Yhteenveto',
+      embeddingsMetadataFields: 'Metatietokentät',
+      embeddingsCompleted: 'Valmis',
+      sqlPlaceholderRecommended: 'Paikkamerkki (suositeltu)',
+      alternativeS3Path: 'Vaihtoehtoinen S3-polku',
       embeddingsChunkCount: 'Palat',
       embeddingsSourceFiles: 'Lähdetiedostot',
       embeddingsTopK: 'Tulokset',
       searchVectors: 'Hae vektoreja',
-      searchVectorsPlaceholder: 'Kirjoita hakukysely...',
+      searchVectorsPlaceholder: 'Kirjoita hakukysely…',
       searchVectorsError: 'Upotusten haku epäonnistui',
       searchResults: 'Hakutulokset',
       noSearchResults: 'Tuloksia ei löytynyt',
@@ -979,6 +1081,23 @@ const fi = {
       embeddingsMetadataRemoveField: 'Poista',
       embeddingsMetadataImportJson: 'Tuo JSON',
       embeddingsMetadataExportJson: 'Vie JSON',
+      embeddingsMetadataKeyRequired: 'Anna metatietoavain.',
+      embeddingsMetadataKeyInvalid:
+        'Käytä metatietoavaimissa vain kirjaimia, numeroita, alaviivoja tai yhdysmerkkejä.',
+      embeddingsMetadataKeyExists: 'Tämä metatietoavain on jo olemassa.',
+      embeddingsMetadataJsonObjectOnly:
+        'Tuo litteä JSON-objekti, joka sisältää avain-arvopareja.',
+      embeddingsMetadataInvalidKey:
+        'Virheellinen avain ”{key}”. Käytä vain kirjaimia, numeroita, alaviivoja tai yhdysmerkkejä.',
+      embeddingsMetadataNullValue:
+        '”{key}” tarvitsee arvon; null- ja undefined-arvoja ei sallita.',
+      embeddingsMetadataNestedValue:
+        'Arvon ”{key}” on oltava merkkijono, numero tai totuusarvo; sisäkkäisiä objekteja ja taulukoita ei sallita.',
+      embeddingsMetadataImportFailed: 'JSON-tiedoston tuonti epäonnistui.',
+      embeddingsMetadataRemoveEntry: 'Poista metatietorivi',
+      embeddingsMetadataAddEntry: 'Lisää metatietorivi',
+      embeddingsMetadataEmpty:
+        'Ei vielä metatietokenttiä. Lisää avain-arvopari yllä.',
       embeddingsContentHash: 'Sisällön tiiviste',
       embeddingsUpsert: 'Päivitä upotukset',
       embeddingsUpsertInserted: 'Lisätty',
@@ -990,12 +1109,12 @@ const fi = {
       embeddingsWizardAddMetadata: 'Lisää metatiedot',
       embeddingsWizardGenerate: 'Luo upotukset',
       embeddingsWizardPreviewChunks: 'Esikatsele paloja',
-      embeddingsWizardGenerating: 'Luodaan upotuksia...',
+      embeddingsWizardGenerating: 'Luodaan upotuksia…',
       embeddingsEditTitle: 'Muokkaa upotusta',
       embeddingsEditDescription:
         'Päivitä tämän upotusosan metatiedot ja prioriteetti',
       embeddingsEditSave: 'Tallenna muutokset',
-      embeddingsEditSaving: 'Tallennetaan...',
+      embeddingsEditSaving: 'Tallennetaan…',
       pointer: 'Osoitin',
       pointsTo: 'Osoittaa kohteeseen',
       createPointer: 'Luo osoitin',
@@ -1122,7 +1241,7 @@ const fi = {
       diffMode: 'Vertaa skeemoja',
       operationMethod: 'Operaatiomenetelmä',
       uploadFile: 'Lataa JSON-tiedosto',
-      selectFile: 'Valitse tiedosto...',
+      selectFile: 'Valitse tiedosto…',
       validateButton: 'Validoi',
       compareButton: 'Vertaa',
       validationPassed: 'Validointi onnistui',
@@ -1134,6 +1253,20 @@ const fi = {
       schemasIncompatible: 'Rikkovia muutoksia havaittu',
       breakingChanges: 'Rikkovat muutokset',
       nonBreakingChanges: 'Ei-rikkovat muutokset',
+      push: 'Lähetä',
+      pull: 'Nouda',
+      schemaPathOptional: 'Skeemapolku (valinnainen)',
+      schemaPathPlaceholder:
+        'Jätä tyhjäksi käyttääksesi juuriskeemaa tai anna tietty polku',
+      expectedFiles: 'Tämän skeeman odottamat tiedostot:',
+      multipleAllowed: '(useita tiedostoja sallitaan)',
+      filesSelected: 'Valittuja tiedostoja: {count}',
+      noMatchingSchema: 'Vastaavaa skeemaa ei löytynyt',
+      missingExpectedFiles: 'Puuttuvat odotetut tiedostot: {files}',
+      expected: 'Odotettu',
+      actual: 'Todellinen',
+      row: 'Rivi',
+      removeSelectedFile: 'Poista {file} valinnasta',
     },
   },
 
@@ -1427,7 +1560,7 @@ const fi = {
       embeddingsPath: 'Upotustiedoston polku',
       embeddingsPathPlaceholder: 'esim. upotukset/dokumentit.parquet',
       embeddingsQuery: 'Hakukysely',
-      embeddingsQueryPlaceholder: 'Kirjoita hakukysely...',
+      embeddingsQueryPlaceholder: 'Kirjoita hakukysely…',
       embeddingsTopK: 'Tulosten määrä',
       embeddingsPriority: 'Prioriteetti',
       embeddingsPriorityDescription:
@@ -1500,14 +1633,53 @@ const fi = {
       saveSchedule: 'Tallenna aikataulu',
       presets: 'Pohjat',
       custom: 'Mukautettu',
+      presetOptions: {
+        everyMinute: 'Joka minuutti',
+        everyHour: 'Joka tunti',
+        everyDayAtMidnight: 'Joka päivä keskiyöllä',
+        everyDayAtNoon: 'Joka päivä keskipäivällä',
+        everyMonday: 'Joka maanantai',
+        everyWeekday: 'Joka arkipäivä',
+        everyWeekend: 'Joka viikonloppu',
+        everyMonth: 'Joka kuukausi',
+        everyMonthOnFirst: 'Joka kuukauden ensimmäisenä päivänä',
+      },
+      monthNames: {
+        january: 'Tammikuu',
+        february: 'Helmikuu',
+        march: 'Maaliskuu',
+        april: 'Huhtikuu',
+        may: 'Toukokuu',
+        june: 'Kesäkuu',
+        july: 'Heinäkuu',
+        august: 'Elokuu',
+        september: 'Syyskuu',
+        october: 'Lokakuu',
+        november: 'Marraskuu',
+        december: 'Joulukuu',
+      },
+      weekdayNames: {
+        sunday: 'Sunnuntai',
+        monday: 'Maanantai',
+        tuesday: 'Tiistai',
+        wednesday: 'Keskiviikko',
+        thursday: 'Torstai',
+        friday: 'Perjantai',
+        saturday: 'Lauantai',
+      },
 
       // Trigger details
       manualTrigger: 'Manuaalinen laukaisin',
       scheduledTrigger: 'Aikataulutettu laukaisin',
       unknownTrigger: 'Tuntematon laukaisin',
       noTriggerInformation: 'Ei laukaisintietoja',
+      unknownTriggerDescription: 'Laukaisimen tyyppiä ei tunnistettu.',
+      noTriggerInformationDescription:
+        'Tälle ajolle ei ole saatavilla laukaisintietoja.',
       rawTriggerData: 'Raaka laukaisintiedot',
       sourceWorkflow: 'Lähdeprosessi',
+      eventOnSource: '{event} kohteessa {source}',
+      eventFromSource: '{event} lähteestä {source}',
       cron: {
         selectPreset: 'Valitse aikataulupohja',
         generatedCron: 'Luotu Cron-lauseke',
@@ -1562,6 +1734,15 @@ const fi = {
         copied: 'Kopioitu!',
         copyRRule: 'Kopioi toistumissääntö',
         rruleSyntaxHelp: 'Toistumissäännön syntaksin ohje',
+        frequencyOptions: {
+          secondly: 'Sekunneittain',
+          minutely: 'Minuuteittain',
+          hourly: 'Tunneittain',
+          daily: 'Päivittäin',
+          weekly: 'Viikoittain',
+          monthly: 'Kuukausittain',
+          yearly: 'Vuosittain',
+        },
       },
     },
   },
@@ -1569,13 +1750,15 @@ const fi = {
   // === DEVELOPMENT TOOLS ===
   scripts: {
     script: 'Skripti',
-    writeYourJS: 'Kirjoita JavaScriptisi tähän...',
-    writeYourGo: 'Kirjoita Go-skriptisi tähän...',
-    writeYourSQL: 'Kirjoita SQL-kyselysi tähän...',
-    writeYourPython: 'Kirjoita Python-koodisi tähän...',
-    writeYourText: 'Kirjoita teksti tähän...',
-    writeYourMarkdown: 'Kirjoita Markdown-tekstisi tähän...',
-    writeYourJSON: 'Kirjoita JSON-objektisi tähän...',
+    writeYourJS: 'Kirjoita JavaScriptisi tähän…',
+    writeYourGo: 'Kirjoita Go-skriptisi tähän…',
+    writeYourSQL: 'Kirjoita SQL-kyselysi tähän…',
+    writeYourPython: 'Kirjoita Python-koodisi tähän…',
+    writeYourText: 'Kirjoita teksti tähän…',
+    writeYourMarkdown: 'Kirjoita Markdown-tekstisi tähän…',
+    writeYourJSON: 'Kirjoita JSON-objektisi tähän…',
+    multipleLargeResultFilesWarning:
+      'Useita suuria tulostiedostoja ladattu ({size}). Tämä voi aiheuttaa suorituskykyongelmia.',
     newScriptTitle: 'Luo uusi skripti',
     newScriptSubtitle:
       'Kirjoita skripti haluamallasi kielellä ja tallenna se prosessina',
@@ -1586,26 +1769,28 @@ const fi = {
     scriptNeedsToBeSaved:
       'Skripti on tallennettava ennen suorittamista. Tallenna skripti ja suorita se uudelleen.',
     selectScript: 'Valitse skripti',
-    searchScripts: 'Hae skriptejä...',
+    searchScripts: 'Hae skriptejä…',
     createScript: 'Luo skripti',
     updateScript: 'Päivitä skripti',
     owner: 'Omistaja',
     scriptManagement: 'Skriptien hallinta',
     scriptName: 'Skriptin nimi',
     scriptDescription: 'Skriptin kuvaus',
+    deleteScript: 'Poista skripti',
     scriptNotFound: 'Skriptiä ei löytynyt. Palautetaan tyhjä editori.',
     scriptDeleted: 'Skripti poistettiin. Palautetaan tyhjä editori.',
     unsavedChangesDiscard:
       'Sinulla on tallentamattomia muutoksia. Haluatko hylätä ne?',
     failedToCreateScript: 'Skriptin luominen epäonnistui',
     failedToUpdateScript: 'Skriptin päivitys epäonnistui',
-    saving: 'Tallennetaan...',
+    saving: 'Tallennetaan…',
     reset: 'Palauta',
   },
 
   query: {
     query: 'Kysely',
     queries: 'Kyselyt',
+    deleteQuery: 'Poista kysely',
     queryExecutionStarted: 'Kyselyn suoritus aloitettu',
     results: 'Tulokset',
     errors: 'Virheet',
@@ -1621,7 +1806,7 @@ const fi = {
     editor: 'SQL-editori',
     queryNotFound: 'Kyselyä ei löytynyt',
     queryDeleted: 'Kyselyä ei ole enää saatavilla',
-    searchQueries: 'Hae kyselyjä...',
+    searchQueries: 'Hae kyselyjä…',
     failedToCreateQuery: 'Kyselyn luominen epäonnistui',
     failedToUpdateQuery: 'Kyselyn päivitys epäonnistui',
     saveAs: 'Tallenna nimellä',
@@ -1655,6 +1840,7 @@ const fi = {
     queryDocumentationTab: 'SQL-syntaksi',
     generateSql: 'Generoi SQL',
     copySelector: 'Kopioi valitsin',
+    pathTableNameExamples: 'Esimerkkejä poluista taulujen nimiksi:',
     availableColumns: 'Saatavilla olevat sarakkeet',
     basicSelect: 'Perusvalinta',
     filterAndSort: 'Suodatus ja lajittelu',
@@ -1705,13 +1891,13 @@ const fi = {
         'Kyselytulokset muunnetaan automaattisesti CSV-muotoon (query_results.csv). Tuloste voidaan tallentaa repositoryihin tai välittää seuraaville putkilinjan vaiheille.',
     },
     sqlGeneration: {
-      placeholder: 'Kuvaile mitä haluat kysellä...',
+      placeholder: 'Kuvaile mitä haluat kysellä…',
       send: 'Lähetä',
       generatedSql: 'Luotu SQL',
       copySql: 'Kopioi SQL',
       response: 'Vastaus',
       clearChat: 'Tyhjennä',
-      loading: 'Luodaan SQL:ää...',
+      loading: 'Luodaan SQL:ää…',
       error: 'SQL:n luominen epäonnistui',
       noMessages: 'Aloita keskustelu luodaksesi SQL-kyselyitä',
     },
@@ -1756,10 +1942,10 @@ const fi = {
         'Jokainen tulostiedosto tallennetaan ja se voidaan välittää seuraaville vaiheille tai tallentaa takaisin repositoryyn.',
     },
     scriptGeneration: {
-      placeholder: 'Kuvaile, mitä skriptin tulisi tehdä...',
+      placeholder: 'Kuvaile, mitä skriptin tulisi tehdä…',
       send: 'Lähetä',
       clearChat: 'Tyhjennä',
-      loading: 'Luodaan skriptiä...',
+      loading: 'Luodaan skriptiä…',
       error: 'Skriptin luominen epäonnistui',
       noMessages: 'Aloita keskustelu luodaksesi skriptin',
     },
@@ -1770,6 +1956,7 @@ const fi = {
     root: 'Juuri',
     rootDirectory: 'Juurihakemisto',
     deleteConfirmation: 'Oletko varma, että haluat poistaa',
+    deleteObject: 'Poista objekti',
 
     errors: {
       invalidPath: 'Virheellinen polku',
@@ -1821,7 +2008,7 @@ const fi = {
     selectFromExistingConnections: 'Valitse olemassa olevista yhteyksistä',
     setupNewConnectionToDataSource: 'Aseta uusi yhteys tietolähteeseesi',
     selectConnection: 'Valitse yhteys',
-    searchConnections: 'Hae yhteyksiä...',
+    searchConnections: 'Hae yhteyksiä…',
     pleaseSelectConnection: 'Valitse yhteys',
     noConnectionsFound: 'Yhteyksiä ei löytynyt hakuasi vastaavasti.',
     noConnectionsAvailable: 'Ei yhteyksiä saatavilla.',
@@ -1833,7 +2020,7 @@ const fi = {
       'Valitse mihin haluat tallentaa tuotavan datan. Voit käyttää olemassa olevaa data-arkistoa tai luoda uuden.',
     selectFromExistingRepositories:
       'Valitse olemassa olevista data-arkistoista',
-    searchRepositories: 'Hae data-arkistoja...',
+    searchRepositories: 'Hae data-arkistoja…',
     defaultBranch: 'Oletushaara:',
     pleaseSelectRepository: 'Valitse data-arkisto',
     createNewRepositoryDescription: 'Luo uusi data-arkisto datallesi',
@@ -1852,7 +2039,7 @@ const fi = {
     connector: 'Yhdistin:',
     destination: 'Kohde:',
     branch: 'Haara:',
-    settingUpDataImport: 'Asetetaan datan tuonti...',
+    settingUpDataImport: 'Asetetaan datan tuonti…',
     creatingConnection: 'Luodaan yhteyttä',
     creatingRepository: 'Luodaan data-arkistoa',
     creatingImportWorkflow: 'Luodaan tuontiprosessia',
@@ -1889,6 +2076,7 @@ const fi = {
     pleaseEnterWorkflowName: 'Anna prosessin nimi',
     pleaseSelectRepositoryBranch: 'Valitse data-arkiston haara',
     pleaseSelectRepositoryPaths: 'Valitse data-arkiston polut',
+    pleaseSelectRepositoryDestinationPath: 'Valitse data-arkiston kohdepolku',
     pleaseSelectConnectionPath: 'Valitse yhteyden polku',
     pleaseSelectConnector: 'Valitse liitin',
     workflowNamePlaceholder: 'Anna prosessin nimi',
@@ -1925,12 +2113,18 @@ const fi = {
     // Conversations List
     newConversation: 'Uusi keskustelu',
     noConversations: 'Ei vielä keskusteluja',
-    searchConversations: 'Hae keskusteluja...',
-    noSearchResults: 'Keskusteluja ei löytynyt',
+    searchConversations: 'Hae keskusteluja…',
+    searchConversationsLabel: 'Hae keskusteluja',
+    noSearchResultsFor: 'Ei keskusteluja haulle ”{query}”',
+    clearSearch: 'Tyhjennä haku',
+    deleteConversation: 'Poista keskustelu',
+    deleteConversationNamed: 'Poista keskustelu ”{title}”',
+    untitledConversation: 'Nimetön',
 
     // Assistant Chat
     askMeAnything:
-      'Kysy minulta mitä tahansa - ohjelmointia, liiketoimintaa, kirjoittamista tai yleisiä kysymyksiä...',
+      'Kysy minulta mitä tahansa - ohjelmointia, liiketoimintaa, kirjoittamista tai yleisiä kysymyksiä…',
+    promptPlaceholder: 'Mitä haluaisit tietää?',
 
     // Chat Suggestions
     querySyntaxExamples: 'Näytä esimerkki SQL kyselystä',
@@ -1946,17 +2140,32 @@ const fi = {
 
     // Tool and Reasoning Elements
     iteration: 'Iteraatio',
+    thinking: 'Ajattelee…',
+    thoughtForOneSecond: 'Ajatteli 1 sekunnin ajan',
+    thoughtForSeconds: 'Ajatteli {duration} sekunnin ajan',
     error: 'Virhe',
     likeThisResponse: 'Tykkää tästä vastauksesta',
     dislikeThisResponse: 'Älä tykkää tästä vastauksesta',
     thisResponseWasGeneratedThrough: 'Tämä vastaus luotiin',
     ofReasoningAndToolUsage: 'ajattelun ja työkalujen avulla',
+    toolParameters: 'Parametrit',
+    toolResult: 'Tulos',
+    toolStatus: {
+      pending: 'Odottaa',
+      running: 'Käynnissä',
+      approvalRequested: 'Odottaa hyväksyntää',
+      approvalResponded: 'Hyväksyntään vastattu',
+      completed: 'Valmis',
+      error: 'Virhe',
+      denied: 'Hylätty',
+    },
   },
 
   // === USER MANAGEMENT ===
   users: {
     inviteUser: 'Kutsu käyttäjä',
     changeProfilePicture: 'Vaihda profiilikuva',
+    profilePicture: 'Profiilikuva',
     firstName: 'Etunimi',
     lastName: 'Sukunimi',
     phone: 'Puhelinnumero',
@@ -1976,6 +2185,9 @@ const fi = {
     declineInvitation: 'Hylkää kutsu',
     workspaceInvitation: 'Kutsu työtilaan',
     workspaceInvitationDescription: 'Sinut on kutsuttu liittymään työtilaan',
+    invalidInvitation: 'Virheellinen kutsu',
+    invalidInvitationDescription:
+      'Kutsulinkki on virheellinen tai vanhentunut. Ota yhteyttä tukeen.',
     invitedBy: 'Kutsuja',
     workspace: 'Työtila',
     role: 'Rooli',
@@ -1985,8 +2197,8 @@ const fi = {
     expires: 'Vanhenee',
     accept: 'Hyväksy',
     decline: 'Hylkää',
-    accepting: 'Hyväksytään...',
-    declining: 'Hylätään...',
+    accepting: 'Hyväksytään…',
+    declining: 'Hylätään…',
     asRole: 'roolissa',
   },
 
@@ -1994,6 +2206,7 @@ const fi = {
     apiTokens: 'API avaimet',
     createAPIToken: 'Luo API avain',
     validFor: 'Voimassa (sekunneissa)',
+    enterSeconds: 'Anna sekuntimäärä',
     expiresAt: 'Vanhenee',
     expiresOn: 'Vanhenee',
     revokeToken: 'Poista avain',
@@ -2029,6 +2242,7 @@ const fi = {
     editPolicy: 'Muokkaa käyttöoikeutta',
     deletePolicyDescription:
       'Haluatko varmasti poistaa tämän käyttöoikeuden? Tätä toimintoa ei voi peruuttaa.',
+    deletePolicy: 'Poista käyttöoikeus',
     effect: 'Vaikutus',
     action: 'Toiminto',
     resource: 'Resurssi',
@@ -2036,7 +2250,7 @@ const fi = {
     resourceId: 'Resurssin tunniste (valinnainen)',
     error: 'Virhe käyttöoikeuksien lataamisessa',
     noPolicies: 'Ei käyttöoikeuksia',
-    creating: 'Luodaan...',
+    creating: 'Luodaan…',
     effectAllow: 'Salli',
     effectDeny: 'Estä',
     actionRead: 'Lue',
@@ -2096,6 +2310,7 @@ const fi = {
       custom: 'Mukautettu',
       removeAccessConfirm:
         'Haluatko varmasti poistaa pääsyn? Tämä poistaa kaikki käyttöoikeudet tälle käyttäjälle/roolille tässä resurssissa.',
+      removeAccess: 'Poista pääsy',
       noOneHasAccess: 'Kenellekään ei ole myönnetty erityistä pääsyä',
       accessGranted: 'Pääsy myönnetty onnistuneesti',
       grantAccessPartial:
@@ -2126,6 +2341,21 @@ const fi = {
       noAccess: 'Ei pääsyä',
       denied: 'Estetty',
       additionalPolicies: 'lisäkäyttöoikeutta',
+      ownerSuffix: '(omistaja)',
+      resourceGroups: {
+        repository: 'Data-arkisto',
+        workflow: 'Prosessi',
+        connection: 'Yhteys',
+        query: 'Kysely',
+        script: 'Skripti',
+        aiApplication: 'Tekoälysovellus',
+        workspace: 'Työtila',
+        user: 'Käyttäjä',
+        policy: 'Käyttöoikeus',
+        auditLog: 'Audit-loki',
+        billing: 'Laskutus',
+        docs: 'Dokumentaatio',
+      },
     },
   },
 
@@ -2142,8 +2372,8 @@ const fi = {
     storedQueryLogs: 'Kyselyn audit lokit',
     policyLogs: 'Käyttöoikeuden audit lokit',
     repositoryObjectLogs: 'Data-arkiston objektin audit lokit',
-    waitingForLogs: 'Odotetaan lokeja...',
-    waitingForResults: 'Odotetaan tuloksia...',
+    waitingForLogs: 'Odotetaan lokeja…',
+    waitingForResults: 'Odotetaan tuloksia…',
   },
 
   // === CATALOG & LINEAGE (workspace documentation view) ===
@@ -2157,11 +2387,11 @@ const fi = {
       'Muistiinpanot ja dokumentaatio tälle resurssille. Näkyy työtilan katalogissa.',
     workspaceDocumentation: 'Työtilan katalogi',
     downloadPdf: 'Lataa PDF',
-    startTypingDocumentation: 'Aloita muistiinpanojen kirjoittaminen...',
+    startTypingDocumentation: 'Aloita muistiinpanojen kirjoittaminen…',
     schema: 'Datavirrat',
     workspace: 'Työtila',
     createdBy: 'Luonut',
-    searchPlaceholder: 'Hae dokumentaatiosta...',
+    searchPlaceholder: 'Hae dokumentaatiosta…',
     summaryTitle: 'Työtilan yhteenveto',
     summaryDescription:
       'Yhteenveto tämän työtilan data-arkistoista, yhteyksistä ja työnkuluista.',
@@ -2196,7 +2426,7 @@ const fi = {
     querySearchEmptyDescription:
       'Muuta hakutermiäsi nähdäksesi kyselyiden dokumentaatio.',
     aiApplicationSectionDescription:
-      'Tähän työtilaan kytketyt AI-sovellukset — mitä arkistoja ne lukevat ja mitä työkaluja ne tarjoavat.',
+      'Työtilaan yhdistetyt AI-sovellukset, niiden tietolähteet ja käytettävissä olevat työkalut.',
     aiApplicationSearchEmptyTitle: 'Yhtään AI-sovellusta ei vastaa hakuasi',
     aiApplicationSearchEmptyDescription:
       'Muuta hakutermiäsi nähdäksesi AI-sovellusten dokumentaatio.',
@@ -2220,7 +2450,7 @@ const fi = {
     schemaTitle: 'Tietovirrat',
     schemaIntro:
       'Visuaalinen näkymä työtilan yhteyksien, työnkulkujen ja arkistojen suhteista.',
-    schemaSearchPlaceholder: 'Hae työnkulkuja tai komponentteja...',
+    schemaSearchPlaceholder: 'Hae työnkulkuja tai komponentteja…',
     dataFlowsTitle: 'Tietovirrat',
     workflowRelationshipsEmptyDescription:
       'Säädä hakuehtoja nähdäksesi työnkulkujen suhteet.',
@@ -2238,10 +2468,19 @@ const fi = {
     noBranches: 'Haaroja ei löytynyt.',
     noGitTags: 'Git-tageja ei löytynyt.',
     noObjects: 'Objekteja ei löytynyt.',
-    loadingDetails: 'Ladataan tietoja...',
-    andMoreObjects: 'ja {count} lisää...',
+    loadingDetails: 'Ladataan tietoja…',
+    andMoreObjects: 'ja {count} lisää…',
     relatedWorkflows: 'Liittyvät työnkulut',
     relatedAIApplications: 'Liittyvät AI-sovellukset',
+    pdfAiApplicationFlowsDescription:
+      'Kunkin AI-sovelluksen käytettävissä olevat arkistot.',
+    pdfAccessLabel: 'Käyttöoikeus',
+    pdfLanguageLabel: 'Kieli',
+    pdfTypeLabel: 'Tyyppi',
+    pdfWorkflowCountOne: '{count} työnkulku',
+    pdfWorkflowCountOther: '{count} työnkulkua',
+    pdfRepositoryCountOne: '{count} arkisto',
+    pdfRepositoryCountOther: '{count} arkistoa',
   },
 
   // === LIST COMPONENTS ===
@@ -2252,7 +2491,7 @@ const fi = {
     lastUpdated: 'Päivitetty',
     createdAt: 'Luotu',
     immutable: 'Muuttumaton',
-    searchPlaceholder: 'Kirjoita hakusana...',
+    searchPlaceholder: 'Kirjoita hakusana…',
     noItemsFound: 'Ei kohteita',
     noItems: 'Ei kohteita',
     emptyState: {
@@ -2341,7 +2580,7 @@ const fi = {
     unwrapLabel: 'pura',
     fieldMappingStageDescription:
       'Käytä kenttien yhdistämistä nimien muuttamiseen, tyyppien vaihtamiseen tai rakenteen muuttamiseen',
-    addFieldPlaceholder: 'Kentän nimi...',
+    addFieldPlaceholder: 'Kentän nimi…',
     nestedFieldsTruncated: 'Syvempiä sisäkkäisiä kenttiä ei näytetä',
   },
 
@@ -2408,6 +2647,8 @@ const fi = {
     maxItems: 'Maksimimäärä',
     default: 'Oletusarvo',
     items: 'Taulukon alkiot',
+    itemsSchema: 'Alkioiden skeema',
+    none: 'Ei mitään',
     noStructured: 'Ei strukturoituja lapsia',
     noBinary: 'Ei binäärilapsia',
     noGroups: 'Ei ryhmälapsia',

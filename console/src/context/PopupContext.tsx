@@ -26,7 +26,7 @@ import Modal from '@/components/ui/popup/Modal';
  * in the console layout.
  *
  * @param irminAlert - Function to show an alert
- * @param irminConfirm - Async function to show a confirmation popup, resolves to a boolean (confirmed or not)
+ * @param irminConfirm - Async function to show a confirmation popup with a consequence-specific action label; resolves to a boolean
  * @param irminModal - Object with functions to show and close a modal
  *
  * @returns The popup context
@@ -39,7 +39,8 @@ type PopupContextType = {
   ) => void;
   irminConfirm: (
     _type: 'info' | 'warning',
-    _message: string
+    _message: string,
+    _confirmLabel: string
   ) => Promise<boolean>;
   irminModal: {
     show: (
@@ -65,10 +66,11 @@ const PopupContext = createContext<PopupContextType>({
  *
  * This allows popup UI (alerts, confirms, modals) to be rendered at any depth
  * in the React tree, so popup content can inherit context providers like
- * {@link WorkspaceProvider} that exist below the root layout.
+ * `WorkspaceProvider` that exist below the root layout.
  */
 type PopupRenderState = {
   alertState: {
+    id: number;
     type: 'error' | 'info' | 'success';
     message: JSX.Element | string;
     onClose: () => void;
@@ -76,6 +78,7 @@ type PopupRenderState = {
   confirmState: {
     type: 'info' | 'warning';
     message: string;
+    confirmLabel: string;
     onSelect: (_confirmed: boolean) => void;
   } | null;
   modalState: {
@@ -108,6 +111,7 @@ const PopupRenderer = ({ renderState }: { renderState: PopupRenderState }) => {
     <>
       {alertState && (
         <Alert
+          key={alertState.id}
           type={alertState.type}
           message={alertState.message}
           onClose={alertState.onClose}
@@ -117,6 +121,7 @@ const PopupRenderer = ({ renderState }: { renderState: PopupRenderState }) => {
         <Confirm
           type={confirmState.type}
           message={confirmState.message}
+          confirmLabel={confirmState.confirmLabel}
           onSelect={confirmState.onSelect}
         />
       )}
@@ -137,7 +142,7 @@ const PopupRenderer = ({ renderState }: { renderState: PopupRenderState }) => {
  * Provides popup state management for the entire application.
  *
  * By default, renders popup UI at this level in the tree. If a {@link PopupOutlet}
- * is mounted deeper in the tree (e.g. inside a {@link WorkspaceProvider}), it takes
+ * is mounted deeper in the tree (e.g. inside a `WorkspaceProvider`), it takes
  * over rendering so popup content inherits those deeper contexts.
  */
 export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
@@ -148,58 +153,56 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
   const [alertType, setAlertType] = useState<
     'error' | 'info' | 'success' | null
   >(null);
-  const alertTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [alertId, setAlertId] = useState(0);
+  const alertIdRef = useRef(0);
   const irminAlert = useCallback(
     (type: 'error' | 'info' | 'success', message: JSX.Element | string) => {
-      // Clear any existing timeout to prevent stale dismissals
-      if (alertTimeoutRef.current) {
-        clearTimeout(alertTimeoutRef.current);
-      }
+      alertIdRef.current += 1;
       setAlertType(type);
       setAlertMessage(message);
-      alertTimeoutRef.current = setTimeout(() => {
-        setAlertType(null);
-        setAlertMessage(null);
-        alertTimeoutRef.current = null;
-      }, 10000);
+      setAlertId(alertIdRef.current);
     },
     []
   );
-  const closeIrminAlert = useCallback(() => {
-    if (alertTimeoutRef.current) {
-      clearTimeout(alertTimeoutRef.current);
-      alertTimeoutRef.current = null;
-    }
+  const closeIrminAlert = useCallback((id?: number) => {
+    if (id !== undefined && id !== alertIdRef.current) return;
     setAlertType(null);
     setAlertMessage(null);
   }, []);
+  const closeCurrentAlert = useCallback(
+    () => closeIrminAlert(alertId),
+    [alertId, closeIrminAlert]
+  );
 
   // Handle confirmations
   const [confirmMessage, setConfirmMessage] = useState<string | null>(null);
+  const [confirmLabel, setConfirmLabel] = useState<string | null>(null);
   const [confirmType, setConfirmType] = useState<'info' | 'warning' | null>(
     null
   );
-  const [confirmResolver, setConfirmResolver] = useState<
-    ((_value: boolean) => void) | null
-  >(null);
-  const handleConfirmSelection = useCallback(
-    (confirmed: boolean) => {
-      if (confirmResolver) {
-        confirmResolver(confirmed); // Resolve the stored promise
-        setConfirmResolver(null); // Clear the resolver
-      }
-      setConfirmMessage(null);
-      setConfirmType(null);
-    },
-    [confirmResolver]
-  );
+  const confirmResolverRef = useRef<((_value: boolean) => void) | null>(null);
+  const handleConfirmSelection = useCallback((confirmed: boolean) => {
+    confirmResolverRef.current?.(confirmed);
+    confirmResolverRef.current = null;
+    setConfirmMessage(null);
+    setConfirmLabel(null);
+    setConfirmType(null);
+  }, []);
   const irminConfirm = useCallback(
-    (type: 'info' | 'warning', message: string): Promise<boolean> => {
+    (
+      type: 'info' | 'warning',
+      message: string,
+      consequenceLabel: string
+    ): Promise<boolean> => {
+      // A second request supersedes the visible one; settle the first promise
+      // instead of leaving its caller suspended indefinitely.
+      confirmResolverRef.current?.(false);
       setConfirmType(type);
       setConfirmMessage(message);
+      setConfirmLabel(consequenceLabel);
 
       return new Promise<boolean>((resolve) => {
-        setConfirmResolver(() => resolve); // Store the resolver function
+        confirmResolverRef.current = resolve;
       });
     },
     []
@@ -216,14 +219,16 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     (title: string, content: React.JSX.Element, onClose?: () => void) => {
       setModalTitle(title);
       setModalContent(content);
-      if (onClose) setModalOnClose(() => onClose);
+      setModalOnClose(onClose ? () => onClose : null);
       setModalOpen(true);
     },
     []
   );
   const closeModal = useCallback(() => {
     setModalOpen(false);
+    setModalContent(null);
     if (modalOnClose && typeof modalOnClose === 'function') modalOnClose();
+    setModalOnClose(null);
   }, [modalOnClose]);
 
   // Clear all popup state — used when the outlet unmounts to prevent stale
@@ -235,10 +240,9 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     setAlertMessage(null);
     setConfirmType(null);
     setConfirmMessage(null);
-    setConfirmResolver((prev: ((_value: boolean) => void) | null) => {
-      if (prev) prev(false);
-      return null;
-    });
+    setConfirmLabel(null);
+    confirmResolverRef.current?.(false);
+    confirmResolverRef.current = null;
     setModalOpen(false);
     setModalContent(null);
     setModalOnClose(null);
@@ -272,13 +276,19 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     () => ({
       alertState:
         alertMessage && alertType
-          ? { type: alertType, message: alertMessage, onClose: closeIrminAlert }
+          ? {
+              id: alertId,
+              type: alertType,
+              message: alertMessage,
+              onClose: closeCurrentAlert,
+            }
           : null,
       confirmState:
-        confirmMessage && confirmType
+        confirmMessage && confirmType && confirmLabel
           ? {
               type: confirmType,
               message: confirmMessage,
+              confirmLabel,
               onSelect: handleConfirmSelection,
             }
           : null,
@@ -294,9 +304,11 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
     [
       alertMessage,
       alertType,
-      closeIrminAlert,
+      alertId,
+      closeCurrentAlert,
       confirmMessage,
       confirmType,
+      confirmLabel,
       handleConfirmSelection,
       modalOpen,
       modalTitle,
@@ -321,7 +333,7 @@ export const PopupProvider = ({ children }: { children: React.ReactNode }) => {
  * Renders popup UI at its position in the React tree, taking over from the
  * default renderer in {@link PopupProvider}.
  *
- * Place this inside context providers (like {@link WorkspaceProvider}) so that
+ * Place this inside context providers (like `WorkspaceProvider`) so that
  * popup content (modals, alerts, confirms) inherits those contexts.
  *
  * @example

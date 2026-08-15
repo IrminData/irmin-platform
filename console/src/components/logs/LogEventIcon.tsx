@@ -1,35 +1,61 @@
 import {
-  AiOutlineDelete,
-  AiOutlineInfoCircle,
-  AiOutlineWarning,
-} from 'react-icons/ai';
-import { FaEdit, FaPlus, FaUserCheck, FaUserTimes } from 'react-icons/fa';
+  TbAlertCircle,
+  TbAlertTriangle,
+  TbInfoCircle,
+  TbPencil,
+  TbPlus,
+  TbTrash,
+  TbUserCheck,
+  TbUserX,
+} from 'react-icons/tb';
 
 import type { LogEventType } from '@/types/core/Log';
 
-/**
- * Component to display an icon for a log event according to its type.
- */
+const iconClassNames = {
+  default: 'size-5 shrink-0 text-foreground',
+  destructive: 'size-5 shrink-0 text-destructive',
+  info: 'size-5 shrink-0 text-muted-foreground',
+  success: 'size-5 shrink-0 text-success',
+  warning: 'size-5 shrink-0 text-warning',
+} as const;
+
+/** Component to display a semantic Tabler icon for a log event. */
 const LogEventIcon = ({ type }: { type: LogEventType }) => {
   switch (type) {
     case 'CREATE':
-      return <FaPlus className='text-green-500' size={22} />;
+      return <TbPlus aria-hidden='true' className={iconClassNames.success} />;
     case 'UPDATE':
-      return <FaEdit className='text-blue-500' size={22} />;
+      return <TbPencil aria-hidden='true' className={iconClassNames.default} />;
     case 'DELETE':
-      return <AiOutlineDelete className='text-red-500' size={22} />;
+      return (
+        <TbTrash aria-hidden='true' className={iconClassNames.destructive} />
+      );
     case 'LOGIN':
-      return <FaUserCheck className='text-green-500' size={22} />;
+      return (
+        <TbUserCheck aria-hidden='true' className={iconClassNames.success} />
+      );
     case 'LOGOUT':
-      return <FaUserTimes className='text-gray-500' size={22} />;
+      return <TbUserX aria-hidden='true' className={iconClassNames.info} />;
     case 'WARNING':
-      return <AiOutlineWarning className='text-yellow-500' size={22} />;
+      return (
+        <TbAlertTriangle
+          aria-hidden='true'
+          className={iconClassNames.warning}
+        />
+      );
     case 'ERROR':
-      return <AiOutlineDelete className='text-red-500' size={22} />;
+      return (
+        <TbAlertCircle
+          aria-hidden='true'
+          className={iconClassNames.destructive}
+        />
+      );
     case 'INFO':
-      return <AiOutlineInfoCircle className='text-blue-500' size={22} />;
+      return (
+        <TbInfoCircle aria-hidden='true' className={iconClassNames.info} />
+      );
     default:
-      return <></>;
+      return null;
   }
 };
 

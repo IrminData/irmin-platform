@@ -1,6 +1,6 @@
 'use client';
 
-import { IoAdd, IoClose, IoSave } from 'react-icons/io5';
+import { TbDeviceFloppy, TbPlus, TbX } from 'react-icons/tb';
 
 import ScriptHelper from '@/components/scripts/helper/ScriptHelper';
 import { Button } from '@/components/ui/button';
@@ -40,9 +40,8 @@ const EditorWithTabs = () => {
       {openTabs.length > 0 && (
         <div
           className={`
-            mb-0 flex items-center justify-between gap-1 border-b
-            border-gray-200 pr-2 pb-0
-            dark:border-gray-800
+            mb-0 flex items-center justify-between gap-1 border-b border-border
+            pr-2 pb-0
           `}
         >
           <div
@@ -58,50 +57,60 @@ const EditorWithTabs = () => {
               >
                 <button
                   type='button'
+                  aria-pressed={activeTab === index}
                   className={`
                     scrollbar-hide max-w-32 min-w-20 overflow-x-scroll px-2 py-1
                     text-sm whitespace-nowrap
                     hover:no-underline
+                    focus-visible:outline-2 focus-visible:outline-offset-2
+                    focus-visible:outline-accent
                   `}
                   onClick={() => setActiveTab(index)}
                 >
-                  {tab.name || 'Untitled'}
+                  {tab.name || dict.assistant.untitledConversation}
                 </button>
                 <button
                   type='button'
+                  aria-label={`${dict.common.close}: ${tab.name || dict.assistant.untitledConversation}`}
                   className={`
                     cursor-pointer border-none p-1
                     hover:opacity-70
+                    focus-visible:outline-2 focus-visible:outline-offset-2
+                    focus-visible:outline-accent
                   `}
                   onClick={() => closeTab(tab.id)}
                 >
-                  <IoClose size={12} />
+                  <TbX aria-hidden='true' size={12} />
                 </button>
               </div>
             ))}
             <button
               type='button'
+              aria-label={dict.scripts.newScriptTitle}
               className={`
-                cursor-pointer rounded-md border-none p-2
-                hover:bg-gray-100
-                dark:hover:bg-gray-800
+                cursor-pointer rounded-[2px] border-none p-2 transition-colors
+                hover:bg-muted
+                focus-visible:outline-2 focus-visible:outline-offset-2
+                focus-visible:outline-accent
               `}
               onClick={() => openNewTab()}
             >
-              <IoAdd size={16} />
+              <TbPlus aria-hidden='true' size={16} />
             </button>
           </div>
           <div className='flex items-center gap-2'>
             <div className='flex items-center gap-2'>
               <select
                 id='language-select'
+                aria-label={dict.common.selectLanguage}
                 value={currentTab?.language || 'go'}
                 onChange={(e) => changeLanguage(e.target.value)}
                 disabled={currentTab?.isSaved}
                 className={`
-                  w-24 rounded-md border bg-background px-2 py-1 text-sm
+                  w-24 rounded-[2px] border border-input bg-background px-2 py-1
+                  text-base
                   disabled:opacity-50
-                  dark:border-gray-700
+                  md:text-sm
                 `}
               >
                 <option value='go'>Go</option>
@@ -114,9 +123,9 @@ const EditorWithTabs = () => {
             />
             <Button
               onClick={saveCurrentTab}
-              variant='default'
+              variant='accent'
               size='sm'
-              icon={<IoSave />}
+              icon={<TbDeviceFloppy />}
               disabled={!enableSaveButton}
             >
               {dict.common.save}

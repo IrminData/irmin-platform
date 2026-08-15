@@ -57,12 +57,9 @@ export default function AssistantSheet({
         <ButtonWithTooltip
           onClick={() => setIsOpen(true)}
           size='icon'
-          variant='gradient'
+          variant='accent'
           tooltip={dict.assistant.title}
-          className={`
-            size-12 rounded-full shadow-lg transition-shadow duration-200
-            hover:shadow-xl
-          `}
+          className='size-12'
           aria-label={dict.assistant.title}
         >
           <TbCircle className='size-6' />

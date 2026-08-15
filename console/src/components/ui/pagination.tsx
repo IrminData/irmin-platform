@@ -1,4 +1,4 @@
-import type { ComponentProps, MouseEvent } from 'react';
+import type { ComponentProps } from 'react';
 
 import { TbChevronLeft, TbChevronRight, TbDots } from 'react-icons/tb';
 
@@ -7,10 +7,14 @@ import { buttonVariants } from '@/components/ui/button';
 
 import { cn } from '@/utils/tw';
 
-function Pagination({ className, ...props }: ComponentProps<'nav'>) {
+type PaginationProps = ComponentProps<'nav'> & {
+  label: string;
+};
+
+function Pagination({ className, label, ...props }: PaginationProps) {
   return (
     <nav
-      aria-label='pagination'
+      aria-label={label}
       data-slot='pagination'
       className={cn('mx-auto flex w-full justify-center', className)}
       {...props}
@@ -33,28 +37,21 @@ function PaginationItem({ ...props }: ComponentProps<'li'>) {
 }
 
 type PaginationLinkProps = Pick<ComponentProps<typeof Button>, 'size'> &
-  ComponentProps<'a'> & {
+  Omit<ComponentProps<'button'>, 'size'> & {
     isActive?: boolean;
-    label?: string;
-    hideLabel?: boolean;
   };
 
 function PaginationLink({
   className,
   isActive,
   size = 'icon',
+  type = 'button',
   ...props
 }: PaginationLinkProps) {
   return (
-    <a
-      role='button'
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          props.onClick?.(e as unknown as MouseEvent<HTMLAnchorElement>);
-        }
-      }}
+    <button
+      {...props}
+      type={type}
       aria-current={isActive ? 'page' : undefined}
       data-slot='pagination-link'
       data-active={isActive}
@@ -65,22 +62,31 @@ function PaginationLink({
         }),
         className
       )}
-      {...props}
     >
       {props.children}
-    </a>
+    </button>
   );
 }
 
+type PaginationDirectionProps = Omit<
+  ComponentProps<typeof PaginationLink>,
+  'aria-label' | 'children'
+> & {
+  accessibleLabel: string;
+  label: string;
+  hideLabel?: boolean;
+};
+
 function PaginationPrevious({
   className,
+  accessibleLabel,
   label,
   hideLabel,
   ...props
-}: ComponentProps<typeof PaginationLink>) {
+}: PaginationDirectionProps) {
   return (
     <PaginationLink
-      aria-label='Go to previous page'
+      aria-label={accessibleLabel}
       size='default'
       className={cn(
         `
@@ -91,7 +97,7 @@ function PaginationPrevious({
       )}
       {...props}
     >
-      <TbChevronLeft />
+      <TbChevronLeft aria-hidden='true' />
       {!hideLabel && (
         <span
           className={`
@@ -99,7 +105,7 @@ function PaginationPrevious({
             sm:block
           `}
         >
-          {label ?? 'Previous'}
+          {label}
         </span>
       )}
     </PaginationLink>
@@ -108,13 +114,14 @@ function PaginationPrevious({
 
 function PaginationNext({
   className,
+  accessibleLabel,
   label,
   hideLabel,
   ...props
-}: ComponentProps<typeof PaginationLink>) {
+}: PaginationDirectionProps) {
   return (
     <PaginationLink
-      aria-label='Go to next page'
+      aria-label={accessibleLabel}
       size='default'
       className={cn(
         `
@@ -132,24 +139,27 @@ function PaginationNext({
             sm:block
           `}
         >
-          {label ?? 'Next'}
+          {label}
         </span>
       )}
-      <TbChevronRight />
+      <TbChevronRight aria-hidden='true' />
     </PaginationLink>
   );
 }
 
-function PaginationEllipsis({ className, ...props }: ComponentProps<'span'>) {
+function PaginationEllipsis({
+  className,
+  label,
+  ...props
+}: ComponentProps<'span'> & { label: string }) {
   return (
     <span
-      aria-hidden
       data-slot='pagination-ellipsis'
       className={cn('flex size-9 items-center justify-center', className)}
       {...props}
     >
-      <TbDots className='size-4' />
-      <span className='sr-only'>More pages</span>
+      <TbDots aria-hidden='true' className='size-4' />
+      <span className='sr-only'>{label}</span>
     </span>
   );
 }

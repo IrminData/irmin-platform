@@ -35,16 +35,26 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
     const baseClasses = `
       relative inline-flex w-full items-center justify-center border-0
       border-b border-input bg-transparent
-      transition-colors duration-150
-      focus-within:border-accent
-      aria-[invalid=true]:border-destructive
+      transition-[border-color,border-width] duration-150
+      focus-within:border-b-2 focus-within:border-accent
       has-[input:disabled]:pointer-events-none
       has-[input:disabled]:opacity-50
       has-[textarea:disabled]:pointer-events-none
       has-[textarea:disabled]:opacity-50
     `;
 
-    const combinedClasses = cn(baseClasses, className, icon ? 'min-w-32' : '');
+    const invalid =
+      props['aria-invalid'] === true || props['aria-invalid'] === 'true';
+    const combinedClasses = cn(
+      baseClasses,
+      className,
+      icon ? 'min-w-32' : '',
+      invalid &&
+        `
+          border-destructive
+          focus-within:border-destructive
+        `
+    );
 
     if (longtext) {
       // Textarea doesn't support type attribute, so we need to handle password masking separately
@@ -53,20 +63,28 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
         props as TextareaHTMLAttributes<HTMLTextAreaElement>;
 
       return (
-        <div className={combinedClasses}>
+        <div className={combinedClasses} aria-busy={loading || undefined}>
           {icon && (
-            <span className='absolute left-0 text-sm text-muted-foreground'>
+            <span
+              aria-hidden='true'
+              className='
+                pointer-events-none absolute inset-s-0 text-sm
+                text-muted-foreground
+              '
+            >
               {icon}
             </span>
           )}
           <textarea
             className={cn(
               `
-                w-full bg-transparent py-2 pr-1
+                field-sizing-content min-h-24 w-full resize-y bg-transparent
+                py-2 pe-1 text-base
                 placeholder:text-muted-foreground/70
                 focus:outline-hidden
+                md:text-sm
               `,
-              icon ? 'pl-8' : 'pl-0'
+              icon ? 'ps-8' : 'ps-0'
             )}
             style={
               isPassword
@@ -74,15 +92,16 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
                 : undefined
             }
             ref={ref as Ref<HTMLTextAreaElement>}
-            rows={longtext.rows}
             {...textareaProps}
+            rows={longtext.rows}
+            aria-busy={loading || undefined}
           />
           {loading && (
-            <div className='absolute right-0'>
+            <div aria-hidden='true' className='absolute inset-e-0'>
               <div
                 className={`
                   inline size-4 animate-spin rounded-full border-2 border-t-2
-                  border-muted-foreground
+                  border-muted border-t-current text-muted-foreground
                 `}
               />
             </div>
@@ -92,9 +111,15 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
     }
 
     return (
-      <div className={combinedClasses}>
+      <div className={combinedClasses} aria-busy={loading || undefined}>
         {icon && (
-          <span className='absolute left-0 text-sm text-muted-foreground'>
+          <span
+            aria-hidden='true'
+            className='
+              pointer-events-none absolute inset-s-0 text-sm
+              text-muted-foreground
+            '
+          >
             {icon}
           </span>
         )}
@@ -102,21 +127,23 @@ const Input = forwardRef<HTMLInputElement | HTMLTextAreaElement, InputProps>(
           type={type}
           className={cn(
             `
-              w-full bg-transparent py-2.5 pr-1 text-[1rem]
+              w-full bg-transparent py-2.5 pe-1 text-base
               placeholder:text-muted-foreground/70
               focus:outline-hidden
+              md:text-sm
             `,
-            icon ? 'pl-8' : 'pl-0'
+            icon ? 'ps-8' : 'ps-0'
           )}
           ref={ref as Ref<HTMLInputElement>}
           {...props}
+          aria-busy={loading || undefined}
         />
         {loading && (
-          <div className='absolute right-0'>
+          <div aria-hidden='true' className='absolute inset-e-0'>
             <div
               className={`
                 inline size-4 animate-spin rounded-full border-2 border-t-2
-                border-muted-foreground
+                border-muted border-t-current text-muted-foreground
               `}
             />
           </div>

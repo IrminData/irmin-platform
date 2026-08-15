@@ -4,6 +4,10 @@ import { useSyncExternalStore } from 'react';
 
 import Link from 'next/link';
 
+import {
+  almanacClerkElements,
+  getAlmanacPrimaryColor,
+} from '@/config/appearance';
 import { clientEnv } from '@/config/env.client';
 import { SignUp } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
@@ -26,7 +30,7 @@ const getFalse = () => false;
  */
 const SignUpSection = () => {
   const { resolvedTheme } = useTheme();
-  const { locale } = useLocale();
+  const { dict, locale } = useLocale();
   const mounted = useSyncExternalStore(noopSubscribe, getTrue, getFalse);
 
   return (
@@ -44,7 +48,7 @@ const SignUpSection = () => {
             transition-opacity
             hover:opacity-80
           `}
-          aria-label='Go to website'
+          aria-label={dict.consoleNavigation.goToWebsite}
         >
           <Logo
             className='
@@ -62,7 +66,10 @@ const SignUpSection = () => {
           signInUrl={`/${locale}/sign-in`}
           appearance={{
             theme: resolvedTheme === 'dark' ? dark : undefined,
-            variables: { colorPrimary: '#a3c2ac' },
+            elements: almanacClerkElements,
+            variables: {
+              colorPrimary: getAlmanacPrimaryColor(resolvedTheme),
+            },
           }}
         />
       )}

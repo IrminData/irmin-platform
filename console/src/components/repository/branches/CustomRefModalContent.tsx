@@ -93,7 +93,7 @@ export default function CustomRefModalContent({
                 placeholder={dict.repository.compare.customRefPlaceholder}
               />
               {errors.customRef && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.customRef.message}
                 </p>
               )}
@@ -112,7 +112,7 @@ export default function CustomRefModalContent({
           {dict.common.cancel}
         </Button>
         <Button
-          variant='default'
+          variant='accent'
           className='w-full'
           type='submit'
           loading={loading}

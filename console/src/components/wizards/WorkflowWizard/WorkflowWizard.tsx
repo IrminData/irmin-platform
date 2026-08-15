@@ -3,7 +3,7 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useCallback, useMemo, useState } from 'react';
 
-import { IoInformationCircle } from 'react-icons/io5';
+import { TbInfoCircle } from 'react-icons/tb';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -182,9 +182,7 @@ export default function WorkflowWizard({
             dark:border-accent-foreground dark:bg-accent/10
           `}
         >
-          <IoInformationCircle
-            className={`mt-0.5 size-5 shrink-0 text-accent`}
-          />
+          <TbInfoCircle className={`mt-0.5 size-5 shrink-0 text-accent`} />
           <p className={`text-sm text-foreground`}>{workflowTypeDescription}</p>
         </div>
       )}

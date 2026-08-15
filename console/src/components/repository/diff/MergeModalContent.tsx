@@ -119,7 +119,7 @@ export default function MergeModalContent({
           )}
         />
         {errors.description && (
-          <p className='mt-1 text-xs text-red-600'>
+          <p className='mt-1 text-xs text-destructive'>
             {errors.description.message}
           </p>
         )}
@@ -179,7 +179,7 @@ export default function MergeModalContent({
         className='mt-4 h-11 w-full'
         type='submit'
         size='sm'
-        variant='default'
+        variant='accent'
         disabled={loading}
       >
         {dict.repository.compare.merge}

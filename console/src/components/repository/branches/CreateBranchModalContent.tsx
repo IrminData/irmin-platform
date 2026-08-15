@@ -82,7 +82,7 @@ export default function CreateBranchModalContent({
             <>
               <Input {...field} disabled={loading} />
               {errors.branchName && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.branchName.message}
                 </p>
               )}
@@ -117,7 +117,7 @@ export default function CreateBranchModalContent({
                 </SelectContent>
               </Select>
               {errors.fromBranch && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.fromBranch.message}
                 </p>
               )}
@@ -126,7 +126,7 @@ export default function CreateBranchModalContent({
         />
       </div>
       <Button
-        variant='default'
+        variant='accent'
         className='w-full'
         type='submit'
         loading={loading}

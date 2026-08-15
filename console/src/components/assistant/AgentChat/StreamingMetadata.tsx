@@ -124,8 +124,8 @@ export const StreamingMetadata = ({
           <div
             key={`streaming-error-${index}`}
             className={`
-              mt-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm
-              text-red-700
+              mt-4 rounded-[2px] border border-destructive/30 bg-destructive/10
+              p-3 text-sm text-foreground
             `}
           >
             <div className='mb-1 font-medium'>{dict.assistant.error}</div>

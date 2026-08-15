@@ -169,7 +169,7 @@ export default function SelectConnectorStep({
           onClick={() => {
             irminAlert('info', dict.connectors.customConnectorNotAvailable);
           }}
-          aria-label='Add custom connector'
+          aria-label={dict.connections.create.addCustomConnector}
         >
           {dict.connections.create.addCustomConnector}
         </Button>
@@ -179,7 +179,7 @@ export default function SelectConnectorStep({
           icon={<TbHelp size={16} />}
           href='/contact'
           target='_blank'
-          aria-label='Go to support page'
+          aria-label={dict.wizard.goToSupportPage}
         >
           {dict.connections.create.contactSupport}
         </Button>

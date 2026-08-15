@@ -292,8 +292,8 @@ export default function ReviewAndCreateStep({
                   <div className='flex items-center gap-3'>
                     <span
                       className={`
-                        rounded-sm bg-irmin-blue-100 px-2 py-1 text-xs
-                        font-medium text-irmin-blue-700
+                        rounded-[2px] border border-chart-2/30 bg-chart-2/10
+                        px-2 py-1 text-xs font-medium text-foreground
                       `}
                     >
                       {mapping.source_field}
@@ -301,8 +301,8 @@ export default function ReviewAndCreateStep({
                     <span className='text-xs text-muted-foreground'>→</span>
                     <span
                       className={`
-                        rounded-sm bg-irmin-green-100 px-2 py-1 text-xs
-                        font-medium text-irmin-green-700
+                        rounded-[2px] border border-success/30 bg-success/10
+                        px-2 py-1 text-xs font-medium text-foreground
                       `}
                     >
                       {mapping.destination_field}
@@ -321,25 +321,12 @@ export default function ReviewAndCreateStep({
       {/* Creation Progress */}
       {isAnyCreating && (
         <div
-          className={`
-            rounded-[2px] bg-blue-50 p-4
-            dark:bg-blue-900/20
-          `}
+          className={`rounded-[2px] border border-chart-2/30 bg-chart-2/10 p-4`}
         >
-          <div
-            className={`
-              mb-2 text-sm font-medium text-blue-900
-              dark:text-blue-100
-            `}
-          >
+          <div className={`mb-2 text-sm font-medium text-foreground`}>
             {dict.wizard.settingUpDataImport}
           </div>
-          <div
-            className={`
-              space-y-2 text-xs text-blue-700
-              dark:text-blue-300
-            `}
-          >
+          <div className={`space-y-2 text-xs text-muted-foreground`}>
             {creationProgress.connection && (
               <div>• {dict.wizard.creatingConnection}</div>
             )}

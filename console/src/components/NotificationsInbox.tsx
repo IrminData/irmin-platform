@@ -4,6 +4,7 @@ import { memo } from 'react';
 
 import { useRouter } from 'next/navigation';
 
+import { getAlmanacPrimaryColor } from '@/config/appearance';
 import { clientEnv } from '@/config/env.client';
 import { Inbox, InboxContent } from '@novu/react';
 import { dark } from '@novu/react/themes';
@@ -41,7 +42,7 @@ const NotificationsInbox = ({ profile }: { profile: User }) => {
       routerPush={(path: string) => router.push(path)}
       appearance={{
         variables: {
-          colorPrimary: '#a3c2ac',
+          colorPrimary: getAlmanacPrimaryColor(resolvedTheme),
         },
         baseTheme: resolvedTheme === 'dark' ? dark : undefined,
       }}

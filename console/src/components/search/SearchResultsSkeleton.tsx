@@ -16,41 +16,28 @@ export default function SearchResultsSkeleton() {
   );
 
   return (
-    <div
-      className={`
-        px-2 pt-2
-        lg:px-4 lg:pt-4
-      `}
-    >
+    <div className='space-y-8'>
       {[...Array(3)].map((_, sectionIndex) => (
-        <div
-          key={sectionKeys[sectionIndex]}
-          className={`
-            mb-2
-            lg:mb-4
-          `}
-        >
+        <div key={sectionKeys[sectionIndex]} className='space-y-4'>
           {/* Section header skeleton */}
-          <div
-            className={`
-              mb-1 flex items-center pl-2
-              lg:mb-2
-            `}
-          >
-            <div className='size-5 animate-pulse rounded-sm bg-muted' />
-            <LoadingSkeleton className='ml-2 h-4 w-24' />
+          <div className='flex items-center gap-2'>
+            <div className='size-5 animate-pulse rounded-[2px] bg-muted' />
+            <LoadingSkeleton className='h-5 w-28' />
           </div>
 
           {/* Section items skeleton */}
-          <ul className='space-y-1'>
+          <ul className='grid gap-4'>
             {[...Array(2 + sectionIndex)].map((_, itemIndex) => (
               <li
                 key={itemKeys[sectionIndex][itemIndex]}
-                className='rounded-lg p-2'
+                className='rounded-[2px] border border-border bg-card p-4'
               >
-                <div className='space-y-2'>
-                  <LoadingSkeleton className='h-4 w-full max-w-xs' />
-                  <LoadingSkeleton className='h-3 w-full max-w-md opacity-60' />
+                <div className='flex items-start gap-3'>
+                  <LoadingSkeleton className='size-4 shrink-0' />
+                  <div className='w-full space-y-2'>
+                    <LoadingSkeleton className='h-6 w-full max-w-xs' />
+                    <LoadingSkeleton className='h-4 w-full max-w-md opacity-60' />
+                  </div>
                 </div>
               </li>
             ))}
