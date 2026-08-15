@@ -8,7 +8,7 @@ export const agentConfig: AgentConfig = {
   supportsStreaming: true,
   // Include minimal core docs statically (avoids ~1.5s embedding latency)
   // Keep this small (~4KB) to minimize time-to-first-token
-  // Agent can use irmin_documentation_hyde_search tool for deeper queries about specific topics
+  // The agent can use documentation search capabilities for deeper queries.
   staticDocs: 'core', // concepts only (~4KB)
   contextRequirements: [
     // Connection context
@@ -63,7 +63,7 @@ export const agentConfig: AgentConfig = {
       name: 'irmin-documentation',
       required: false,
       description:
-        'Core Irmin documentation covering concepts, connections, and workflows. This is statically injected from local files for fast context loading. For deeper queries, use the irmin_documentation_hyde_search or irmin_documentation_retrieve tools.',
+        'Core Irmin documentation covering concepts, connections, and workflows. This is statically injected from local files for fast context loading. For deeper queries, use the available documentation retrieval capability.',
     },
   ],
 };

@@ -39,5 +39,5 @@
   rate.
 - [ ] After one healthy release at 100% OpenRouter, remove the temporary direct
   Anthropic adapter, credential, package, and rollback backend modes.
-- [ ] Add generic pending-operation staging and replay for destructive tools on
-  the user MCP endpoint; until then the AI runtime withholds those descriptors.
+- [x] Add generic pending-operation staging and authenticated one-time replay
+  for destructive tools on the user MCP endpoint and Agent chat.
