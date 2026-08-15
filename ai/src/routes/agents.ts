@@ -2,8 +2,6 @@ import { AgentsManager } from '@/agents';
 import { conversations, db, modelRuns } from '@/database';
 import { MODEL_PROFILE } from '@/inference';
 import { createRunEventStream } from '@/protocol/runEvents';
-import { sanitizeBrowserMessage } from '@/protocol/sanitizeBrowserMessage';
-import type { StoredMessage } from '@langchain/core/messages';
 import { eq } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 import { ulid } from 'ulid';
@@ -91,15 +89,6 @@ export async function agentRoutes(fastify: FastifyInstance) {
         // Report AI usage (fire-and-forget)
         reportAIUsage(workspaceContext.workspace.id).catch(() => undefined);
 
-        // Serialize LangChain messages using their toDict method
-        const serializedMessages =
-          response.agentResponse.messages
-            ?.filter((message) => message.getType() !== 'system')
-            .map(
-              (message) =>
-                sanitizeBrowserMessage(message.toDict()) as StoredMessage
-            ) ?? [];
-
         // Add conversation ID to response headers
         reply.header('X-Conversation-Id', response.conversationId);
         reply.header('X-Agent-Id', agentId);
@@ -108,8 +97,9 @@ export async function agentRoutes(fastify: FastifyInstance) {
           reply,
           AgentResponseSchema,
           {
-            ...response.agentResponse,
-            messages: serializedMessages,
+            conversationId: response.conversationId,
+            metadata: response.agentResponse.metadata,
+            specialistResult: response.agentResponse.specialistResult,
           },
           fastify.log
         );

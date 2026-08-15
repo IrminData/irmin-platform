@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 
 import { TbSend, TbTrash } from 'react-icons/tb';
 
-import { getMessageContent } from '@/components/assistant/AgentChat/storedMessageHelpers';
 import { Response } from '@/components/ui/ai-elements/response';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -150,23 +149,24 @@ export function ScriptGenerationChat({
         }
 
         const data: AIAgentExecuteResponse = await response.json();
-
-        if (data.messages && data.messages.length > 0) {
-          const lastMessage = data.messages[data.messages.length - 1];
-          const content = getMessageContent(lastMessage);
-
-          if (content.trim()) {
-            const assistantMessage: ChatMessage = {
+        const result = data.specialistResult;
+        const content =
+          result?.kind === 'go'
+            ? result.code
+            : result?.kind === 'clarification'
+              ? result.message
+              : '';
+        if (!content.trim()) {
+          setError(dict.scriptHelper.scriptGeneration.error);
+        } else {
+          setMessages((prev) => [
+            ...prev,
+            {
               id: `assistant-${Date.now()}`,
               role: 'assistant',
-              content: content.trim(),
-            };
-            setMessages((prev) => [...prev, assistantMessage]);
-          } else {
-            setError(dict.scriptHelper.scriptGeneration.error);
-          }
-        } else {
-          setError(dict.scriptHelper.scriptGeneration.error);
+              content,
+            },
+          ]);
         }
       } catch (err) {
         const errorMessage =

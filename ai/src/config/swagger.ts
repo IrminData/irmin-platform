@@ -213,7 +213,7 @@ export const swaggerSchemas = {
     tags: ['Agents'],
     summary: 'Execute an agent (non-streaming)',
     description:
-      'Executes a specific agent with the provided message and context. Returns a complete response. Supports iterative tool calling via LangGraph when tools are available.',
+      'Executes a specialist agent with the provided message and context. Returns a typed SQL, Go, or clarification result without provider or LangChain message structures.',
     security: [{ bearerAuth: [], workspaceHeader: [] }],
     params: {
       type: 'object',
@@ -251,13 +251,36 @@ export const swaggerSchemas = {
         description: 'Agent execution successful',
         type: 'object',
         properties: {
-          messages: {
-            type: 'array',
-            description: 'Array of LangChain messages',
-            items: {
-              type: 'object',
-              additionalProperties: true,
-            },
+          specialistResult: {
+            oneOf: [
+              {
+                type: 'object',
+                additionalProperties: false,
+                required: ['kind', 'sql'],
+                properties: {
+                  kind: { const: 'sql' },
+                  sql: { type: 'string' },
+                },
+              },
+              {
+                type: 'object',
+                additionalProperties: false,
+                required: ['kind', 'code'],
+                properties: {
+                  kind: { const: 'go' },
+                  code: { type: 'string' },
+                },
+              },
+              {
+                type: 'object',
+                additionalProperties: false,
+                required: ['kind', 'message'],
+                properties: {
+                  kind: { const: 'clarification' },
+                  message: { type: 'string' },
+                },
+              },
+            ],
           },
           conversationId: { type: 'string' },
           metadata: {
@@ -274,7 +297,7 @@ export const swaggerSchemas = {
     tags: ['Agents'],
     summary: 'Execute an agent (streaming)',
     description:
-      'Executes a specific agent with streaming response. Returns a stream of response chunks including tool calls, thinking steps, and final results. Supports iterative tool calling via LangGraph when tools are available.',
+      'Executes an agent as a versioned provider-neutral RunEventV1 NDJSON stream. Raw reasoning, tool payloads, exact usage, and provider events remain server-side.',
     security: [{ bearerAuth: [], workspaceHeader: [] }],
     params: {
       type: 'object',
@@ -309,14 +332,13 @@ export const swaggerSchemas = {
     },
     response: {
       200: {
-        description:
-          'Streaming response (text/plain) with JSON chunks for different event types',
+        description: 'RunEventV1 newline-delimited JSON stream',
         content: {
-          'text/plain': {
+          'application/x-ndjson': {
             schema: {
               type: 'string',
               description:
-                'Stream of JSON chunks separated by newlines. Event types include: iteration, tool_calls, tool_result, thinking, completed, error',
+                'Monotonic RunEventV1 envelopes ending in run.completed, run.failed, or run.cancelled',
             },
           },
         },

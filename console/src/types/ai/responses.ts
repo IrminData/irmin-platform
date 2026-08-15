@@ -1,4 +1,3 @@
-import type { StoredMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 
 import { AIAgentSchema, AIConversationSchema } from './base';
@@ -29,9 +28,15 @@ export const AIAgentsListResponseSchema = z.object({
 });
 
 export const AIAgentExecuteResponseSchema = z.object({
-  messages: z.array(z.custom<StoredMessage>()).optional(),
   conversationId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  specialistResult: z
+    .discriminatedUnion('kind', [
+      z.object({ kind: z.literal('sql'), sql: z.string() }),
+      z.object({ kind: z.literal('go'), code: z.string() }),
+      z.object({ kind: z.literal('clarification'), message: z.string() }),
+    ])
+    .optional(),
 });
 
 export const AIUserInfoResponseSchema = z.object({

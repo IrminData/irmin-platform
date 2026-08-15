@@ -84,6 +84,20 @@ export async function POST(req: NextRequest, context: RouteContext) {
     const token = await resolveToken(req);
     const client = new AgentsClient(token, workspaceSlug);
 
+    const config = await client.getAgentConfig(agentId);
+    if (!config.supportsStreaming) {
+      const { data, conversationId } = await client.executeAgent(
+        agentId,
+        executeRequest,
+        req.signal
+      );
+      return NextResponse.json(data, {
+        headers: {
+          ...(conversationId && { 'X-Conversation-Id': conversationId }),
+        },
+      });
+    }
+
     const { stream, conversationId, runId } = await client.executeAgentStream(
       agentId,
       executeRequest,
