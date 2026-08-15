@@ -35,6 +35,10 @@ export interface AgentInput {
   authToken?: string;
   workspace: Workspace;
   user: User;
+  /** Cancels model and tool work when the upstream request disconnects. */
+  signal?: AbortSignal;
+  /** Internal specialist calls disable checkpoint persistence. */
+  persistConversation?: boolean;
 }
 
 export interface AgentResponse {

@@ -207,6 +207,7 @@ const AgentChat = ({
     if (!text) return;
 
     let responseConversationId: string | null = null;
+    let requestController: AbortController | null = null;
 
     try {
       setInput('');
@@ -216,8 +217,8 @@ const AgentChat = ({
       streamingState.setStreamingMessageId(`temp-${Date.now()}`);
       setPendingUserMessage(null);
 
-      const controller = new AbortController();
-      streamingState.setAbortController(controller);
+      requestController = new AbortController();
+      streamingState.setAbortController(requestController);
 
       const userMessage: StoredMessage = {
         type: 'human',
@@ -240,6 +241,7 @@ const AgentChat = ({
       const response = await executeAgentStreamMutation.mutateAsync({
         agentId,
         request: agentRequest,
+        signal: requestController.signal,
       });
 
       responseConversationId = response.conversationId || currentConversationId;
@@ -250,7 +252,7 @@ const AgentChat = ({
       ) {
         const { content, parts } = await processStream(
           response.stream as ReadableStream,
-          controller.signal,
+          requestController.signal,
           streamingState.setStreamingMessage,
           streamingState.setStreamingParts
         );
@@ -270,6 +272,7 @@ const AgentChat = ({
         }
       }
     } catch (error) {
+      if (requestController?.signal.aborted) return;
       console.error('Error sending message:', error);
 
       // If there was streaming content, preserve it even on error

@@ -395,6 +395,7 @@ export abstract class BaseAgent implements BaseAgentInterface {
       systemPrompt,
       tools: options.tools,
       middleware: options.middleware,
+      persistConversation: input.persistConversation,
     });
     console.log(
       `[Agent Timing] agentService.getAgent: ${Date.now() - agentCreateStart}ms`
@@ -420,7 +421,8 @@ export abstract class BaseAgent implements BaseAgentInterface {
     const result = await agentService.invokeAgent(
       agent,
       input.message,
-      conversationId
+      conversationId,
+      input.signal
     );
 
     // Extract content from result
@@ -444,6 +446,7 @@ export abstract class BaseAgent implements BaseAgentInterface {
       systemPrompt: `You are a helpful assistant.`,
       tools: [],
       middleware: [],
+      persistConversation: true,
     });
 
     // Get the agent state from memory

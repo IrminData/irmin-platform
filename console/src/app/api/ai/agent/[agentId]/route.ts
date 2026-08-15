@@ -91,7 +91,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
     if (config.supportsStreaming) {
       const { stream, conversationId } = await client.executeAgentStream(
         agentId,
-        executeRequest
+        executeRequest,
+        req.signal
       );
 
       // Create a pass-through stream to ensure proper flushing
@@ -126,7 +127,6 @@ export async function POST(req: NextRequest, context: RouteContext) {
           'Content-Type': 'application/x-ndjson',
           'Cache-Control': 'no-cache, no-transform',
           Connection: 'keep-alive',
-          'Transfer-Encoding': 'chunked',
           'X-Accel-Buffering': 'no',
           ...(conversationId && { 'X-Conversation-Id': conversationId }),
         },
@@ -136,7 +136,8 @@ export async function POST(req: NextRequest, context: RouteContext) {
     // Otherwise, use non-streaming endpoint
     const { data, conversationId } = await client.executeAgent(
       agentId,
-      executeRequest
+      executeRequest,
+      req.signal
     );
 
     return NextResponse.json(data, {

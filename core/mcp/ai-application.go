@@ -217,6 +217,16 @@ func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices) {
 			return
 		}
 
+		if !OriginAllowed(r.Header.Get("Origin"), aiApp.AllowedOrigins) {
+			apiServices.Logger.Warn("AI App MCP origin rejected",
+				"origin", r.Header.Get("Origin"),
+				"path", r.URL.Path,
+				"ai_app_id", aiApp.ID)
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = w.Write([]byte("Forbidden origin"))
+			return
+		}
+
 		// Track API request for billing (per-request, not per-session)
 		if apiServices.UsageTracker != nil {
 			apiServices.UsageTracker.Track(aiApp.Workspace.ID, db.UsageDimensionAPIRequests, 1)

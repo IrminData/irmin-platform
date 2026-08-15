@@ -149,7 +149,8 @@ See [TypeDoc website](https://typedoc.org/) for more information on TypeDoc.
 
 ## Testing
 
-Playwright is used for end-to-end testing. The tests are located in the `tests` directory.
+Run the hermetic TypeScript unit tests with `pnpm test:unit`. Playwright is
+used for end-to-end testing; those tests live in the `tests` directory.
 
 To run the tests, use the following commands:
 

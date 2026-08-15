@@ -22,7 +22,8 @@ export class AgentsClient extends BaseClient {
 
   async executeAgent(
     agentId: string,
-    request: AIAgentExecuteRequest
+    request: AIAgentExecuteRequest,
+    signal?: AbortSignal
   ): Promise<{ data: AIAgentExecuteResponse; conversationId?: string }> {
     const validatedRequest = AIAgentExecuteRequestSchema.parse(request);
 
@@ -30,6 +31,7 @@ export class AgentsClient extends BaseClient {
       method: 'POST',
       headers: this.getHeaders(),
       body: JSON.stringify(validatedRequest),
+      signal,
     });
 
     const conversationId =
@@ -46,7 +48,8 @@ export class AgentsClient extends BaseClient {
 
   async executeAgentStream(
     agentId: string,
-    request: AIAgentExecuteRequest
+    request: AIAgentExecuteRequest,
+    signal?: AbortSignal
   ): Promise<{
     stream: ReadableStream<Uint8Array>;
     conversationId?: string;
@@ -63,6 +66,7 @@ export class AgentsClient extends BaseClient {
           Accept: 'application/x-ndjson',
         },
         body: JSON.stringify(validatedRequest),
+        signal,
       }
     );
 

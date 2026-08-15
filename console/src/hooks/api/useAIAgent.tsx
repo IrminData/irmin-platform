@@ -13,6 +13,7 @@ interface ExecuteAgentStreamResponse {
 interface ExecuteAgentParams {
   agentId: string;
   request: AIAgentExecuteRequest;
+  signal?: AbortSignal;
 }
 
 export function useAIAgent(_agentId: string) {
@@ -24,7 +25,7 @@ export function useAIAgent(_agentId: string) {
     Error,
     ExecuteAgentParams
   >({
-    mutationFn: async ({ agentId, request }: ExecuteAgentParams) => {
+    mutationFn: async ({ agentId, request, signal }: ExecuteAgentParams) => {
       const token = await getToken();
 
       const response = await fetch(
@@ -36,6 +37,7 @@ export function useAIAgent(_agentId: string) {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify(request),
+          signal,
         }
       );
 
