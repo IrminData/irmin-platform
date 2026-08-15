@@ -27,7 +27,7 @@ function ConsoleErrorSection({
         title={dict.common.errors.consoleTitle}
         description={dict.common.errors.consoleDescription}
         variant='page'
-        showDetails={true}
+        showDetails={process.env.NODE_ENV === 'development'}
         showReload={true}
         showHome={true}
         showReport={true}

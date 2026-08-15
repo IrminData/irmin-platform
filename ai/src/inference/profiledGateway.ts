@@ -8,6 +8,7 @@ import type {
   ModelProfile,
   ModelRole,
 } from './types';
+import { inferenceSignal } from './types';
 
 interface GatewayOptions {
   profile: ModelProfile;
@@ -44,7 +45,7 @@ export class ProfiledInferenceGateway implements InferenceGateway {
     runContext: InferenceRunContext = {}
   ): Promise<T> {
     const model = this.modelFor(role, runContext);
-    const signal = AbortSignal.timeout(this.profile.roles[role].timeoutMs);
+    const signal = inferenceSignal(this.profile, role, runContext.signal);
     if (structuredSchema) {
       return (await model
         .withStructuredOutput(structuredSchema)

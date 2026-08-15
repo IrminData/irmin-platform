@@ -4,8 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useQuery } from '@tanstack/react-query';
 
-import { IoSave } from 'react-icons/io5';
-import { TbExternalLink } from 'react-icons/tb';
+import { TbDeviceFloppy, TbExternalLink } from 'react-icons/tb';
 
 import IrminCore from '@/lib/core';
 import { storedQueriesQueryKey } from '@/lib/queryKeys';
@@ -227,7 +226,8 @@ export default function InlineQueryEditor({
       if (hasUnsavedChangesRef.current) {
         const confirmed = await irminConfirm(
           'warning',
-          dict.scripts.unsavedChangesDiscard
+          dict.scripts.unsavedChangesDiscard,
+          dict.common.discardChanges
         );
         if (!confirmed) {
           isUserInitiatedChangeRef.current = false;
@@ -420,8 +420,7 @@ export default function InlineQueryEditor({
       {/* Editor Controls */}
       <div
         className={`
-          flex items-center justify-between gap-2 border-b border-gray-200 pb-2
-          dark:border-gray-800
+          flex items-center justify-between gap-2 border-b border-border pb-2
         `}
       >
         <div className='flex items-center gap-2'>
@@ -429,9 +428,9 @@ export default function InlineQueryEditor({
         </div>
         <Button
           onClick={handleSave}
-          variant='default'
+          variant='accent'
           size='sm'
-          icon={<IoSave />}
+          icon={<TbDeviceFloppy />}
           disabled={
             !enableSaveButton ||
             disabled ||

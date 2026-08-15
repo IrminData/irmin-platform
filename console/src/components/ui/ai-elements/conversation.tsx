@@ -7,6 +7,8 @@ import { TbArrowDown } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { cn } from '@/utils/tw';
 
 export type ConversationProps = ComponentProps<'div'>;
@@ -84,6 +86,7 @@ export const ConversationScrollButton = ({
   ...props
 }: ConversationScrollButtonProps) => {
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const { dict } = useLocale();
   const [buttonPosition, setButtonPosition] = useState({
     left: '50%',
     bottom: '6rem',
@@ -159,13 +162,13 @@ export const ConversationScrollButton = ({
       }}
     >
       <Button
-        className={cn('rounded-full', className)}
+        className={className}
         onClick={scrollToBottom}
-        title='Scroll to bottom'
+        title={dict.common.scrollToBottom}
         size='icon'
         type='button'
         variant='gray'
-        aria-label='Scroll to bottom'
+        aria-label={dict.common.scrollToBottom}
         {...props}
       >
         <TbArrowDown className='size-3' />

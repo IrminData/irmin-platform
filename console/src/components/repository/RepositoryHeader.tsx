@@ -4,11 +4,13 @@ import { Suspense, useCallback, useMemo, useState } from 'react';
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import { GoGitBranch, GoGitCommit, GoGitCompare } from 'react-icons/go';
 import {
   TbBook,
   TbDatabase,
   TbFileText,
+  TbGitBranch,
+  TbGitCommit,
+  TbGitCompare,
   TbLink,
   TbSchema,
   TbSettings,
@@ -121,7 +123,7 @@ function RepositoryHeaderContent() {
         name: dict.repository.commit.commits,
         link: tabLink(`${baseUrl}/commits`),
         active: pathname === `${baseUrl}/commits`,
-        icon: <GoGitCommit size={14} />,
+        icon: <TbGitCommit size={14} />,
         hidden: !isResourceAllowed('repository_commit', 'read', repository.id),
       },
       {
@@ -135,14 +137,14 @@ function RepositoryHeaderContent() {
         name: dict.repository.branches.branches,
         link: tabLink(`${baseUrl}/branches`),
         active: pathname === `${baseUrl}/branches`,
-        icon: <GoGitBranch size={14} />,
+        icon: <TbGitBranch size={14} />,
         hidden: !isResourceAllowed('repository_branch', 'read', repository.id),
       },
       {
         name: dict.repository.compare.compare,
         link: tabLink(`${baseUrl}/compare`),
         active: pathname === `${baseUrl}/compare`,
-        icon: <GoGitCompare size={14} />,
+        icon: <TbGitCompare size={14} />,
         hidden: !isResourceAllowed('repository_commit', 'read', repository.id),
       },
     ],
@@ -266,21 +268,16 @@ function RepositoryHeaderContent() {
         `}
       >
         <div className='flex flex-1 flex-col gap-2 py-4'>
-          <div
-            className={`
-              flex flex-row items-center divide-x divide-gray-300
-              dark:divide-gray-700
-            `}
-          >
+          <div className={`flex flex-row items-center divide-x divide-border`}>
             <div className='flex flex-row items-center gap-2 pr-2'>
-              <span className='text-sm text-gray-400'>
+              <span className='text-sm text-muted-foreground'>
                 {dict.repository.repository}
               </span>
               {immutable && (
                 <Badge variant='secondary'>{dict.list.immutable}</Badge>
               )}
             </div>
-            <span className='px-2 text-sm text-gray-400'>
+            <span className='px-2 text-sm text-muted-foreground'>
               {dict.common.owner}:{' '}
               {`${repository.owner.first_name} ${repository.owner.last_name}`}
               {repository.owner.company
@@ -289,13 +286,16 @@ function RepositoryHeaderContent() {
               - {repository.owner.email}
             </span>
             <span className='px-2'>
-              <StatusBadge status={'private'} label={'Private'} />
+              <StatusBadge
+                status={'private'}
+                label={dict.catalog.visibilityPrivate}
+              />
             </span>
           </div>
           <DisplayTitle>{repository.name}</DisplayTitle>
           <p
             className={`
-              max-w-lg text-xs text-gray-400
+              max-w-lg text-xs text-muted-foreground
               lg:text-sm
             `}
           >

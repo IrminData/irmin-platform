@@ -1,7 +1,6 @@
 'use client';
 
-import { IoExit, IoKey } from 'react-icons/io5';
-import { TbBook } from 'react-icons/tb';
+import { TbBook, TbKey, TbLogout } from 'react-icons/tb';
 
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
 import { ContentWrapper } from '@/components/ui/ContentWrapper';
@@ -77,12 +76,7 @@ const WorkspaceUsersSection = () => {
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
       <Table className='min-w-full'>
         <TableHeader>
-          <TableRow
-            className={`
-              border-b
-              dark:border-gray-800
-            `}
-          >
+          <TableRow className={`border-b border-border`}>
             <TableHead
               className={`
                 px-4 py-2 text-left text-xs font-normal
@@ -137,17 +131,9 @@ const WorkspaceUsersSection = () => {
           {usersQuery.data?.data?.map((user) => (
             <TableRow
               key={`workspace-user-${user.id}`}
-              className={`
-                h-14 border-b
-                dark:border-gray-800
-              `}
+              className={`h-14 border-b border-border`}
             >
-              <TableCell
-                className={`
-                  px-4 py-2 text-sm text-gray-700
-                  dark:text-gray-400
-                `}
-              >
+              <TableCell className={`px-4 py-2 text-sm text-muted-foreground`}>
                 {user.first_name} {user.last_name}
                 {/* Mobile screen details */}
                 <span
@@ -161,37 +147,29 @@ const WorkspaceUsersSection = () => {
               </TableCell>
               <TableCell
                 className={`
-                  hidden p-2 text-sm text-gray-700
+                  hidden p-2 text-sm text-muted-foreground
                   md:table-cell
-                  dark:text-gray-400
                 `}
               >
                 {user.email}
               </TableCell>
               <TableCell
                 className={`
-                  hidden p-2 text-sm text-gray-700
+                  hidden p-2 text-sm text-muted-foreground
                   md:table-cell
-                  dark:text-gray-400
                 `}
               >
                 {user.phone}
               </TableCell>
               <TableCell
                 className={`
-                  hidden p-2 text-sm text-gray-700
+                  hidden p-2 text-sm text-muted-foreground
                   md:table-cell
-                  dark:text-gray-400
                 `}
               >
                 {user.company}
               </TableCell>
-              <TableCell
-                className={`
-                  px-4 py-2 text-xs text-gray-700
-                  dark:text-gray-400
-                `}
-              >
+              <TableCell className={`px-4 py-2 text-xs text-muted-foreground`}>
                 {workspaceQuery?.data?.data?.owner?.id === user.id ? (
                   dict.common.owner
                 ) : canUpdateUsers ? (
@@ -239,15 +217,15 @@ const WorkspaceUsersSection = () => {
                           size='icon'
                           variant='secondary'
                           onClick={() => confirmTransferWorkspace(user.id)}
-                          icon={<IoKey size={14} />}
+                          icon={<TbKey size={14} />}
                           tooltip={dict.users.transferOwnership}
                         />
                         <ButtonWithTooltip
                           size='icon'
                           variant='secondary'
-                          aria-label='Remove user from workspace'
+                          aria-label={dict.users.removeFromWorkspace}
                           onClick={() => deleteUserMutation.mutate(user.id)}
-                          icon={<IoExit size={14} />}
+                          icon={<TbLogout size={14} />}
                           tooltip={dict.users.removeFromWorkspace}
                         />
                       </div>

@@ -14,39 +14,19 @@ const EventSkeletonRow = () => {
   return (
     <div
       className={`
-        flex animate-pulse items-center gap-4 rounded-lg bg-card/80 p-2
+        flex animate-pulse items-center gap-4 rounded-[2px] bg-card/80 p-2
       `}
     >
       {/* icon placeholder */}
-      <div
-        className={`
-          size-6 rounded-sm bg-gray-300
-          dark:bg-gray-700
-        `}
-      />
+      <div className={`size-6 rounded-[2px] bg-muted`} />
       {/* text placeholders */}
       <div className='flex-1'>
-        <div
-          className={`
-            h-4 w-3/4 rounded-sm bg-gray-300
-            dark:bg-gray-700
-          `}
-        />
+        <div className={`h-4 w-3/4 rounded-[2px] bg-muted`} />
       </div>
       {/* timestamp and user placeholders */}
       <div className='ml-auto flex flex-col gap-1'>
-        <div
-          className={`
-            h-3 w-1/2 rounded-sm bg-gray-300
-            dark:bg-gray-700
-          `}
-        />
-        <div
-          className={`
-            h-3 w-1/3 rounded-sm bg-gray-300
-            dark:bg-gray-700
-          `}
-        />
+        <div className={`h-3 w-1/2 rounded-[2px] bg-muted`} />
+        <div className={`h-3 w-1/3 rounded-[2px] bg-muted`} />
       </div>
     </div>
   );
@@ -97,9 +77,8 @@ const LogEventFeed = ({
     return (
       <p
         className={`
-          py-8 text-center text-lg text-gray-600
+          py-8 text-center text-lg text-muted-foreground
           lg:text-2xl
-          dark:text-gray-400
         `}
       >
         {dict.logs.noLogsFound}
@@ -113,21 +92,14 @@ const LogEventFeed = ({
         <div
           key={event.id}
           className={`
-            flex flex-col gap-4 rounded-lg bg-card/80 px-2 py-4
+            flex flex-col gap-4 rounded-[2px] bg-card/80 px-2 py-4
             md:flex-row md:items-center md:p-2
           `}
         >
           {/* Event icon */}
           <LogEventIcon type={event.type} />
           {/* Event description and the associated object */}
-          <p
-            className={`
-              text-base text-gray-900
-              dark:text-gray-100
-            `}
-          >
-            {event.description}
-          </p>
+          <p className={`text-base text-foreground`}>{event.description}</p>
           <div
             className={`
               flex flex-row items-center gap-2
@@ -174,20 +146,10 @@ const LogEventFeed = ({
             )}
             {/* Event timestamp and user */}
             <div className='flex w-36 flex-col'>
-              <span
-                className={`
-                  text-xs text-gray-500
-                  dark:text-gray-400
-                `}
-              >
+              <span className={`text-xs text-muted-foreground`}>
                 {new Date(event.created_at).toLocaleString(locale)}
               </span>
-              <span
-                className={`
-                  text-xs text-gray-500
-                  dark:text-gray-400
-                `}
-              >
+              <span className={`text-xs text-muted-foreground`}>
                 {event.user ? event.user.email : dict.logs.system}
               </span>
             </div>

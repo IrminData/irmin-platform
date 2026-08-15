@@ -1,6 +1,7 @@
 import {
   inferenceGateway,
   type InferenceRunContext,
+  inferenceSignal,
   type ModelRole,
 } from '@/inference';
 import { PostgresSaver } from '@langchain/langgraph-checkpoint-postgres';
@@ -82,12 +83,16 @@ class AgentService {
     agent: Awaited<ReturnType<typeof this.getAgent>>,
     message: string,
     conversationId?: string,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    role: ModelRole = 'assistant'
   ) {
     // Invoke agent with thread_id = conversationId
     return agent.invoke(
       { messages: [{ role: 'user', content: message }] },
-      { configurable: { thread_id: conversationId }, signal }
+      {
+        configurable: { thread_id: conversationId },
+        signal: inferenceSignal(inferenceGateway.profile, role, signal),
+      }
     );
   }
 
@@ -95,11 +100,16 @@ class AgentService {
     agent: Awaited<ReturnType<typeof this.getAgent>>,
     message: string,
     conversationId?: string,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    role: ModelRole = 'assistant'
   ) {
     return agent.streamEvents(
       { messages: [{ role: 'user', content: message }] },
-      { configurable: { thread_id: conversationId }, version: 'v2', signal }
+      {
+        configurable: { thread_id: conversationId },
+        version: 'v2',
+        signal: inferenceSignal(inferenceGateway.profile, role, signal),
+      }
     );
   }
 

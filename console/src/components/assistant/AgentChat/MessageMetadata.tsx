@@ -213,13 +213,14 @@ export const MessageMetadata = ({
         <div className='flex items-center gap-2'>
           <div
             className={`
-              flex size-6 items-center justify-center rounded-full bg-blue-500
-              text-xs font-medium text-white
+              flex size-6 items-center justify-center rounded-full border
+              border-chart-2/30 bg-chart-2/10 text-xs font-medium
+              text-foreground
             `}
           >
             {metadata.iterations}
           </div>
-          <div className='text-sm font-medium text-blue-900'>
+          <div className='text-sm font-medium text-foreground'>
             {metadata.iterations} {dict.assistant.iteration.toLowerCase()}
             {metadata.iterations !== 1 ? 's' : ''}
             {(isStoredToolCallsArray(metadata.toolCalls) ||

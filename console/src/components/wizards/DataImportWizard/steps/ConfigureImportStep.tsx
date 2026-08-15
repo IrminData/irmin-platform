@@ -55,6 +55,8 @@ export default function ConfigureImportStep({
       name: wizardData.workflowData.name,
       description: wizardData.workflowData.description,
       documentation: wizardData.workflowData.documentation,
+      import_from_connection_paths:
+        wizardData.workflowData.import_from_connection_paths,
       repository_branch: wizardData.workflowData.repository_branch,
       import_to_repository_path:
         wizardData.workflowData.import_to_repository_path,
@@ -71,22 +73,18 @@ export default function ConfigureImportStep({
       name: string;
       description: string;
       documentation: string;
+      import_from_connection_paths: string[];
       repository_branch: string;
       import_to_repository_path: string;
     }) => {
       try {
-        // Validate that we have import paths
-        if (wizardData.workflowData.import_from_connection_paths.length === 0) {
-          irminAlert('error', dict.wizard.pleaseSpecifyImportPath);
-          return;
-        }
-
         updateWizardData({
           workflowData: {
             ...wizardData.workflowData,
             name: data.name,
             description: data.description,
             documentation: data.documentation,
+            import_from_connection_paths: data.import_from_connection_paths,
             repository_branch: data.repository_branch,
             import_to_repository_path: data.import_to_repository_path,
           },
@@ -119,16 +117,31 @@ export default function ConfigureImportStep({
           <h4 className='font-medium'>{dict.wizard.workflowInformation}</h4>
 
           <div className='flex flex-col gap-2'>
-            <Label>{dict.common.name}</Label>
+            <Label htmlFor='import-workflow-name'>{dict.common.name}</Label>
             <Controller
               name='name'
               control={control}
-              rules={{ required: dict.common.fieldRequired }}
+              rules={{
+                validate: (value) =>
+                  value.trim().length > 0 ||
+                  dict.wizard.pleaseEnterWorkflowName,
+              }}
               render={({ field }) => (
                 <>
-                  <Input {...field} />
+                  <Input
+                    {...field}
+                    id='import-workflow-name'
+                    aria-invalid={Boolean(errors.name)}
+                    aria-describedby={
+                      errors.name ? 'import-workflow-name-error' : undefined
+                    }
+                  />
                   {errors.name && (
-                    <p className='mt-1 text-xs text-red-600'>
+                    <p
+                      id='import-workflow-name-error'
+                      className='text-sm text-destructive'
+                      role='alert'
+                    >
                       {errors.name.message}
                     </p>
                   )}
@@ -146,9 +159,9 @@ export default function ConfigureImportStep({
               control={control}
               render={({ field }) => (
                 <>
-                  <Textarea {...field} rows={3} />
+                  <Textarea {...field} />
                   {errors.description && (
-                    <p className='mt-1 text-xs text-red-600'>
+                    <p className='mt-1 text-xs text-destructive'>
                       {errors.description.message}
                     </p>
                   )}
@@ -160,24 +173,61 @@ export default function ConfigureImportStep({
 
         {/* Import Paths Configuration */}
         {wizardData.connection && (
-          <MultiplePathsSelector
-            label={dict.workflow.importSourceConnectionPath}
-            paths={wizardData.workflowData.import_from_connection_paths}
-            onPathsChange={(paths) =>
-              updateWizardData({
-                workflowData: {
-                  ...wizardData.workflowData,
-                  import_from_connection_paths: paths,
-                },
-              })
-            }
-            renderPathSelector={(path, onPathChange) => (
-              <ConnectionPathSelector
-                connectionId={wizardData.connection!.id}
-                defaultPath={path}
-                operationMethod={'pull'}
-                onPathChange={onPathChange}
-              />
+          <Controller
+            name='import_from_connection_paths'
+            control={control}
+            rules={{
+              validate: (paths) =>
+                paths.some((path) => path.trim().length > 0) ||
+                dict.wizard.pleaseSpecifyImportPath,
+            }}
+            render={({ field }) => (
+              <div
+                role='group'
+                aria-label={dict.workflow.importSourceConnectionPath}
+                aria-describedby={
+                  errors.import_from_connection_paths
+                    ? 'import-source-paths-error'
+                    : undefined
+                }
+              >
+                <MultiplePathsSelector
+                  label={dict.workflow.importSourceConnectionPath}
+                  paths={field.value}
+                  onPathsChange={(paths) => {
+                    field.onChange(paths);
+                    updateWizardData({
+                      workflowData: {
+                        ...wizardData.workflowData,
+                        import_from_connection_paths: paths,
+                      },
+                    });
+                  }}
+                  renderPathSelector={(path, onPathChange) => (
+                    <ConnectionPathSelector
+                      connectionId={wizardData.connection!.id}
+                      defaultPath={path}
+                      operationMethod={'pull'}
+                      onPathChange={onPathChange}
+                      ariaInvalid={Boolean(errors.import_from_connection_paths)}
+                      ariaDescribedBy={
+                        errors.import_from_connection_paths
+                          ? 'import-source-paths-error'
+                          : undefined
+                      }
+                    />
+                  )}
+                />
+                {errors.import_from_connection_paths && (
+                  <p
+                    id='import-source-paths-error'
+                    className='text-sm text-destructive'
+                    role='alert'
+                  >
+                    {errors.import_from_connection_paths.message}
+                  </p>
+                )}
+              </div>
             )}
           />
         )}
@@ -187,16 +237,35 @@ export default function ConfigureImportStep({
           <h4 className='font-medium'>{dict.wizard.repositorySettings}</h4>
 
           <div className='flex flex-col gap-2'>
-            <Label>{dict.wizard.repositoryBranch}</Label>
+            <Label htmlFor='import-repository-branch'>
+              {dict.wizard.repositoryBranch}
+            </Label>
             <Controller
               name='repository_branch'
               control={control}
-              rules={{ required: dict.common.fieldRequired }}
+              rules={{
+                validate: (value) =>
+                  value.trim().length > 0 ||
+                  dict.wizard.pleaseSelectRepositoryBranch,
+              }}
               render={({ field }) => (
                 <>
-                  <Input {...field} />
+                  <Input
+                    {...field}
+                    id='import-repository-branch'
+                    aria-invalid={Boolean(errors.repository_branch)}
+                    aria-describedby={
+                      errors.repository_branch
+                        ? 'import-repository-branch-error'
+                        : undefined
+                    }
+                  />
                   {errors.repository_branch && (
-                    <p className='mt-1 text-xs text-red-600'>
+                    <p
+                      id='import-repository-branch-error'
+                      className='text-sm text-destructive'
+                      role='alert'
+                    >
                       {errors.repository_branch.message}
                     </p>
                   )}
@@ -207,22 +276,46 @@ export default function ConfigureImportStep({
 
           {wizardData.repository && (
             <div className='flex flex-col gap-2'>
-              <Label>{dict.workflow.importDestinationPath}</Label>
+              <Label htmlFor='import-destination-path'>
+                {dict.workflow.importDestinationPath}
+              </Label>
               <Controller
                 name='import_to_repository_path'
                 control={control}
-                rules={{ required: true }}
+                rules={{
+                  validate: (value) =>
+                    value.trim().length > 0 ||
+                    dict.wizard.pleaseSelectRepositoryDestinationPath,
+                }}
                 render={({ field }) => (
-                  <RepositoryPathSelector
-                    repositorySlug={wizardData.repository?.slug ?? ''}
-                    repositoryRef={
-                      repositoryBranch ||
-                      wizardData.workflowData.repository_branch
-                    }
-                    defaultPath={field.value}
-                    onPathChange={field.onChange}
-                    defaultExpanded={true}
-                  />
+                  <>
+                    <RepositoryPathSelector
+                      repositorySlug={wizardData.repository?.slug ?? ''}
+                      repositoryRef={
+                        repositoryBranch ||
+                        wizardData.workflowData.repository_branch
+                      }
+                      defaultPath={field.value}
+                      onPathChange={field.onChange}
+                      defaultExpanded={true}
+                      inputId='import-destination-path'
+                      ariaInvalid={Boolean(errors.import_to_repository_path)}
+                      ariaDescribedBy={
+                        errors.import_to_repository_path
+                          ? 'import-destination-path-error'
+                          : undefined
+                      }
+                    />
+                    {errors.import_to_repository_path && (
+                      <p
+                        id='import-destination-path-error'
+                        className='text-sm text-destructive'
+                        role='alert'
+                      >
+                        {errors.import_to_repository_path.message}
+                      </p>
+                    )}
+                  </>
                 )}
               />
             </div>
@@ -234,16 +327,10 @@ export default function ConfigureImportStep({
           <h4 className='font-medium'>{dict.workflow.syncMode}</h4>
           <div
             className={`
-              rounded-md border border-blue-200 bg-blue-50 p-4
-              dark:border-blue-800 dark:bg-blue-950
+              rounded-[2px] border border-chart-2/30 bg-chart-2/10 p-4
             `}
           >
-            <p
-              className={`
-                text-sm text-blue-800
-                dark:text-blue-200
-              `}
-            >
+            <p className={`text-sm text-foreground`}>
               {dict.workflow.syncModeImportExplanation}
             </p>
           </div>
@@ -282,7 +369,7 @@ export default function ConfigureImportStep({
         </div>
 
         {/* Schedule Configuration */}
-        <div className='rounded-md border border-foreground/20 px-2 py-4'>
+        <div className='rounded-[2px] border border-border px-2 py-4'>
           <WorkflowScheduleForm
             initialData={wizardData.workflowData.schedule}
             disableSaveButton={true}

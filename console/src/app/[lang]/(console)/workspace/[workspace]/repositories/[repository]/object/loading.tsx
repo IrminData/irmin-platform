@@ -20,11 +20,11 @@ export default function RepositoryObjectLoading() {
             lg:w-72
           '
         >
-          <LoadingSkeleton className='h-96 w-full rounded-md' />
+          <LoadingSkeleton className='h-96 w-full rounded-[2px]' />
         </div>
         <div className='min-w-0 flex-1'>
-          <LoadingSkeleton className='mb-3 h-10 w-full rounded-md' />
-          <LoadingSkeleton className='h-112 w-full rounded-lg' />
+          <LoadingSkeleton className='mb-3 h-10 w-full rounded-[2px]' />
+          <LoadingSkeleton className='h-112 w-full rounded-[2px]' />
         </div>
       </div>
     </div>

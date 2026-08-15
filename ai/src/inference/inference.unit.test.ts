@@ -138,4 +138,34 @@ describe('inference gateway', () => {
       status: 'completed',
     });
   });
+
+  it('resets first-token timing for every invocation', async () => {
+    const telemetry: InferenceTelemetry[] = [];
+    const callback = new InferenceTelemetryCallback('requested-model', {
+      onTelemetry: (event) => void telemetry.push(event),
+    });
+    const originalNow = Date.now;
+    let now = 100;
+    Date.now = () => now;
+    try {
+      await callback.handleLLMStart?.();
+      now = 110;
+      await callback.handleLLMNewToken?.();
+      now = 120;
+      await callback.handleLLMEnd?.({ generations: [[]] } as never);
+      now = 200;
+      await callback.handleLLMStart?.();
+      now = 230;
+      await callback.handleLLMNewToken?.();
+      now = 240;
+      await callback.handleLLMEnd?.({ generations: [[]] } as never);
+    } finally {
+      Date.now = originalNow;
+    }
+    const completed = telemetry.filter((event) => event.status === 'completed');
+    assert.deepEqual(
+      completed.map((event) => event.timeToFirstTokenMs),
+      [10, 30]
+    );
+  });
 });

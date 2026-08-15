@@ -16,12 +16,26 @@ interface ButtonWithTooltipProps extends ButtonProps {
 }
 
 const ButtonWithTooltip = forwardRef<HTMLButtonElement, ButtonWithTooltipProps>(
-  ({ children, tooltip, ...props }, ref) => {
+  ({ children, tooltip, icon, ...props }, ref) => {
+    const accessibleName =
+      props['aria-label'] ??
+      (props['aria-labelledby'] || children != null ? undefined : tooltip);
+    const decorativeIcon = icon ? (
+      <span aria-hidden='true' className='inline-flex shrink-0'>
+        {icon}
+      </span>
+    ) : undefined;
+
     return (
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button ref={ref} {...props}>
+            <Button
+              ref={ref}
+              icon={decorativeIcon}
+              {...props}
+              aria-label={accessibleName}
+            >
               {children}
             </Button>
           </TooltipTrigger>

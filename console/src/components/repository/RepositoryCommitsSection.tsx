@@ -45,10 +45,7 @@ function RepositoryCommitsSectionContent() {
   if (!canViewCommits) {
     return (
       <div
-        className={`
-          w-full rounded-lg border border-gray-200 bg-card px-2 py-8
-          dark:border-gray-800
-        `}
+        className={`w-full rounded-[2px] border border-border bg-card px-2 py-8`}
       >
         <p
           className={`

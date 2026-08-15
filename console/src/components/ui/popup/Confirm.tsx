@@ -1,92 +1,79 @@
 'use client';
 
-import { memo } from 'react';
-
-import { IoClose } from 'react-icons/io5';
+import { memo, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 import { useLocale } from '@/context/LocaleContext';
 
 /**
- * Confirmation popup UI
+ * Modal confirmation with a consequence-specific action label.
  *
- * @remarks
- *
- * UI for displaying a confirmation popup with a message and two buttons
- * to confirm or cancel the action.
- *
- * This popup is shown when the user needs to confirm an action.
- * The position of the popup is fixed at the bottom of the screen.
- *
- * @param confirmPopupDetails - The details of the confirmation popup
- * @param confirmPopupDetails.type - The type of the confirmation popup
- * @param confirmPopupDetails.message - The message to display in the confirmation popup
- * @param confirmPopupDetails.onSelect - The function to call when the user selects an option
- *
- * @returns The confirmation popup component
+ * The shared Radix dialog supplies focus containment, Escape and outside-click
+ * dismissal, background inerting, and focus restoration. Cancel receives
+ * initial focus so a destructive action is never the keyboard default.
  */
 const Confirm = ({
   type,
   message,
+  confirmLabel,
   onSelect,
 }: {
   type: 'info' | 'warning';
   message: string;
+  confirmLabel: string;
   onSelect: (_confirmed: boolean) => void;
 }) => {
   const { dict } = useLocale();
+  const cancelRef = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
+
   return (
-    <div
-      id='confirm'
-      className={`
-        fixed bottom-[20px] z-50 flex w-screen animate-in justify-center p-4
-        align-middle fade-in
-      `}
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onSelect(false);
+      }}
     >
-      <div
-        className={`
-          flex w-[400px] max-w-[90vw] flex-col items-start justify-between
-          rounded-lg border bg-gray-50 p-4 shadow-md
-          dark:bg-irmin-black-500
-          ${type === 'warning' ? `border-destructive` : ''}
-          ${type === 'info' ? 'border-irmin-blue-500' : ''}
-        `}
+      <DialogContent
+        role='alertdialog'
+        showCloseButton={false}
+        className={type === 'warning' ? 'border-destructive/60' : undefined}
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          cancelRef.current?.focus();
+        }}
       >
-        <div className='flex w-full flex-row items-center justify-between'>
-          <p className='text-base font-normal'>{message}</p>
-          <ButtonWithTooltip
-            size='icon'
-            variant='ghost'
-            onClick={() => onSelect(false)}
-            aria-label='Close confirmation popup'
-            tooltip={dict.common.close}
-            icon={<IoClose size={22} />}
-          />
-        </div>
-        <div className='mt-8 flex w-full justify-end gap-2'>
+        <DialogHeader className='text-start'>
+          <DialogTitle>{confirmLabel}</DialogTitle>
+          <DialogDescription className='text-pretty text-foreground'>
+            {message}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
           <Button
+            ref={cancelRef}
             variant='secondary'
             onClick={() => onSelect(false)}
-            aria-label='Cancel confirmation'
-            size='sm'
-            className='w-1/2'
           >
             {dict.common.cancel}
           </Button>
           <Button
-            variant={type === 'warning' ? 'destructive' : 'default'}
+            variant={type === 'warning' ? 'destructive' : 'accent'}
             onClick={() => onSelect(true)}
-            aria-label='Confirm'
-            size='sm'
-            className='w-1/2'
           >
-            {dict.common.confirm}
+            {confirmLabel}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -197,8 +197,8 @@ const AgentChat = ({
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const text = input.trim();
-    if (!text) return;
+    const text = input;
+    if (!text.trim()) return;
 
     let responseConversationId: string | null = null;
     let requestController: AbortController | null = null;
@@ -253,10 +253,18 @@ const AgentChat = ({
 
         if (status === 'failed') {
           const failure = parts.find((part) => part.type === 'stream-error');
-          throw new Error(
+          const error =
             (failure as { error?: string } | undefined)?.error ||
-              dict.assistant.error
+            dict.assistant.error;
+          appendMessage(
+            createAssistantMessage(
+              content || dict.assistant.error,
+              [...parts, { type: 'error', error }],
+              agentId,
+              messageId || `assistant-error-${Date.now()}`
+            )
           );
+          return;
         }
         if (status !== 'completed') return;
 
@@ -574,7 +582,7 @@ const AgentChat = ({
                 {showContextBanner && (
                   <div
                     className={`
-                      mt-4 flex items-center gap-2 rounded-md border
+                      mt-4 flex items-center gap-2 rounded-[2px] border
                       border-border bg-muted/60 p-2 text-xs
                       text-muted-foreground
                     `}

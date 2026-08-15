@@ -13,11 +13,8 @@ import { cn } from '@/utils/tw';
 
 const labelVariants = cva(
   `
-    pl-1 text-xs leading-none text-gray-600
+    type-mono-label leading-none text-foreground
     peer-disabled:cursor-not-allowed peer-disabled:opacity-70
-    md:text-sm
-    lg:text-base
-    dark:text-gray-400
   `
 );
 

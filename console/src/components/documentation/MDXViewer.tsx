@@ -10,7 +10,7 @@ const MDXViewer = ({ content }: { content: string }) => {
   return (
     <div
       className={`
-        mdx-viewer w-full max-w-none bg-background leading-relaxed
+        mdx-viewer w-full max-w-[68ch] bg-background leading-relaxed
         text-foreground
       `}
     >
@@ -59,13 +59,13 @@ const MDXViewer = ({ content }: { content: string }) => {
             code: {
               props: {
                 className:
-                  'bg-muted/50 text-muted-foreground px-1.5 py-0.5 rounded text-xs font-mono',
+                  'rounded-[2px] bg-muted/50 px-1.5 py-0.5 font-mono text-xs text-muted-foreground',
               },
             },
             pre: {
               props: {
                 className:
-                  'bg-muted/30 border border-border/30 rounded-lg p-4 overflow-x-auto text-xs font-mono mb-4',
+                  'mb-4 overflow-x-auto rounded-[2px] border border-border/30 bg-muted/30 p-4 font-mono text-xs',
               },
             },
             blockquote: {

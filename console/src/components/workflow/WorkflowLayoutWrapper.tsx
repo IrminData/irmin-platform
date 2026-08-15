@@ -264,15 +264,12 @@ export default function WorkflowLayoutWrapper({
         >
           <div className='flex flex-1 flex-col gap-2 py-4'>
             <div
-              className={`
-                flex flex-row items-center divide-x divide-gray-300
-                dark:divide-gray-700
-              `}
+              className={`flex flex-row items-center divide-x divide-border`}
             >
               <div className='flex flex-row items-center gap-2 pr-2'>
                 <span
                   className={`
-                    text-xs text-gray-400
+                    text-xs text-muted-foreground
                     md:text-sm
                   `}
                 >
@@ -288,7 +285,7 @@ export default function WorkflowLayoutWrapper({
               </div>
               <span
                 className={`
-                  px-2 text-xs text-gray-400
+                  px-2 text-xs text-muted-foreground
                   md:text-sm
                 `}
               >
@@ -298,7 +295,7 @@ export default function WorkflowLayoutWrapper({
                   ? ` (${workflow.owner.company})`
                   : ''} - {workflow.owner.email}
               </span>
-              <span className='px-2 text-xs text-gray-400'>
+              <span className='px-2 text-xs text-muted-foreground'>
                 {workflow ? (
                   <>
                     {workflow.status === '' || !workflow.status ? (
@@ -321,7 +318,7 @@ export default function WorkflowLayoutWrapper({
             <DisplayTitle>{workflow.name}</DisplayTitle>
             <p
               className={`
-                max-w-lg text-xs text-gray-400
+                max-w-lg text-xs text-muted-foreground
                 lg:text-sm
               `}
             >
@@ -341,7 +338,7 @@ export default function WorkflowLayoutWrapper({
             <Button
               onClick={handleTriggerRun}
               className='w-full'
-              variant='default'
+              variant='accent'
               size='lg'
               icon={<TbPlayerPlay size={14} />}
               loading={isTriggerButtonLoading}

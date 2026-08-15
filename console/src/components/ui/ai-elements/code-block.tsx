@@ -13,6 +13,8 @@ import { TbCheck, TbCopy } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { cn } from '@/utils/tw';
 
 type CodeBlockContextType = {
@@ -42,7 +44,7 @@ export const CodeBlock = ({
     <div
       className={cn(
         `
-          relative w-full max-w-full overflow-hidden rounded-md border
+          relative w-full max-w-full overflow-hidden rounded-[2px] border
           bg-background text-foreground
         `,
         className
@@ -128,6 +130,7 @@ export const CodeBlockCopyButton = ({
 }: CodeBlockCopyButtonProps) => {
   const [isCopied, setIsCopied] = useState(false);
   const { code } = useContext(CodeBlockContext);
+  const { dict } = useLocale();
 
   const copyToClipboard = async () => {
     if (typeof window === 'undefined' || !navigator.clipboard.writeText) {
@@ -153,7 +156,7 @@ export const CodeBlockCopyButton = ({
       onClick={copyToClipboard}
       size='icon'
       variant='ghost'
-      aria-label='Copy code'
+      aria-label={dict.common.copyCode}
       {...props}
     >
       {children ?? <Icon size={14} />}

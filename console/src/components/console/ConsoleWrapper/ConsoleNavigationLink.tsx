@@ -24,30 +24,42 @@ export default function ConsoleNavigationLink({
   hasWorkspace: boolean;
   setIsMenuOpen: (_value: boolean) => void;
 }) {
-  const menuIconStyles = `text-lg ${isMenuFolded ? 'ml-1' : 'mr-2'}`;
+  const menuIconStyles = `text-lg ${isMenuFolded ? 'ms-1' : 'me-2'}`;
   const menuLinkStyles = `text-xs font-normal md:text-sm ${
     isMenuFolded ? 'hidden' : 'block'
   }`;
+  const foldedAccessibleName = isMenuFolded ? link.title : undefined;
 
   if (link.workspaceOnly && !hasWorkspace) return null;
 
   if (link.href) {
     return (
-      <li id='console-navigation-link'>
+      <li>
         <Link
           className={`
-            flex items-center justify-between rounded-md p-3 py-3
-            hover:bg-primary/20
-            ${link.active ? 'bg-primary/10' : ''}
+            flex min-h-11 items-center justify-between rounded-[2px] p-3
+            text-start
+            hover:bg-muted
+            focus-visible:outline-2 focus-visible:outline-offset-2
+            focus-visible:outline-accent
+            ${link.active ? 'bg-muted text-foreground' : ''}
             overflow-hidden transition-[width,background-color]
             ${isMenuFolded ? 'w-12' : 'w-full'}
           `}
           href={link.href}
           onClick={() => setIsMenuOpen(false)}
           {...(link.props as ComponentPropsWithoutRef<'a'>)}
+          aria-current={link.active ? 'page' : undefined}
+          aria-label={
+            (link.props as ComponentPropsWithoutRef<'a'> | undefined)?.[
+              'aria-label'
+            ] ?? foldedAccessibleName
+          }
         >
           <div className={`flex w-full min-w-36 items-center justify-start`}>
-            <div className={menuIconStyles}>{link.icon}</div>
+            <div className={menuIconStyles} aria-hidden='true'>
+              {link.icon}
+            </div>
             <p className={menuLinkStyles}>{link.title}</p>
           </div>
         </Link>
@@ -55,12 +67,16 @@ export default function ConsoleNavigationLink({
     );
   } else {
     return (
-      <li id='console-navigation-link'>
+      <li>
         <button
+          type='button'
           className={`
-            flex items-center justify-between rounded-md p-3 py-3
-            hover:bg-primary/20
-            ${link.active ? 'bg-primary/10' : ''}
+            flex min-h-11 items-center justify-between rounded-[2px] p-3
+            text-start
+            hover:bg-muted
+            focus-visible:outline-2 focus-visible:outline-offset-2
+            focus-visible:outline-accent
+            ${link.active ? 'bg-muted text-foreground' : ''}
             overflow-hidden transition-[width,background-color]
             ${isMenuFolded ? 'w-12' : 'w-full'}
           `}
@@ -69,9 +85,16 @@ export default function ConsoleNavigationLink({
             if (link.action) link.action();
           }}
           {...(link.props as ComponentPropsWithoutRef<'button'>)}
+          aria-label={
+            (link.props as ComponentPropsWithoutRef<'button'> | undefined)?.[
+              'aria-label'
+            ] ?? foldedAccessibleName
+          }
         >
           <div className={`flex w-full min-w-36 items-center justify-start`}>
-            <div className={menuIconStyles}>{link.icon}</div>
+            <div className={menuIconStyles} aria-hidden='true'>
+              {link.icon}
+            </div>
             <p className={menuLinkStyles}>{link.title}</p>
           </div>
         </button>

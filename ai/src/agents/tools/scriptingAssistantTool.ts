@@ -65,13 +65,17 @@ export function createScriptingAssistantTool(
           'Any Go code already drafted that the expert should refine, if any.'
         ),
     }),
-    func: async ({
-      question,
-      repositorySlug,
-      repositoryObjectPath,
-      repositoryRef,
-      currentScript,
-    }) => {
+    func: async (
+      {
+        question,
+        repositorySlug,
+        repositoryObjectPath,
+        repositoryRef,
+        currentScript,
+      },
+      _runManager,
+      config
+    ) => {
       try {
         const context: Record<string, unknown> = {
           // Required by the ScriptingAgent's config: the agent needs to know
@@ -93,6 +97,7 @@ export function createScriptingAssistantTool(
             workspace,
             user,
             persistConversation: false,
+            signal: config?.signal,
           },
           'specialist-scripting'
         );

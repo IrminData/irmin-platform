@@ -36,6 +36,7 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
 
   override async handleLLMStart() {
     this.startedAt = Date.now();
+    this.firstTokenAt = undefined;
     await this.emit({ requestedModel: this.requestedModel, status: 'started' });
   }
 

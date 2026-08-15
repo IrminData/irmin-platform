@@ -69,7 +69,7 @@ function ObjectSchemaViewer({
       );
     default:
       return (
-        <div className='text-red-500'>
+        <div className='text-destructive'>
           {dict.repository.objects.unknownType}
         </div>
       );

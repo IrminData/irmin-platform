@@ -160,7 +160,7 @@ export default function UploadObjectModal({
                 }}
               />
               {errors.files && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.files.message}
                 </p>
               )}
@@ -186,7 +186,7 @@ export default function UploadObjectModal({
                 }}
               />
               {errors.name && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.name.message}
                 </p>
               )}
@@ -212,7 +212,7 @@ export default function UploadObjectModal({
                 }}
               />
               {errors.path && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.path.message}
                 </p>
               )}
@@ -234,7 +234,7 @@ export default function UploadObjectModal({
                 {...field}
               />
               {errors.repository && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.repository.message}
                 </p>
               )}
@@ -256,7 +256,7 @@ export default function UploadObjectModal({
                 {...field}
               />
               {errors.ref && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.ref.message}
                 </p>
               )}
@@ -276,7 +276,7 @@ export default function UploadObjectModal({
       {error && <div className='py-2 text-destructive'>{error}</div>}
       <div className='pb-3'>
         <Button
-          variant='default'
+          variant='accent'
           className='w-full'
           loading={loading}
           type='submit'

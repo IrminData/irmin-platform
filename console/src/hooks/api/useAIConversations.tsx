@@ -33,7 +33,7 @@ interface UseAIConversationsOptions {
 export function useAIConversations(options: UseAIConversationsOptions = {}) {
   const { getToken } = useIAM();
   const { irminAlert } = usePopup();
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
   const { workspaceSlug } = useWorkspaceContext();
   const queryClient = useQueryClient();
 
@@ -101,13 +101,13 @@ export function useAIConversations(options: UseAIConversationsOptions = {}) {
           })
         );
 
-      const timestamp = new Date().toLocaleString('en-US', {
+      const timestamp = new Date().toLocaleString(locale, {
         month: 'short',
         day: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
       });
-      const title = `untitled - ${timestamp}`;
+      const title = `${dict.assistant.untitledConversation} — ${timestamp}`;
 
       // Optimistically update the cache
       const optimisticConversation: AIConversation = {

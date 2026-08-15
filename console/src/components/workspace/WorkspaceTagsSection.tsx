@@ -73,7 +73,8 @@ const WorkspaceTagsSection = () => {
     async (tagId: string) => {
       const confirmed = await irminConfirm(
         'warning',
-        dict.common.areYouSureYouWantToDelete
+        dict.common.areYouSureYouWantToDelete,
+        dict.workspace.deleteTag
       );
 
       if (confirmed) {
@@ -86,6 +87,7 @@ const WorkspaceTagsSection = () => {
       irminConfirm,
       deleteWorkspaceTagMutation,
       dict.common.areYouSureYouWantToDelete,
+      dict.workspace.deleteTag,
     ]
   );
 
@@ -125,12 +127,7 @@ const WorkspaceTagsSection = () => {
     return (
       <div className='mx-auto flex max-w-7xl flex-col gap-2 py-2'>
         <div className='flex items-center justify-end px-4'>
-          <div
-            className={`
-              h-10 w-28 animate-pulse rounded-sm bg-gray-200
-              dark:bg-gray-800
-            `}
-          />
+          <div className={`h-10 w-28 animate-pulse rounded-[2px] bg-muted`} />
         </div>
         <ContentWrapper>
           <TableSkeleton rows={5} columns={3} />
@@ -160,7 +157,7 @@ const WorkspaceTagsSection = () => {
           size='lg'
           icon={<TbPlus size={16} />}
           tooltip={dict.common.create}
-          variant='default'
+          variant='accent'
           onClick={openCreateModal}
           disabled={!isResourceAllowed('workspace_tag', 'create')}
           loading={createWorkspaceTagMutation.isPending}
@@ -172,12 +169,7 @@ const WorkspaceTagsSection = () => {
       <ContentWrapper>
         <Table className='min-w-full'>
           <TableHeader>
-            <TableRow
-              className={`
-                border-b
-                dark:border-gray-800
-              `}
-            >
+            <TableRow className={`border-b border-border`}>
               <TableHead
                 className={`
                   px-4 py-2 text-left text-xs font-normal
@@ -208,20 +200,12 @@ const WorkspaceTagsSection = () => {
             {workspaceTagsQuery.data?.data?.map((tag) => (
               <TableRow
                 key={`workspace-tag-${tag.id}`}
-                className={`
-                  h-14 border-b
-                  dark:border-gray-800
-                `}
+                className={`h-14 border-b border-border`}
               >
-                <TableCell
-                  className={`
-                    px-4 py-2 text-sm text-gray-700
-                    dark:text-gray-400
-                  `}
-                >
+                <TableCell className={`px-4 py-2 text-sm text-foreground`}>
                   <div className='flex items-center gap-2'>
                     <div
-                      className='size-8 rounded-full border border-gray-300'
+                      className='size-8 rounded-full border border-border'
                       style={{ backgroundColor: tag.color }}
                     />
                     <p className='text-base font-medium'>{tag.name}</p>
@@ -238,9 +222,8 @@ const WorkspaceTagsSection = () => {
                 </TableCell>
                 <TableCell
                   className={`
-                    hidden p-2 text-sm text-gray-700
+                    hidden p-2 text-sm text-muted-foreground
                     md:table-cell
-                    dark:text-gray-400
                   `}
                 >
                   {tag.description}

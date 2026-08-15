@@ -1,11 +1,15 @@
 'use client';
 
-import { memo } from 'react';
-
-import { IoClose } from 'react-icons/io5';
+import { memo, useRef } from 'react';
 
 import { Button } from '@/components/ui/button';
-import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -18,94 +22,63 @@ interface FileConflictDialogProps {
   onSelect: (action: ConflictAction) => void;
 }
 
-/**
- * Conflict resolution dialog with 4 options
- *
- * Displayed when a file being uploaded already exists at the target path.
- * Follows the same positioning pattern as Confirm.tsx (fixed at bottom of screen).
- *
- * @param props - Component properties
- * @returns The FileConflictDialog component
- */
+/** Resolve an upload conflict without letting focus escape behind the prompt. */
 const FileConflictDialog = ({ file, onSelect }: FileConflictDialogProps) => {
   const { dict } = useLocale();
-
+  const skipRef = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
   const conflictDict = dict.repository.objects.uploadFiles.conflict;
 
   return (
-    <div
-      className={`
-        fixed bottom-[20px] z-50 flex w-screen animate-in justify-center p-4
-        align-middle fade-in
-      `}
+    <Dialog
+      open
+      onOpenChange={(open) => {
+        if (!open) onSelect('skip');
+      }}
     >
-      <div
-        className={`
-          flex w-[450px] max-w-[90vw] flex-col items-start justify-between
-          rounded-lg border border-yellow-500 bg-gray-50 p-4 shadow-md
-          dark:bg-irmin-black-500
-        `}
+      <DialogContent
+        role='alertdialog'
+        showCloseButton={false}
+        className='
+          border-warning/50
+          sm:max-w-md
+        '
+        onOpenAutoFocus={(event) => {
+          event.preventDefault();
+          skipRef.current?.focus();
+        }}
       >
-        {/* Header */}
-        <div className='flex w-full flex-row items-start justify-between gap-2'>
-          <div className='flex-1'>
-            <p className='text-base font-semibold'>{conflictDict.title}</p>
-            <p
-              className={`
-                mt-1 text-sm text-gray-600
-                dark:text-gray-400
-              `}
-            >
-              {conflictDict.message.replace('{filename}', file.file.name)}
-            </p>
-          </div>
-          <ButtonWithTooltip
-            size='icon'
-            variant='ghost'
-            onClick={() => onSelect('skip')}
-            aria-label='Close conflict dialog'
-            tooltip={dict.common.close}
-            icon={<IoClose size={22} />}
-          />
-        </div>
+        <DialogHeader className='text-start'>
+          <DialogTitle>{conflictDict.title}</DialogTitle>
+          <DialogDescription className='text-pretty text-foreground'>
+            {conflictDict.message.replace('{filename}', file.file.name)}
+          </DialogDescription>
+        </DialogHeader>
 
-        {/* Action buttons */}
-        <div className='mt-4 grid w-full grid-cols-2 gap-2'>
+        <div
+          className='
+            grid grid-cols-1 gap-2
+            sm:grid-cols-2
+          '
+        >
           <Button
+            ref={skipRef}
             variant='secondary'
             onClick={() => onSelect('skip')}
-            aria-label='Skip this file'
-            size='sm'
           >
             {conflictDict.skip}
           </Button>
-          <Button
-            variant='default'
-            onClick={() => onSelect('replace')}
-            aria-label='Replace this file'
-            size='sm'
-          >
+          <Button variant='accent' onClick={() => onSelect('replace')}>
             {conflictDict.replace}
           </Button>
-          <Button
-            variant='outline'
-            onClick={() => onSelect('skipAll')}
-            aria-label='Skip all conflicting files'
-            size='sm'
-          >
+          <Button variant='outline' onClick={() => onSelect('skipAll')}>
             {conflictDict.skipAll}
           </Button>
-          <Button
-            variant='outline'
-            onClick={() => onSelect('replaceAll')}
-            aria-label='Replace all conflicting files'
-            size='sm'
-          >
+          <Button variant='outline' onClick={() => onSelect('replaceAll')}>
             {conflictDict.replaceAll}
           </Button>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

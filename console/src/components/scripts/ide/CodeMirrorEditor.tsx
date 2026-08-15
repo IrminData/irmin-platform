@@ -75,8 +75,7 @@ const CodeMirrorEditor = ({
         ...containerStyles,
       }}
       className={`
-        codemirror-editor relative size-full overflow-scroll bg-white
-        dark:bg-gray-950
+        codemirror-editor relative size-full overflow-scroll bg-background
       `}
     >
       <CodeMirror

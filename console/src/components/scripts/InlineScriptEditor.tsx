@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { IoSave } from 'react-icons/io5';
-import { TbExternalLink } from 'react-icons/tb';
+import { TbDeviceFloppy, TbExternalLink } from 'react-icons/tb';
 
 import ScriptHelper from '@/components/scripts/helper/ScriptHelper';
 import CodeMirrorEditor from '@/components/scripts/ide/CodeMirrorEditor';
@@ -197,7 +196,8 @@ export default function InlineScriptEditor({
       if (hasUnsavedChangesRef.current) {
         const confirmed = await irminConfirm(
           'warning',
-          dict.scripts.unsavedChangesDiscard
+          dict.scripts.unsavedChangesDiscard,
+          dict.common.discardChanges
         );
         if (!confirmed) {
           isUserInitiatedChangeRef.current = false;
@@ -223,7 +223,12 @@ export default function InlineScriptEditor({
         isUserInitiatedChangeRef.current = false;
       }, 0);
     },
-    [disabled, irminConfirm, dict.scripts.unsavedChangesDiscard]
+    [
+      disabled,
+      irminConfirm,
+      dict.scripts.unsavedChangesDiscard,
+      dict.common.discardChanges,
+    ]
   );
 
   const handleSave = useCallback(async () => {
@@ -393,12 +398,12 @@ export default function InlineScriptEditor({
       {/* Editor Controls */}
       <div
         className={`
-          flex items-center justify-between gap-2 border-b border-gray-200 pb-2
-          dark:border-gray-800
+          flex items-center justify-between gap-2 border-b border-border pb-2
         `}
       >
         <div className='flex items-center gap-2'>
           <select
+            aria-label={dict.common.selectLanguage}
             value={language}
             onChange={(e) => {
               if (!disabled && (!normalizedScriptId || isNewScript)) {
@@ -407,9 +412,10 @@ export default function InlineScriptEditor({
             }}
             disabled={disabled || (!!normalizedScriptId && !isNewScript)}
             className={`
-              w-24 rounded-md border bg-background px-2 py-1 text-sm
+              w-24 rounded-[2px] border border-input bg-background px-2 py-1
+              text-base
               disabled:opacity-50
-              dark:border-gray-700
+              md:text-sm
             `}
           >
             <option value='go'>Go</option>
@@ -422,9 +428,9 @@ export default function InlineScriptEditor({
         </div>
         <Button
           onClick={handleSave}
-          variant='default'
+          variant='accent'
           size='sm'
-          icon={<IoSave />}
+          icon={<TbDeviceFloppy />}
           disabled={
             !enableSaveButton ||
             disabled ||

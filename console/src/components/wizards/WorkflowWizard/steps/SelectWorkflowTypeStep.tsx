@@ -2,10 +2,10 @@
 
 import { type JSX, useCallback, useMemo } from 'react';
 
-import { RiFlowChart } from 'react-icons/ri';
 import {
   TbDatabaseExport,
   TbDatabaseImport,
+  TbHierarchy2,
   TbPlayerPlay,
 } from 'react-icons/tb';
 
@@ -55,7 +55,7 @@ function SelectWorkflowTypeStep({
     () => [
       {
         type: 'pipeline',
-        icon: <RiFlowChart size={20} />,
+        icon: <TbHierarchy2 size={20} />,
         label: dict.workflow.pipeline.pipeline,
         description: dict.workflow.create.typeDescription.pipeline,
       },

@@ -2,8 +2,14 @@
 
 import Link from 'next/link';
 
-import { GoWorkflow } from 'react-icons/go';
-import { TbBrain, TbDatabase, TbDots, TbPlus, TbRun } from 'react-icons/tb';
+import {
+  TbBrain,
+  TbDatabase,
+  TbDots,
+  TbPlugConnected,
+  TbPlus,
+  TbRun,
+} from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -35,7 +41,7 @@ interface DashboardListCardProps {
 
 const iconMap = {
   repositories: TbDatabase,
-  connections: GoWorkflow,
+  connections: TbPlugConnected,
   workflows: TbRun,
   'ai-applications': TbBrain,
 };
@@ -224,7 +230,7 @@ export function DashboardListCard({
                               // distinction.
                               <span
                                 className={`
-                                  shrink-0 font-mono text-[10px]
+                                  shrink-0 font-mono text-[11px]
                                   tracking-[0.08em] text-muted-foreground
                                   uppercase
                                 `}
@@ -251,11 +257,12 @@ export function DashboardListCard({
                           size='sm'
                           className='ml-1 size-6 p-0'
                           href={`${workspaceUrl}/${type}/${itemDetails.href}`}
+                          aria-label={`${dict.common.view}: ${itemDetails.name}`}
                           onClick={(e) => {
                             e.stopPropagation();
                           }}
                         >
-                          <TbDots className='size-3' />
+                          <TbDots aria-hidden='true' className='size-3' />
                         </Button>
                       </div>
                     );

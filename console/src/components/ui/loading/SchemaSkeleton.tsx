@@ -26,14 +26,14 @@ function SchemaSkeleton({
           {showHeader && (
             <div className='mb-10 flex flex-col gap-6'>
               <div className='flex items-center gap-3'>
-                <LoadingSkeleton className='size-10 rounded-lg' />
+                <LoadingSkeleton className='size-10 rounded-[2px]' />
                 <LoadingSkeleton className='h-9 w-48' />
               </div>
               <LoadingSkeleton className='h-4 w-2/3 max-w-3xl' />
               {showControls && (
                 <div className='flex flex-wrap items-center gap-4'>
-                  <LoadingSkeleton className='h-10 w-80 max-w-full rounded-md' />
-                  <LoadingSkeleton className='h-10 w-32 rounded-md' />
+                  <LoadingSkeleton className='h-10 w-80 max-w-full rounded-[2px]' />
+                  <LoadingSkeleton className='h-10 w-32 rounded-[2px]' />
                 </div>
               )}
             </div>
@@ -47,7 +47,7 @@ function SchemaSkeleton({
                 {Array.from({ length: dataFlowCount }).map((_, i) => (
                   <div
                     key={`flow-${i}`}
-                    className='rounded-lg border border-border bg-card p-6'
+                    className='rounded-[2px] border border-border bg-card p-6'
                   >
                     <div className='mb-4 flex flex-wrap items-center gap-3'>
                       <LoadingSkeleton className='h-7 w-56' />
@@ -60,7 +60,7 @@ function SchemaSkeleton({
                       {Array.from({ length: 5 }).map((_, j) => (
                         <LoadingSkeleton
                           key={`flow-${i}-node-${j}`}
-                          className='h-8 w-32 rounded-md'
+                          className='h-8 w-32 rounded-[2px]'
                         />
                       ))}
                     </div>
@@ -81,7 +81,7 @@ function SchemaSkeleton({
                 {Array.from({ length: 2 }).map((_, i) => (
                   <div
                     key={`component-${i}`}
-                    className='rounded-lg border border-border bg-card p-6'
+                    className='rounded-[2px] border border-border bg-card p-6'
                   >
                     <div className='mb-4 flex items-center gap-2'>
                       <LoadingSkeleton className='size-5' />

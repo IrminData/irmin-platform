@@ -46,42 +46,17 @@ const PendingWriteSkeletonRow = () => {
   return (
     <div
       className={`
-        flex animate-pulse items-center gap-4 rounded-lg bg-card/80 p-3
+        flex animate-pulse items-center gap-4 rounded-[2px] bg-card/80 p-3
       `}
     >
-      <div
-        className={`
-          size-8 rounded-sm bg-gray-300
-          dark:bg-gray-700
-        `}
-      />
+      <div className={`size-8 rounded-[2px] bg-muted`} />
       <div className='flex-1'>
-        <div
-          className={`
-            mb-2 h-4 w-1/3 rounded-sm bg-gray-300
-            dark:bg-gray-700
-          `}
-        />
-        <div
-          className={`
-            h-3 w-2/3 rounded-sm bg-gray-300
-            dark:bg-gray-700
-          `}
-        />
+        <div className={`mb-2 h-4 w-1/3 rounded-[2px] bg-muted`} />
+        <div className={`h-3 w-2/3 rounded-[2px] bg-muted`} />
       </div>
       <div className='flex gap-2'>
-        <div
-          className={`
-            h-8 w-20 rounded-sm bg-gray-300
-            dark:bg-gray-700
-          `}
-        />
-        <div
-          className={`
-            h-8 w-20 rounded-sm bg-gray-300
-            dark:bg-gray-700
-          `}
-        />
+        <div className={`h-8 w-20 rounded-[2px] bg-muted`} />
+        <div className={`h-8 w-20 rounded-[2px] bg-muted`} />
       </div>
     </div>
   );
@@ -105,6 +80,8 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
   isProcessing: boolean;
   canEdit: boolean;
 }) {
+  const { dict } = useLocale();
+
   const getOperationIcon = () => {
     switch (pendingWrite.operation) {
       case 'upload':
@@ -124,39 +101,39 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
         return (
           <span
             className={`
-              inline-flex items-center gap-1 rounded-full bg-yellow-500/10 px-2
-              py-0.5 text-xs text-yellow-600
-              dark:text-yellow-400
+              inline-flex items-center gap-1 rounded-full border
+              border-warning/30 bg-warning/10 px-2 py-0.5 text-xs
+              text-foreground
             `}
           >
-            <TbClock size={12} />
-            Pending
+            <TbClock aria-hidden='true' size={12} />
+            {dict.aiApplication.pendingStatus}
           </span>
         );
       case 'approved':
         return (
           <span
             className={`
-              inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2
-              py-0.5 text-xs text-green-600
-              dark:text-green-400
+              inline-flex items-center gap-1 rounded-full border
+              border-success/30 bg-success/10 px-2 py-0.5 text-xs
+              text-foreground
             `}
           >
-            <TbCheck size={12} />
-            Approved
+            <TbCheck aria-hidden='true' size={12} />
+            {dict.aiApplication.approvedStatus}
           </span>
         );
       case 'rejected':
         return (
           <span
             className={`
-              inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2
-              py-0.5 text-xs text-red-600
-              dark:text-red-400
+              inline-flex items-center gap-1 rounded-full border
+              border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs
+              text-foreground
             `}
           >
-            <TbX size={12} />
-            Rejected
+            <TbX aria-hidden='true' size={12} />
+            {dict.aiApplication.rejectedStatus}
           </span>
         );
     }
@@ -166,18 +143,18 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
     <div
       className={cn(
         `
-          flex flex-col gap-3 rounded-lg bg-card/80 p-4 transition-colors
+          flex flex-col gap-3 rounded-[2px] bg-card/80 p-4 transition-colors
           hover:bg-card
         `,
-        pendingWrite.status === 'pending' && 'border-l-2 border-yellow-500'
+        pendingWrite.status === 'pending' && 'border-l-2 border-warning'
       )}
     >
       <div className='flex items-start justify-between'>
         <div className='flex items-center gap-3'>
           <div
             className={`
-              flex size-8 items-center justify-center rounded-md bg-primary/10
-              text-primary
+              flex size-8 items-center justify-center rounded-[2px]
+              bg-primary/10 text-primary
             `}
           >
             {getOperationIcon()}
@@ -201,7 +178,7 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
 
       {/* Commit message */}
       <div className='text-sm text-muted-foreground'>
-        <span className='font-medium'>Message:</span>{' '}
+        <span className='font-medium'>{dict.aiApplication.commitMessage}:</span>{' '}
         {pendingWrite.commit_message}
       </div>
 
@@ -209,7 +186,8 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
       {pendingWrite.content_preview && (
         <div
           className={`
-            max-h-24 overflow-auto rounded-md bg-muted/50 p-2 font-mono text-xs
+            max-h-24 overflow-auto rounded-[2px] bg-muted/50 p-2 font-mono
+            text-xs
           `}
         >
           <pre className='break-all whitespace-pre-wrap'>
@@ -222,7 +200,8 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
       {pendingWrite.patch_json && (
         <div
           className={`
-            max-h-24 overflow-auto rounded-md bg-muted/50 p-2 font-mono text-xs
+            max-h-24 overflow-auto rounded-[2px] bg-muted/50 p-2 font-mono
+            text-xs
           `}
         >
           <pre className='break-all whitespace-pre-wrap'>
@@ -240,21 +219,21 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
             onClick={() => onReject(pendingWrite.id)}
             disabled={!canEdit || isProcessing}
             className={`
-              text-red-600
-              hover:text-red-700
+              text-destructive
+              hover:text-destructive/80
             `}
           >
-            <TbX size={14} className='mr-1' />
-            Reject
+            <TbX aria-hidden='true' size={14} className='mr-1' />
+            {dict.aiApplication.rejectWrite}
           </Button>
           <Button
-            variant='default'
+            variant='accent'
             size='sm'
             onClick={() => onApprove(pendingWrite.id)}
             disabled={!canEdit || isProcessing}
           >
-            <TbCheck size={14} className='mr-1' />
-            Approve
+            <TbCheck aria-hidden='true' size={14} className='mr-1' />
+            {dict.aiApplication.approveWrite}
           </Button>
         </div>
       )}
@@ -262,9 +241,15 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
       {/* Review info */}
       {pendingWrite.reviewed_by && pendingWrite.reviewed_at && (
         <div className='text-xs text-muted-foreground'>
-          Reviewed by {pendingWrite.reviewed_by.first_name}{' '}
-          {pendingWrite.reviewed_by.last_name} on{' '}
-          {new Date(pendingWrite.reviewed_at).toLocaleString(locale)}
+          {dict.aiApplication.reviewedByOn
+            .replace(
+              '{name}',
+              `${pendingWrite.reviewed_by.first_name} ${pendingWrite.reviewed_by.last_name}`
+            )
+            .replace(
+              '{date}',
+              new Date(pendingWrite.reviewed_at).toLocaleString(locale)
+            )}
         </div>
       )}
     </div>
@@ -372,10 +357,11 @@ const AIApplicationPendingWritesSectionContent = () => {
           disabled={isLoading}
         >
           <TbRefresh
+            aria-hidden='true'
             size={16}
             className={cn('mr-2', isLoading && 'animate-spin')}
           />
-          Refresh
+          {dict.common.refresh}
         </Button>
       </CardHeader>
       <CardContent>
@@ -423,8 +409,13 @@ const AIApplicationPendingWritesSectionContent = () => {
             {totalPages > 1 && (
               <div className='mt-4 flex items-center justify-between'>
                 <span className='text-sm text-muted-foreground'>
-                  Showing {page * limit + 1}-
-                  {Math.min((page + 1) * limit, total)} of {total}
+                  {dict.aiApplication.pendingWritesShowing
+                    .replace('{start}', String(page * limit + 1))
+                    .replace(
+                      '{end}',
+                      String(Math.min((page + 1) * limit, total))
+                    )
+                    .replace('{total}', String(total))}
                 </span>
                 <div className='flex gap-2'>
                   <Button
@@ -432,16 +423,18 @@ const AIApplicationPendingWritesSectionContent = () => {
                     size='sm'
                     onClick={() => setPage((prev) => prev - 1)}
                     disabled={page === 0}
+                    aria-label={dict.common.previousPage}
                   >
-                    <TbChevronLeft size={16} />
+                    <TbChevronLeft aria-hidden='true' size={16} />
                   </Button>
                   <Button
                     variant='outline'
                     size='sm'
                     onClick={() => setPage((prev) => prev + 1)}
                     disabled={page >= totalPages - 1}
+                    aria-label={dict.common.nextPage}
                   >
-                    <TbChevronRight size={16} />
+                    <TbChevronRight aria-hidden='true' size={16} />
                   </Button>
                 </div>
               </div>

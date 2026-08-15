@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from 'react';
 
-import { IoAdd } from 'react-icons/io5';
+import { TbPlus } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import SafeComponent from '@/components/ui/error/SafeComponent';
@@ -112,7 +112,8 @@ function RepositoryTagsSectionContent() {
     async (tag: string) => {
       const confirmed = await irminConfirm(
         'warning',
-        dict.repository.tags.confirmDeleteTag
+        dict.repository.tags.confirmDeleteTag,
+        dict.repository.tags.deleteTag
       );
       if (!confirmed) return;
       // Delete the tag
@@ -124,10 +125,7 @@ function RepositoryTagsSectionContent() {
   if (!canViewTags) {
     return (
       <div
-        className={`
-          w-full rounded-lg border border-gray-200 bg-card px-2 py-8
-          dark:border-gray-800
-        `}
+        className={`w-full rounded-[2px] border border-border bg-card px-2 py-8`}
       >
         <p
           className={`
@@ -150,9 +148,9 @@ function RepositoryTagsSectionContent() {
     >
       <div className='mb-4 flex flex-row items-center justify-end gap-4'>
         <Button
-          variant='default'
+          variant='accent'
           size='sm'
-          icon={<IoAdd size={18} />}
+          icon={<TbPlus size={18} />}
           disabled={!canCreateTag}
           onClick={() => {
             showCreateTagModal();

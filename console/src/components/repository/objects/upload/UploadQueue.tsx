@@ -93,19 +93,12 @@ const UploadQueue = ({
 
       {/* Summary (only shown after processing starts) */}
       {(isProcessing || isComplete) && summaryText && (
-        <p
-          className={`
-            text-sm text-gray-600
-            dark:text-gray-400
-          `}
-        >
-          {summaryText}
-        </p>
+        <p className={`text-sm text-muted-foreground`}>{summaryText}</p>
       )}
 
       {/* Upload button (only when not processing and has pending files) */}
       {!isProcessing && !isComplete && pendingCount > 0 && (
-        <Button variant='default' onClick={onStartUpload} className='w-full'>
+        <Button variant='accent' onClick={onStartUpload} className='w-full'>
           {uploadDict.startUpload.replace('{count}', String(pendingCount))}
         </Button>
       )}

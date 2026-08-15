@@ -102,7 +102,7 @@ export default function LogsSection({
             <Button
               size='icon'
               variant='gray'
-              className='rounded-full'
+              aria-label={dict.common.back}
               icon={<TbChevronLeft size={24} />}
               onClick={() => router.back()}
             />
@@ -112,9 +112,8 @@ export default function LogsSection({
             {workflow && (
               <h3
                 className={`
-                  mt-4 text-lg text-gray-600
+                  mt-4 text-lg text-muted-foreground
                   xl:text-xl
-                  dark:text-gray-400
                 `}
               >
                 <Link
@@ -128,9 +127,8 @@ export default function LogsSection({
             {repository && !repositoryObject && (
               <h3
                 className={`
-                  mt-4 text-lg text-gray-600
+                  mt-4 text-lg text-muted-foreground
                   xl:text-xl
-                  dark:text-gray-400
                 `}
               >
                 <Link
@@ -144,9 +142,8 @@ export default function LogsSection({
             {repositoryObject && repository && (
               <h3
                 className={`
-                  mt-4 text-lg text-gray-600
+                  mt-4 text-lg text-muted-foreground
                   xl:text-xl
-                  dark:text-gray-400
                 `}
               >
                 <Link
@@ -160,9 +157,8 @@ export default function LogsSection({
             {connection && (
               <h3
                 className={`
-                  mt-4 text-lg text-gray-600
+                  mt-4 text-lg text-muted-foreground
                   xl:text-xl
-                  dark:text-gray-400
                 `}
               >
                 <Link
@@ -176,9 +172,8 @@ export default function LogsSection({
             {user && (
               <h3
                 className={`
-                  mt-4 text-lg text-gray-600
+                  mt-4 text-lg text-muted-foreground
                   xl:text-xl
-                  dark:text-gray-400
                 `}
               >
                 {user.first_name} {user.last_name} - {user.email}
@@ -187,9 +182,8 @@ export default function LogsSection({
             {storedQuery && (
               <h3
                 className={`
-                  mt-4 text-lg text-gray-600
+                  mt-4 text-lg text-muted-foreground
                   xl:text-xl
-                  dark:text-gray-400
                 `}
               >
                 {storedQuery.name}
@@ -198,9 +192,8 @@ export default function LogsSection({
             {policy && (
               <h3
                 className={`
-                  mt-4 text-lg text-gray-600
+                  mt-4 text-lg text-muted-foreground
                   xl:text-xl
-                  dark:text-gray-400
                 `}
               >
                 {policy.id}
@@ -210,19 +203,21 @@ export default function LogsSection({
         </div>
         <div
           className={`
-            flex w-full items-center gap-2 rounded-md bg-gray-100 p-2
-            text-gray-900
+            flex w-full items-center gap-2 rounded-[2px] bg-muted p-2
+            text-foreground
             focus:outline-hidden
-            dark:bg-gray-800 dark:text-gray-200
           `}
         >
           <TbSearch />
           <input
             type='text'
             onChange={(e) => setSearchQuery(e.target.value)}
+            aria-label={dict.list.searchPlaceholder}
             className={`
-              w-full bg-transparent p-2
-              focus:outline-hidden
+              w-full rounded-[2px] bg-transparent p-2 text-base
+              focus-visible:outline-2 focus-visible:outline-offset-2
+              focus-visible:outline-accent
+              md:text-sm
             `}
             placeholder={dict.list.searchPlaceholder}
             disabled={loading}

@@ -16,6 +16,7 @@ import type { AgentInput, AgentResponse } from '@/agents/types';
 import { agentConfig } from './config';
 
 export class ScriptingAgent extends BaseAgent {
+  protected override executionRole: ModelRole = 'scripting';
   constructor() {
     super(agentConfig);
   }

@@ -21,6 +21,8 @@ import {
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { cn } from '@/utils/tw';
 
 export type PromptInputProps = HTMLAttributes<HTMLFormElement>;
@@ -28,10 +30,7 @@ export type PromptInputProps = HTMLAttributes<HTMLFormElement>;
 export const PromptInput = ({ className, ...props }: PromptInputProps) => (
   <form
     className={cn(
-      `
-        w-full divide-y overflow-hidden rounded-xl border bg-background
-        shadow-sm
-      `,
+      `w-full divide-y overflow-hidden rounded-[2px] border bg-background`,
       className
     )}
     {...props}
@@ -46,9 +45,10 @@ export type PromptInputTextareaProps = ComponentProps<typeof Textarea> & {
 export const PromptInputTextarea = ({
   onChange,
   className,
-  placeholder = 'What would you like to know?',
+  placeholder,
   ...props
 }: PromptInputTextareaProps) => {
+  const { dict } = useLocale();
   const handleKeyDown: KeyboardEventHandler<HTMLTextAreaElement> = (e) => {
     if (e.key === 'Enter') {
       if (e.shiftKey) {
@@ -84,7 +84,7 @@ export const PromptInputTextarea = ({
         onChange?.(e);
       }}
       onKeyDown={handleKeyDown}
-      placeholder={placeholder}
+      placeholder={placeholder ?? dict.assistant.promptPlaceholder}
       {...props}
     />
   );
@@ -111,7 +111,7 @@ export const PromptInputTools = ({
   <div
     className={cn(
       'flex items-center gap-1',
-      '[&_button:first-child]:rounded-bl-xl',
+      '[&_button:first-child]:rounded-bl-[2px]',
       className
     )}
     {...props}
@@ -132,7 +132,7 @@ export const PromptInputButton = ({
   return (
     <Button
       className={cn(
-        'shrink-0 gap-1.5 rounded-lg',
+        'shrink-0 gap-1.5 rounded-[2px]',
         variant === 'ghost' && 'text-muted-foreground',
         newSize === 'default' && 'px-3',
         className
@@ -169,7 +169,7 @@ export const PromptInputSubmit = ({
 
   return (
     <Button
-      className={cn('gap-1.5 rounded-lg', className)}
+      className={cn('gap-1.5 rounded-[2px]', className)}
       size={size}
       type='submit'
       variant={variant}

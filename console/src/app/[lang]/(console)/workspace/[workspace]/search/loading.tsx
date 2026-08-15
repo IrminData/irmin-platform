@@ -3,15 +3,19 @@ import LoadingSkeleton from '@/components/ui/loading/LoadingSkeleton';
 
 export default function SearchLoading() {
   return (
-    <div className='container mx-auto max-w-6xl px-4 py-8'>
-      <div className='mb-4 flex items-center gap-3'>
-        <LoadingSkeleton className='size-10 rounded-full' />
-        <LoadingSkeleton className='h-11 w-full rounded-md' />
+    <div
+      className='
+        mx-auto max-w-6xl space-y-6 p-4
+        md:p-6
+      '
+    >
+      <div className='space-y-2'>
+        <LoadingSkeleton className='h-10 w-40' />
+        <LoadingSkeleton className='h-4 w-full max-w-md' />
       </div>
-      <div className='mb-4 flex flex-wrap gap-2'>
-        <LoadingSkeleton className='h-8 w-20 rounded-full' />
-        <LoadingSkeleton className='h-8 w-24 rounded-full' />
-        <LoadingSkeleton className='h-8 w-16 rounded-full' />
+      <LoadingSkeleton className='h-11 w-full' />
+      <div className='flex items-center justify-between'>
+        <LoadingSkeleton className='h-11 w-28' />
       </div>
       <SearchResultsSkeleton />
     </div>

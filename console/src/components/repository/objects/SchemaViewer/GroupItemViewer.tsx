@@ -2,8 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-import { MdFolder } from 'react-icons/md';
-import { TbLoader2 } from 'react-icons/tb';
+import { TbFolder, TbLoader2 } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 
@@ -114,25 +113,12 @@ export function GroupItemViewer({
   return (
     <div
       className={`
-        rounded-md border bg-popover/10 p-2
-        dark:border-gray-800
-        ${
-          isFocused
-            ? `
-              ring-2 ring-blue-500
-              dark:ring-blue-400
-            `
-            : ''
-        }
+        rounded-[2px] border border-border bg-popover/10 p-2
+        ${isFocused ? `ring-2 ring-accent` : ''}
       `}
     >
       <div className='flex items-start gap-3'>
-        <MdFolder
-          className={`
-            mt-1 size-6 shrink-0 text-yellow-500
-            dark:text-yellow-300
-          `}
-        />
+        <TbFolder className={`mt-1 size-6 shrink-0 text-warning`} />
         <div className='min-w-0 grow'>
           <div
             className={`
@@ -140,48 +126,27 @@ export function GroupItemViewer({
               sm:flex-row sm:items-center
             `}
           >
-            <h3
-              className={`
-                truncate font-medium text-gray-900
-                dark:text-gray-100
-              `}
-            >
+            <h3 className={`truncate font-medium text-foreground`}>
               {item.name}
             </h3>
             {item.last_modified && (
-              <span
-                className={`
-                  text-xs text-gray-500
-                  dark:text-gray-400
-                `}
-              >
+              <span className={`text-xs text-muted-foreground`}>
                 {dict.common.lastModified}:{' '}
                 {formatTimestamp(item.last_modified, locale)}
               </span>
             )}
           </div>
-          <p
-            className={`
-              truncate text-sm text-gray-500
-              dark:text-gray-400
-            `}
-          >
+          <p className={`truncate text-sm text-muted-foreground`}>
             {item.path}
           </p>
           {item.description && (
-            <p
-              className={`
-                mt-1 text-sm text-gray-600
-                dark:text-gray-300
-              `}
-            >
+            <p className={`mt-1 text-sm text-muted-foreground`}>
               {item.description}
             </p>
           )}
           <div
             className={`
-              mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500
-              dark:text-gray-400
+              mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground
             `}
           >
             <span>
@@ -217,7 +182,7 @@ export function GroupItemViewer({
                 </div>
               )}
               {!lazyLoading && lazyError && (
-                <div className='flex items-center gap-2 text-sm text-red-500'>
+                <div className='flex items-center gap-2 text-sm text-destructive'>
                   <span>{dict.fileNavigator.errors.lazyLoadError}</span>
                   <button
                     type='button'

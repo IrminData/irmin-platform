@@ -13,6 +13,8 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { cn } from '@/utils/tw';
 
 import type { TabDetails } from '@/types/internal/Tabs';
@@ -46,8 +48,10 @@ const TabsWithBackButton = ({
   moreTabs?: TabDetails[];
   moreLabel?: string;
 }) => {
+  const { dict } = useLocale();
   const visibleMoreTabs = (moreTabs ?? []).filter((tab) => !tab.hidden);
   const isMoreActive = visibleMoreTabs.some((tab) => tab.active);
+  const resolvedMoreLabel = moreLabel ?? dict.common.more;
 
   return (
     <div
@@ -59,7 +63,7 @@ const TabsWithBackButton = ({
       <ButtonWithTooltip
         size='lg'
         variant='gray'
-        className='aspect-square overflow-hidden rounded-full'
+        className='aspect-square overflow-hidden'
         icon={<TbChevronLeft size={24} />}
         href={backHref}
         onClick={onBackClick}
@@ -68,9 +72,8 @@ const TabsWithBackButton = ({
       />
       <div
         className={`
-          flex w-full flex-row border-gray-200
+          flex w-full flex-row border-border
           md:border-b
-          dark:border-gray-800
         `}
       >
         {tabs
@@ -92,7 +95,6 @@ const TabsWithBackButton = ({
                 variant={'ghost'}
                 href={tab.link}
                 onClick={tab.onClick}
-                aria-label={`Tab ${tab.name}`}
                 icon={tab.icon}
               >
                 {tab.name}
@@ -115,9 +117,9 @@ const TabsWithBackButton = ({
                 )}
                 size='lg'
                 variant='ghost'
-                aria-label={moreLabel ?? 'More'}
+                aria-label={resolvedMoreLabel}
               >
-                {moreLabel ?? 'More'}
+                {resolvedMoreLabel}
                 <TbChevronDown size={14} className='ml-1' />
               </Button>
             </DropdownMenuTrigger>

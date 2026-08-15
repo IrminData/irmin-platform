@@ -32,7 +32,8 @@ export default function PolicyBulkActions({
   const handleBulkDelete = useCallback(async () => {
     const confirmed = await irminConfirm(
       'warning',
-      dict.policy.bulkDeleteConfirm
+      dict.policy.bulkDeleteConfirm,
+      dict.policy.bulkDelete
     );
     if (!confirmed) return;
 
@@ -71,6 +72,7 @@ export default function PolicyBulkActions({
     selectedIds,
     irminConfirm,
     irminAlert,
+    dict.policy.bulkDelete,
     dict.policy.bulkDeleteConfirm,
     dict.policy.bulkDeleteSuccess,
     dict.policy.failedCount,
@@ -81,7 +83,7 @@ export default function PolicyBulkActions({
   return (
     <div
       className='
-        my-2 flex items-center gap-3 rounded-md border bg-muted/50 px-4 py-2
+        my-2 flex items-center gap-3 rounded-[2px] border bg-muted/50 px-4 py-2
       '
     >
       <span className='text-sm font-medium'>

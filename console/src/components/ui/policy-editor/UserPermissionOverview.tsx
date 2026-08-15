@@ -106,7 +106,7 @@ export default function UserPermissionOverview() {
         ];
 
         return (
-          <div key={summary.user.id} className='rounded-md border'>
+          <div key={summary.user.id} className='rounded-[2px] border'>
             <Button
               variant='ghost'
               className='flex w-full items-center justify-between px-3 py-2'
@@ -157,7 +157,7 @@ export default function UserPermissionOverview() {
                                 ? 'default'
                                 : 'destructive'
                             }
-                            className='px-1.5 py-0 text-[10px]'
+                            className='px-1.5 py-0 text-[11px]'
                           >
                             {policy.effect === 'allow'
                               ? dict.policy.effectAllow
@@ -170,7 +170,7 @@ export default function UserPermissionOverview() {
                         </div>
                         <span
                           className={`
-                            text-[10px]
+                            text-[11px]
                             ${
                               policy.source ===
                               dict.policy.permissionOverview.directPermission

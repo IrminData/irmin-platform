@@ -72,12 +72,7 @@ const RepositoryList = ({
                   </Badge>
                 )}
               </div>
-              <span
-                className={`
-                  text-sm text-gray-600
-                  dark:text-gray-400
-                `}
-              >
+              <span className={`text-sm text-muted-foreground`}>
                 {dict.common.owner}: {item.owner.email}
                 {item.owner.company ? ` (${item.owner.company})` : ''}
               </span>
@@ -87,25 +82,18 @@ const RepositoryList = ({
               className='inline-flex flex-row items-center gap-2'
             >
               {/* Status */}
-              <StatusBadge status={'private'} label={'Private'} />
+              <StatusBadge
+                status={'private'}
+                label={dict.catalog.visibilityPrivate}
+              />
               {/* Last updated and created at */}
               <div className='flex flex-col'>
-                <span
-                  className={`
-                    text-xs text-gray-600
-                    dark:text-gray-400
-                  `}
-                >
+                <span className={`text-xs text-muted-foreground`}>
                   {dict.list.lastUpdated}
                   {': '}
                   {new Date(item.updated_at).toLocaleString(locale)}
                 </span>
-                <span
-                  className={`
-                    text-xs text-gray-600
-                    dark:text-gray-400
-                  `}
-                >
+                <span className={`text-xs text-muted-foreground`}>
                   {dict.list.createdAt}
                   {': '}
                   {new Date(item.created_at).toLocaleString(locale)}
@@ -125,12 +113,7 @@ const RepositoryList = ({
           ],
           actions,
           details: (
-            <p
-              className={`
-                max-w-sm pb-4 text-sm text-gray-600
-                dark:text-gray-400
-              `}
-            >
+            <p className={`max-w-sm pb-4 text-sm text-muted-foreground`}>
               {item.description}
             </p>
           ),

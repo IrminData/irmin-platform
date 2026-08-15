@@ -29,7 +29,7 @@ Always use `DisplayTitle` over inlining `<h1 className="text-3xl font-bold">`.
 
 ## Color — `src/styles/theme.css`
 
-Cream paper canvas (light) or warm ink canvas (dark), with **one** sharp accent: **acid lime**. No gradients. No secondary accents. No colored backgrounds on sections — cards separate via hairline rules, not fills.
+Cream paper canvas (light) or warm ink canvas (dark), with **one** sharp accent: **acid lime**. No linear or decorative gradients. No secondary accents. No colored backgrounds on sections — cards separate via hairline rules, not fills. The sparse dot-grid texture below is the sole gradient exception.
 
 ```
 Light:
@@ -51,7 +51,11 @@ Dark:
 
 **Console override — muted / border are tuned one notch stronger on light than the website.** The marketing site's paper aesthetic reads well with barely-there borders because each section already carries a `§` number and generous padding. In-app tables, search fields, and skeletons have none of that — they need a visible baseline or they dissolve into the cream canvas. We keep the same cream/ink intent; we just push muted/border contrast up by ~3-5% lightness on light mode. Dark mode values match the website.
 
-Every surface pulls from semantic tokens (`bg-background`, `bg-card`, `text-foreground`, `border-border`, `text-accent`), so both themes work without branching code.
+Every surface pulls from semantic tokens (`bg-background`, `bg-card`, `text-foreground`, `border-border`, `text-accent`, `bg-overlay`), so both themes work without branching code. Overlay scrims use the fixed near-black `overlay` token rather than foreground opacity, which keeps modal depth stable in both themes.
+
+`prefers-contrast: more` strengthens muted text, borders, and input rules without changing layout. Small badges and status labels keep semantic color in their tint, border, or icon while using `text-foreground` for readable label text.
+
+**Third-party surfaces.** Clerk and Novu cannot consume every CSS custom property directly. Their shared Almanac accent and Clerk element geometry live in `src/config/appearance.ts`; do not duplicate brand hex values or per-screen widget chrome.
 
 **Chart palette.** Five distinct hues tuned for cream/ink, harmonized with lime. Exact values in `--chart-1` through `--chart-5`.
 
@@ -63,15 +67,16 @@ Every surface pulls from semantic tokens (`bg-background`, `bg-card`, `text-fore
 | 4     | `280 35% 50%` | `280 45% 68%` | Plum                       |
 | 5     | `42 30% 40%`  | `42 30% 62%`  | Warm brown                 |
 
-**Legacy `irmin-*` palette — aliased, not extended.** Pre-Almanac code used `bg-irmin-blue-500`, `text-irmin-green-700`, etc., across ~30 files. Those token names remain defined in `@theme inline` but now map to Almanac semantic tones (greens → lime, blues/teals → ink/paper neutrals, blacks → deep ink). Old call sites render in the new palette without a sweep. **New code must use semantic tokens.** Each legacy reference is a paper cut the next pass through the file should clean up.
+**Legacy `irmin-*` palette — compatibility aliases only.** Pre-Almanac code used `bg-irmin-blue-500`, `text-irmin-green-700`, and related names. Console call sites have been migrated to semantic tokens; the names remain defined in `@theme inline` only for compatibility with downstream or temporarily out-of-tree consumers. **New code must use semantic tokens.** Do not reintroduce a legacy utility.
 
 ## Visual primitives
 
 - **Grain overlay** — SVG fractal noise, `mix-blend-multiply` (light) / `overlay` (dark), 6 %/12 % opacity, fixed on `body::after`, non-interactive. Defined in `src/styles/base.css`.
 - **Dot grid** — `.dot-grid` / `.dot-grid-dense` radial-gradient utilities for empty states and hero backgrounds. Use sparingly — most empty regions belong to skeletons.
 - **Hairline rules** — 1 px `border-border` separates every section and every card. No fills, no shadows. `border-b border-border` is the workhorse.
-- **Radius** — `--radius: 0.125rem` (2 px). Minimal. Avatars and dots can go to `rounded-full`.
+- **Radius** — `--radius: 0.125rem` (2 px). Minimal. `rounded-full` is reserved for inherently circular or pill-shaped primitives such as avatars, dots, spinners, radios, switches, tags, and progress tracks — never cards or ordinary buttons.
 - **Shadows** — **none.** No `shadow-*` classes anywhere. Lift via background (`bg-card` vs. `bg-background`). Reject on sight.
+- **Icons** — Tabler (`react-icons/tb`) with `currentColor` and a consistent stroke. Do not mix icon families within the Console.
 
 ## Logo
 
@@ -130,7 +135,7 @@ Content spacing lives in page-level layouts — the Console has no global sectio
 
 All form fields use an **underline-only** treatment — no boxed inputs, no rounded corners, no filled backgrounds. Single `border-b border-input` hairline; `focus:border-accent` flips it lime. Padding is `py-2.5`, `px-0`.
 
-- **Inputs** — [src/components/ui/input.tsx](src/components/ui/input.tsx). The Console `Input` retains the existing `icon`, `loading`, and `longtext` props so in-app callers don't break. The wrapper owns the underline + focus treatment; inner `<input>` stays unstyled.
+- **Inputs** — [src/components/ui/input.tsx](src/components/ui/input.tsx). The Console `Input` retains the existing `icon`, `loading`, and `longtext` props so in-app callers don't break. The wrapper owns the underline + focus treatment; inner `<input>` stays unstyled. `longtext.rows` is an initial-size compatibility hint; the textarea still grows with its content.
 - **Textareas** — [src/components/ui/textarea.tsx](src/components/ui/textarea.tsx). Same underline + `field-sizing: content` + `min-h-24`. **Do not hard-code `rows={N}`** — a fixed `rows` attr defeats content sizing and leaves a floating gap above the next element.
 - **Labels** — `.type-mono-label`, above the field. Not inside (no floating labels), never placeholder-only.
 - **Required mark** — `*` suffixed to the label, `text-accent`.
@@ -143,34 +148,33 @@ All interactive buttons use the shared `Button` component — [src/components/ui
 
 - **Cursor** — always `cursor-pointer` on native `<button>`. Tailwind class, not browser default.
 - **Disabled** — `disabled:opacity-50 disabled:pointer-events-none disabled:cursor-not-allowed`.
-- **Focus ring** — `focus-visible:outline-1 outline-accent/70 outline-offset-1`. Softer than the website's 2 px offset 2 ring; at Console density an aggressive halo wraps half the chrome on screen (tabs, icon buttons).
+- **Focus ring** — `focus-visible:outline-2 outline-accent outline-offset-2`. The same visible treatment applies to native controls, links, and custom editor handles.
 - **Transition** — explicit: `transition-[color,background-color,border-color,transform] duration-150 ease-out`.
 - **Radius** — `rounded-[2px]` across all variants.
 - **Scale on press** — `active:scale-[0.96]`, disabled on `disabled` state.
 - **No global `border` in the base** — the base class does NOT reserve a 1 px stroke. Each variant that wants a visible border adds `border border-<color>` explicitly. This keeps `ghost`, `link`, and the theme/fold icon buttons truly borderless on cream — otherwise the base.css `border-color: var(--border)` fallback would bleed a tinted 1 px edge through.
 
-| Variant       | Idle                                           | Hover                     |
-| ------------- | ---------------------------------------------- | ------------------------- |
-| `default`     | Transparent, no border, foreground text        | Muted bg                  |
-| `outline`     | Transparent, hairline border, foreground text  | Muted bg, stronger border |
-| `secondary`   | Secondary bg, no visible border                | Muted bg                  |
-| `accent`      | Lime bg, accent-fg text, accent border         | Slight opacity drop       |
-| `ghost`       | Transparent, no border                         | Muted bg                  |
-| `link`        | Underlined, accent decoration 1 px, no border  | Thickness → 2 px          |
-| `destructive` | Destructive bg, destructive border             | Slight opacity drop       |
-| `gradient`    | _legacy alias_ — renders identical to `accent` |                           |
-| `gray`        | Card bg, no border                             | Muted bg                  |
+| Variant       | Idle                                          | Hover                     |
+| ------------- | --------------------------------------------- | ------------------------- |
+| `default`     | Transparent, no border, foreground text       | Muted bg                  |
+| `outline`     | Transparent, hairline border, foreground text | Muted bg, stronger border |
+| `secondary`   | Secondary bg, no visible border               | Muted bg                  |
+| `accent`      | Lime bg, accent-fg text, accent border        | Slight opacity drop       |
+| `ghost`       | Transparent, no border                        | Muted bg                  |
+| `link`        | Underlined, accent decoration 1 px, no border | Thickness → 2 px          |
+| `destructive` | Destructive bg, destructive border            | Slight opacity drop       |
+| `gray`        | Card bg, no border                            | Muted bg                  |
 
 **Console override — `default` is quiet by default.** The website uses a solid `bg-foreground` fill on its default button. In-app, nearly every surface already carries chrome (cards, rows, table headers, list items, top-nav action bars). Layering a bordered/filled button on top of that stack produces pill-grids that read as visual noise. The Console's `default` is therefore borderless and transparent at idle with only a `hover:bg-muted` state. Pick variants deliberately:
 
 - `default` or `ghost` — almost everything. Inline text actions, nav items, icon buttons.
 - `outline` — when the button needs to read as a tappable container (a primary form action without brand weight).
-- `accent` / `gradient` — brand-forward CTAs (Create, Commit, Save).
+- `accent` — brand-forward CTAs (Create, Commit, Save).
 - `destructive` — dangerous actions.
 
 One button → one variant. If you catch yourself wanting a bordered + filled pill for a tertiary action, pick ghost and let the surrounding structure carry the affordance.
 
-Sizes: `sm` (h-9 · px-4) / `default` (h-10 · px-5) / `lg` (h-12 · px-7) / `icon` (size-10). `iconFirst` controls flex direction. For navigation, always pass `href` to `Button` (it renders as `<Link>`); never nest `<Link>` around a `Button` (invalid HTML).
+Sizes are touch-first: `sm` (h-11 mobile → h-9 at `md`, px-4) / `default` (h-11 mobile → h-10 at `md`, px-5) / `lg` (h-12 · px-7) / `icon` (size-11 mobile → size-10 at `md`). `iconFirst` controls flex direction. For navigation, always pass `href` to `Button` (it renders as `<Link>`); never nest `<Link>` around a `Button` (invalid HTML).
 
 ## Responsiveness
 
@@ -351,7 +355,7 @@ Public routes: `index, follow`. In-app routes: `noindex, nofollow`. Use the help
 ### Favicon, icons, theme-color
 
 - `src/app/favicon.ico` · `src/app/icon.png` · `src/app/apple-icon.png` — sourced from the Almanac `public/brand/favicon/` pack. Already the new set.
-- `viewport.themeColor` — `#f4eedf` (cream) light / `#0e1010` (ink) dark. Defined in `src/app/layout.tsx`.
+- `viewport.themeColor` — `#f6f4ee` (cream) light / `#0e1110` (ink) dark. Defined in `src/app/layout.tsx`.
 
 ### Logo assets for external surfaces
 
@@ -403,9 +407,9 @@ Reject in review.
 
 ### Styling
 
-- Gradients. Any kind.
+- Linear or decorative gradients. The documented dot-grid texture is the only exception.
 - Drop-shadows. `shadow-sm`, `shadow-xs`, `drop-shadow-*`.
-- Rounded cards (> 2 px) — `rounded-full` reserved for avatars/dots.
+- Rounded cards (> 2 px) — `rounded-full` is only for the circular/pill primitives listed above.
 - Raw Tailwind grays (`bg-gray-*`, `dark:*-gray-*`) — use `bg-muted` / `bg-card`.
 - Hardcoded hex colors / font families other than Fraunces / Plex Sans / Plex Mono.
 - Recoloring the lime dot for contrast.

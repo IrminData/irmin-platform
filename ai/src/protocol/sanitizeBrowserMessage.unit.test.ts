@@ -12,9 +12,13 @@ it('removes reasoning artifacts without mutating the checkpoint message', () => 
     data: {
       content: [
         { type: 'thinking', thinking: 'private' },
+        { type: 'reasoning', reasoning: 'private OpenRouter reasoning' },
         { type: 'text', text: 'public' },
       ],
-      additional_kwargs: { reasoning_details: [{ private: true }] },
+      additional_kwargs: {
+        reasoning_details: [{ private: true }],
+        reasoning_content: 'private OpenRouter reasoning',
+      },
       response_metadata: { thinking: 'private', model: 'example' },
     },
   };
@@ -23,5 +27,5 @@ it('removes reasoning artifacts without mutating the checkpoint message', () => 
   assert.deepEqual(sanitized.data.content, [{ type: 'text', text: 'public' }]);
   assert.deepEqual(sanitized.data.additional_kwargs, {});
   assert.deepEqual(sanitized.data.response_metadata, { model: 'example' });
-  assert.equal(original.data.content.length, 2);
+  assert.equal(original.data.content.length, 3);
 });

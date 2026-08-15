@@ -16,7 +16,12 @@ export function sanitizeBrowserMessage(message: unknown): unknown {
   if (Array.isArray(data.content)) {
     data.content = data.content.filter((block) => {
       const value = record(block);
-      return value?.type !== 'thinking' && !('thinking' in (value ?? {}));
+      return (
+        value?.type !== 'thinking' &&
+        value?.type !== 'reasoning' &&
+        !('thinking' in (value ?? {})) &&
+        !('reasoning' in (value ?? {}))
+      );
     });
   }
 
@@ -24,6 +29,8 @@ export function sanitizeBrowserMessage(message: unknown): unknown {
     const metadata = record(data[field]);
     if (!metadata) continue;
     delete metadata.reasoning_details;
+    delete metadata.reasoning_content;
+    delete metadata.reasoning;
     delete metadata.thinking;
     delete metadata.signature;
   }

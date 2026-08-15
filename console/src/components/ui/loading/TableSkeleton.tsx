@@ -18,7 +18,7 @@ export const TableSkeleton = ({
 }) => {
   return (
     <div className={className}>
-      <div className='overflow-hidden rounded-lg border border-border'>
+      <div className='overflow-hidden rounded-[2px] border border-border'>
         {showHeader && (
           <div className='border-b border-border bg-card'>
             <div className='flex'>

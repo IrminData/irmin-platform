@@ -2,13 +2,13 @@
 
 import { useMemo, useState } from 'react';
 
-import { AiOutlineSave } from 'react-icons/ai';
-import { MdPlayArrow } from 'react-icons/md';
 import {
   TbAlertTriangle,
   TbDatabase,
+  TbDeviceFloppy,
   TbExclamationCircle,
   TbLogs,
+  TbPlayerPlay,
   TbStepInto,
   TbTable,
 } from 'react-icons/tb';
@@ -154,9 +154,8 @@ const ScriptResults = ({
   return (
     <div
       className={`
-        flex size-full flex-col overflow-hidden border-t border-gray-200
+        flex size-full flex-col overflow-hidden border-t border-border
         bg-background
-        dark:border-gray-800
       `}
       id='query-results'
     >
@@ -164,15 +163,16 @@ const ScriptResults = ({
       {showMemoryWarning && (
         <div
           className={`
-            flex items-center gap-2 border-b border-yellow-200 bg-yellow-50 px-4
-            py-2 text-xs text-yellow-800
-            dark:border-yellow-900/50 dark:bg-yellow-900/20 dark:text-yellow-200
+            flex items-center gap-2 border-b border-warning/30 bg-warning/10
+            px-4 py-2 text-xs text-foreground
           `}
         >
-          <TbAlertTriangle className='size-4 shrink-0' />
+          <TbAlertTriangle aria-hidden='true' className='size-4 shrink-0' />
           <span>
-            Multiple large result files loaded ({formatByteSize(totalDataSize)}
-            ). This may cause performance issues.
+            {dict.scripts.multipleLargeResultFilesWarning.replace(
+              '{size}',
+              formatByteSize(totalDataSize)
+            )}
           </span>
         </div>
       )}
@@ -180,10 +180,8 @@ const ScriptResults = ({
       {/* Tab Buttons */}
       <div
         className={`
-          mt-1 mb-0 flex w-full flex-wrap justify-start gap-2 border-gray-200
-          px-2
+          mt-1 mb-0 flex w-full flex-wrap justify-start gap-2 border-border px-2
           md:border-b
-          dark:border-gray-800
         `}
       >
         <div
@@ -257,8 +255,12 @@ const ScriptResults = ({
           {result?.structured_results &&
             Object.keys(result.structured_results).length > 0 && (
               <select
+                aria-label={dict.common.selectResultFile}
                 onChange={(e) => setCurrentDataFile(e.target.value)}
-                className='py-1 pr-8 pl-2 text-xs'
+                className='
+                  py-1 pr-8 pl-2 text-base
+                  md:text-xs
+                '
               >
                 {Object.keys(result.structured_results).map((file) => (
                   <option key={file} value={file}>
@@ -269,7 +271,7 @@ const ScriptResults = ({
             )}
           {onSave && (
             <Button
-              icon={<AiOutlineSave />}
+              icon={<TbDeviceFloppy />}
               variant='secondary'
               size='sm'
               className='text-xs'
@@ -291,7 +293,7 @@ const ScriptResults = ({
           )}
           {onRun && (
             <Button
-              icon={<MdPlayArrow />}
+              icon={<TbPlayerPlay />}
               variant='accent'
               size='sm'
               className='px-4 text-xs'
@@ -323,7 +325,11 @@ const ScriptResults = ({
               loading={showLoadingOnData}
             />
           ) : (
-            <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+            <div
+              className='
+                w-full px-4 py-12 text-center text-lg text-muted-foreground
+              '
+            >
               {dict.common.noResults}
             </div>
           )}
@@ -332,16 +338,15 @@ const ScriptResults = ({
       {activeTab === 'logs' && (
         <div className='flex-1 overflow-y-auto'>
           {showLoadingOnLogs ? (
-            <div
-              className={`
-                m-4 h-64 animate-pulse rounded-sm bg-gray-200
-                dark:bg-gray-800
-              `}
-            />
+            <div className={`m-4 h-64 animate-pulse rounded-[2px] bg-muted`} />
           ) : logs && logs.length > 0 ? (
             <LogFeed logs={logs} />
           ) : (
-            <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+            <div
+              className='
+                w-full px-4 py-12 text-center text-lg text-muted-foreground
+              '
+            >
               {dict.logs.noLogsFound}
             </div>
           )}
@@ -363,7 +368,11 @@ const ScriptResults = ({
           ) : workspaceSchema.schema ? (
             <SchemaViewer schema={workspaceSchema.schema} isExpanded={true} />
           ) : (
-            <div className='w-full px-4 py-12 text-center text-lg text-gray-400'>
+            <div
+              className='
+                w-full px-4 py-12 text-center text-lg text-muted-foreground
+              '
+            >
               {dict.common.noResults}
             </div>
           )}

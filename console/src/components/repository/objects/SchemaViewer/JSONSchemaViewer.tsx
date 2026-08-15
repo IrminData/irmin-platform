@@ -1,8 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
-import { MdKeyboardArrowDown, MdKeyboardArrowRight } from 'react-icons/md';
+import { TbChevronDown, TbChevronRight } from 'react-icons/tb';
+
+import { useLocale } from '@/context/LocaleContext';
 
 import type { JSONSchema } from '@/types/core/ObjectSchema';
 
@@ -18,13 +20,16 @@ export function JSONSchemaViewer({
   /** Whether to start expanded */
   isExpanded?: boolean;
 }) {
+  const { dict, locale } = useLocale();
   // track expanded state
   const [expanded, setExpanded] = useState(isExpanded);
+  const contentId = useId();
+  const isExpandable = ['object', 'array'].includes(schema?.type ?? '');
 
   /**
    * Toggle tree node expansion
    */
-  const toggleExpand = () => setExpanded(!expanded);
+  const toggleExpand = () => setExpanded((current) => !current);
 
   /**
    * Render nested object properties
@@ -36,41 +41,26 @@ export function JSONSchemaViewer({
     return (
       <div className='mt-2 ml-4 space-y-2'>
         {Object.entries(schema.properties).map(([key, prop]) => (
-          <div
-            key={key}
-            className={`
-              border-l-2 border-gray-200 pl-3
-              dark:border-gray-700
-            `}
-          >
+          <div key={key} className={`border-l-2 border-border pl-3`}>
             <div className='flex items-start'>
-              <span
-                className={`
-                  font-medium text-gray-800
-                  dark:text-gray-200
-                `}
-              >
-                {key}
-              </span>
+              <span className={`font-medium text-foreground`}>{key}</span>
               {schema.required?.includes(key) && (
-                <span className='ml-1 text-xs text-red-500'>*</span>
+                <>
+                  <span
+                    className='ml-1 text-xs text-destructive'
+                    aria-hidden='true'
+                  >
+                    *
+                  </span>
+                  <span className='sr-only'>{dict.schemaBuilder.required}</span>
+                </>
               )}
-              <span
-                className={`
-                  ml-2 text-sm text-gray-500
-                  dark:text-gray-400
-                `}
-              >
+              <span className={`ml-2 text-sm text-muted-foreground`}>
                 ({prop.type})
               </span>
             </div>
             {prop.description && (
-              <p
-                className={`
-                  mt-1 text-sm text-gray-600
-                  dark:text-gray-400
-                `}
-              >
+              <p className={`mt-1 text-sm text-muted-foreground`}>
                 {prop.description}
               </p>
             )}
@@ -83,13 +73,8 @@ export function JSONSchemaViewer({
             {/* render array items */}
             {prop.type === 'array' && prop.items && (
               <div className='mt-1 ml-4'>
-                <span
-                  className={`
-                    text-sm text-gray-500
-                    dark:text-gray-400
-                  `}
-                >
-                  Items:
+                <span className={`text-sm text-muted-foreground`}>
+                  {dict.repository.objects.schemaItems}:
                 </span>
                 <JSONSchemaViewer schema={prop.items} isExpanded={false} />
               </div>
@@ -97,13 +82,8 @@ export function JSONSchemaViewer({
 
             {/* render enum values */}
             {prop.enum && (
-              <div
-                className={`
-                  mt-1 text-sm text-gray-600
-                  dark:text-gray-400
-                `}
-              >
-                <span>Enum: </span>
+              <div className={`mt-1 text-sm text-muted-foreground`}>
+                <span>{dict.schemaBuilder.enum}: </span>
                 <code className='font-mono'>
                   [{prop.enum.map((v) => JSON.stringify(v)).join(', ')}]
                 </code>
@@ -117,79 +97,68 @@ export function JSONSchemaViewer({
 
   return (
     <div className='text-sm'>
-      <div
-        className='flex cursor-pointer items-center'
-        onClick={toggleExpand}
-        role='button'
-        aria-expanded={expanded}
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            toggleExpand();
-            e.preventDefault();
-          }
-        }}
-      >
-        {['object', 'array'].includes(schema?.type ?? '') ? (
-          <>
-            {expanded ? (
-              <MdKeyboardArrowDown
-                className={`
-                  size-4 text-gray-600
-                  dark:text-gray-300
-                `}
-              />
-            ) : (
-              <MdKeyboardArrowRight
-                className={`
-                  size-4 text-gray-600
-                  dark:text-gray-300
-                `}
-              />
-            )}
-            <span
-              className={`
-                ml-1 font-medium text-gray-800
-                dark:text-gray-200
-              `}
-            >
-              {schema?.type === 'object'
-                ? `Object with ${Object.keys(schema?.properties || {}).length} properties`
-                : `Array of ${schema?.items?.type}s`}
-            </span>
-          </>
-        ) : (
-          <span
-            className={`
-              font-medium text-gray-800
-              dark:text-gray-200
-            `}
-          >
-            {schema?.type}
+      {isExpandable ? (
+        <button
+          type='button'
+          className={`
+            flex w-full appearance-none items-center rounded-[2px] border-0
+            bg-transparent p-0 text-left
+            focus-visible:outline-2 focus-visible:outline-offset-2
+            focus-visible:outline-accent
+          `}
+          onClick={toggleExpand}
+          aria-expanded={expanded}
+          aria-controls={contentId}
+        >
+          {expanded ? (
+            <TbChevronDown
+              className='size-4 text-muted-foreground'
+              aria-hidden='true'
+            />
+          ) : (
+            <TbChevronRight
+              className='size-4 text-muted-foreground'
+              aria-hidden='true'
+            />
+          )}
+          <span className='ml-1 font-medium text-foreground'>
+            {schema?.type === 'object'
+              ? (Object.keys(schema?.properties || {}).length === 1
+                  ? dict.repository.objects.schemaObjectSummaryOne
+                  : dict.repository.objects.schemaObjectSummaryOther
+                ).replace(
+                  '{count}',
+                  new Intl.NumberFormat(locale).format(
+                    Object.keys(schema?.properties || {}).length
+                  )
+                )
+              : dict.repository.objects.schemaArraySummary.replace(
+                  '{type}',
+                  String(
+                    schema?.items?.type ?? dict.repository.objects.unknownType
+                  )
+                )}
           </span>
-        )}
-      </div>
+        </button>
+      ) : (
+        <span className='font-medium text-foreground'>{schema?.type}</span>
+      )}
 
-      {expanded && (
-        <>
+      {isExpandable && (
+        <div id={contentId} hidden={!expanded}>
           {/* if object, render its properties */}
-          {schema?.type === 'object' && renderProperties()}
+          {expanded && schema?.type === 'object' && renderProperties()}
 
           {/* if array, render its item schema */}
-          {schema?.type === 'array' && schema?.items && (
+          {expanded && schema?.type === 'array' && schema?.items && (
             <div className='mt-2 ml-4'>
-              <span
-                className={`
-                  text-sm text-gray-500
-                  dark:text-gray-400
-                `}
-              >
-                Items:
+              <span className={`text-sm text-muted-foreground`}>
+                {dict.repository.objects.schemaItems}:
               </span>
               <JSONSchemaViewer schema={schema?.items} isExpanded={false} />
             </div>
           )}
-        </>
+        </div>
       )}
     </div>
   );

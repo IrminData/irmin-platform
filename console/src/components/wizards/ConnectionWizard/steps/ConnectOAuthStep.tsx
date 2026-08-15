@@ -197,12 +197,11 @@ export default function ConnectOAuthStep({
             placeholder={
               dict.connections.create.connectionDescriptionPlaceholder
             }
-            rows={3}
           />
         </div>
       </div>
 
-      <div className='space-y-3 rounded-md border bg-muted/30 p-4'>
+      <div className='space-y-3 rounded-[2px] border bg-muted/30 p-4'>
         <p className='text-sm font-medium'>
           {dict.connections.oauth.scopesExplainerTitle}
         </p>
@@ -218,7 +217,8 @@ export default function ConnectOAuthStep({
               <li
                 key={scope}
                 className='
-                  rounded-sm border bg-background px-2 py-0.5 font-mono text-xs
+                  rounded-[2px] border bg-background px-2 py-0.5 font-mono
+                  text-xs
                 '
               >
                 {scope}
@@ -229,6 +229,7 @@ export default function ConnectOAuthStep({
       </div>
 
       <Button
+        variant='accent'
         className='w-full'
         onClick={handleConnect}
         disabled={busy || !name.trim()}

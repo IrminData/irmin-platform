@@ -13,6 +13,8 @@ import {
   TbRefresh,
 } from 'react-icons/tb';
 
+import { defaultLocale, getDictionary } from '@/lib/dict';
+
 import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -36,7 +38,11 @@ export function useCommonErrorTranslations(): CommonErrorDisplayProps['translati
   return {
     somethingWentWrong: common?.somethingWentWrong,
     error: common?.error,
-    weEncounteredError: common?.weEncounteredError,
+    weEncounteredError: common?.actionFailedDescription,
+    sectionLoadingError: common?.sectionLoadingError,
+    componentLoadingError: common?.componentLoadingError,
+    genericErrorDescription: common?.genericErrorDescription,
+    genericErrorRetryDescription: common?.genericErrorRetryDescription,
     tryAgain: common?.tryAgain,
     goBackHome: common?.goBackHome,
     reportIssue: common?.reportIssue,
@@ -90,24 +96,33 @@ interface CommonErrorDisplayProps {
     copied?: string;
     copy?: string;
     stackTrace?: string;
+    sectionLoadingError?: string;
+    componentLoadingError?: string;
+    genericErrorDescription?: string;
+    genericErrorRetryDescription?: string;
   };
 }
 
+const defaultCommon = getDictionary(defaultLocale).common;
+
 // Default English translations
 const defaultTranslations = {
-  somethingWentWrong: 'Something went wrong',
-  error: 'Error',
-  weEncounteredError:
-    "We couldn't complete that action. Try again, or refresh the page if it keeps happening.",
-  tryAgain: 'Try Again',
-  goBackHome: 'Go Back Home',
-  reportIssue: 'Report Issue',
-  hideDetails: 'Hide Details',
-  showDetails: 'Show Details',
-  errorDetails: 'Error Details',
-  copied: 'Copied',
-  copy: 'Copy',
-  stackTrace: 'Stack Trace',
+  somethingWentWrong: defaultCommon.somethingWentWrong,
+  error: defaultCommon.error,
+  weEncounteredError: defaultCommon.actionFailedDescription,
+  tryAgain: defaultCommon.tryAgain,
+  goBackHome: defaultCommon.goBackHome,
+  reportIssue: defaultCommon.reportIssue,
+  hideDetails: defaultCommon.hideDetails,
+  showDetails: defaultCommon.showDetails,
+  errorDetails: defaultCommon.errorDetails,
+  copied: defaultCommon.copied,
+  copy: defaultCommon.copy,
+  stackTrace: defaultCommon.stackTrace,
+  sectionLoadingError: defaultCommon.sectionLoadingError,
+  componentLoadingError: defaultCommon.componentLoadingError,
+  genericErrorDescription: defaultCommon.genericErrorDescription,
+  genericErrorRetryDescription: defaultCommon.genericErrorRetryDescription,
 };
 
 /**
@@ -148,11 +163,17 @@ export function CommonErrorDisplay({
 
   const [showErrorDetails, setShowErrorDetails] = useState(false);
   const [copied, setCopied] = useState(false);
+  const shouldShowDetails =
+    showDetails && process.env.NODE_ENV === 'development';
 
   const copyToClipboard = useCallback(async () => {
     if (!error) return;
 
-    const errorText = `Error: ${error.message}\n\nStack Trace:\n${error.stack}`;
+    const errorDigest = (error as Error & { digest?: string }).digest;
+    const errorText =
+      process.env.NODE_ENV === 'development'
+        ? `Error: ${error.message}\n\nStack Trace:\n${error.stack}`
+        : `Error: ${error.name}${errorDigest ? `\nReference: ${errorDigest}` : ''}`;
 
     try {
       await navigator.clipboard.writeText(errorText);
@@ -239,13 +260,13 @@ export function CommonErrorDisplay({
       case 'page':
         return dict.weEncounteredError;
       case 'section':
-        return 'Something went wrong while loading. Try refreshing the page.';
+        return dict.sectionLoadingError;
       case 'component':
-        return 'Something went wrong while loading.';
+        return dict.componentLoadingError;
       case 'inline':
-        return error?.message || 'An error occurred.';
+        return error?.message || dict.genericErrorDescription;
       default:
-        return 'An error occurred. Please try again.';
+        return dict.genericErrorRetryDescription;
     }
   };
 
@@ -316,7 +337,7 @@ export function CommonErrorDisplay({
         >
           {showReload && onRetry && (
             <Button
-              variant='default'
+              variant='accent'
               size='sm'
               onClick={onRetry}
               className='inline-flex items-center gap-2'
@@ -352,7 +373,7 @@ export function CommonErrorDisplay({
         </div>
 
         {/* Error Details (Expandable) */}
-        {showDetails && error && (
+        {shouldShowDetails && error && (
           <div className='mt-6 w-full'>
             <button
               onClick={() => setShowErrorDetails(!showErrorDetails)}
@@ -376,7 +397,7 @@ export function CommonErrorDisplay({
             </button>
 
             {showErrorDetails && (
-              <div className='mt-3 rounded-lg bg-muted/50 p-4 text-left'>
+              <div className='mt-3 rounded-[2px] bg-muted/50 p-4 text-left'>
                 <div className='mb-2 flex items-start justify-between'>
                   <span
                     className={`
@@ -409,12 +430,12 @@ export function CommonErrorDisplay({
                 </div>
                 <div
                   className={`
-                    overflow-x-auto rounded-sm border bg-background/50 p-3
+                    overflow-x-auto rounded-[2px] border bg-background/50 p-3
                     font-mono text-sm text-foreground
                   `}
                 >
                   <div className='mb-1 font-semibold text-destructive'>
-                    {error.name || 'Error'}
+                    {error.name || dict.error}
                   </div>
                   <div className='mb-2 text-muted-foreground'>
                     {error.message}

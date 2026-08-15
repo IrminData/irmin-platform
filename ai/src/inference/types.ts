@@ -57,6 +57,8 @@ export interface InferenceRunContext {
   conversationId?: string;
   runId?: string;
   userId?: string;
+  /** Cancels this model call in addition to the configured role timeout. */
+  signal?: AbortSignal;
   onTelemetry?: (telemetry: InferenceTelemetry) => void | Promise<void>;
 }
 
@@ -77,4 +79,14 @@ export interface InferenceGateway {
     structuredSchema?: object,
     runContext?: InferenceRunContext
   ): Promise<T>;
+}
+
+/** Compose caller cancellation with a role's version-controlled timeout. */
+export function inferenceSignal(
+  profile: ModelProfile,
+  role: ModelRole,
+  callerSignal?: AbortSignal
+): AbortSignal {
+  const timeout = AbortSignal.timeout(profile.roles[role].timeoutMs);
+  return callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout;
 }

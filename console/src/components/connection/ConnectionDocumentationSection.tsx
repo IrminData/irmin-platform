@@ -50,7 +50,7 @@ const ConnectionDocumentationSection = () => {
     >
       <Button
         size='sm'
-        variant='default'
+        variant='accent'
         type='submit'
         disabled={!isResourceAllowed('connection', 'update', connection.id)}
       >

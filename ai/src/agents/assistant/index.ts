@@ -147,7 +147,8 @@ export class AssistantAgent extends BaseAgent {
       agent,
       input.message,
       conversationId,
-      input.signal
+      input.signal,
+      this.executionRole
     );
 
     // Return streaming response

@@ -51,7 +51,7 @@ export default function ConnectionConfigTable({
   return (
     <div className='flex flex-col gap-2'>
       <h3>{title}</h3>
-      <div className='rounded-lg border border-card bg-background'>
+      <div className='rounded-[2px] border border-border bg-background'>
         <Table>
           <TableBody>
             {filteredEntries.map(([key, value]) => {
@@ -60,7 +60,7 @@ export default function ConnectionConfigTable({
               const shouldTruncate =
                 !isSecret && displayValue.length > MAX_DISPLAY_LENGTH;
               const truncatedValue = shouldTruncate
-                ? `${displayValue.substring(0, MAX_DISPLAY_LENGTH)}...`
+                ? `${displayValue.substring(0, MAX_DISPLAY_LENGTH)}…`
                 : displayValue;
               const isCopied = copiedKey === key;
 
@@ -69,7 +69,10 @@ export default function ConnectionConfigTable({
                   <TableCell className='w-1/3 font-medium text-muted-foreground'>
                     {key}
                   </TableCell>
-                  <TableCell className='font-mono text-sm'>
+                  <TableCell
+                    className='font-mono text-sm'
+                    title={shouldTruncate ? displayValue : undefined}
+                  >
                     {truncatedValue}
                   </TableCell>
                   <TableCell className='w-16 text-right'>
@@ -90,7 +93,7 @@ export default function ConnectionConfigTable({
                         title={isCopied ? dict.common.copied : dict.common.copy}
                       >
                         {isCopied ? (
-                          <TbCheck size={16} className='text-green-500' />
+                          <TbCheck size={16} className='text-success' />
                         ) : (
                           <TbCopy size={16} />
                         )}

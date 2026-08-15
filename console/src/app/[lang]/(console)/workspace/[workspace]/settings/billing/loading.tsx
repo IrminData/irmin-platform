@@ -8,16 +8,16 @@ export default function BillingLoading() {
         <LoadingSkeleton className='h-4 w-96 max-w-full' />
       </div>
       {/* Plan card */}
-      <div className='mb-6 rounded-lg border border-border bg-card p-6'>
+      <div className='mb-6 rounded-[2px] border border-border bg-card p-6'>
         <div className='mb-4 flex items-center justify-between'>
           <LoadingSkeleton className='h-6 w-32' />
-          <LoadingSkeleton className='h-10 w-40 rounded-md' />
+          <LoadingSkeleton className='h-10 w-40 rounded-[2px]' />
         </div>
         <LoadingSkeleton className='mb-2 h-4 w-2/3' />
         <LoadingSkeleton className='h-4 w-1/2' />
       </div>
       {/* Usage */}
-      <div className='mb-6 rounded-lg border border-border bg-card p-6'>
+      <div className='mb-6 rounded-[2px] border border-border bg-card p-6'>
         <LoadingSkeleton className='mb-4 h-6 w-24' />
         <div className='flex flex-col gap-3'>
           {Array.from({ length: 3 }).map((_, i) => (
@@ -32,7 +32,7 @@ export default function BillingLoading() {
         </div>
       </div>
       {/* Invoices */}
-      <div className='rounded-lg border border-border bg-card p-6'>
+      <div className='rounded-[2px] border border-border bg-card p-6'>
         <LoadingSkeleton className='mb-4 h-6 w-24' />
         <div className='flex flex-col gap-2'>
           {Array.from({ length: 4 }).map((_, i) => (
@@ -45,7 +45,7 @@ export default function BillingLoading() {
             >
               <LoadingSkeleton className='h-4 w-24' />
               <LoadingSkeleton className='h-4 w-20' />
-              <LoadingSkeleton className='h-8 w-20 rounded-md' />
+              <LoadingSkeleton className='h-8 w-20 rounded-[2px]' />
             </div>
           ))}
         </div>

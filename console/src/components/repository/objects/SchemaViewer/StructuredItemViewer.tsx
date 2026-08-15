@@ -2,8 +2,13 @@
 
 import { useState } from 'react';
 
-import { MdDescription } from 'react-icons/md';
-import { TbCheck, TbCode, TbCopy, TbEye } from 'react-icons/tb';
+import {
+  TbCheck,
+  TbCode,
+  TbCopy,
+  TbEye,
+  TbFileDescription,
+} from 'react-icons/tb';
 
 import SqlHelper from '@/components/query/helper/SqlHelper';
 import { Button } from '@/components/ui/button';
@@ -53,25 +58,12 @@ export function StructuredItemViewer({
   return (
     <div
       className={`
-        rounded-md border bg-popover/10 p-2
-        dark:border-gray-800
-        ${
-          isFocused
-            ? `
-              ring-2 ring-blue-500
-              dark:ring-blue-400
-            `
-            : ''
-        }
+        rounded-[2px] border border-border bg-popover/10 p-2
+        ${isFocused ? `ring-2 ring-accent` : ''}
       `}
     >
       <div className='flex items-start gap-3'>
-        <MdDescription
-          className={`
-            mt-1 size-6 shrink-0 text-blue-500
-            dark:text-blue-300
-          `}
-        />
+        <TbFileDescription className={`mt-1 size-6 shrink-0 text-chart-2`} />
         <div className='min-w-0 grow'>
           <div
             className={`
@@ -79,48 +71,27 @@ export function StructuredItemViewer({
               sm:flex-row sm:items-center
             `}
           >
-            <h3
-              className={`
-                truncate font-medium text-gray-900
-                dark:text-gray-100
-              `}
-            >
+            <h3 className={`truncate font-medium text-foreground`}>
               {item.name}
             </h3>
             {item.last_modified && (
-              <span
-                className={`
-                  text-xs text-gray-500
-                  dark:text-gray-400
-                `}
-              >
+              <span className={`text-xs text-muted-foreground`}>
                 {dict.common.lastModified}:{' '}
                 {formatTimestamp(item.last_modified, locale)}
               </span>
             )}
           </div>
-          <p
-            className={`
-              truncate text-sm text-gray-500
-              dark:text-gray-400
-            `}
-          >
+          <p className={`truncate text-sm text-muted-foreground`}>
             {item.path}
           </p>
           {item.description && (
-            <p
-              className={`
-                mt-1 text-sm text-gray-600
-                dark:text-gray-300
-              `}
-            >
+            <p className={`mt-1 text-sm text-muted-foreground`}>
               {item.description}
             </p>
           )}
           <div
             className={`
-              mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500
-              dark:text-gray-400
+              mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground
             `}
           >
             <span>
@@ -130,19 +101,20 @@ export function StructuredItemViewer({
             <span>
               {dict.common.size}: {formatFileSizeForUI(item.size)}
             </span>
-            {item.content_type && <span>MIME: {item.content_type}</span>}
+            {item.content_type && (
+              <span>
+                {dict.repository.objects.mime}: {item.content_type}
+              </span>
+            )}
           </div>
           {item.sql_selector && (
             <div className='mt-2 w-full max-w-full'>
               <div
-                className={`
-                  flex items-center gap-1 rounded-sm bg-gray-100 p-1
-                  dark:bg-gray-800
-                `}
+                className={`flex items-center gap-1 rounded-[2px] bg-muted p-1`}
               >
                 <code
                   className={`
-                    flex-1 overflow-x-auto px-1 font-mono text-[10px]
+                    flex-1 overflow-x-auto px-1 font-mono text-[11px]
                     whitespace-nowrap
                   `}
                 >
@@ -162,7 +134,7 @@ export function StructuredItemViewer({
                   title={copied ? dict.common.copied : dict.common.copy}
                   icon={
                     copied ? (
-                      <TbCheck size={12} className='text-green-500' />
+                      <TbCheck size={12} className='text-success' />
                     ) : (
                       <TbCopy size={12} />
                     )
@@ -198,8 +170,7 @@ export function StructuredItemViewer({
           {hasSchema && expanded && (
             <div
               className={`
-                mt-2 rounded-md border border-gray-200 bg-gray-50 p-3
-                dark:border-gray-600 dark:bg-gray-700
+                mt-2 rounded-[2px] border border-border bg-muted/30 p-3
               `}
             >
               <div className='mb-3 flex items-center justify-between'>
@@ -232,7 +203,7 @@ export function StructuredItemViewer({
                     >
                       {copied ? (
                         <>
-                          <TbCheck className='mr-1 size-3 text-green-500' />
+                          <TbCheck className='mr-1 size-3 text-success' />
                           {dict.common.copied}
                         </>
                       ) : (
@@ -250,8 +221,8 @@ export function StructuredItemViewer({
               ) : (
                 <pre
                   className={`
-                    overflow-x-auto rounded-md border bg-background p-3
-                    font-mono text-xs
+                    overflow-x-auto rounded-[2px] border border-border
+                    bg-background p-3 font-mono text-xs
                   `}
                 >
                   {JSON.stringify(item.schema, null, 2)}

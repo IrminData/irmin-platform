@@ -1,7 +1,7 @@
 import { cn } from '@/utils/tw';
 
 /**
- * ContentWrapper component to wrap content in a container with a border and shadow
+ * ContentWrapper component to group content on a flat, bordered surface.
  *
  * @param props - The props
  * @param props.className - The class name for the container
@@ -29,10 +29,7 @@ export const ContentWrapper = ({
     >
       <div
         className={cn(
-          `
-            w-full max-w-full rounded-lg border bg-popover/10 p-2
-            dark:border-gray-800
-          `,
+          `w-full max-w-full rounded-[2px] border border-border bg-card p-2`,
           wrapperClassName
         )}
       >

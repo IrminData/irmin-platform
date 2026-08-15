@@ -65,7 +65,7 @@ export default function BillingBanner() {
         </div>
         <Button
           href={`${workspaceUrl}/settings/billing`}
-          variant='gradient'
+          variant='accent'
           size='sm'
         >
           {dict.workspace.billingBannerAction}

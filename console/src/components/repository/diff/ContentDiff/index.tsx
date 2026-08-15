@@ -173,9 +173,8 @@ const ContentDiff = ({
   return (
     <p
       className={`
-        mx-auto mb-2 max-w-lg text-center text-lg text-gray-600
+        mx-auto mb-2 max-w-lg text-center text-lg text-muted-foreground
         lg:text-2xl
-        dark:text-gray-300
       `}
     >
       {dict.repository.objects.unsupportedContentType}

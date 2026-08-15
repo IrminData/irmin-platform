@@ -129,7 +129,7 @@ export default function ConfigureRepositoryStep({
             <>
               <Input {...field} />
               {errors.name && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.name.message}
                 </p>
               )}
@@ -153,7 +153,7 @@ export default function ConfigureRepositoryStep({
                 }}
               />
               {errors.description && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.description.message}
                 </p>
               )}
@@ -171,7 +171,7 @@ export default function ConfigureRepositoryStep({
             <>
               <Input {...field} />
               {errors.default_branch && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.default_branch.message}
                 </p>
               )}
