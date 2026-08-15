@@ -86,38 +86,12 @@ describe('inference gateway', () => {
     const openRouter = new TrackingAdapter();
     const gateway = new ProfiledInferenceGateway({
       profile: MODEL_PROFILE,
-      openRouter,
+      adapter: openRouter,
     });
     const context = { workspaceSlug: 'acme', conversationId: 'conversation-1' };
     gateway.modelFor('assistant', context);
     gateway.modelFor('query', { workspaceSlug: 'acme' });
     assert.deepEqual(openRouter.roles, ['assistant', 'query']);
-  });
-
-  it('assigns canaries deterministically and supports forced rollback', () => {
-    const openRouter = new TrackingAdapter();
-    const directAnthropic = new TrackingAdapter();
-    const canary = new ProfiledInferenceGateway({
-      profile: MODEL_PROFILE,
-      openRouter,
-      directAnthropic,
-      rollout: { backend: 'canary', openRouterPercentage: 0 },
-    });
-    canary.modelFor('assistant', {
-      workspaceSlug: 'acme',
-      conversationId: 'conversation-1',
-    });
-    assert.deepEqual(openRouter.roles, []);
-    assert.deepEqual(directAnthropic.roles, ['assistant']);
-
-    const forcedOpenRouter = new ProfiledInferenceGateway({
-      profile: MODEL_PROFILE,
-      openRouter,
-      directAnthropic,
-      rollout: { backend: 'openrouter', openRouterPercentage: 0 },
-    });
-    forcedOpenRouter.modelFor('query', { workspaceSlug: 'acme' });
-    assert.deepEqual(openRouter.roles, ['query']);
   });
 
   it('keeps unevaluated candidates out of the active profile', () => {

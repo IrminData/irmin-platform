@@ -8,21 +8,7 @@ import type {
 
 interface GatewayOptions {
   profile: ModelProfile;
-  openRouter: InferenceAdapter;
-  directAnthropic?: InferenceAdapter;
-  rollout?: {
-    backend: 'canary' | 'openrouter' | 'anthropic';
-    openRouterPercentage: number;
-  };
-}
-
-function stableRolloutBucket(value: string): number {
-  let hash = 2166136261;
-  for (let index = 0; index < value.length; index += 1) {
-    hash ^= value.charCodeAt(index);
-    hash = Math.imul(hash, 16777619);
-  }
-  return (hash >>> 0) % 100;
+  adapter: InferenceAdapter;
 }
 
 export class ProfiledInferenceGateway implements InferenceGateway {
@@ -34,7 +20,7 @@ export class ProfiledInferenceGateway implements InferenceGateway {
 
   modelFor(role: ModelRole, runContext: InferenceRunContext = {}) {
     const roleProfile = this.profile.roles[role];
-    return this.adapterFor(runContext).modelFor(
+    return this.options.adapter.modelFor(
       role,
       roleProfile,
       this.withPersistentTelemetry(role, runContext)
@@ -138,29 +124,5 @@ export class ProfiledInferenceGateway implements InferenceGateway {
         }
       },
     };
-  }
-
-  private adapterFor(context: InferenceRunContext): InferenceAdapter {
-    const rollout = this.options.rollout ?? {
-      backend: 'openrouter' as const,
-      openRouterPercentage: 100,
-    };
-    if (rollout.backend === 'openrouter') return this.options.openRouter;
-    if (rollout.backend === 'anthropic') {
-      if (!this.options.directAnthropic) {
-        throw new Error('Direct Anthropic rollback is not configured');
-      }
-      return this.options.directAnthropic;
-    }
-    const key = `${context.workspaceSlug ?? 'system'}:${context.conversationId ?? 'one-shot'}`;
-    if (stableRolloutBucket(key) < rollout.openRouterPercentage) {
-      return this.options.openRouter;
-    }
-    if (!this.options.directAnthropic) {
-      throw new Error(
-        'OpenRouter canary requires the direct Anthropic adapter'
-      );
-    }
-    return this.options.directAnthropic;
   }
 }

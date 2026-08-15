@@ -4,7 +4,7 @@ This file provides guidance to coding agents (Claude Code, Gemini CLI, etc.) whe
 
 ## Project Overview
 
-Irmin AI is a LangChain-powered AI service (Fastify + TypeScript) providing streaming agents, vector embeddings, and RAG capabilities. Chat inference targets OpenRouter using version-controlled roles; direct Anthropic exists temporarily for canary baseline/rollback, and direct OpenAI remains embeddings-only.
+Irmin AI is a LangChain-powered AI service (Fastify + TypeScript) providing streaming agents, vector embeddings, and RAG capabilities. Chat inference uses OpenRouter exclusively through version-controlled roles; direct OpenAI remains embeddings-only.
 
 ## Development Commands
 
@@ -169,8 +169,6 @@ Copy `.env.example` to `.env` and configure:
 **Optional:**
 
 - `OPENROUTER_PROVIDER_ALLOWLIST` - Reviewed ZDR provider restriction
-- `AI_INFERENCE_BACKEND`, `AI_OPENROUTER_CANARY_PERCENT` - Deterministic rollout and forced backend control
-- `ANTHROPIC_API_KEY` - Temporary; required only for canary/direct rollback and removed after the healthy 100% release
 - `QDRANT_URL`, `QDRANT_PORT`, `QDRANT_API_KEY` - Vector database (defaults to localhost:6333)
 - `IRMIN_API_BASE_URL` - Irmin Core API for MCP tools
 - `LANGSMITH_TRACING`, `LANGSMITH_API_KEY` - LLM observability

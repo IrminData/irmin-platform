@@ -1,6 +1,6 @@
 # AI runtime operations
 
-This runbook governs model profiles, OpenRouter providers, rollout, rollback,
+This runbook governs model profiles, OpenRouter providers, release, rollback,
 telemetry retention, the breaking MCP catalog, and the pre-launch data reset.
 It is the release source of truth; runtime configuration and generated API docs
 remain authoritative for individual fields and routes.
@@ -12,7 +12,6 @@ flowchart LR
   UI["Console Agent UI"] -->|"RunEventV1 NDJSON"| AI["AI runtime"]
   AI --> GW["InferenceGateway"]
   GW -->|"ZDR + data collection denied"| OR["OpenRouter"]
-  GW -.->|"temporary canary baseline / rollback"| AN["Anthropic direct"]
   AI -->|"capabilities, not names"| CAT["Core tool catalog"]
   CAT --> MCP["MCP and AI Application handlers"]
   AI --> DB["Conversations, checkpoints, telemetry"]
@@ -20,10 +19,9 @@ flowchart LR
   OPS -->|"workspace-user approval"| MCP
 ```
 
-OpenRouter is the production target for all text and tool inference. During
-the 5%/25%/100% rollout only, a temporary direct Anthropic adapter supplies the
-baseline and emergency rollback. The direct OpenAI credential is
-embeddings-only. Browser code consumes only `RunEventV1`; provider events,
+OpenRouter is the only runtime path for text and tool inference. The direct
+OpenAI credential is embeddings-only. Browser code consumes only `RunEventV1`;
+provider events,
 LangChain events, raw responses, tool payload internals, and reasoning details
 remain server-side.
 
@@ -67,21 +65,14 @@ The runtime rejects an allowlisted provider not present in the reviewed
 version-controlled set. Provider fallbacks are disabled; fallback models and
 providers must be explicit in a reviewed profile.
 
-## Promotion rollout and rollback
+## Promotion release and rollback
 
-Promoted profiles roll out by deterministic workspace/conversation bucket at
-5%, 25%, and 100%. Hold each stage for one complete internal release cycle.
+Promoted profiles ship through the normal Git-reviewed application release.
 Advance only when failure, cancellation, malformed-stream, missing-usage,
-quality, authorization, cost, and p95 latency metrics remain within the
-approved envelope.
-
-Configure rollout with `AI_INFERENCE_BACKEND=canary` and
-`AI_OPENROUTER_CANARY_PERCENT=5`, then `25`, then `100`. Canary assignment is a
-stable hash of workspace and conversation. `ANTHROPIC_API_KEY` is required for
-`canary` and the emergency `anthropic` backend; `openrouter` forces all traffic
-through OpenRouter. After one complete healthy release at 100%, remove the
-direct Anthropic adapter, key, package, and backend modes. Groq is never a
-runtime path.
+quality, authorization, cost, and p95 latency evidence remains within the
+approved envelope. Roll back by reverting to the previous reviewed profile or
+application release; rollback still routes through OpenRouter. Direct provider
+credentials and runtime backend switches are not supported.
 
 ## Telemetry and billing
 
@@ -138,11 +129,11 @@ pre-launch maintenance window:
 1. Back up both PostgreSQL databases and record the active profile version.
 2. Deploy Core with the canonical catalog and pending-operation routes.
 3. Apply AI Drizzle migrations, then deploy AI with the matching catalog
-   client and the documented canary configuration.
+   client and reviewed model profile.
 4. Deploy Console with `RunEventV1` and pending-operation contracts.
 5. Run the guarded reset below, then require new conversations.
-6. Smoke-test stable canary assignment, forced rollback, model profile,
-   catalog listing, agent streaming, cancellation,
+6. Smoke-test the model profile and OpenRouter ZDR route, catalog listing,
+   agent streaming, cancellation,
    AI Application destructive approval, feedback reload, and conversation deletion.
 7. Schedule daily telemetry rollup/pruning and monitor the release gates.
 
