@@ -88,13 +88,13 @@ export async function generateMetadata(props: {
  * Viewport configuration. Theme-color lives here, not on `metadata` — Next.js
  * 13.3+ deprecated `metadata.themeColor` and Next 16 silently drops it. Hexes
  * track --background in src/styles/theme.css:
- *   light  HSL(42 30% 95%) ≈ #f4eedf  (cream paper)
- *   dark   HSL(170 8% 6%)  ≈ #0e1010  (warm near-black)
+ *   light  HSL(42 30% 95%) = #f6f4ee  (cream paper)
+ *   dark   HSL(170 8% 6%)  = #0e1110  (warm near-black)
  */
 export const viewport: Viewport = {
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#f4eedf' },
-    { media: '(prefers-color-scheme: dark)', color: '#0e1010' },
+    { media: '(prefers-color-scheme: light)', color: '#f6f4ee' },
+    { media: '(prefers-color-scheme: dark)', color: '#0e1110' },
   ],
 };
 
@@ -112,6 +112,7 @@ export default async function RootLayout(props: {
 
   // Extract locale from params, fallback to defaultLocale
   const locale = params.lang ? findLocale(params.lang) : defaultLocale;
+  const dict = getDictionary(locale);
 
   return (
     <html suppressHydrationWarning lang={locale}>
@@ -126,14 +127,16 @@ export default async function RootLayout(props: {
         `}
       >
         <a
-          href='#console-content'
+          href='#main-content'
           className='
             sr-only
-            focus:not-sr-only focus:absolute focus:z-50 focus:rounded-md
-            focus:bg-background focus:p-4 focus:text-foreground
+            focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-100
+            focus:rounded-[2px] focus:bg-background focus:p-4
+            focus:text-foreground focus:outline-2 focus:outline-offset-2
+            focus:outline-accent
           '
         >
-          Skip to main content
+          {dict.common.skipToMainContent}
         </a>
         <PostHogProvider>
           <ClerkProvider dynamic>

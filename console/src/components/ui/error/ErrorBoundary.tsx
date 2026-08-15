@@ -5,7 +5,11 @@ import { Component } from 'react';
 
 import * as Sentry from '@sentry/nextjs';
 
+import { TbAlertTriangle } from 'react-icons/tb';
+
 import type { Dictionary } from '@/lib/dict';
+
+import { Button } from '@/components/ui/button';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -164,8 +168,8 @@ function ErrorBoundaryFallback({
 }) {
   // Lazy dict lookup — only runs when the boundary has already caught an
   // error, so a throw here can't prevent the boundary from mounting.
-  // Guarded with optional chaining in case the consumer renders the
-  // boundary outside a LocaleProvider (context default is `{}`).
+  // Consumers outside a LocaleProvider receive the context's default-locale
+  // dictionary, so even emergency UI remains readable and localized.
   const { dict } = useLocale();
   const resolvedTitle =
     title ?? (titleKey ? dict.common?.errors?.[titleKey] : undefined);
@@ -176,24 +180,24 @@ function ErrorBoundaryFallback({
   const getDefaultTitle = () => {
     switch (level) {
       case 'page':
-        return 'Something went wrong';
+        return dict.common.errors.consoleTitle;
       case 'section':
-        return "Couldn't load this section";
+        return dict.common.somethingWentWrong;
       case 'component':
       default:
-        return "Couldn't load";
+        return dict.common.weEncounteredError;
     }
   };
 
   const getDefaultDescription = () => {
     switch (level) {
       case 'page':
-        return "We couldn't load this page. Try refreshing — if it keeps happening, contact support.";
+        return dict.common.errors.consoleDescription;
       case 'section':
-        return 'Something went wrong while loading. Try refreshing the page.';
+        return dict.common.tryAgainOrContactSupport;
       case 'component':
       default:
-        return 'Something went wrong while loading.';
+        return dict.common.tryAgainOrContactSupport;
     }
   };
 
@@ -218,23 +222,19 @@ function ErrorBoundaryFallback({
       `}
     >
       <div className='mx-auto max-w-md space-y-4 p-6 text-center'>
-        <div className='mb-4 text-4xl text-red-500'>⚠️</div>
+        <TbAlertTriangle
+          aria-hidden='true'
+          className='mx-auto mb-4 size-10 text-destructive'
+        />
         <h2 className='text-xl font-semibold text-foreground'>
           {resolvedTitle || getDefaultTitle()}
         </h2>
         <p className='text-muted-foreground'>
           {resolvedDescription || getDefaultDescription()}
         </p>
-        <button
-          onClick={onReset}
-          className={`
-            rounded-md bg-primary px-4 py-2 text-primary-foreground
-            transition-colors
-            hover:bg-primary/90
-          `}
-        >
-          {dict.common?.tryAgain ?? 'Try again'}
-        </button>
+        <Button onClick={onReset} variant='accent'>
+          {dict.common.tryAgain}
+        </Button>
         {process.env.NODE_ENV === 'development' && error && (
           <details className='mt-4 text-left text-sm'>
             <summary
@@ -243,13 +243,13 @@ function ErrorBoundaryFallback({
                 hover:text-foreground
               `}
             >
-              Error Details (Development)
+              {dict.common.errorDetails}
             </summary>
-            <pre className='mt-2 overflow-auto rounded-sm bg-muted p-2 text-xs'>
+            <pre className='mt-2 overflow-auto rounded-[2px] bg-muted p-2 text-xs'>
               {error.message}
-              {error.stack && `\n\n${error.stack}`}
+              {error.stack && `\n\n${dict.common.stackTrace}:\n${error.stack}`}
               {errorInfo?.componentStack &&
-                `\n\nComponent Stack:${errorInfo.componentStack}`}
+                `\n\n${dict.common.errorDetails}:${errorInfo.componentStack}`}
             </pre>
           </details>
         )}

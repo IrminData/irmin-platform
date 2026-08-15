@@ -28,6 +28,7 @@ func RegisterFiber(app *fiber.App, apiServices *services.APIServices) {
 	var httpHandler = newStreamableHandler(server)
 
 	cfg := &authConfig{apiServices: apiServices}
+	registerPendingOperationRoutes(app, apiServices, mcpTools.Registry(), cfg)
 
 	// Register the attach endpoint FIRST (more specific route)
 	registerAttachRoute(app, apiServices, httpHandler, cfg)

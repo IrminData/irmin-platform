@@ -10,6 +10,9 @@ export interface RunToolState {
   status: 'running' | 'completed' | 'failed' | 'approval_required';
   summary?: string;
   error?: string;
+  pendingOperationId?: string;
+  approvalPreview?: string;
+  workspaceSlug?: string;
 }
 
 export interface RunState {
@@ -145,6 +148,18 @@ export function reduceRunEvent(state: RunState, event: RunEventV1): RunState {
                 : previous?.summary,
             error:
               typeof data.message === 'string' ? data.message : previous?.error,
+            pendingOperationId:
+              typeof data.pendingOperationId === 'string'
+                ? data.pendingOperationId
+                : previous?.pendingOperationId,
+            approvalPreview:
+              typeof data.approvalPreview === 'string'
+                ? data.approvalPreview
+                : previous?.approvalPreview,
+            workspaceSlug:
+              typeof data.workspaceSlug === 'string'
+                ? data.workspaceSlug
+                : previous?.workspaceSlug,
           },
         },
       };

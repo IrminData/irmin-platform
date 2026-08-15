@@ -423,14 +423,16 @@ function WorkflowScheduleForm({
                     <SelectTrigger className='w-full'>
                       <SelectValue>
                         {trigger.timeFormat === 'cron'
-                          ? 'Cron Expression'
-                          : 'Recurrence Rule (RRule)'}
+                          ? dict.workflow.schedule.cronExpression
+                          : dict.workflow.schedule.recurrenceRule}
                       </SelectValue>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value='cron'>Cron Expression</SelectItem>
+                      <SelectItem value='cron'>
+                        {dict.workflow.schedule.cronExpression}
+                      </SelectItem>
                       <SelectItem value='rrule'>
-                        Recurrence Rule (RRule)
+                        {dict.workflow.schedule.recurrenceRule}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -744,7 +746,7 @@ function WorkflowScheduleForm({
           <Button
             type='submit'
             className='w-full'
-            variant={'default'}
+            variant='accent'
             size={'default'}
             loading={isUpdatingSchedule}
           >

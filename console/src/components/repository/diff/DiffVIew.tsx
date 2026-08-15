@@ -78,16 +78,15 @@ const DiffView = ({
         <div className='mb-4'>
           <h3
             className={`
-              text-sm text-gray-900
+              text-sm text-foreground
               lg:text-base
-              dark:text-gray-100
             `}
           >
             {dict.repository.compare.comparing}{' '}
             <span
               className={`
-                font-semibold text-irmin-blue-500
-                dark:text-irmin-green-500
+                font-semibold text-foreground underline decoration-accent
+                underline-offset-4
               `}
             >
               {baseRef ?? diff.base_ref}
@@ -95,21 +94,14 @@ const DiffView = ({
             {dict.repository.compare.and}{' '}
             <span
               className={`
-                font-semibold text-irmin-blue-500
-                dark:text-irmin-green-500
+                font-semibold text-foreground underline decoration-accent
+                underline-offset-4
               `}
             >
               {compareRef ?? diff.compare_ref}
             </span>
           </h3>
-          <p
-            className={`
-              text-xs text-gray-600
-              dark:text-gray-300
-            `}
-          >
-            {diff.repository}
-          </p>
+          <p className={`text-xs text-muted-foreground`}>{diff.repository}</p>
         </div>
       )}
       {/* Diff Items Section */}
@@ -120,8 +112,7 @@ const DiffView = ({
             <div
               key={`diff-item-${item.type}-${item.object.path}`}
               className={`
-                rounded-lg border border-gray-200 bg-card text-card-foreground
-                dark:border-gray-800
+                rounded-[2px] border border-border bg-card text-card-foreground
               `}
             >
               {/* Main Diff Item Row */}
@@ -134,25 +125,19 @@ const DiffView = ({
                   {/* Affected object */}
                   <h4
                     className={`
-                      text-sm text-gray-800
+                      text-sm text-foreground
                       lg:text-base
-                      dark:text-gray-200
                     `}
                   >
                     {item.object.path}
                   </h4>
                   {/* Size Indicator */}
-                  <div
-                    className={`
-                      text-xs text-gray-500
-                      dark:text-gray-400
-                    `}
-                  >
+                  <div className={`text-xs text-muted-foreground`}>
                     {item.type === 'added' && (
                       <span
                         className={`
-                          rounded-md bg-green-100 p-1 text-green-700
-                          dark:bg-green-900 dark:text-green-200
+                          rounded-[2px] border border-success/30 bg-success/10
+                          p-1 text-foreground
                         `}
                       >
                         +{item.size} {dict.repository.compare.bytes}
@@ -161,8 +146,8 @@ const DiffView = ({
                     {item.type === 'removed' && (
                       <span
                         className={`
-                          rounded-md bg-red-100 p-1 text-red-700
-                          dark:bg-red-900 dark:text-red-200
+                          rounded-[2px] border border-destructive/30
+                          bg-destructive/10 p-1 text-foreground
                         `}
                       >
                         -{item.size} {dict.repository.compare.bytes}
@@ -171,8 +156,8 @@ const DiffView = ({
                     {item.type === 'changed' && (
                       <span
                         className={`
-                          rounded-md bg-blue-100 p-1 text-blue-700
-                          dark:bg-blue-900 dark:text-blue-200
+                          rounded-[2px] border border-chart-2/30 bg-chart-2/10
+                          p-1 text-foreground
                         `}
                       >
                         {item.size} {dict.repository.compare.bytes}{' '}
@@ -182,8 +167,8 @@ const DiffView = ({
                     {item.type === 'moved' && (
                       <span
                         className={`
-                          rounded-md bg-purple-100 p-1 text-purple-700
-                          dark:bg-purple-900 dark:text-purple-200
+                          rounded-[2px] border border-chart-4/30 bg-chart-4/10
+                          p-1 text-foreground
                         `}
                       >
                         {dict.repository.compare.moved} {item.size}{' '}
@@ -193,8 +178,8 @@ const DiffView = ({
                     {item.type === 'conflict' && (
                       <span
                         className={`
-                          rounded-md bg-yellow-100 p-1 text-yellow-700
-                          dark:bg-yellow-900 dark:text-yellow-200
+                          rounded-[2px] border border-warning/30 bg-warning/10
+                          p-1 text-foreground
                         `}
                       >
                         {dict.repository.compare.conflict} {item.size}{' '}
@@ -227,18 +212,12 @@ const DiffView = ({
               {openItem?.path === item.object.path &&
                 !diffContentQuery.isLoading &&
                 diffContentQuery.data && (
-                  <div
-                    className={`
-                      border-t
-                      dark:border-gray-800
-                    `}
-                  >
+                  <div className={`border-t border-border`}>
                     {diffContentQuery.data.baseError ||
                     diffContentQuery.data.compareError ? (
                       <div
                         className={`
-                          px-4 py-8 text-center text-sm text-gray-500
-                          dark:text-gray-400
+                          px-4 py-8 text-center text-sm text-muted-foreground
                         `}
                       >
                         {diffContentQuery.data.baseError && (
@@ -259,12 +238,7 @@ const DiffView = ({
                 )}
               {openItem?.path === item.object.path &&
                 diffContentQuery.isLoading && (
-                  <div
-                    className={`
-                      border-t
-                      dark:border-gray-800
-                    `}
-                  >
+                  <div className={`border-t border-border`}>
                     <LoadingSkeleton className='h-96' />
                   </div>
                 )}

@@ -4,8 +4,7 @@ import { useMemo } from 'react';
 
 import type { WorkspaceLayoutParams } from '@/app/[lang]/(console)/workspace/[workspace]/layout';
 
-import { IoDocumentText } from 'react-icons/io5';
-import { TbSchema } from 'react-icons/tb';
+import { TbFileText, TbSchema } from 'react-icons/tb';
 
 import Tabs from '@/components/ui/tabs/Tabs';
 
@@ -34,7 +33,7 @@ export default function DocumentationLayoutWrapper({
   const tabs = useMemo(
     () => [
       {
-        icon: <IoDocumentText />,
+        icon: <TbFileText />,
         name: dict.catalog.documentation,
         slug: 'catalog',
         link: `/${params.lang}/workspace/${params.workspace}/catalog`,

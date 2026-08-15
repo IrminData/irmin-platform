@@ -217,7 +217,7 @@ export function SqlGenerationChat({
           >
             <div
               className={`
-                max-w-[85%] rounded-lg px-3 py-2 text-sm
+                max-w-[85%] rounded-[2px] px-3 py-2 text-sm
                 ${
                   message.role === 'user'
                     ? 'bg-accent text-accent-foreground'
@@ -236,7 +236,7 @@ export function SqlGenerationChat({
 
         {isLoading && (
           <div className='flex justify-start'>
-            <div className='animate-pulse rounded-lg bg-muted px-3 py-2 text-sm'>
+            <div className='animate-pulse rounded-[2px] bg-muted px-3 py-2 text-sm'>
               <p className='text-muted-foreground'>
                 {dict.queryHelper.sqlGeneration.loading}
               </p>
@@ -247,8 +247,8 @@ export function SqlGenerationChat({
         {error && (
           <div
             className={`
-              rounded-md border border-destructive bg-destructive/10 p-3 text-sm
-              text-destructive
+              rounded-[2px] border border-destructive bg-destructive/10 p-3
+              text-sm text-destructive
             `}
           >
             {error}
@@ -292,6 +292,7 @@ export function SqlGenerationChat({
               {dict.queryHelper.sqlGeneration.clearChat}
             </Button>
             <Button
+              variant='accent'
               type='submit'
               disabled={!input.trim() || isLoading}
               className='gap-1'

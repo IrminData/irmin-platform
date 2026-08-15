@@ -1,4 +1,7 @@
-import { contextAssembler } from '@/agent-runtime/contextAssembler';
+import {
+  contextAssembler,
+  contextValue,
+} from '@/agent-runtime/contextAssembler';
 import type { ModelRole } from '@/inference';
 import IrminCore from '@/irmin-api';
 import fs from 'fs/promises';
@@ -23,6 +26,7 @@ import type {
 
 export abstract class BaseAgent implements BaseAgentInterface {
   public config: AgentConfig;
+  protected executionRole: ModelRole = 'assistant';
 
   constructor(config: AgentConfig) {
     this.config = config;
@@ -65,7 +69,11 @@ export abstract class BaseAgent implements BaseAgentInterface {
 
     // Add static docs to context if available
     if (staticDocs) {
-      context['irmin-documentation'] = staticDocs;
+      context['irmin-documentation'] = contextValue(
+        staticDocs,
+        'static-docs',
+        'trusted-system'
+      );
     }
 
     console.log(
@@ -128,7 +136,11 @@ export abstract class BaseAgent implements BaseAgentInterface {
                 connectionID: connectionId,
               });
               if (res.data) {
-                context['connection'] = JSON.stringify(res.data, null, 2);
+                context['connection'] = contextValue(
+                  JSON.stringify(res.data, null, 2),
+                  'irmin-api',
+                  'workspace-data'
+                );
               }
             } catch (e) {
               console.error(`Failed to fetch connection ${connectionId}:`, e);
@@ -148,7 +160,11 @@ export abstract class BaseAgent implements BaseAgentInterface {
                 workflowID: workflowId,
               });
               if (res.data) {
-                context['workflow'] = JSON.stringify(res.data, null, 2);
+                context['workflow'] = contextValue(
+                  JSON.stringify(res.data, null, 2),
+                  'irmin-api',
+                  'workspace-data'
+                );
               }
             } catch (e) {
               console.error(`Failed to fetch workflow ${workflowId}:`, e);
@@ -168,7 +184,11 @@ export abstract class BaseAgent implements BaseAgentInterface {
                 queryID: queryId,
               });
               if (res.data) {
-                context['stored-query'] = JSON.stringify(res.data, null, 2);
+                context['stored-query'] = contextValue(
+                  JSON.stringify(res.data, null, 2),
+                  'irmin-api',
+                  'workspace-data'
+                );
               }
             } catch (e) {
               console.error(`Failed to fetch stored query ${queryId}:`, e);
@@ -188,7 +208,11 @@ export abstract class BaseAgent implements BaseAgentInterface {
                 slug: repoSlug,
               });
               if (res.data) {
-                context['repository'] = JSON.stringify(res.data, null, 2);
+                context['repository'] = contextValue(
+                  JSON.stringify(res.data, null, 2),
+                  'irmin-api',
+                  'workspace-data'
+                );
               }
             } catch (e) {
               console.error(`Failed to fetch repository ${repoSlug}:`, e);
@@ -213,10 +237,10 @@ export abstract class BaseAgent implements BaseAgentInterface {
                 ref,
               });
               if (res.data) {
-                context['repository-object-schema'] = JSON.stringify(
-                  res.data,
-                  null,
-                  2
+                context['repository-object-schema'] = contextValue(
+                  JSON.stringify(res.data, null, 2),
+                  'irmin-api',
+                  'workspace-data'
                 );
               }
             } catch (e) {
@@ -267,10 +291,14 @@ export abstract class BaseAgent implements BaseAgentInterface {
                     }
                   })
                 );
-                context['scripts'] = JSON.stringify(
-                  scripts.filter((s) => s !== null),
-                  null,
-                  2
+                context['scripts'] = contextValue(
+                  JSON.stringify(
+                    scripts.filter((s) => s !== null),
+                    null,
+                    2
+                  ),
+                  'irmin-api',
+                  'workspace-data'
                 );
               } catch (e) {
                 console.error('Failed to fetch scripts:', e);
@@ -394,10 +422,11 @@ export abstract class BaseAgent implements BaseAgentInterface {
       runContext: {
         workspaceSlug: input.workspace?.slug,
         conversationId:
-          input.persistConversation === false ? undefined : conversationId,
+          input.persistConversation === false
+            ? input.conversationId
+            : conversationId,
         runId: input.runId,
         userId: input.user?.id,
-        signal: input.signal,
       },
       systemPrompt,
       tools: options.tools,
@@ -429,7 +458,8 @@ export abstract class BaseAgent implements BaseAgentInterface {
       agent,
       input.message,
       conversationId,
-      input.signal
+      input.signal,
+      this.executionRole
     );
 
     // Extract content from result

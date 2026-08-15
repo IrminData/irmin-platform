@@ -80,3 +80,13 @@ export interface InferenceGateway {
     runContext?: InferenceRunContext
   ): Promise<T>;
 }
+
+/** Compose caller cancellation with a role's version-controlled timeout. */
+export function inferenceSignal(
+  profile: ModelProfile,
+  role: ModelRole,
+  callerSignal?: AbortSignal
+): AbortSignal {
+  const timeout = AbortSignal.timeout(profile.roles[role].timeoutMs);
+  return callerSignal ? AbortSignal.any([callerSignal, timeout]) : timeout;
+}

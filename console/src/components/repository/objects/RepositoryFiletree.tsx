@@ -4,7 +4,6 @@ import { memo, useCallback, useMemo, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 
-import { LuSearchX } from 'react-icons/lu';
 import {
   TbArrowsSort,
   TbChevronDown,
@@ -12,6 +11,7 @@ import {
   TbDotsVertical,
   TbFile,
   TbFolder,
+  TbSearchOff,
   TbTable,
 } from 'react-icons/tb';
 
@@ -304,50 +304,31 @@ const RepositoryFiletree = ({
   const getIcon = useCallback((type: RepositoryObject['type']) => {
     switch (type) {
       case 'group':
-        return (
-          <TbFolder
-            className={`
-              size-5 text-yellow-500
-              dark:text-yellow-400
-            `}
-          />
-        );
+        return <TbFolder className={`size-5 text-warning`} />;
       case 'structured':
-        return (
-          <TbTable
-            className={`
-              size-5 text-blue-500
-              dark:text-blue-400
-            `}
-          />
-        );
+        return <TbTable className={`size-5 text-chart-2`} />;
       case 'binary':
-        return (
-          <TbFile
-            className={`
-              size-5 text-gray-500
-              dark:text-gray-400
-            `}
-          />
-        );
+        return <TbFile className={`size-5 text-muted-foreground`} />;
     }
   }, []);
 
   if (repositoryObjectQuery.isLoading) {
     return (
-      <div className='mb-4 w-full overflow-hidden rounded-lg border border-card'>
+      <div
+        className='
+          mb-4 w-full overflow-hidden rounded-[2px] border border-border
+        '
+      >
         {/* Search header skeleton */}
         <div
           className={`
-            flex items-center justify-start gap-2 rounded-lg border-b
-            border-gray-200 bg-background px-4 py-2
-            dark:border-gray-800
+            flex items-center justify-start gap-2 rounded-[2px] border-b
+            border-border bg-background px-4 py-2
           `}
         >
           <div
             className={`
-              h-9 w-full max-w-sm animate-pulse rounded-md bg-gray-200
-              dark:bg-gray-800
+              h-9 w-full max-w-sm animate-pulse rounded-[2px] bg-muted
             `}
           />
         </div>
@@ -362,7 +343,11 @@ const RepositoryFiletree = ({
 
   if (repositoryObjectQuery.error) {
     return (
-      <div className='mb-4 w-full overflow-hidden rounded-lg border border-card'>
+      <div
+        className='
+          mb-4 w-full overflow-hidden rounded-[2px] border border-border
+        '
+      >
         <div className='p-8'>
           <QueryError
             error={repositoryObjectQuery.error}
@@ -378,25 +363,19 @@ const RepositoryFiletree = ({
 
   if (!rootObject) {
     return (
-      <div className='mb-4 w-full overflow-hidden rounded-lg border border-card'>
+      <div
+        className='
+          mb-4 w-full overflow-hidden rounded-[2px] border border-border
+        '
+      >
         <div className='p-8'>
           <div className='flex flex-col items-center justify-center gap-4'>
-            <LuSearchX className='size-12 text-gray-400' />
+            <TbSearchOff className='size-12 text-muted-foreground' />
             <div className='text-center'>
-              <div
-                className={`
-                  text-base font-medium text-gray-900
-                  dark:text-gray-100
-                `}
-              >
+              <div className={`text-base font-medium text-foreground`}>
                 {dict.repository.objects.contentUnavailable}
               </div>
-              <div
-                className={`
-                  mt-2 text-sm text-gray-600
-                  dark:text-gray-400
-                `}
-              >
+              <div className={`mt-2 text-sm text-muted-foreground`}>
                 {dict.common.tryAgainOrContactSupport}
               </div>
             </div>
@@ -413,13 +392,12 @@ const RepositoryFiletree = ({
   }
 
   return (
-    <div className='mb-4 w-full overflow-hidden rounded-lg border border-card'>
+    <div className='mb-4 w-full overflow-hidden rounded-[2px] border border-border'>
       {/* Search header */}
       <div
         className={`
-          flex items-center justify-start gap-2 rounded-lg border-b
-          border-gray-200 bg-background px-4 py-2
-          dark:border-gray-800
+          flex items-center justify-start gap-2 rounded-[2px] border-b
+          border-border bg-background px-4 py-2
         `}
       >
         <Input
@@ -437,12 +415,11 @@ const RepositoryFiletree = ({
               flex size-full min-h-96 flex-col items-center justify-center gap-4
             `}
           >
-            <LuSearchX className='size-12 text-gray-400' />
+            <TbSearchOff className='size-12 text-muted-foreground' />
             <div
               className={`
-                text-base text-gray-600
+                text-base text-muted-foreground
                 lg:text-lg
-                dark:text-gray-300
               `}
             >
               {dict.repository.objects.noObjects}
@@ -489,14 +466,7 @@ const RepositoryFiletree = ({
                 return (
                   <TableRow
                     key={object.path}
-                    className={
-                      isCurrentPath
-                        ? `
-                          bg-gray-200
-                          dark:bg-gray-800
-                        `
-                        : ''
-                    }
+                    className={isCurrentPath ? `bg-muted` : ''}
                   >
                     <TableCell>
                       <div className='flex flex-col gap-1'>
@@ -509,12 +479,24 @@ const RepositoryFiletree = ({
                               variant='ghost'
                               size='sm'
                               className='size-5 p-0'
+                              aria-label={`${
+                                isExpanded
+                                  ? dict.repository.objects.hideChildren
+                                  : dict.repository.objects.showChildren
+                              }: ${object.name}`}
+                              aria-expanded={isExpanded}
                               onClick={() => toggleFolder(object)}
                             >
                               {isExpanded ? (
-                                <TbChevronDown className='size-4' />
+                                <TbChevronDown
+                                  className='size-4'
+                                  aria-hidden='true'
+                                />
                               ) : (
-                                <TbChevronRight className='size-4' />
+                                <TbChevronRight
+                                  className='size-4'
+                                  aria-hidden='true'
+                                />
                               )}
                             </Button>
                           )}
@@ -554,9 +536,10 @@ const RepositoryFiletree = ({
                       <Button
                         variant='ghost'
                         className='p-2'
+                        aria-label={`${dict.common.showDetails}: ${object.name}`}
                         onClick={() => handleObjectClick(object)}
                       >
-                        <TbDotsVertical className='size-5' />
+                        <TbDotsVertical className='size-5' aria-hidden='true' />
                       </Button>
                     </TableCell>
                   </TableRow>

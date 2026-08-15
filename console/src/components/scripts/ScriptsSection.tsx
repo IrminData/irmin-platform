@@ -25,6 +25,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { QueryError } from '@/components/ui/error/QueryError';
 import SafeComponent from '@/components/ui/error/SafeComponent';
+import { Input } from '@/components/ui/input';
 import ListSkeleton from '@/components/ui/loading/ListSkeleton';
 import WorkspaceTagDisplay from '@/components/workspace/WorkspaceTagDisplay';
 import { WorkspaceTagSelector } from '@/components/workspace/WorkspaceTagSelector';
@@ -263,7 +264,8 @@ function ScriptsSectionContent() {
     if (!selectedScript) return;
     const confirmed = await irminConfirm(
       'warning',
-      `${dict.common.areYouSureYouWantToDelete}: ${selectedScript.name}`
+      `${dict.common.areYouSureYouWantToDelete}: ${selectedScript.name}`,
+      dict.scripts.deleteScript
     );
     if (!confirmed) return;
     const success = await deleteScript(selectedScript.id);
@@ -275,8 +277,8 @@ function ScriptsSectionContent() {
   return (
     <SafeComponent
       level='section'
-      title='Scripts Interface Error'
-      description='Failed to load scripts interface'
+      titleKey='scriptsInterfaceTitle'
+      descriptionKey='scriptsInterfaceDescription'
     >
       <div className='flex size-full flex-col bg-background'>
         <div
@@ -296,7 +298,7 @@ function ScriptsSectionContent() {
             <div className='flex flex-col gap-2 p-2'>
               <Button
                 className='w-full'
-                variant='default'
+                variant='accent'
                 onClick={() => openNewTab()}
                 disabled={!isResourceAllowed('script', 'create') || loading}
               >
@@ -313,27 +315,14 @@ function ScriptsSectionContent() {
               </Button>
             </div>
             <div className='border-b p-2'>
-              <div className='relative'>
-                <TbSearch
-                  className={`
-                    absolute top-1/2 left-2 -translate-y-1/2
-                    text-muted-foreground
-                  `}
-                  size={16}
-                />
-                <input
-                  type='text'
-                  placeholder={dict.scripts.searchScripts}
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`
-                    w-full rounded-md border border-border bg-background py-1.5
-                    pr-2 pl-8 text-sm transition-colors
-                    focus:border-primary focus:ring-1 focus:ring-primary
-                    focus:outline-none
-                  `}
-                />
-              </div>
+              <Input
+                type='search'
+                placeholder={dict.scripts.searchScripts}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                icon={<TbSearch aria-hidden='true' />}
+                aria-label={dict.scripts.searchScripts}
+              />
             </div>
             {loading && <ListSkeleton items={6} className='p-2' />}
             {scriptsError && (
@@ -349,20 +338,10 @@ function ScriptsSectionContent() {
             {!loading && !scriptsError && filteredScripts.length === 0 && (
               <div className='p-4'>
                 <div className='py-8 text-center'>
-                  <h3
-                    className={`
-                      mb-2 text-lg font-medium text-gray-700
-                      dark:text-gray-300
-                    `}
-                  >
+                  <h3 className={`mb-2 text-lg font-medium text-foreground`}>
                     {dict.list.emptyState.scripts.title}
                   </h3>
-                  <p
-                    className={`
-                      mx-auto mb-4 max-w-sm text-gray-500
-                      dark:text-gray-400
-                    `}
-                  >
+                  <p className={`mx-auto mb-4 max-w-sm text-muted-foreground`}>
                     {dict.list.emptyState.scripts.description}
                   </p>
                 </div>
@@ -374,40 +353,46 @@ function ScriptsSectionContent() {
                 <div
                   key={`script-${script.id}`}
                   className={`
-                    flex cursor-pointer flex-row items-center justify-between
-                    gap-2 border-b border-border p-4 transition-colors
+                    border-b border-border transition-colors
                     hover:bg-card
                     ${selectedScript?.id === script.id ? `bg-card` : ''}
                   `}
-                  onClick={() => handleScriptSelect(script)}
-                  role='button'
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      handleScriptSelect(script);
-                    }
-                  }}
                 >
-                  <div className='flex flex-col gap-1'>
-                    <p className='text-sm'>{script.name}</p>
-                    {script.description && (
-                      <p className='text-xs text-foreground/50'>
-                        {script.description}
-                      </p>
-                    )}
-                    {script.tags && script.tags.length > 0 && (
-                      <div className='mt-1'>
-                        <WorkspaceTagDisplay
-                          tags={script.tags}
-                          maxVisible={3}
-                          size='sm'
-                        />
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <TbChevronRight size={22} />
-                  </div>
+                  <button
+                    type='button'
+                    aria-current={
+                      selectedScript?.id === script.id ? 'true' : undefined
+                    }
+                    onClick={() => handleScriptSelect(script)}
+                    className={`
+                      flex w-full appearance-none flex-row items-center
+                      justify-between gap-2 bg-transparent p-4 text-left
+                      focus-visible:outline-2 focus-visible:-outline-offset-2
+                      focus-visible:outline-accent
+                    `}
+                  >
+                    <span className='flex min-w-0 flex-col gap-1'>
+                      <span className='text-sm'>{script.name}</span>
+                      {script.description && (
+                        <span className='text-xs text-foreground/50'>
+                          {script.description}
+                        </span>
+                      )}
+                    </span>
+                    <TbChevronRight
+                      aria-hidden='true'
+                      className='size-5 shrink-0'
+                    />
+                  </button>
+                  {script.tags && script.tags.length > 0 && (
+                    <div className='px-4 pb-4'>
+                      <WorkspaceTagDisplay
+                        tags={script.tags}
+                        maxVisible={3}
+                        size='sm'
+                      />
+                    </div>
+                  )}
                 </div>
               ))}
           </div>
@@ -455,8 +440,9 @@ function ScriptsSectionContent() {
                 size='icon'
                 variant='ghost'
                 onClick={() => setSelectedScript(null)}
-                icon={<TbX size={22} />}
+                icon={<TbX aria-hidden='true' size={22} />}
                 className='absolute top-2 right-2'
+                aria-label={dict.common.close}
               />
               <Badge className='mt-2'>{dict.scripts.scriptManagement}</Badge>
               <p className='text-sm'>{selectedScript.name}</p>
@@ -467,12 +453,7 @@ function ScriptsSectionContent() {
               )}
 
               {/* Owner section */}
-              <div
-                className={`
-                  mb-4 border-b border-gray-200 pb-4
-                  dark:border-gray-800
-                `}
-              >
+              <div className={`mb-4 border-b border-border pb-4`}>
                 <p className='mb-1 text-xs font-medium text-foreground/70'>
                   {dict.common.owner}
                 </p>
@@ -484,12 +465,7 @@ function ScriptsSectionContent() {
 
               {/* Tags section */}
               {canViewTags && (
-                <div
-                  className={`
-                    mb-4 border-b border-gray-200 pb-4
-                    dark:border-gray-800
-                  `}
-                >
+                <div className={`mb-4 border-b border-border pb-4`}>
                   <WorkspaceTagSelector
                     selectedTags={selectedTags}
                     onTagsChange={handleUpdateTags}

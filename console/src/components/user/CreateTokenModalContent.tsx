@@ -187,7 +187,7 @@ const CreateTokenModalContent = ({
                   {...field}
                   type='number'
                   min={1}
-                  placeholder='Enter seconds'
+                  placeholder={dict.tokens.enterSeconds}
                   value={field.value ?? ''}
                   onChange={(e) => {
                     const value = e.target.value;
@@ -202,7 +202,7 @@ const CreateTokenModalContent = ({
                   }}
                 />
                 {errors.validFor && (
-                  <p className='mt-1 text-xs text-red-600'>
+                  <p className='mt-1 text-xs text-destructive'>
                     {errors.validFor.message}
                   </p>
                 )}
@@ -240,7 +240,7 @@ const CreateTokenModalContent = ({
             <>
               <Input {...field} />
               {errors.name && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.name.message}
                 </p>
               )}
@@ -248,7 +248,7 @@ const CreateTokenModalContent = ({
           )}
         />
       </div>
-      <Button variant='default' size='sm' className='w-full' type='submit'>
+      <Button variant='accent' size='sm' className='w-full' type='submit'>
         {dict.tokens.createAPIToken}
       </Button>
       <Button

@@ -4,16 +4,19 @@ import { useCallback, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 
-import { BsFilePdf, BsPerson, BsSearch, BsTag } from 'react-icons/bs';
-import { GoWorkflow } from 'react-icons/go';
-import { HiOutlineDocumentText } from 'react-icons/hi';
 import {
   TbClipboardX,
   TbCode,
   TbDatabase,
+  TbFileText,
+  TbFileTypePdf,
+  TbPlugConnected,
   TbRun,
+  TbSearch,
   TbSparkles,
   TbSql,
+  TbTag,
+  TbUser,
 } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
@@ -252,6 +255,7 @@ export default function DocumentationSection() {
         workspace: { name: workspace.name, slug: workspace.slug },
         profile: profile ?? null,
         locale: locale ?? 'en',
+        dict,
         stats,
         repositories,
         connections,
@@ -270,6 +274,7 @@ export default function DocumentationSection() {
     workspaceSlug,
     profile,
     locale,
+    dict,
     stats,
     repositories,
     connections,
@@ -348,8 +353,8 @@ export default function DocumentationSection() {
         <div className='container mx-auto max-w-6xl px-4 py-12'>
           <div className='space-y-6'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <HiOutlineDocumentText className='size-6 text-muted-foreground' />
+              <div className='rounded-[2px] bg-muted p-2'>
+                <TbFileText className='size-6 text-muted-foreground' />
               </div>
               <Badge variant='secondary'>{dict.catalog.workspace}</Badge>
             </div>
@@ -381,8 +386,8 @@ export default function DocumentationSection() {
       <div className='container mx-auto max-w-6xl px-4 py-12'>
         <div className='mb-10 flex flex-col gap-6'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-muted p-2'>
-              <HiOutlineDocumentText className='size-6 text-muted-foreground' />
+            <div className='rounded-[2px] bg-muted p-2'>
+              <TbFileText className='size-6 text-muted-foreground' />
             </div>
             <Badge variant='secondary'>{dict.catalog.workspace}</Badge>
           </div>
@@ -397,13 +402,13 @@ export default function DocumentationSection() {
           <div className='flex flex-wrap items-center gap-4'>
             <Button
               variant='default'
-              icon={<BsFilePdf size={18} />}
+              icon={<TbFileTypePdf size={18} />}
               onClick={handleDownloadPDF}
             >
               {dict.catalog.downloadPdf}
             </Button>
             <div className='relative'>
-              <BsSearch
+              <TbSearch
                 className={`
                   pointer-events-none absolute top-1/2 left-3 size-4
                   -translate-y-1/2 text-muted-foreground
@@ -452,7 +457,7 @@ export default function DocumentationSection() {
                       lg:grid-cols-6
                     `}
                   >
-                    <div className='rounded-md border p-3'>
+                    <div className='rounded-[2px] border p-3'>
                       <dd className='text-lg font-semibold tabular-nums'>
                         {stats.repositories}
                       </dd>
@@ -460,7 +465,7 @@ export default function DocumentationSection() {
                         {dict.repository.repositories}
                       </dt>
                     </div>
-                    <div className='rounded-md border p-3'>
+                    <div className='rounded-[2px] border p-3'>
                       <dd className='text-lg font-semibold tabular-nums'>
                         {stats.connections}
                       </dd>
@@ -468,7 +473,7 @@ export default function DocumentationSection() {
                         {dict.connections.connections}
                       </dt>
                     </div>
-                    <div className='rounded-md border p-3'>
+                    <div className='rounded-[2px] border p-3'>
                       <dd className='text-lg font-semibold tabular-nums'>
                         {stats.workflows}
                       </dd>
@@ -476,7 +481,7 @@ export default function DocumentationSection() {
                         {dict.workflow.workflows}
                       </dt>
                     </div>
-                    <div className='rounded-md border p-3'>
+                    <div className='rounded-[2px] border p-3'>
                       <dd className='text-lg font-semibold tabular-nums'>
                         {stats.scripts}
                       </dd>
@@ -484,7 +489,7 @@ export default function DocumentationSection() {
                         {dict.consoleNavigation.scripts}
                       </dt>
                     </div>
-                    <div className='rounded-md border p-3'>
+                    <div className='rounded-[2px] border p-3'>
                       <dd className='text-lg font-semibold tabular-nums'>
                         {stats.queries}
                       </dd>
@@ -492,7 +497,7 @@ export default function DocumentationSection() {
                         {dict.query.queries}
                       </dt>
                     </div>
-                    <div className='rounded-md border p-3'>
+                    <div className='rounded-[2px] border p-3'>
                       <dd className='text-lg font-semibold tabular-nums'>
                         {stats.aiApplications}
                       </dd>
@@ -518,7 +523,7 @@ export default function DocumentationSection() {
                       sm:grid-cols-4
                     `}
                   >
-                    <div className='rounded-md border p-3'>
+                    <div className='rounded-[2px] border p-3'>
                       <dd className='text-lg font-semibold tabular-nums'>
                         {stats.importWorkflows}
                       </dd>
@@ -526,7 +531,7 @@ export default function DocumentationSection() {
                         {dict.workflow.importWorkflows}
                       </dt>
                     </div>
-                    <div className='rounded-md border p-3'>
+                    <div className='rounded-[2px] border p-3'>
                       <dd className='text-lg font-semibold tabular-nums'>
                         {stats.exportWorkflows}
                       </dd>
@@ -534,7 +539,7 @@ export default function DocumentationSection() {
                         {dict.workflow.exportWorkflows}
                       </dt>
                     </div>
-                    <div className='rounded-md border p-3'>
+                    <div className='rounded-[2px] border p-3'>
                       <dd className='text-lg font-semibold tabular-nums'>
                         {stats.actionWorkflows}
                       </dd>
@@ -542,7 +547,7 @@ export default function DocumentationSection() {
                         {dict.workflow.actionWorkflows}
                       </dt>
                     </div>
-                    <div className='rounded-md border p-3'>
+                    <div className='rounded-[2px] border p-3'>
                       <dd className='text-lg font-semibold tabular-nums'>
                         {stats.pipelineWorkflows}
                       </dd>
@@ -559,7 +564,7 @@ export default function DocumentationSection() {
           {repositories.length > 0 && (
             <section className='space-y-6'>
               <div className='flex items-center gap-3'>
-                <div className='rounded-lg bg-muted p-2'>
+                <div className='rounded-[2px] bg-muted p-2'>
                   <TbDatabase className='size-5 text-muted-foreground' />
                 </div>
                 <div>
@@ -610,8 +615,8 @@ export default function DocumentationSection() {
           {connections.length > 0 && (
             <section className='space-y-6'>
               <div className='flex items-center gap-3'>
-                <div className='rounded-lg bg-muted p-2'>
-                  <GoWorkflow className='size-5 text-muted-foreground' />
+                <div className='rounded-[2px] bg-muted p-2'>
+                  <TbPlugConnected className='size-5 text-muted-foreground' />
                 </div>
                 <div>
                   <h2 className='text-2xl'>{dict.connections.connections}</h2>
@@ -684,7 +689,7 @@ export default function DocumentationSection() {
                                     text-muted-foreground
                                   `}
                                 >
-                                  <BsPerson className='size-4' />
+                                  <TbUser className='size-4' />
                                   {dict.common.owner}
                                 </dt>
                                 <dd className='text-foreground'>
@@ -701,7 +706,7 @@ export default function DocumentationSection() {
                                     text-muted-foreground
                                   `}
                                 >
-                                  <BsTag className='size-4' />
+                                  <TbTag className='size-4' />
                                   {dict.repository.tags.tags}
                                 </dt>
                                 <dd className='flex flex-wrap gap-2'>
@@ -723,7 +728,7 @@ export default function DocumentationSection() {
           {workflows.length > 0 && (
             <section className='space-y-6'>
               <div className='flex items-center gap-3'>
-                <div className='rounded-lg bg-muted p-2'>
+                <div className='rounded-[2px] bg-muted p-2'>
                   <TbRun className='size-5 text-muted-foreground' />
                 </div>
                 <div>
@@ -841,7 +846,7 @@ export default function DocumentationSection() {
                                     text-muted-foreground
                                   `}
                                 >
-                                  <BsPerson className='size-4' />
+                                  <TbUser className='size-4' />
                                   {dict.common.owner}
                                 </dt>
                                 <dd className={`font-medium text-foreground`}>
@@ -910,7 +915,7 @@ export default function DocumentationSection() {
                                     text-muted-foreground
                                   `}
                                 >
-                                  <BsTag className='size-4' />
+                                  <TbTag className='size-4' />
                                   {dict.repository.tags.tags}
                                 </dt>
                                 <dd className='flex flex-wrap gap-2'>
@@ -932,7 +937,7 @@ export default function DocumentationSection() {
           {scripts.length > 0 && (
             <section className='space-y-6'>
               <div className='flex items-center gap-3'>
-                <div className='rounded-lg bg-muted p-2'>
+                <div className='rounded-[2px] bg-muted p-2'>
                   <TbCode className='size-5 text-muted-foreground' />
                 </div>
                 <div>
@@ -998,7 +1003,7 @@ export default function DocumentationSection() {
                                     text-muted-foreground
                                   `}
                                 >
-                                  <BsPerson className='size-4' />
+                                  <TbUser className='size-4' />
                                   {dict.common.owner}
                                 </dt>
                                 <dd className={`font-medium text-foreground`}>
@@ -1015,7 +1020,7 @@ export default function DocumentationSection() {
                                     text-muted-foreground
                                   `}
                                 >
-                                  <BsTag className='size-4' />
+                                  <TbTag className='size-4' />
                                   {dict.repository.tags.tags}
                                 </dt>
                                 <dd className='flex flex-wrap gap-2'>
@@ -1036,7 +1041,7 @@ export default function DocumentationSection() {
           {queries.length > 0 && (
             <section className='space-y-6'>
               <div className='flex items-center gap-3'>
-                <div className='rounded-lg bg-muted p-2'>
+                <div className='rounded-[2px] bg-muted p-2'>
                   <TbSql className='size-5 text-muted-foreground' />
                 </div>
                 <div>
@@ -1096,7 +1101,7 @@ export default function DocumentationSection() {
                                     text-muted-foreground
                                   `}
                                 >
-                                  <BsPerson className='size-4' />
+                                  <TbUser className='size-4' />
                                   {dict.common.owner}
                                 </dt>
                                 <dd className={`font-medium text-foreground`}>
@@ -1113,7 +1118,7 @@ export default function DocumentationSection() {
                                     text-muted-foreground
                                   `}
                                 >
-                                  <BsTag className='size-4' />
+                                  <TbTag className='size-4' />
                                   {dict.repository.tags.tags}
                                 </dt>
                                 <dd className='flex flex-wrap gap-2'>
@@ -1134,7 +1139,7 @@ export default function DocumentationSection() {
           {aiApplications.length > 0 && (
             <section className='space-y-6'>
               <div className='flex items-center gap-3'>
-                <div className='rounded-lg bg-muted p-2'>
+                <div className='rounded-[2px] bg-muted p-2'>
                   <TbSparkles
                     aria-hidden='true'
                     className='size-5 text-muted-foreground'
@@ -1217,7 +1222,7 @@ export default function DocumentationSection() {
                                     text-muted-foreground
                                   `}
                                 >
-                                  <BsPerson
+                                  <TbUser
                                     aria-hidden='true'
                                     className='size-4'
                                   />
@@ -1298,7 +1303,7 @@ export default function DocumentationSection() {
                                     text-muted-foreground
                                   `}
                                 >
-                                  <BsTag
+                                  <TbTag
                                     aria-hidden='true'
                                     className='size-4'
                                   />

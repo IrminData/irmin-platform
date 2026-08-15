@@ -28,8 +28,8 @@ const DetailPageSkeleton = () => {
           </div>
         </div>
         <div className='flex items-center gap-2'>
-          <LoadingSkeleton className='h-10 w-20 rounded-md' />
-          <LoadingSkeleton className='h-10 w-24 rounded-md' />
+          <LoadingSkeleton className='h-10 w-20 rounded-[2px]' />
+          <LoadingSkeleton className='h-10 w-24 rounded-[2px]' />
         </div>
       </div>
 
@@ -53,7 +53,7 @@ const DetailPageSkeleton = () => {
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={`stat-${i}`}
-              className='rounded-lg border border-border bg-card p-4'
+              className='rounded-[2px] border border-border bg-card p-4'
             >
               <div className='space-y-2'>
                 <LoadingSkeleton className='h-4 w-16' />
@@ -63,7 +63,7 @@ const DetailPageSkeleton = () => {
           ))}
         </div>
 
-        <div className='rounded-lg border border-border bg-card p-6'>
+        <div className='rounded-[2px] border border-border bg-card p-6'>
           <LoadingSkeleton className='mb-4 h-6 w-32' />
           <div className='space-y-2'>
             {Array.from({ length: 6 }).map((_, i) => (

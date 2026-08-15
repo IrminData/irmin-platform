@@ -1,4 +1,8 @@
+'use client';
+
 import type { HTMLAttributes } from 'react';
+
+import { useLocale } from '@/context/LocaleContext';
 
 import { cn } from '@/utils/tw';
 
@@ -13,8 +17,8 @@ const LoaderIcon = ({ size = 16 }: LoaderIconProps) => (
     style={{ color: 'currentcolor' }}
     viewBox='0 0 16 16'
     width={size}
+    aria-hidden='true'
   >
-    <title>Loader</title>
     <g clipPath='url(#clip0_2393_1490)'>
       <path d='M8 0V4' stroke='currentColor' strokeWidth='1.5' />
       <path
@@ -84,14 +88,20 @@ export type LoaderProps = HTMLAttributes<HTMLDivElement> & {
   size?: number;
 };
 
-export const Loader = ({ className, size = 16, ...props }: LoaderProps) => (
-  <div
-    className={cn(
-      'inline-flex animate-spin items-center justify-center',
-      className
-    )}
-    {...props}
-  >
-    <LoaderIcon size={size} />
-  </div>
-);
+export const Loader = ({ className, size = 16, ...props }: LoaderProps) => {
+  const { dict } = useLocale();
+
+  return (
+    <div
+      className={cn(
+        'inline-flex animate-spin items-center justify-center',
+        className
+      )}
+      role='status'
+      aria-label={dict.common.loading}
+      {...props}
+    >
+      <LoaderIcon size={size} />
+    </div>
+  );
+};

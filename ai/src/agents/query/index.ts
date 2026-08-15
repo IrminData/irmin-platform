@@ -11,6 +11,7 @@ import type { AgentInput, AgentResponse } from '@/agents/types';
 import { agentConfig } from './config';
 
 export class QueryAgent extends BaseAgent {
+  protected override executionRole: ModelRole = 'query';
   constructor() {
     super(agentConfig);
   }
@@ -23,8 +24,11 @@ export class QueryAgent extends BaseAgent {
   }> {
     // Create MCP tools with auth token and filter to only include the required tools
     const tools: DynamicStructuredTool[] = [];
-    if (input.authToken && input.workspace) {
-      const mcpConfig = toolsService.getIrminMCPConfig(input.authToken);
+    if (input.authToken) {
+      const mcpConfig = toolsService.getIrminMCPConfig(
+        input.authToken,
+        input.workspace.slug
+      );
       const mcpClient = toolsService.createClient(
         {
           // Add MCP servers here...

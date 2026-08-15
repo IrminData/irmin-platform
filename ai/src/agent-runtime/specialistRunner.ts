@@ -32,7 +32,7 @@ export class SpecialistRunner {
         message: 'The generated SQL did not pass the DuckDB safety parser.',
       };
     }
-    if (!hasSuccessfulSqlVerification(response.messages, cleaned)) {
+    if (!hasSuccessfulSqlExecution(response.messages, cleaned)) {
       return {
         kind: 'clarification',
         message: 'The generated SQL could not be verified by DuckDB.',
@@ -75,28 +75,12 @@ function stripFence(content: string): string {
     .trim();
 }
 
-function hasSuccessfulSqlVerification(
+function hasSuccessfulSqlExecution(
   messages: BaseMessage[] | undefined,
   finalSql: string
 ): boolean {
-  const successfulCallIds = new Set(
-    (messages ?? []).flatMap((message) => {
-      const candidate = message as BaseMessage & {
-        name?: string;
-        status?: string;
-        tool_call_id?: string;
-      };
-      return candidate.getType() === 'tool' &&
-        typeof candidate.name === 'string' &&
-        toolCatalog.hasCapability(candidate.name, ['query.execute']) &&
-        candidate.status !== 'error' &&
-        typeof candidate.tool_call_id === 'string'
-        ? [candidate.tool_call_id]
-        : [];
-    })
-  );
-
-  return (messages ?? []).some((message) => {
+  const matchingCallIds = new Set<string>();
+  for (const message of messages ?? []) {
     const candidate = message as BaseMessage & {
       tool_calls?: Array<{
         id?: string;
@@ -104,14 +88,30 @@ function hasSuccessfulSqlVerification(
         args?: Record<string, unknown>;
       }>;
     };
-    return candidate.tool_calls?.some(
-      (call) =>
-        typeof call.id === 'string' &&
-        successfulCallIds.has(call.id) &&
-        typeof call.name === 'string' &&
+    for (const call of candidate.tool_calls ?? []) {
+      if (
+        call.id &&
+        call.name &&
         toolCatalog.hasCapability(call.name, ['query.execute']) &&
-        typeof call.args?.sql === 'string' &&
-        call.args.sql.trim() === finalSql
+        call.args?.sql === finalSql
+      ) {
+        matchingCallIds.add(call.id);
+      }
+    }
+  }
+  return (messages ?? []).some((message) => {
+    const candidate = message as BaseMessage & {
+      name?: string;
+      status?: string;
+      tool_call_id?: string;
+    };
+    return (
+      candidate.getType() === 'tool' &&
+      typeof candidate.name === 'string' &&
+      toolCatalog.hasCapability(candidate.name, ['query.execute']) &&
+      typeof candidate.tool_call_id === 'string' &&
+      matchingCallIds.has(candidate.tool_call_id) &&
+      candidate.status !== 'error'
     );
   });
 }

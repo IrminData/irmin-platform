@@ -104,7 +104,6 @@ export default function CreateAIApplicationModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder='AI application for analyzing customer data...'
-              rows={3}
             />
           </div>
         </div>
@@ -114,7 +113,7 @@ export default function CreateAIApplicationModal({
             {dict.common.cancel}
           </Button>
           <Button
-            variant='gradient'
+            variant='accent'
             onClick={handleCreate}
             disabled={!name.trim() || createAIApplicationMutation.isPending}
           >

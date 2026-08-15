@@ -25,18 +25,18 @@ interface UploadQueueItemProps {
 function getStatusIcon(status: QueuedFileStatus): React.ReactNode {
   switch (status) {
     case 'pending':
-      return <TbClock className='size-4 text-gray-400' />;
+      return <TbClock className='size-4 text-muted-foreground' />;
     case 'checking':
     case 'uploading':
-      return <TbLoader2 className='size-4 animate-spin text-irmin-blue-500' />;
+      return <TbLoader2 className='size-4 animate-spin text-accent' />;
     case 'completed':
-      return <TbCheck className='size-4 text-green-500' />;
+      return <TbCheck className='size-4 text-success' />;
     case 'failed':
       return <TbX className='size-4 text-destructive' />;
     case 'skipped':
-      return <TbSlash className='size-4 text-gray-400' />;
+      return <TbSlash className='size-4 text-muted-foreground' />;
     case 'conflict':
-      return <TbLoader2 className='size-4 animate-spin text-yellow-500' />;
+      return <TbLoader2 className='size-4 animate-spin text-warning' />;
     default:
       return null;
   }
@@ -57,23 +57,13 @@ const UploadQueueItem = ({ file, onRemove }: UploadQueueItemProps) => {
   return (
     <div
       className={`
-        flex items-center justify-between gap-2 rounded-md border px-3 py-2
+        flex items-center justify-between gap-2 rounded-[2px] border px-3 py-2
         ${file.status === 'failed' ? 'border-destructive/50 bg-destructive/5' : ''}
-        ${file.status === 'completed' ? 'border-green-500/50 bg-green-500/5' : ''}
-        ${
-          file.status === 'skipped'
-            ? `
-              border-gray-300 bg-gray-100
-              dark:border-gray-600 dark:bg-gray-800
-            `
-            : ''
-        }
+        ${file.status === 'completed' ? 'border-success/50 bg-success/5' : ''}
+        ${file.status === 'skipped' ? `border-border bg-muted` : ''}
         ${
           !['failed', 'completed', 'skipped'].includes(file.status)
-            ? `
-              border-gray-200
-              dark:border-gray-700
-            `
+            ? `border-border`
             : ''
         }
       `}
@@ -82,7 +72,7 @@ const UploadQueueItem = ({ file, onRemove }: UploadQueueItemProps) => {
         {getStatusIcon(file.status)}
         <div className='min-w-0 flex-1'>
           <p className='truncate text-sm font-medium'>{file.file.name}</p>
-          <p className='text-xs text-gray-500'>
+          <p className='text-xs text-muted-foreground'>
             {formatFileSizeForUI(file.file.size)}
             {file.status !== 'pending' && (
               <span className='ml-2'>{statusLabel}</span>
@@ -101,7 +91,7 @@ const UploadQueueItem = ({ file, onRemove }: UploadQueueItemProps) => {
           onClick={() => onRemove(file.id)}
           tooltip={dict.common.remove}
           icon={<TbX className='size-4' />}
-          aria-label='Remove file from queue'
+          aria-label={dict.repository.objects.uploadFiles.removeFromQueue}
         />
       )}
     </div>

@@ -16,7 +16,7 @@ const Avatar = forwardRef<
     className={cn(
       `
         relative flex size-10 shrink-0 items-center justify-center
-        overflow-hidden rounded-full bg-white
+        overflow-hidden rounded-full bg-card
       `,
       className
     )}
@@ -31,7 +31,13 @@ const AvatarImage = forwardRef<
 >(({ className, ...props }, ref) => (
   <AvatarPrimitive.Image
     ref={ref}
-    className={cn('aspect-square size-full', className)}
+    className={cn(
+      `
+        aspect-square size-full outline-1 -outline-offset-1
+        outline-foreground/10
+      `,
+      className
+    )}
     {...props}
   />
 ));

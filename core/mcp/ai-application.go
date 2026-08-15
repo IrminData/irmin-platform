@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -157,9 +156,6 @@ func logToolCallWithWriteInfo(
 	inputsJSON := "{}"
 	if inputs != nil {
 		redaction := toolregistry.AuditRedactionFor(toolName)
-		if descriptor, ok := toolregistry.Published(toolName); ok {
-			redaction = descriptor.AuditRedaction
-		}
 		redactedInputs := toolregistry.RedactForAudit(inputs, redaction)
 		if jsonBytes, err := json.Marshal(redactedInputs); err == nil {
 			inputsJSON = string(jsonBytes)
@@ -657,8 +653,9 @@ func registerAIAppGetContentTool(
 			// Detect content type
 			mimeType := irminutils.DetectMimeType(content, args.Path)
 
-			// Check if this is a format we can transform (binary or tabular text)
-			if IsBinaryFormatSupported(args.Path) || IsTabularTextFormat(args.Path) {
+			// Apply the common input and 16k-token output bounds to every format,
+			// including ordinary text, Markdown, JSON, and XML.
+			{
 				transformed, transformErr := TransformContentForLLM(ctx, content, args.Path)
 				if transformErr != nil {
 					apiServices.Logger.Warn("Failed to transform content, returning error",
@@ -706,65 +703,6 @@ func registerAIAppGetContentTool(
 				)
 				return result, toolregistry.OutputFromResult(result), nil
 			}
-
-			// For non-binary files, check if text-based
-			if !irminutils.IsTextMimeType(mimeType) {
-				result := mcpError("Content is not a supported text format")
-				logToolCall(
-					ctx,
-					al,
-					apiServices,
-					aiApp,
-					"irmin_repository_object_content_get",
-					"builtin",
-					args,
-					startTime,
-					result,
-				)
-				return result, toolregistry.OutputFromResult(result), nil
-			}
-
-			transformed, transformErr := TransformContentForLLM(ctx, content, args.Path)
-			if transformErr != nil {
-				result := mcpError(fmt.Sprintf("Failed to bound text content: %v", transformErr))
-				logToolCall(
-					ctx,
-					al,
-					apiServices,
-					aiApp,
-					"irmin_repository_object_content_get",
-					"builtin",
-					args,
-					startTime,
-					result,
-				)
-				return result, toolregistry.OutputFromResult(result), nil
-			}
-
-			result := &sdkmcp.CallToolResult{
-				Content: []sdkmcp.Content{
-					&sdkmcp.TextContent{
-						Text: transformed.Content,
-						Meta: sdkmcp.Meta{
-							"mimeType": mimeType,
-							"path":     args.Path,
-						},
-					},
-				},
-			}
-
-			logToolCall(
-				ctx,
-				al,
-				apiServices,
-				aiApp,
-				"irmin_repository_object_content_get",
-				"builtin",
-				args,
-				startTime,
-				result,
-			)
-			return result, toolregistry.OutputFromResult(result), nil
 		},
 	)
 }
@@ -1210,28 +1148,8 @@ func registerAIAppCustomTools(
 ) {
 	executor := services.NewAIAppToolExecutor(aiApp, apiServices)
 	customTools := executor.GetEnabledCustomTools()
-	sort.Slice(customTools, func(i, j int) bool {
-		left := toolregistry.CanonicalCustomName(customTools[i].Name)
-		right := toolregistry.CanonicalCustomName(customTools[j].Name)
-		if left == right {
-			return customTools[i].ID < customTools[j].ID
-		}
-		return left < right
-	})
-	registered := make(map[string]struct{}, len(customTools))
 
 	for _, tool := range customTools {
-		name := toolregistry.CanonicalCustomName(tool.Name)
-		if _, exists := registered[name]; exists {
-			apiServices.Logger.Error(
-				"Skipping colliding custom MCP tool name",
-				"ai_application_id", aiApp.ID,
-				"tool_id", tool.ID,
-				"canonical_name", name,
-			)
-			continue
-		}
-		registered[name] = struct{}{}
 		registerSingleCustomTool(server, registry, aiApp, apiServices, tool, al)
 	}
 }

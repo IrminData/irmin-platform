@@ -1,6 +1,6 @@
 'use client';
 
-import { formatDistanceToNow, intervalToDuration } from 'date-fns';
+import { intervalToDuration } from 'date-fns';
 
 import { TbClock, TbFileText, TbHourglassLow } from 'react-icons/tb';
 
@@ -18,6 +18,7 @@ import { useCancelWorkflowRun, useWorkflowRun } from '@/hooks/api';
 import { useResourceAllowed } from '@/hooks/utils';
 
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
+import { formatRelativeTime } from '@/utils/formatTimestamp';
 
 /**
  * Workflow Run Logs section - showing logs for a specific workflow run.
@@ -147,7 +148,7 @@ export default function WorkflowRunLogsSection({
         <div
           className={`
             flex w-full flex-wrap items-center justify-start gap-x-8 gap-y-4
-            rounded-lg bg-card p-4 text-sm text-card-foreground
+            rounded-[2px] bg-card p-4 text-sm text-card-foreground
             lg:text-lg
           `}
         >
@@ -197,9 +198,7 @@ export default function WorkflowRunLogsSection({
               `}
             >
               <TbClock className='mr-1' />
-              {formatDistanceToNow(new Date(workflowRun.started_at ?? ''), {
-                addSuffix: true,
-              })}
+              {formatRelativeTime(workflowRun.started_at, locale)}
             </p>
             <p
               className={`

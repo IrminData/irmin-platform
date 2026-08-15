@@ -16,11 +16,10 @@ const LoadingCard = () => {
   return (
     <div
       className={`
-        flex flex-col gap-1 rounded-lg border border-gray-200 bg-white p-4
+        flex flex-col gap-1 rounded-[2px] border border-border bg-card p-4
         text-xs
         md:text-sm
         xl:text-base
-        dark:border-gray-900 dark:bg-irmin-black-600
       `}
     >
       <LoadingSkeleton className='h-32 w-full' />
@@ -89,10 +88,9 @@ const CardList = ({
   return (
     <div
       className={`
-        scrollbar-hide size-full max-w-3xl overflow-scroll rounded-lg
+        scrollbar-hide size-full max-w-3xl overflow-scroll rounded-[2px]
         bg-popover/10 p-2
       `}
-      id='list'
     >
       <div
         className={`
@@ -109,13 +107,11 @@ const CardList = ({
           rows.map((card, rowIndex) => (
             <div
               key={cardKeys[rowIndex]}
-              id='list-card'
               className={`
-                flex flex-col gap-1 rounded-lg border border-gray-200 bg-white
+                flex flex-col gap-1 rounded-[2px] border border-border bg-card
                 p-4 text-xs
                 md:text-sm
                 xl:text-base
-                dark:border-gray-900 dark:bg-irmin-black-600
               `}
             >
               <div className='flex flex-wrap items-center justify-between gap-4'>
@@ -174,22 +170,33 @@ const CardList = ({
                         }}
                         aria-label={
                           openDetails.includes(rowIndex)
-                            ? 'Hide details'
-                            : 'Show details'
+                            ? dict.common.hideDetails
+                            : dict.common.showDetails
                         }
+                        aria-expanded={openDetails.includes(rowIndex)}
+                        aria-controls={`${cardKeys[rowIndex]}-details`}
                       >
                         {openDetails.includes(rowIndex) ? (
-                          <TbChevronUp className='size-5' />
+                          <TbChevronUp aria-hidden='true' className='size-5' />
                         ) : (
-                          <TbChevronDown className='size-5' />
+                          <TbChevronDown
+                            aria-hidden='true'
+                            className='size-5'
+                          />
                         )}
                       </Button>
                     </div>
                   )}
                 </div>
               )}
-              {card.details && openDetails.includes(rowIndex) && (
-                <div className='mt-0 rounded-lg'>{card.details}</div>
+              {card.details && (
+                <div
+                  id={`${cardKeys[rowIndex]}-details`}
+                  className='mt-0 rounded-[2px]'
+                  hidden={!openDetails.includes(rowIndex)}
+                >
+                  {card.details}
+                </div>
               )}
             </div>
           ))

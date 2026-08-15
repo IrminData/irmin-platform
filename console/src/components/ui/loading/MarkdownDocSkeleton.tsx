@@ -33,7 +33,7 @@ const MarkdownDocSkeleton = ({ className = '' }: { className?: string }) => {
       </div>
 
       {/* Code block */}
-      <LoadingSkeleton className='mb-6 h-32 w-full rounded-md' />
+      <LoadingSkeleton className='mb-6 h-32 w-full rounded-[2px]' />
 
       {/* H2 + paragraph */}
       <LoadingSkeleton className='mt-8 mb-3 h-6 w-2/5' />

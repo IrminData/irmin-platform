@@ -1,13 +1,22 @@
 'use client';
 
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
-import { FaFolderTree } from 'react-icons/fa6';
-import { FiFile, FiFolder } from 'react-icons/fi';
 import {
   TbChevronDown,
   TbChevronRight,
   TbChevronUp,
+  TbFile,
+  TbFolder,
+  TbFolderRoot,
   TbLoader2,
 } from 'react-icons/tb';
 
@@ -96,29 +105,14 @@ const findObjectByPath = (
 };
 
 const SkeletonInput = () => (
-  <div
-    className={`
-      h-10 w-full animate-pulse rounded-md bg-gray-200
-      dark:bg-gray-800
-    `}
-  />
+  <div className={`h-10 w-full animate-pulse rounded-[2px] bg-muted`} />
 );
 
 const SkeletonTreeItem = ({ depth = 0 }: { depth?: number }) => (
   <div className='my-1' style={{ paddingLeft: `${depth * 1.5}rem` }}>
     <div className='flex items-center gap-2'>
-      <div
-        className={`
-          size-4 animate-pulse rounded-sm bg-gray-200
-          dark:bg-gray-800
-        `}
-      />
-      <div
-        className={`
-          h-4 w-32 animate-pulse rounded-sm bg-gray-200
-          dark:bg-gray-800
-        `}
-      />
+      <div className={`size-4 animate-pulse rounded-[2px] bg-muted`} />
+      <div className={`h-4 w-32 animate-pulse rounded-[2px] bg-muted`} />
     </div>
   </div>
 );
@@ -152,6 +146,9 @@ const SkeletonTree = () => (
  * @param props.structuredOnly - Whether only structured data can be selected
  * @param props.nonGroupOnly - Whether only non-group objects can be selected
  * @param props.existingOnly - Whether only existing paths can be selected
+ * @param props.inputId - Optional id for the path input
+ * @param props.ariaInvalid - Whether the path input has a validation error
+ * @param props.ariaDescribedBy - Id of the path input's validation message
  */
 const ConnectionPathSelector = ({
   rootSchema: initialRootSchema,
@@ -166,6 +163,9 @@ const ConnectionPathSelector = ({
   nonGroupOnly = false,
   existingOnly = false,
   loading: loadingProp = false,
+  inputId,
+  ariaInvalid,
+  ariaDescribedBy,
 }: {
   rootSchema?: ObjectSchema;
   connectionId: string;
@@ -179,6 +179,9 @@ const ConnectionPathSelector = ({
   nonGroupOnly?: boolean;
   existingOnly?: boolean;
   loading?: boolean;
+  inputId?: string;
+  ariaInvalid?: boolean;
+  ariaDescribedBy?: string;
 }) => {
   const { dict } = useLocale();
 
@@ -190,6 +193,7 @@ const ConnectionPathSelector = ({
     formatPath(defaultPath || '', false, groupOnly) || (groupOnly ? '/' : '')
   );
   const [isExpanded, setIsExpanded] = useState<boolean>(defaultExpanded);
+  const treeId = useId();
   const { connectionSchemaQuery } = useConnectionSchema(
     connectionId,
     operationMethod
@@ -450,7 +454,11 @@ const ConnectionPathSelector = ({
     segmentsAfter: 1,
   });
 
-  const renderItem = (item: ObjectSchema, index: number) => {
+  const renderItem = (
+    item: ObjectSchema,
+    index: number,
+    parentKey = 'root'
+  ) => {
     // Check if this item can be selected based on type constraints
     const canSelect = matchesTypeConstraints(
       item,
@@ -459,189 +467,189 @@ const ConnectionPathSelector = ({
       structuredOnly,
       nonGroupOnly
     );
+    const itemPath = item.path ?? '';
+    const itemLabel =
+      item.name || item.path || dict.fileNavigator.rootDirectory;
 
     if (item.type === 'group') {
+      const isOpen = Boolean(openFolders[itemPath]);
+      const isSelected =
+        canSelect && formatPath(itemPath, true, groupOnly) === selectedPath;
+      const itemKey = itemPath
+        ? encodeURIComponent(itemPath)
+        : `${parentKey}-${index}`;
+      const childrenId = `${treeId}-children-${itemKey}`;
+
       return (
         <div key={item.path || `group-${index}`} className='my-1'>
           <div
             className={`
-              flex items-center justify-normal rounded-md p-1 text-sm
-              ${
-                canSelect &&
-                formatPath(item.path ?? '', true, groupOnly) === selectedPath
-                  ? `
-                    bg-gray-200
-                    dark:bg-gray-800
-                  `
-                  : ''
-              }
+              flex items-center justify-normal rounded-[2px] p-1 text-sm
+              ${isSelected ? `bg-accent/15` : ''}
             `}
           >
-            <div
-              className='flex cursor-pointer items-center'
-              role='button'
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  toggleFolder(item);
-                }
-              }}
+            <button
+              type='button'
+              className={`
+                flex min-h-6 cursor-pointer touch-manipulation appearance-none
+                items-center rounded-[2px] border-0 bg-transparent p-0
+                focus-visible:outline-2 focus-visible:outline-offset-2
+                focus-visible:outline-accent
+              `}
+              aria-expanded={isOpen}
+              aria-controls={childrenId}
               onClick={() => toggleFolder(item)}
             >
-              {openFolders[item.path] ? (
-                <TbChevronDown
-                  className='inline-block'
-                  aria-label={`Close group ${item.path} in the path selector`}
-                />
+              {isOpen ? (
+                <TbChevronDown aria-hidden='true' className='inline-block' />
               ) : (
-                <TbChevronRight
-                  className='inline-block'
-                  aria-label={`Open folder ${item.path} in the path selector`}
-                />
+                <TbChevronRight aria-hidden='true' className='inline-block' />
               )}
               <span className='ml-2'>
-                <FiFolder />
+                <TbFolder aria-hidden='true' />
               </span>
-            </div>
-            <span
-              className={`
-                ml-2
-                ${
-                  canSelect
-                    ? `
-                      cursor-pointer
-                      hover:bg-gray-200 hover:underline
-                      dark:hover:bg-gray-800
-                    `
-                    : ''
-                }
-              `}
-              role='button'
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  if (canSelect) {
-                    handleItemClick(item);
-                  }
-                }
-              }}
-              onClick={() => {
-                if (canSelect) {
-                  handleItemClick(item);
-                }
-              }}
-              aria-label={`Open ${item.path} group`}
-            >
-              {item.name || item.path || dict.fileNavigator.rootDirectory}
-            </span>
+              <span className='sr-only'>
+                {isOpen
+                  ? dict.repository.objects.hideChildren
+                  : dict.repository.objects.showChildren}
+                : {itemLabel}
+              </span>
+            </button>
+            {canSelect ? (
+              <button
+                type='button'
+                className={`
+                  ml-2 min-h-6 cursor-pointer touch-manipulation appearance-none
+                  border-0 bg-transparent p-0 text-left
+                  hover:bg-accent/15 hover:underline
+                  focus-visible:outline-2 focus-visible:outline-offset-2
+                  focus-visible:outline-accent
+                `}
+                aria-current={isSelected ? 'true' : undefined}
+                onClick={() => handleItemClick(item)}
+              >
+                {itemLabel}
+              </button>
+            ) : (
+              <span className='ml-2'>{itemLabel}</span>
+            )}
           </div>
-          {openFolders[item.path] &&
-            (() => {
-              const children = resolveChildren(item);
-              const isLoading = lazyLoading[item.path ?? ''];
-              const errMsg = lazyError[item.path ?? ''];
-              const hasChildren = !!children && children.length > 0;
-              // Match the pre-lazy behaviour: an open folder with nothing
-              // to show (e.g. SFTP/MySQL groups with children: []) renders
-              // no wrapper. The pl-6 div only appears when there's actual
-              // content — spinner, error, or at least one child.
-              if (!isLoading && !errMsg && !hasChildren) return null;
-              return (
-                <div className='pl-6'>
-                  {isLoading && (
-                    <div
-                      className={`
-                        my-1 flex items-center gap-2 p-1 text-sm
-                        text-muted-foreground
-                      `}
-                    >
-                      <TbLoader2 className='size-4 animate-spin' />
-                      <span>{dict.common.loading}</span>
-                    </div>
-                  )}
-                  {!isLoading && errMsg && (
-                    <div
-                      className={`
-                        my-1 flex items-center gap-2 p-1 text-sm text-red-500
-                      `}
-                    >
-                      <span>{dict.fileNavigator.errors.lazyLoadError}</span>
-                      <button
-                        type='button'
-                        className='underline'
-                        onClick={() => void loadLazyChildren(item.path ?? '')}
+          <div id={childrenId} hidden={!isOpen} className='pl-6'>
+            {isOpen &&
+              (() => {
+                const children = resolveChildren(item);
+                const isLoading = lazyLoading[itemPath];
+                const errMsg = lazyError[itemPath];
+                const hasChildren = !!children && children.length > 0;
+                if (!isLoading && !errMsg && !hasChildren) return null;
+                return (
+                  <>
+                    {isLoading && (
+                      <div
+                        className={`
+                          my-1 flex items-center gap-2 p-1 text-sm
+                          text-muted-foreground
+                        `}
                       >
-                        {dict.fileNavigator.errors.lazyRetry}
-                      </button>
-                    </div>
-                  )}
-                  {!isLoading &&
-                    !errMsg &&
-                    children &&
-                    children.length > 0 &&
-                    children.map((child, idx) => renderItem(child, idx))}
-                </div>
-              );
-            })()}
+                        <TbLoader2
+                          aria-hidden='true'
+                          className='size-4 animate-spin'
+                        />
+                        <span>{dict.common.loading}</span>
+                      </div>
+                    )}
+                    {!isLoading && errMsg && (
+                      <div
+                        className={`
+                          my-1 flex items-center gap-2 p-1 text-sm
+                          text-destructive
+                        `}
+                      >
+                        <span>{dict.fileNavigator.errors.lazyLoadError}</span>
+                        <button
+                          type='button'
+                          className='underline'
+                          onClick={() => void loadLazyChildren(itemPath)}
+                        >
+                          {dict.fileNavigator.errors.lazyRetry}
+                        </button>
+                      </div>
+                    )}
+                    {!isLoading &&
+                      !errMsg &&
+                      children &&
+                      children.length > 0 &&
+                      children.map((child, idx) =>
+                        renderItem(child, idx, itemKey)
+                      )}
+                  </>
+                );
+              })()}
+          </div>
         </div>
       );
     }
 
-    return (
-      <div
-        key={item.path || `item-${index}`}
-        className={`
-          my-1 ml-6 flex items-center justify-normal rounded-md p-1 text-sm
-          ${
-            canSelect
-              ? `
-                cursor-pointer
-                ${
-                  formatPath(item.path ?? '', false, groupOnly) === selectedPath
-                    ? `
-                      bg-gray-200
-                      dark:bg-gray-800
-                    `
-                    : `
-                      hover:bg-gray-200
-                      dark:hover:bg-gray-800
-                    `
-                }
-              `
-              : 'opacity-50'
-          }
-        `}
-        role='button'
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') {
-            e.preventDefault();
-            if (canSelect) {
-              handleItemClick(item);
+    const isSelected = formatPath(itemPath, false, groupOnly) === selectedPath;
+    const itemClassName = `
+      my-1 ml-6 flex min-h-6 items-center justify-normal rounded-[2px] p-1
+      text-left text-sm
+      ${
+        canSelect
+          ? `
+            cursor-pointer
+            ${
+              isSelected
+                ? `
+                  bg-accent/15
+                `
+                : `
+                  hover:bg-accent/15
+                `
             }
-          }
-        }}
-        onClick={() => {
-          if (canSelect) {
-            handleItemClick(item);
-          }
-        }}
-      >
+          `
+          : 'opacity-50'
+      }
+    `;
+    const itemContent = (
+      <>
         <span className='ml-2'>
-          <FiFile />
+          <TbFile aria-hidden='true' />
         </span>
         <span
           className={`
             ml-2
             ${canSelect ? 'hover:underline' : ''}
           `}
-          aria-label={`Select path ${item.path}`}
         >
-          {item.name || item.path}
+          {itemLabel}
         </span>
-      </div>
+      </>
+    );
+
+    if (!canSelect) {
+      return (
+        <div key={item.path || `item-${index}`} className={itemClassName}>
+          {itemContent}
+        </div>
+      );
+    }
+
+    return (
+      <button
+        key={item.path || `item-${index}`}
+        type='button'
+        className={`
+          ${itemClassName}
+          touch-manipulation appearance-none border-0 bg-transparent
+          focus-visible:outline-2 focus-visible:outline-offset-2
+          focus-visible:outline-accent
+        `}
+        aria-current={isSelected ? 'true' : undefined}
+        onClick={() => handleItemClick(item)}
+      >
+        {itemContent}
+      </button>
     );
   };
 
@@ -651,34 +659,27 @@ const ConnectionPathSelector = ({
         <div className='mb-2 flex items-center gap-2'>
           <SkeletonInput />
           <div
-            className={`
-              size-10 shrink-0 animate-pulse rounded-md bg-gray-200
-              dark:bg-gray-800
-            `}
+            className={`size-10 shrink-0 animate-pulse rounded-[2px] bg-muted`}
           />
         </div>
         {isExpanded && (
           <div
             className={`
-              relative max-h-48 overflow-y-scroll border-b pb-4
-              dark:border-b-gray-800
+              relative max-h-48 overflow-y-scroll border-b border-border pb-4
             `}
           >
             <div className='my-1'>
               <div
                 className={`
-                  flex items-center justify-normal rounded-md p-1 text-sm
+                  flex items-center justify-normal rounded-[2px] p-1 text-sm
                 `}
               >
                 <span className='ml-2'>
-                  <FaFolderTree className='text-gray-400' />
+                  <TbFolderRoot className='text-muted-foreground' />
                 </span>
                 <span className='ml-2'>
                   <div
-                    className={`
-                      h-4 w-24 animate-pulse rounded-sm bg-gray-200
-                      dark:bg-gray-800
-                    `}
+                    className={`h-4 w-24 animate-pulse rounded-[2px] bg-muted`}
                   />
                 </span>
               </div>
@@ -699,39 +700,43 @@ const ConnectionPathSelector = ({
     <div className='relative mb-2'>
       <div className='mb-2 flex items-center gap-2'>
         <Input
+          id={inputId}
           value={inputPath}
           onChange={handlePathInput}
           placeholder={dict.repository.objects.enterPath}
           className={`
             w-full
-            ${!isValidPath ? 'border-red-500' : ''}
+            ${ariaInvalid || !isValidPath ? 'border-destructive' : ''}
           `}
+          aria-invalid={ariaInvalid || !isValidPath}
+          aria-describedby={ariaDescribedBy}
           disabled={loading}
         />
         <ButtonWithTooltip
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={() => setIsExpanded((expanded) => !expanded)}
           variant='gray'
-          tooltip={isExpanded ? 'Collapse tree view' : 'Expand tree view'}
+          tooltip={
+            isExpanded
+              ? dict.repository.objects.hideChildren
+              : dict.repository.objects.showChildren
+          }
           className='shrink-0'
           disabled={loading}
+          aria-expanded={isExpanded}
+          aria-controls={treeId}
         >
           {isExpanded ? <TbChevronUp /> : <TbChevronDown />}
         </ButtonWithTooltip>
       </div>
 
       {!isValidPath && existingOnly && (
-        <div className='mb-2 text-sm text-red-500'>
+        <div className='mb-2 text-sm text-destructive'>
           {dict.fileNavigator.errors.invalidPath}
         </div>
       )}
 
       {!existingOnly && inputPath && !isValidPath && (
-        <div
-          className={`
-            mb-2 text-sm text-gray-500
-            dark:text-gray-400
-          `}
-        >
+        <div className={`mb-2 text-sm text-muted-foreground`}>
           {dict.repository.objects.newObjectWillBeCreated}
         </div>
       )}
@@ -752,112 +757,95 @@ const ConnectionPathSelector = ({
           </ButtonWithTooltip>
         )}
 
-      {isExpanded && (
-        <div
-          id='file-selector'
-          className={`
-            relative max-h-48 overflow-y-scroll border-b pb-4
-            dark:border-b-gray-800
-          `}
-        >
-          <div className='my-1'>
-            {rootSchema && (
-              <>
-                {rootSchema.type === 'group' && (
-                  <div className='my-1'>
-                    <div
-                      className={`
-                        flex items-center justify-normal rounded-md p-1 text-sm
+      <div
+        id={treeId}
+        hidden={!isExpanded}
+        className={`
+          relative max-h-48 overflow-y-scroll border-b border-border pb-4
+        `}
+      >
+        <div className='my-1'>
+          {isExpanded && rootSchema && (
+            <>
+              {rootSchema.type === 'group' && (
+                <div className='my-1'>
+                  {(() => {
+                    const canSelectRoot = matchesTypeConstraints(
+                      rootSchema,
+                      groupOnly,
+                      binaryOnly,
+                      structuredOnly,
+                      nonGroupOnly
+                    );
+                    const isRootSelected =
+                      formatPath(rootSchema.path ?? '', true, groupOnly) ===
+                      selectedPath;
+                    const rootClassName = `
+                        flex min-h-6 w-full items-center justify-normal
+                        rounded-[2px] p-1 text-left text-sm
                         ${
-                          matchesTypeConstraints(
-                            rootSchema,
-                            groupOnly,
-                            binaryOnly,
-                            structuredOnly,
-                            nonGroupOnly
-                          )
+                          canSelectRoot
                             ? `
                               cursor-pointer
-                              hover:bg-gray-200
-                              dark:hover:bg-gray-800
+                              hover:bg-accent/15
                             `
                             : ''
                         }
                         ${
-                          formatPath(
-                            rootSchema?.path ?? '',
-                            true,
-                            groupOnly
-                          ) === selectedPath
+                          isRootSelected
                             ? `
-                              bg-gray-200
-                              dark:bg-gray-800
+                              bg-accent/15
                             `
                             : ''
                         }
-                      `}
-                      role='button'
-                      tabIndex={0}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          if (
-                            matchesTypeConstraints(
-                              rootSchema,
-                              groupOnly,
-                              binaryOnly,
-                              structuredOnly,
-                              nonGroupOnly
-                            )
-                          ) {
-                            handleItemClick(rootSchema);
-                          }
-                        }
-                      }}
-                      onClick={() =>
-                        matchesTypeConstraints(
-                          rootSchema,
-                          groupOnly,
-                          binaryOnly,
-                          structuredOnly,
-                          nonGroupOnly
-                        ) && handleItemClick(rootSchema)
-                      }
-                    >
-                      <span className='ml-2'>
-                        <FiFolder />
-                      </span>
-                      <span
+                      `;
+                    const rootContent = (
+                      <>
+                        <span className='ml-2'>
+                          <TbFolder aria-hidden='true' />
+                        </span>
+                        <span
+                          className={`
+                            ml-2
+                            ${canSelectRoot ? 'hover:underline' : ''}
+                          `}
+                        >
+                          {dict.fileNavigator.rootDirectory}
+                        </span>
+                      </>
+                    );
+
+                    if (!canSelectRoot) {
+                      return <div className={rootClassName}>{rootContent}</div>;
+                    }
+
+                    return (
+                      <button
+                        type='button'
                         className={`
-                          ml-2
-                          ${
-                            matchesTypeConstraints(
-                              rootSchema,
-                              groupOnly,
-                              binaryOnly,
-                              structuredOnly,
-                              nonGroupOnly
-                            )
-                              ? 'hover:underline'
-                              : ''
-                          }
+                          ${rootClassName}
+                          touch-manipulation appearance-none border-0
+                          bg-transparent
+                          focus-visible:outline-2 focus-visible:outline-offset-2
+                          focus-visible:outline-accent
                         `}
-                        aria-label={`Select root directory`}
+                        aria-current={isRootSelected ? 'true' : undefined}
+                        onClick={() => handleItemClick(rootSchema)}
                       >
-                        {dict.fileNavigator.rootDirectory}
-                      </span>
-                    </div>
-                  </div>
+                        {rootContent}
+                      </button>
+                    );
+                  })()}
+                </div>
+              )}
+              {rootSchema.type === 'group' &&
+                resolveChildren(rootSchema)?.map((item, idx) =>
+                  renderItem(item, idx)
                 )}
-                {rootSchema.type === 'group' &&
-                  resolveChildren(rootSchema)?.map((item, idx) =>
-                    renderItem(item, idx)
-                  )}
-              </>
-            )}
-          </div>
+            </>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

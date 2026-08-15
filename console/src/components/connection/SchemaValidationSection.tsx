@@ -280,8 +280,16 @@ const SchemaValidationSection = () => {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {hasPush && <SelectItem value='push'>Push</SelectItem>}
-                  {hasPull && <SelectItem value='pull'>Pull</SelectItem>}
+                  {hasPush && (
+                    <SelectItem value='push'>
+                      {dict.connections.schemaValidation.push}
+                    </SelectItem>
+                  )}
+                  {hasPull && (
+                    <SelectItem value='pull'>
+                      {dict.connections.schemaValidation.pull}
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -293,18 +301,26 @@ const SchemaValidationSection = () => {
               htmlFor='schema-path-input'
               className='mb-2 block text-sm font-medium'
             >
-              Schema Path (optional)
+              {dict.connections.schemaValidation.schemaPathOptional}
             </label>
             <input
               id='schema-path-input'
               type='text'
               value={selectedPath}
               onChange={(e) => handlePathChange(e.target.value)}
-              placeholder='Leave empty for root schema, or enter a specific path'
+              placeholder={
+                dict.connections.schemaValidation.schemaPathPlaceholder
+              }
               disabled={isMutationPending}
               className={cn(
-                'w-full rounded-md border px-3 py-2 text-sm',
-                'focus:ring-2 focus:ring-primary focus:outline-none',
+                `
+                  w-full rounded-[2px] border px-3 py-2 text-base
+                  md:text-sm
+                `,
+                `
+                  focus-visible:ring-2 focus-visible:ring-accent
+                  focus-visible:outline-none
+                `,
                 'disabled:cursor-not-allowed disabled:opacity-50'
               )}
             />
@@ -312,9 +328,9 @@ const SchemaValidationSection = () => {
 
           {/* Expected Files Info */}
           {targetSchema && expectedFilesForSchema.length > 0 && (
-            <div className='rounded-md border bg-muted/30 p-3'>
+            <div className='rounded-[2px] border border-border bg-muted/30 p-3'>
               <p className='mb-2 text-sm font-medium'>
-                Expected files in this schema:
+                {dict.connections.schemaValidation.expectedFiles}
               </p>
               <div className='flex flex-wrap gap-2'>
                 {expectedFilesForSchema.map((fileName) => (
@@ -322,16 +338,13 @@ const SchemaValidationSection = () => {
                     key={fileName}
                     className={cn(
                       `
-                        inline-flex items-center gap-1 rounded-md px-2 py-1
-                        text-xs
+                        inline-flex items-center gap-1 rounded-[2px] border px-2
+                        py-1 text-xs text-foreground
                       `,
                       selectedFiles.some(
                         (f) => f.name.toLowerCase() === fileName.toLowerCase()
                       )
-                        ? `
-                          bg-green-500/20 text-green-700
-                          dark:text-green-400
-                        `
+                        ? `border-success/30 bg-success/10`
                         : 'bg-muted text-muted-foreground'
                     )}
                   >
@@ -352,7 +365,7 @@ const SchemaValidationSection = () => {
               {dict.connections.schemaValidation.uploadFile}
               {mode === 'validate' && (
                 <span className='ml-1 text-muted-foreground'>
-                  (multiple allowed)
+                  {dict.connections.schemaValidation.multipleAllowed}
                 </span>
               )}
             </label>
@@ -360,8 +373,8 @@ const SchemaValidationSection = () => {
               <label
                 className={cn(
                   `
-                    flex items-center gap-2 rounded-md border border-dashed px-4
-                    py-3
+                    flex items-center gap-2 rounded-[2px] border border-dashed
+                    px-4 py-3
                   `,
                   'transition-colors',
                   isMutationPending
@@ -379,7 +392,10 @@ const SchemaValidationSection = () => {
                 <span className='text-sm'>
                   {selectedFiles.length === 0
                     ? dict.connections.schemaValidation.selectFile
-                    : `${selectedFiles.length} file(s) selected`}
+                    : dict.connections.schemaValidation.filesSelected.replace(
+                        '{count}',
+                        String(selectedFiles.length)
+                      )}
                 </span>
                 <input
                   type='file'
@@ -405,11 +421,11 @@ const SchemaValidationSection = () => {
                         key={`${file.name}-${index}`}
                         className={cn(
                           `
-                            flex items-center justify-between rounded-md border
-                            px-3 py-2
+                            flex items-center justify-between rounded-[2px]
+                            border px-3 py-2
                           `,
                           isUnmatched
-                            ? 'border-yellow-500/50 bg-yellow-500/10'
+                            ? 'border-warning/50 bg-warning/10'
                             : 'border-border'
                         )}
                       >
@@ -419,9 +435,9 @@ const SchemaValidationSection = () => {
                           {matchInfo?.schemaChild && (
                             <span
                               className={`
-                                rounded-sm bg-green-500/20 px-1.5 py-0.5 text-xs
-                                text-green-700
-                                dark:text-green-400
+                                rounded-[2px] border border-success/30
+                                bg-success/10 px-1.5 py-0.5 text-xs
+                                text-foreground
                               `}
                             >
                               → {matchInfo.schemaChild}
@@ -430,12 +446,15 @@ const SchemaValidationSection = () => {
                           {isUnmatched && (
                             <span
                               className={`
-                                rounded-sm bg-yellow-500/20 px-1.5 py-0.5
-                                text-xs text-yellow-700
-                                dark:text-yellow-400
+                                rounded-[2px] border border-warning/30
+                                bg-warning/10 px-1.5 py-0.5 text-xs
+                                text-foreground
                               `}
                             >
-                              No matching schema
+                              {
+                                dict.connections.schemaValidation
+                                  .noMatchingSchema
+                              }
                             </span>
                           )}
                         </div>
@@ -443,13 +462,22 @@ const SchemaValidationSection = () => {
                           type='button'
                           onClick={() => handleRemoveFile(index)}
                           disabled={isMutationPending}
+                          aria-label={dict.connections.schemaValidation.removeSelectedFile.replace(
+                            '{file}',
+                            file.name
+                          )}
                           className={`
-                            text-muted-foreground
+                            inline-flex size-11 items-center justify-center
+                            rounded-[2px] text-muted-foreground
                             hover:text-foreground
+                            focus-visible:outline-2
+                            focus-visible:outline-offset-2
+                            focus-visible:outline-accent
                             disabled:opacity-50
+                            md:size-6
                           `}
                         >
-                          <TbX className='size-4' />
+                          <TbX aria-hidden='true' className='size-4' />
                         </button>
                       </div>
                     );
@@ -461,22 +489,21 @@ const SchemaValidationSection = () => {
               {fileMatchInfo.missing.length > 0 && selectedFiles.length > 0 && (
                 <div
                   className={`
-                    rounded-md border border-yellow-500/50 bg-yellow-500/10 p-3
+                    rounded-[2px] border border-warning/50 bg-warning/10 p-3
                   `}
                 >
-                  <p
-                    className={`
-                      text-sm text-yellow-700
-                      dark:text-yellow-400
-                    `}
-                  >
+                  <p className={`text-sm text-foreground`}>
                     <TbAlertCircle className='mr-1 inline size-4' />
-                    Missing expected files: {fileMatchInfo.missing.join(', ')}
+                    {dict.connections.schemaValidation.missingExpectedFiles.replace(
+                      '{files}',
+                      fileMatchInfo.missing.join(', ')
+                    )}
                   </p>
                 </div>
               )}
 
               <Button
+                variant='accent'
                 onClick={handleValidate}
                 disabled={selectedFiles.length === 0 || isMutationPending}
               >
@@ -521,12 +548,12 @@ function ValidationResultDisplay({
         <CardTitle className='flex items-center gap-2'>
           {result.valid ? (
             <>
-              <TbCircleCheck className='size-5 text-green-500' />
+              <TbCircleCheck className='size-5 text-success' />
               <span>{dict.connections.schemaValidation.validationPassed}</span>
             </>
           ) : (
             <>
-              <TbCircleX className='size-5 text-red-500' />
+              <TbCircleX className='size-5 text-destructive' />
               <span>{dict.connections.schemaValidation.validationFailed}</span>
             </>
           )}
@@ -549,7 +576,7 @@ function ValidationResultDisplay({
         {/* Errors */}
         {result.errors && result.errors.length > 0 && (
           <div className='space-y-2'>
-            <h4 className='font-medium text-red-500'>
+            <h4 className='font-medium text-destructive'>
               {dict.connections.schemaValidation.errorsTitle} (
               {result.errors.length})
             </h4>
@@ -567,7 +594,7 @@ function ValidationResultDisplay({
         {/* Warnings */}
         {result.warnings && result.warnings.length > 0 && (
           <div className='space-y-2'>
-            <h4 className='font-medium text-yellow-500'>
+            <h4 className='font-medium text-foreground'>
               {dict.connections.schemaValidation.warningsTitle} (
               {result.warnings.length})
             </h4>
@@ -592,30 +619,49 @@ function ValidationResultDisplay({
  * Displays a single validation error.
  */
 function ValidationErrorItem({ error }: { error: SchemaValidationError }) {
+  const { dict } = useLocale();
+
   return (
-    <div className='rounded-md border border-red-500/20 bg-red-500/5 p-3'>
+    <div
+      className='
+        rounded-[2px] border border-destructive/20 bg-destructive/5 p-3
+      '
+    >
       <div className='flex items-start gap-2'>
-        <TbAlertCircle className='mt-0.5 size-4 shrink-0 text-red-500' />
+        <TbAlertCircle className='mt-0.5 size-4 shrink-0 text-destructive' />
         <div className='flex-1 space-y-1'>
           <p className='font-mono text-sm font-medium'>{error.field_path}</p>
           <p className='text-sm text-muted-foreground'>{error.message}</p>
           {error.suggestion && (
-            <p className='text-xs text-blue-500'>{error.suggestion}</p>
+            <p className='text-xs text-muted-foreground'>{error.suggestion}</p>
           )}
           <div className='flex flex-wrap gap-2 text-xs text-muted-foreground'>
             {error.expected_type && (
-              <span className='rounded-sm bg-accent px-1.5 py-0.5'>
-                Expected: {error.expected_type}
+              <span
+                className='
+                  rounded-[2px] border border-border bg-muted px-1.5 py-0.5
+                '
+              >
+                {dict.connections.schemaValidation.expected}:{' '}
+                {error.expected_type}
               </span>
             )}
             {error.actual_type && (
-              <span className='rounded-sm bg-accent px-1.5 py-0.5'>
-                Actual: {error.actual_type}
+              <span
+                className='
+                  rounded-[2px] border border-border bg-muted px-1.5 py-0.5
+                '
+              >
+                {dict.connections.schemaValidation.actual}: {error.actual_type}
               </span>
             )}
             {error.row_index !== undefined && (
-              <span className='rounded-sm bg-accent px-1.5 py-0.5'>
-                Row: {error.row_index}
+              <span
+                className='
+                  rounded-[2px] border border-border bg-muted px-1.5 py-0.5
+                '
+              >
+                {dict.connections.schemaValidation.row}: {error.row_index}
               </span>
             )}
           </div>
@@ -637,12 +683,12 @@ function DiffResultDisplay({ result }: { result: SchemaDiff }) {
         <CardTitle className='flex items-center gap-2'>
           {result.compatible ? (
             <>
-              <TbCircleCheck className='size-5 text-green-500' />
+              <TbCircleCheck className='size-5 text-success' />
               <span>{dict.connections.schemaValidation.schemasCompatible}</span>
             </>
           ) : (
             <>
-              <TbAlertCircle className='size-5 text-yellow-500' />
+              <TbAlertCircle className='size-5 text-warning' />
               <span>
                 {dict.connections.schemaValidation.schemasIncompatible}
               </span>
@@ -656,7 +702,7 @@ function DiffResultDisplay({ result }: { result: SchemaDiff }) {
         {/* Breaking Changes */}
         {result.breaking_changes && result.breaking_changes.length > 0 && (
           <div className='space-y-2'>
-            <h4 className='font-medium text-red-500'>
+            <h4 className='font-medium text-destructive'>
               {dict.connections.schemaValidation.breakingChanges} (
               {result.breaking_changes.length})
             </h4>
@@ -676,7 +722,7 @@ function DiffResultDisplay({ result }: { result: SchemaDiff }) {
         {result.non_breaking_changes &&
           result.non_breaking_changes.length > 0 && (
             <div className='space-y-2'>
-              <h4 className='font-medium text-yellow-500'>
+              <h4 className='font-medium text-foreground'>
                 {dict.connections.schemaValidation.nonBreakingChanges} (
                 {result.non_breaking_changes.length})
               </h4>
@@ -706,11 +752,14 @@ function FieldDiffItem({
   change: SchemaFieldDiff;
   isBreaking: boolean;
 }) {
-  const bgColor = isBreaking ? 'bg-red-500/5' : 'bg-yellow-500/5';
-  const borderColor = isBreaking ? 'border-red-500/20' : 'border-yellow-500/20';
+  const { dict } = useLocale();
+  const bgColor = isBreaking ? 'bg-destructive/5' : 'bg-warning/5';
+  const borderColor = isBreaking
+    ? 'border-destructive/20'
+    : 'border-warning/20';
 
   return (
-    <div className={cn('rounded-md border p-3', bgColor, borderColor)}>
+    <div className={cn('rounded-[2px] border p-3', bgColor, borderColor)}>
       <div className='space-y-1'>
         <p className='font-mono text-sm font-medium'>{change.field_path}</p>
         {change.description && (
@@ -719,18 +768,19 @@ function FieldDiffItem({
         <div className='flex flex-wrap gap-2 text-xs'>
           <span
             className={cn(
-              'rounded-sm px-1.5 py-0.5',
+              'rounded-[2px] border px-1.5 py-0.5 text-foreground',
               change.change_type === 'added' &&
-                'bg-green-500/20 text-green-500',
-              change.change_type === 'removed' && 'bg-red-500/20 text-red-500',
+                'border-success/30 bg-success/10',
+              change.change_type === 'removed' &&
+                'border-destructive/30 bg-destructive/10',
               change.change_type === 'type_changed' &&
-                'bg-yellow-500/20 text-yellow-500',
+                'border-warning/30 bg-warning/10',
               change.change_type === 'required_changed' &&
-                'bg-blue-500/20 text-blue-500',
+                'border-chart-2/30 bg-chart-2/10',
               change.change_type === 'nullability_changed' &&
-                'bg-cyan-500/20 text-cyan-500',
+                'border-chart-3/30 bg-chart-3/10',
               change.change_type === 'modified' &&
-                'bg-purple-500/20 text-purple-500'
+                'border-chart-4/30 bg-chart-4/10'
             )}
           >
             {change.change_type.replace('_', ' ')}
@@ -738,19 +788,21 @@ function FieldDiffItem({
           {change.source_type && (
             <span
               className={`
-                rounded-sm bg-accent px-1.5 py-0.5 text-muted-foreground
+                rounded-[2px] border border-border bg-muted px-1.5 py-0.5
+                text-foreground
               `}
             >
-              From: {change.source_type}
+              {dict.common.from}: {change.source_type}
             </span>
           )}
           {change.target_type && (
             <span
               className={`
-                rounded-sm bg-accent px-1.5 py-0.5 text-muted-foreground
+                rounded-[2px] border border-border bg-muted px-1.5 py-0.5
+                text-foreground
               `}
             >
-              To: {change.target_type}
+              {dict.common.to}: {change.target_type}
             </span>
           )}
         </div>

@@ -141,7 +141,7 @@ const BillingInfoCard = () => {
     return (
       <Card>
         <CardContent className='flex items-center justify-center py-8'>
-          <LoadingSpinner />
+          <LoadingSpinner label={dict.common.loading} />
         </CardContent>
       </Card>
     );
@@ -319,6 +319,7 @@ const BillingInfoCard = () => {
           </div>
 
           <Button
+            variant='accent'
             className='
               h-11 w-full
               sm:w-auto

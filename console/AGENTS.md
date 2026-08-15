@@ -120,21 +120,21 @@ Route groups: `(console)` for main app, `(authentication)` for auth pages.
 
 ### Styling & Design Tokens
 
-**`DESIGN.md` is the non-negotiable design system for this repo.** It lives at the repo root (`./DESIGN.md`). Every visual or UX change must follow it — tokens, typography scale, motion rules, accessibility, forms, images, content/copy, error-state flow, skeleton guidance, SEO, anti-patterns. Ad-hoc patterns that ignore it get rejected in review.
+**`DESIGN.md` is the non-negotiable Console design system.** It lives in this project (`console/DESIGN.md`; `./DESIGN.md` when working inside `console/`). Every visual or UX change must follow it — tokens, typography scale, motion rules, accessibility, forms, images, content/copy, error-state flow, skeleton guidance, SEO, and anti-patterns. Ad-hoc patterns that ignore it get rejected in review.
 
-- **Design system source of truth**: `DESIGN.md` (Industrial/Utilitarian, HSL 197 Irmin Blue + HSL 137 Irmin Green, Geist Sans + Geist Mono + Lora).
+- **Design system source of truth**: `DESIGN.md` (Almanac: cream paper + warm ink, one acid-lime accent, Fraunces display + IBM Plex Sans + IBM Plex Mono).
 - **Token layer**: `src/styles/theme.css` — CSS variables for both light and dark mode, exposed to Tailwind v4 via `@theme inline`
-- **Typography primitive**: `src/components/ui/display-title.tsx` for page titles (defaults to Geist Sans bold; pass `brand` prop for Big Shoulders on marketing surfaces). Always use this instead of inlining `<h1 className="text-3xl font-bold">`
+- **Typography primitive**: `src/components/ui/display-title.tsx` for page titles. Always use it instead of inlining `<h1 className="text-3xl font-bold">`
 - **Color rules**:
-  - Use semantic tokens (`bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`, `bg-muted`, `bg-card`, `text-accent`) — NOT `text-gray-*`, `bg-gray-*`, `dark:border-gray-800` etc. The token system defines blue-tinted neutrals for dark mode; raw grays break the palette.
-  - `text-accent` is Irmin Green — reserve for brand-forward moments (active states, primary CTAs), not as a default label color
+  - Use semantic tokens (`bg-background`, `text-foreground`, `text-muted-foreground`, `border-border`, `bg-muted`, `bg-card`, `text-accent`) — NOT `text-gray-*`, `bg-gray-*`, `dark:border-gray-800` etc. The token system defines warm Almanac neutrals for both themes; raw grays break the palette.
+  - `text-accent` is acid lime — reserve it for large text, decoration, and brand-forward moments; small labels use contrast-safe foreground text
 - **Motion**: Keep transitions at `duration-150` (short) per DESIGN.md. Never `transition-all` / `transition` shorthand — list properties explicitly (`transition-[color,background-color]`)
-- **Icons**: Decorative icons adjacent to a text label need `aria-hidden='true'`. Icon-only buttons need `aria-label`
+- **Icons**: Use Tabler (`react-icons/tb`) consistently. Decorative icons adjacent to a text label need `aria-hidden='true'`; icon-only buttons need a localized `aria-label`
 - **Skeletons**: When you change a component's container, columns, row count, header layout, or buttons, update its paired skeleton in the same commit — either the `*Skeleton.tsx` next to the component in `src/components/ui/loading/` or the nearest `loading.tsx` under `src/app/`. A skeleton that doesn't match causes a layout shift on data arrival. See DESIGN.md → "Loading & Skeleton States" → "Keep skeletons in lockstep with the real component" for the common drift patterns to watch for.
 
 ## TypeDoc Requirements
 
-All exported functions must have TypeDoc comments. Run `pnpm docs` before PRs - it must complete without errors or warnings. Documentation served at `/tsdocs` (password protected).
+All exported functions must have TypeDoc comments. Run `pnpm run docs` before PRs - it must complete without errors or warnings. Documentation served at `/tsdocs` (password protected).
 
 ## Testing
 

@@ -27,17 +27,17 @@ const EditorLayoutSkeleton = ({
           `}
         >
           <div className='flex flex-col gap-2 p-2'>
-            <LoadingSkeleton className='h-9 w-full rounded-md' />
-            <LoadingSkeleton className='h-9 w-full rounded-md' />
+            <LoadingSkeleton className='h-9 w-full rounded-[2px]' />
+            <LoadingSkeleton className='h-9 w-full rounded-[2px]' />
           </div>
           <div className='border-b border-border p-2'>
-            <LoadingSkeleton className='h-9 w-full rounded-md' />
+            <LoadingSkeleton className='h-9 w-full rounded-[2px]' />
           </div>
           <div className='flex flex-col gap-2 p-2'>
             {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={`list-${i}`}
-                className='flex flex-col gap-1 rounded-md p-2'
+                className='flex flex-col gap-1 rounded-[2px] p-2'
               >
                 <LoadingSkeleton className='h-4 w-3/4' />
                 <LoadingSkeleton className='h-3 w-1/2' />
@@ -60,18 +60,18 @@ const EditorLayoutSkeleton = ({
           >
             <LoadingSkeleton className='h-5 w-48' />
             <div className='flex items-center gap-2'>
-              <LoadingSkeleton className='h-8 w-20 rounded-md' />
-              <LoadingSkeleton className='h-8 w-24 rounded-md' />
+              <LoadingSkeleton className='h-8 w-20 rounded-[2px]' />
+              <LoadingSkeleton className='h-8 w-24 rounded-[2px]' />
             </div>
           </div>
           {/* Code editor area */}
           <div className='flex min-h-0 flex-1 flex-col p-2'>
-            <LoadingSkeleton className='size-full min-h-64 rounded-md' />
+            <LoadingSkeleton className='size-full min-h-64 rounded-[2px]' />
           </div>
           {/* Results panel */}
           <div className='border-t border-border p-2'>
             <LoadingSkeleton className='mb-2 h-4 w-32' />
-            <LoadingSkeleton className='h-24 w-full rounded-md' />
+            <LoadingSkeleton className='h-24 w-full rounded-[2px]' />
           </div>
         </div>
 
@@ -88,9 +88,9 @@ const EditorLayoutSkeleton = ({
             <LoadingSkeleton className='mb-1 h-5 w-40' />
             <LoadingSkeleton className='mb-4 h-3 w-2/3' />
             <div className='flex flex-col gap-2'>
-              <LoadingSkeleton className='h-9 w-full rounded-md' />
-              <LoadingSkeleton className='h-9 w-full rounded-md' />
-              <LoadingSkeleton className='h-9 w-full rounded-md' />
+              <LoadingSkeleton className='h-9 w-full rounded-[2px]' />
+              <LoadingSkeleton className='h-9 w-full rounded-[2px]' />
+              <LoadingSkeleton className='h-9 w-full rounded-[2px]' />
             </div>
           </div>
         )}

@@ -3,13 +3,13 @@
 import { useCallback, useState } from 'react';
 
 import {
-  IoArrowDownCircle,
-  IoArrowUpCircle,
-  IoGitBranch,
-  IoLink,
-  IoPlay,
-} from 'react-icons/io5';
-import { RiFlowChart } from 'react-icons/ri';
+  TbCircleArrowDown,
+  TbCircleArrowUp,
+  TbGitBranch,
+  TbHierarchy2,
+  TbLink,
+  TbPlayerPlay,
+} from 'react-icons/tb';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -88,7 +88,7 @@ export default function WizardSelector({
         isResourceAllowed('workflow', 'create') && (
           <WizardButton
             onClick={() => openWizard('data-import')}
-            icon={<IoArrowDownCircle className='text-xl' />}
+            icon={<TbCircleArrowDown className='text-xl' />}
             title={dict.wizard.dataImport}
             description={dict.wizard.dataImportDescription}
           />
@@ -99,7 +99,7 @@ export default function WizardSelector({
         isResourceAllowed('workflow', 'create') && (
           <WizardButton
             onClick={() => openWizard('data-export')}
-            icon={<IoArrowUpCircle className='text-xl' />}
+            icon={<TbCircleArrowUp className='text-xl' />}
             title={dict.wizard.dataExport}
             description={dict.wizard.dataExportDescription}
           />
@@ -110,7 +110,7 @@ export default function WizardSelector({
         isResourceAllowed('repository', 'create') && (
           <WizardButton
             onClick={() => openWizard('repository')}
-            icon={<IoGitBranch className='text-xl' />}
+            icon={<TbGitBranch className='text-xl' />}
             title={dict.repository.createNewRepository}
             description={dict.wizard.repositoryDescription}
           />
@@ -121,7 +121,7 @@ export default function WizardSelector({
         isResourceAllowed('connection', 'create') && (
           <WizardButton
             onClick={() => openWizard('connection')}
-            icon={<IoLink className='text-xl' />}
+            icon={<TbLink className='text-xl' />}
             title={dict.connections.create.createConnection}
             description={dict.wizard.connectionDescription}
           />
@@ -132,7 +132,7 @@ export default function WizardSelector({
         isResourceAllowed('workflow', 'create') && (
           <WizardButton
             onClick={() => openWizard('workflow')}
-            icon={<IoPlay className='text-xl' />}
+            icon={<TbPlayerPlay className='text-xl' />}
             title={dict.workflow.create.createNewWorkflow}
             description={dict.wizard.workflowDescription}
           />
@@ -143,7 +143,7 @@ export default function WizardSelector({
         isResourceAllowed('workflow', 'create') && (
           <WizardButton
             onClick={() => openWizard('pipeline')}
-            icon={<RiFlowChart className='text-xl' />}
+            icon={<TbHierarchy2 className='text-xl' />}
             title={dict.workflow.create.configurePipeline}
             description={dict.wizard.workflowDescription}
           />

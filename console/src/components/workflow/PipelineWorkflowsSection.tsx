@@ -2,11 +2,11 @@
 
 import { memo, useCallback, useMemo, useState } from 'react';
 
-import { IoAdd, IoInformationCircle } from 'react-icons/io5';
-import { TbSearch } from 'react-icons/tb';
+import { TbInfoCircle, TbPlus, TbSearch } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import DisplayTitle from '@/components/ui/display-title';
+import { Input } from '@/components/ui/input';
 import WorkflowWizardModal from '@/components/wizards/WorkflowWizardModal';
 
 import { useLocale } from '@/context/LocaleContext';
@@ -76,13 +76,18 @@ function PipelineWorkflowsSection({
 
   return (
     <div className='relative container mx-auto max-w-7xl px-4 py-8'>
-      <div className='my-4 flex flex-row items-center justify-between gap-4'>
+      <div
+        className={`
+          my-4 flex flex-col items-stretch gap-4
+          sm:flex-row sm:items-center sm:justify-between
+        `}
+      >
         <DisplayTitle>{dict.workflow.pipelineWorkflows}</DisplayTitle>
         <Button
-          variant='gradient'
+          variant='accent'
           size='lg'
           onClick={() => openModal()}
-          icon={<IoAdd size={25} />}
+          icon={<TbPlus aria-hidden='true' size={25} />}
           disabled={!isResourceAllowed('workflow', 'create')}
         >
           {dict.workflow.create.createNewPipelineWorkflow}
@@ -90,12 +95,15 @@ function PipelineWorkflowsSection({
       </div>
       <div
         className={`
-          my-2 flex items-start gap-3 rounded-lg border border-accent/30
+          my-2 flex items-start gap-3 rounded-[2px] border border-accent/30
           bg-accent/10 p-3
           dark:border-accent-foreground dark:bg-accent/10
         `}
       >
-        <IoInformationCircle className={`mt-0.5 size-5 shrink-0 text-accent`} />
+        <TbInfoCircle
+          aria-hidden='true'
+          className='mt-0.5 size-5 shrink-0 text-accent'
+        />
         <p className={`text-sm text-foreground`}>
           {dict.workflow.create.typeDescription.pipeline}
         </p>
@@ -106,26 +114,15 @@ function PipelineWorkflowsSection({
         workflowType='pipeline'
       />
       <div className='py-4'>
-        <div
-          className={`
-            mb-4 flex w-full items-center gap-2 rounded-md bg-gray-100 p-2
-            text-gray-900
-            focus:outline-hidden
-            dark:bg-gray-800 dark:text-gray-200
-          `}
-        >
-          <TbSearch />
-          <input
-            type='text'
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className={`
-              w-full bg-transparent p-2
-              focus:outline-hidden
-            `}
-            placeholder={dict.list.searchPlaceholder}
-          />
-        </div>
+        <Input
+          type='search'
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className='mb-4'
+          icon={<TbSearch aria-hidden='true' />}
+          aria-label={dict.list.searchPlaceholder}
+          placeholder={dict.list.searchPlaceholder}
+        />
         <PipelineWorkflowList
           loading={workflowsQuery.isLoading}
           pipelineWorkflows={filteredItems}
@@ -134,7 +131,7 @@ function PipelineWorkflowsSection({
               ? {
                   label: dict.workflow.create.createNewPipelineWorkflow,
                   onClick: openModal,
-                  variant: 'gradient',
+                  variant: 'accent',
                 }
               : undefined
           }

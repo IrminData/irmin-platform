@@ -13,6 +13,7 @@ import {
 } from '@/types/ai/responses';
 
 import { BaseClient } from './BaseClient';
+import { conversationFeedbackUrl } from './conversationFeedbackUrl';
 
 interface ListConversationsParams {
   page?: number;
@@ -32,10 +33,9 @@ interface ListConversationsWithCursorParams {
 
 export class ConversationsClient extends BaseClient {
   async getFeedback(id: string): Promise<MessageFeedback[]> {
-    const response = await fetch(
-      `${this.baseUrl}/api/conversations/${id}/feedback`,
-      { headers: this.getHeaders() }
-    );
+    const response = await fetch(conversationFeedbackUrl(this.baseUrl, id), {
+      headers: this.getHeaders(),
+    });
     if (!response.ok)
       throw new Error(`Failed to load feedback: ${response.status}`);
     return (await response.json()) as MessageFeedback[];
@@ -47,7 +47,7 @@ export class ConversationsClient extends BaseClient {
     input: { runId?: string; rating: 1 | -1; reason?: string }
   ): Promise<MessageFeedback> {
     const response = await fetch(
-      `${this.baseUrl}/api/conversations/${id}/feedback/${messageId}`,
+      conversationFeedbackUrl(this.baseUrl, id, messageId),
       {
         method: 'PUT',
         headers: this.getHeaders(),

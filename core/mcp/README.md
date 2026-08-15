@@ -135,11 +135,12 @@ Application writes stage only when explicit write approval is enabled. Only an
 authenticated workspace user may approve or reject; AI Application credentials
 cannot self-approve.
 
-The user MCP endpoint does not yet implement generic destructive-operation
-staging and replay. The AI runtime therefore withholds those descriptors from
-agents, and the canonical registry rejects direct destructive calls before a
-handler can run. Those tools remain unavailable until that policy path is
-implemented.
+The user MCP endpoint stages destructive operations without running their
+handlers. Chat receives only the pending-operation handle and descriptor
+preview. An authenticated user in the bound workspace can approve or reject;
+approval claims the operation once and replays the registered handler with an
+internal approval context. Machine and AI Application credentials cannot
+self-approve.
 
 ### Adding new resources
 

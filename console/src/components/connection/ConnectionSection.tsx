@@ -170,7 +170,7 @@ const ConnectionSection = () => {
                   ? {
                       label: dict.workflow.create.createNewWorkflow,
                       href: `${workspaceUrl}/workflows?create`,
-                      variant: 'gradient',
+                      variant: 'accent',
                     }
                   : undefined
               }

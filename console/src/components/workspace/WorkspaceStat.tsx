@@ -6,7 +6,7 @@ import type { IconType } from 'react-icons';
  * Inline skeleton placeholder for a stat value while the summary loads.
  */
 const StatSkeleton = () => (
-  <div className='h-3 w-4 animate-pulse rounded-sm bg-muted' />
+  <div className='h-3 w-4 animate-pulse rounded-[2px] bg-muted' />
 );
 
 /**

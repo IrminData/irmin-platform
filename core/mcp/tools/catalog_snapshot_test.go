@@ -35,7 +35,7 @@ func TestCanonicalCatalogSnapshot(t *testing.T) {
 		t.Fatal(err)
 	}
 	hash := sha256.Sum256(encoded)
-	if got := hex.EncodeToString(hash[:]); got != "c324e82a4637e2172f9583bb5df5621dfb86b6f3854abb34dd0035d1c058697d" {
+	if got := hex.EncodeToString(hash[:]); got != "1dacca484c46a5fd41d7045b37efaafb51c3b89c63370d6730c848aef021e4f6" {
 		t.Fatalf("tool descriptor snapshot changed: %s", got)
 	}
 }
@@ -55,6 +55,7 @@ func TestDestructiveCatalogPolicy(t *testing.T) {
 		"irmin_repository_branch_delete",
 		"irmin_repository_changes_revert",
 		"irmin_repository_object_delete",
+		"irmin_repository_object_move_or_copy",
 		"irmin_repository_ref_merge",
 		"irmin_workflow_run_cancel",
 	}

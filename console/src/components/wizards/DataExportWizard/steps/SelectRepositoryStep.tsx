@@ -58,14 +58,14 @@ export default function SelectRepositoryStep({
     return (
       <div className='flex w-full flex-col space-y-6 px-4 py-8'>
         <div className='animate-pulse space-y-4'>
-          <div className={`h-4 w-1/3 rounded-sm bg-muted`} />
-          <div className={`h-3 w-2/3 rounded-sm bg-muted`} />
-          <div className={`h-10 w-full rounded-sm bg-muted`} />
+          <div className={`h-4 w-1/3 rounded-[2px] bg-muted`} />
+          <div className={`h-3 w-2/3 rounded-[2px] bg-muted`} />
+          <div className={`h-10 w-full rounded-[2px] bg-muted`} />
           <div className='space-y-2'>
             {Array.from({ length: 3 }, (_, i) => (
               <div
                 key={`skeleton-${i}`}
-                className={`h-16 w-full rounded-sm bg-muted`}
+                className={`h-16 w-full rounded-[2px] bg-muted`}
               />
             ))}
           </div>

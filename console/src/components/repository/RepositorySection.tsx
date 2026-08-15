@@ -5,13 +5,13 @@ import { Suspense, useCallback, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 
-import { AiOutlinePlayCircle } from 'react-icons/ai';
 import {
   TbBookmark,
   TbChevronUp,
   TbDownload,
   TbFileDiff,
   TbLink,
+  TbPlayerPlay,
   TbRefresh,
   TbUpload,
 } from 'react-icons/tb';
@@ -327,7 +327,12 @@ function RepositorySectionContent({
   if (!canViewRepository) {
     return (
       <div className='relative container mx-auto max-w-7xl px-4 py-8'>
-        <div className='my-4 flex flex-row items-center justify-between gap-4'>
+        <div
+          className={`
+            my-4 flex flex-col items-stretch gap-4
+            sm:flex-row sm:items-center sm:justify-between
+          `}
+        >
           <DisplayTitle>{dict.repository.repository}</DisplayTitle>
         </div>
         <LocalizedErrorDisplay
@@ -386,16 +391,13 @@ function RepositorySectionContent({
         {canQuery && (
           <div
             className={`
-              w-full max-w-full overflow-hidden rounded-md border
-              border-gray-100 bg-background
-              dark:border-gray-800
+              w-full max-w-full overflow-hidden rounded-[2px] border
+              border-border bg-background
             `}
           >
             <div
               className={`
-                flex w-full flex-row items-center justify-between bg-gray-100
-                pl-4
-                dark:bg-gray-800
+                flex w-full flex-row items-center justify-between bg-muted pl-4
               `}
             >
               <div
@@ -426,7 +428,7 @@ function RepositorySectionContent({
                   variant='accent'
                   className='float-end m-1 shadow-none'
                   size='sm'
-                  icon={<AiOutlinePlayCircle />}
+                  icon={<TbPlayerPlay />}
                   loading={queryLoading}
                   onClick={runCurrentQuery}
                 >
@@ -451,16 +453,14 @@ function RepositorySectionContent({
               <div
                 className={`
                   inline max-w-full overflow-x-scroll text-xs whitespace-nowrap
-                  text-gray-600
+                  text-muted-foreground
                   lg:text-sm
-                  dark:text-gray-400
                 `}
               >
                 <Link
                   className={`
                     transition-colors
-                    hover:text-gray-800 hover:underline
-                    dark:hover:text-gray-200
+                    hover:text-foreground hover:underline
                   `}
                   href={`${workspaceUrl}/repositories`}
                 >
@@ -470,8 +470,7 @@ function RepositorySectionContent({
                 <Link
                   className={`
                     transition-colors
-                    hover:text-gray-800 hover:underline
-                    dark:hover:text-gray-200
+                    hover:text-foreground hover:underline
                   `}
                   href={`${workspaceUrl}/repositories/${repository.slug}`}
                 >

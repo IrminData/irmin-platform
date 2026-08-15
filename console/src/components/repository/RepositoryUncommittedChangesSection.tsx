@@ -2,9 +2,7 @@
 
 import { useCallback, useMemo } from 'react';
 
-import { GoGitCommit } from 'react-icons/go';
-import { GrRevert } from 'react-icons/gr';
-import { TbRefresh } from 'react-icons/tb';
+import { TbArrowBackUp, TbGitCommit, TbRefresh } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
@@ -77,7 +75,8 @@ function RepositoryUncommittedChangesSectionContent() {
   const handleRevertChanges = useCallback(async () => {
     const confirmed = await irminConfirm(
       'warning',
-      dict.repository.commit.confirmRevertChanges
+      dict.repository.commit.confirmRevertChanges,
+      dict.repository.commit.revertChanges
     );
     if (!confirmed) return;
     // Revert the changes, then refetch the diff
@@ -122,20 +121,12 @@ function RepositoryUncommittedChangesSectionContent() {
         {/* Title */}
         <h3
           className={`
-            text-sm text-gray-900
+            text-sm text-foreground
             lg:text-base
-            dark:text-gray-100
           `}
         >
           {dict.repository.commit.showingUncommittedChangesFor}{' '}
-          <span
-            className={`
-              font-semibold text-irmin-blue-500
-              dark:text-irmin-green-500
-            `}
-          >
-            {currentRef}
-          </span>
+          <span className={`font-semibold text-accent`}>{currentRef}</span>
         </h3>
         {/* Actions */}
         <div
@@ -154,16 +145,16 @@ function RepositoryUncommittedChangesSectionContent() {
           />
           <ButtonWithTooltip
             size='icon'
-            icon={<GrRevert size={18} />}
+            icon={<TbArrowBackUp size={18} />}
             onClick={handleRevertChanges}
             disabled={uncommittedChangesQuery.isLoading}
             tooltip={dict.repository.commit.revertChanges}
             aria-label={dict.repository.commit.revertChanges}
           />
           <Button
-            variant='default'
+            variant='accent'
             size='sm'
-            icon={<GoGitCommit size={18} />}
+            icon={<TbGitCommit size={18} />}
             onClick={handleCommitChanges}
             disabled={!canCommit}
           >

@@ -302,7 +302,7 @@ const components: Options['components'] = {
     return (
       <code
         className={cn(
-          'rounded-sm bg-muted px-1 py-0.5 font-mono text-xs',
+          'rounded-[2px] bg-muted px-1 py-0.5 font-mono text-xs',
           className
         )}
         {...props}

@@ -38,13 +38,7 @@ export type EmptyStateAction = {
   href?: string;
   /** Button variant */
   variant?:
-    | 'default'
-    | 'ghost'
-    | 'gradient'
-    | 'gray'
-    | 'link'
-    | 'outline'
-    | 'secondary';
+    'accent' | 'default' | 'ghost' | 'gray' | 'link' | 'outline' | 'secondary';
 };
 
 /**

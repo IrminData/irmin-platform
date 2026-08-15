@@ -6,6 +6,7 @@ import { toolsService } from '@/services/tools';
 interface CachedToolsEntry {
   tools: DynamicStructuredTool[];
   fetchedAt: number;
+  tokenHash: string;
 }
 
 /**
@@ -26,8 +27,8 @@ class ToolCacheService {
     authToken: string,
     workspaceSlug: string
   ): Promise<DynamicStructuredTool[]> {
-    const cacheKey = this.cacheKey(authToken, workspaceSlug);
-    const cached = this.cache.get(cacheKey);
+    const tokenHash = this.hashToken(`${authToken}:${workspaceSlug}`);
+    const cached = this.cache.get(tokenHash);
 
     // Return cached tools if still valid
     if (cached && Date.now() - cached.fetchedAt < this.CACHE_TTL) {
@@ -38,9 +39,10 @@ class ToolCacheService {
     const tools = await this.fetchTools(authToken, workspaceSlug);
 
     // Cache the result
-    this.cache.set(cacheKey, {
+    this.cache.set(tokenHash, {
       tools,
       fetchedAt: Date.now(),
+      tokenHash,
     });
 
     // Cleanup old entries periodically
@@ -56,8 +58,8 @@ class ToolCacheService {
     authToken: string,
     workspaceSlug: string
   ): Promise<DynamicStructuredTool[]> {
-    const cacheKey = this.cacheKey(authToken, workspaceSlug);
-    this.cache.delete(cacheKey);
+    const tokenHash = this.hashToken(`${authToken}:${workspaceSlug}`);
+    this.cache.delete(tokenHash);
     return this.getTools(authToken, workspaceSlug);
   }
 
@@ -91,7 +93,7 @@ class ToolCacheService {
     authToken: string,
     workspaceSlug: string
   ): Promise<DynamicStructuredTool[]> {
-    const mcpConfig = toolsService.getIrminMCPConfig(authToken);
+    const mcpConfig = toolsService.getIrminMCPConfig(authToken, workspaceSlug);
     const mcpClient = toolsService.createClient(
       {
         ...mcpConfig,
@@ -104,10 +106,6 @@ class ToolCacheService {
   private hashToken(token: string): string {
     // Use first 16 chars of SHA-256 hash for efficiency
     return crypto.createHash('sha256').update(token).digest('hex').slice(0, 16);
-  }
-
-  private cacheKey(token: string, workspaceSlug: string): string {
-    return `${this.hashToken(token)}:${workspaceSlug}`;
   }
 
   private cleanupExpiredEntries(): void {

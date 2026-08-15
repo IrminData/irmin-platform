@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"irmin-api/toolregistry"
+
 	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v3"
 	adaptor "github.com/gofiber/fiber/v3/middleware/adaptor"
@@ -72,7 +74,7 @@ func wrapWithHTTPAuth(base http.Handler, cfg *authConfig) http.Handler {
 		defer cancel()
 
 		authHeader := r.Header.Get("Authorization")
-		user, err := validateAuthAndGetUser(ctx, cfg, authHeader)
+		user, tokenType, err := validateAuthAndGetUser(ctx, cfg, authHeader)
 		if err != nil {
 			cfg.apiServices.Logger.Warn("MCP auth failed",
 				"error", err,
@@ -85,6 +87,11 @@ func wrapWithHTTPAuth(base http.Handler, cfg *authConfig) http.Handler {
 
 		// Enrich context with user
 		userCtx := withUserInContext(ctx, user)
+		userCtx = withTokenTypeInContext(userCtx, tokenType)
+		userCtx = toolregistry.WithWorkspaceBinding(
+			userCtx,
+			r.Header.Get("X-Irmin-Workspace"),
+		)
 
 		// Only log MCP requests for debugging (can be removed in production)
 		cfg.apiServices.Logger.Debug("MCP HTTP request",

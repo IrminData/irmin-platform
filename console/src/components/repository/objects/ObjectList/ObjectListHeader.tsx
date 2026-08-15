@@ -54,7 +54,7 @@ function ObjectListHeader({
           {dict.common.back}
         </Button>
       )}
-      <div className='flex items-center space-x-2 rounded-md font-mono text-xs'>
+      <div className='flex items-center space-x-2 rounded-[2px] font-mono text-xs'>
         {currentPath !== '' && (
           <Button variant='ghost' size='sm' onClick={() => navigateToGroup('')}>
             <TbHome className='mr-2 size-4' />

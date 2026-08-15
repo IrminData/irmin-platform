@@ -1,7 +1,7 @@
 'use client';
 
 import type { ComponentPropsWithoutRef } from 'react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
@@ -26,6 +26,15 @@ import ConsoleNavigationLink from './ConsoleNavigationLink';
 import ConsoleNavigationProfile from './ConsoleNavigationProfile';
 import ConsoleNavigationWorkspaceSwitcher from './ConsoleNavigationWorkspaceSwitcher';
 import useConsoleNavigationLinks from './useConsoleNavigationLinks';
+
+const FOCUSABLE_SELECTOR = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',');
 
 /**
  * Console navigation component
@@ -63,25 +72,21 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
   const params = useParams<{ workspace?: string }>();
   const { loadingPermissions, ...links } = useConsoleNavigationLinks();
 
-  // Detect "large screen" = viewport >= 1024px, which is exactly when the
-  // sidebar's `lg:hidden` / `lg:relative` classes flip from mobile-overlay
-  // mode to persistent-desktop mode. Two gotchas this call has to avoid:
+  // Detect the persistent-sidebar breakpoint (viewport >= 768px), matching
+  // the `md:` classes below. Two gotchas this call has to avoid:
   //
-  // 1. useBreakpoint returns `{ 'is@5xl': boolean }` (keyed by capitalized
+  // 1. useBreakpoint returns `{ 'is@3xl': boolean }` (keyed by capitalized
   //    breakpoint). Without destructuring, the bound value is a truthy
-  //    object, which silently breaks every downstream `isLargeScreen ? ...
-  //    : ...` and every `!isLargeScreen` check.
+  //    object, which silently breaks the responsive state checks below.
   //
   // 2. The custom breakpoint scale in src/utils/tw.ts is container-query
-  //    style: `@lg` is 512px (!), `@5xl` is 1024px. Tailwind v4's default
-  //    screen `lg:` is 1024px. So to match the CSS, we need `@5xl`, not
-  //    `@lg` — using `@lg` would flip isLargeScreen to true at 512px while
-  //    the sidebar is still rendering as a mobile overlay, which disables
-  //    inert on tablets (512-1023px) and lets focus escape the drawer.
-  const { 'is@5xl': isLargeScreen } = useBreakpoint('@5xl');
+  //    style, so Tailwind's 768px `md:` breakpoint maps to `@3xl` here.
+  const { 'is@3xl': isPersistentSidebar } = useBreakpoint('@3xl');
 
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isMenuFolded, setIsMenuFolded] = useState(false);
+  const sidebarRef = useRef<HTMLElement>(null);
+  const menuTriggerRef = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
 
   const { workspacesQuery } = useWorkspaces();
 
@@ -91,66 +96,137 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
     (workspace) => workspace.slug === params.workspace
   );
 
-  const foldMenu = isLargeScreen ? isMenuFolded : false;
+  const foldMenu = isPersistentSidebar ? isMenuFolded : false;
+  const mobileMenuOpen = isMenuOpen && !isPersistentSidebar;
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const sidebar = sidebarRef.current;
+    if (!sidebar) return;
+    const menuTrigger = menuTriggerRef.current;
+
+    const getFocusableElements = () =>
+      Array.from(
+        sidebar.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+      ).filter(
+        (element) =>
+          element.getAttribute('aria-hidden') !== 'true' &&
+          element.getClientRects().length > 0
+      );
+
+    const focusFrame = window.requestAnimationFrame(() => {
+      (getFocusableElements()[0] ?? sidebar).focus();
+    });
+
+    const handleDialogKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        setIsMenuOpen(false);
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+
+      const focusableElements = getFocusableElements();
+      if (focusableElements.length === 0) {
+        event.preventDefault();
+        sidebar.focus();
+        return;
+      }
+
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+      const activeElement = document.activeElement;
+
+      if (event.shiftKey) {
+        if (
+          activeElement === firstElement ||
+          !sidebar.contains(activeElement)
+        ) {
+          event.preventDefault();
+          lastElement.focus();
+        }
+      } else if (
+        activeElement === lastElement ||
+        !sidebar.contains(activeElement)
+      ) {
+        event.preventDefault();
+        firstElement.focus();
+      }
+    };
+
+    document.addEventListener('keydown', handleDialogKeyDown);
+
+    return () => {
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener('keydown', handleDialogKeyDown);
+      window.requestAnimationFrame(() => menuTrigger?.focus());
+    };
+  }, [mobileMenuOpen]);
 
   return (
     <div className='contents' id='console-wrapper'>
-      {/* Mobile drawer backdrop — clickable to close, blocks pointer events.
-          aria-hidden + tabIndex=-1 because the real close affordance is the
-          hamburger toggle; we don't want AT to announce this button too.
-          Gated on !isLargeScreen so the element isn't in the DOM on
-          desktop (≥1024px) where the sidebar is always visible and the
-          backdrop would be inert chrome. */}
-      {isMenuOpen && !isLargeScreen && (
-        <button
-          type='button'
+      {/* The backdrop is pointer-only dismissal; the close control lives
+          inside the modal navigation and is first in its focus order. */}
+      {mobileMenuOpen && (
+        <div
           aria-hidden='true'
-          tabIndex={-1}
           onClick={() => setIsMenuOpen(false)}
           className={`
-            fixed inset-0 z-5 block bg-foreground/20 backdrop-blur-xs
-            lg:hidden
+            fixed inset-0 z-40 block bg-foreground/20 backdrop-blur-xs
+            md:hidden
           `}
-        >
-          <span className='sr-only'>{dict.consoleNavigation.closeMenu}</span>
-        </button>
+        />
       )}
       {/* Console wrapper structure */}
-      <div className='flex w-screen flex-row items-start justify-start gap-0'>
-        {/* Console navigation sidebar. We intentionally do NOT claim
-            role='dialog'/aria-modal on mobile — that would advertise an
-            ARIA modal dialog pattern we haven't implemented (no focus
-            trap, no Escape-to-close, no focus return on close). The
-            sidebar is a plain disclosure region; the backdrop handles
-            dismissal and inert on content-wrapper confines interaction. */}
+      <div className='flex h-dvh w-full flex-row overflow-hidden'>
         <aside
+          ref={sidebarRef}
           id='console-sidebar-wrapper'
+          role={mobileMenuOpen ? 'dialog' : undefined}
+          aria-modal={mobileMenuOpen ? 'true' : undefined}
           aria-label={dict.consoleNavigation.workspaceNavigationAriaLabel}
+          tabIndex={mobileMenuOpen ? -1 : undefined}
           className={`
-            scrollbar-hide h-screen overflow-x-hidden overflow-y-scroll
+            scrollbar-hide h-dvh shrink-0 overflow-x-hidden overflow-y-auto
             overscroll-contain border-r border-border bg-background
             transition-[width] duration-150 ease-in-out
             ${
-              isMenuOpen
-                ? 'absolute z-10 block'
+              mobileMenuOpen
+                ? 'fixed inset-y-0 left-0 z-50 block'
                 : `
                   hidden
-                  lg:relative lg:block
+                  md:relative md:z-auto md:block
                 `
             }
             ${foldMenu ? 'w-20' : 'w-60'}
           `}
         >
+          {mobileMenuOpen && (
+            <Button
+              className='
+                absolute top-1 left-2 z-50 aspect-square size-11
+                md:hidden
+              '
+              onClick={() => setIsMenuOpen(false)}
+              size='icon'
+              variant='link'
+              aria-label={dict.consoleNavigation.closeMenu}
+            >
+              <MobileMenuIcon isOpen />
+            </Button>
+          )}
           <div
             id='console-sidebar'
-            className={`relative flex size-full flex-col justify-between`}
+            className='relative flex min-h-full w-full flex-col justify-between'
           >
             <div
               id='console-sidebar-main-content'
               className={`
                 mt-12 flex flex-col justify-start
                 ${foldMenu ? `mt-24 gap-0` : `gap-6`}
-                lg:mt-1
+                md:mt-1
               `}
             >
               {/* Logo, notifications and fold button */}
@@ -167,7 +243,10 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                     ${foldMenu ? `hidden opacity-0` : `opacity-100`}
                   `}
                 >
-                  <Link href='/' aria-label='Go to website home page'>
+                  <Link
+                    href='/'
+                    aria-label={dict.consoleNavigation.irminConsole}
+                  >
                     <Logo
                       className='
                         text-[1.25rem]
@@ -179,7 +258,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                 <Button
                   className={`
                     absolute top-[12px] hidden
-                    lg:block
+                    md:block
                     ${!foldMenu ? 'right-0' : 'left-7'}
                   `}
                   aria-label={
@@ -341,12 +420,12 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                     <Link
                       key={`console-nav-useful-${link.title}`}
                       className={`
-                        -mx-2 flex min-h-9 items-center gap-2 rounded-md px-2
-                        text-left text-sm text-muted-foreground
+                        -mx-2 flex min-h-11 items-center gap-2 rounded-[2px]
+                        px-2 text-left text-sm text-muted-foreground
                         transition-colors
                         hover:bg-accent/10 hover:text-foreground
-                        focus-visible:ring-1 focus-visible:ring-ring
-                        focus-visible:outline-none
+                        focus-visible:outline-2 focus-visible:outline-offset-2
+                        focus-visible:outline-accent
                       `}
                       href={link.href ?? ''}
                       onClick={() => setIsMenuOpen(false)}
@@ -371,9 +450,9 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
             visually; inert blocks them programmatically). */}
         <div
           id='console-content-wrapper'
-          inert={isMenuOpen && !isLargeScreen}
+          inert={mobileMenuOpen}
           className={`
-            flex h-screen max-w-full flex-1 flex-col gap-0 overflow-scroll
+            flex h-dvh max-w-full min-w-0 flex-1 flex-col overflow-hidden
             transition-[margin,width] duration-150 ease-in-out
           `}
         >
@@ -383,11 +462,11 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
             className={`
               z-20 w-full border-b border-border bg-background
               ${
-                isMenuOpen
+                mobileMenuOpen
                   ? `pl-0`
                   : `
                     pl-12
-                    lg:pl-0
+                    md:pl-0
                   `
               }
             `}
@@ -402,7 +481,7 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
                 className={`
                   py-2 pr-4
                   group-focus-within:hidden
-                  ${foldMenu ? `lg:block` : `lg:hidden`}
+                  ${foldMenu ? `md:block` : `md:hidden`}
                 `}
               >
                 <Logo
@@ -431,14 +510,15 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
               on protected routes still get redirected to /sign-in (the
               handler's useEffect). */}
           <main
-            id='console-content'
-            className={`
-              relative min-h-[calc(100vh-4rem)] overflow-y-scroll bg-background
-            `}
+            id='main-content'
+            tabIndex={-1}
+            className={`relative min-h-0 flex-1 overflow-y-auto bg-background`}
           >
-            <AuthenticationErrorHandler error={authError}>
-              {children}
-            </AuthenticationErrorHandler>
+            <div id='console-content' className='contents'>
+              <AuthenticationErrorHandler error={authError}>
+                {children}
+              </AuthenticationErrorHandler>
+            </div>
           </main>
         </div>
       </div>
@@ -447,53 +527,59 @@ function ConsoleWrapperContent({ children }: { children: React.ReactNode }) {
         id='console-navigation-toggle-mobile'
         className={`
           fixed top-1 left-2 z-50 block
-          lg:hidden
+          md:hidden
+          ${mobileMenuOpen ? 'invisible' : ''}
         `}
       >
         <Button
+          ref={menuTriggerRef}
           className='relative aspect-square size-11'
-          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          onClick={() => setIsMenuOpen(true)}
           size='icon'
           variant='link'
-          aria-label={
-            isMenuOpen
-              ? dict.consoleNavigation.closeMenu
-              : dict.consoleNavigation.openMenu
-          }
-          aria-expanded={isMenuOpen}
+          aria-label={dict.consoleNavigation.openMenu}
+          aria-expanded={mobileMenuOpen}
           aria-controls='console-sidebar-wrapper'
+          tabIndex={mobileMenuOpen ? -1 : 0}
         >
-          <div
-            className={`
-              absolute top-1/2 left-1/2 block w-5 -translate-1/2 transform
-            `}
-          >
-            <span
-              className={`
-                absolute block h-0.5 w-7 transform bg-current
-                transition-[transform,opacity] duration-200 ease-in-out
-                ${isMenuOpen ? 'rotate-45' : '-translate-y-1.5'}
-              `}
-            />
-            <span
-              className={`
-                absolute block h-0.5 w-5 transform bg-current
-                transition-[transform,opacity] duration-200 ease-in-out
-                ${isMenuOpen ? 'opacity-0' : ''}
-              `}
-            />
-            <span
-              className={`
-                absolute block h-0.5 w-7 transform bg-current
-                transition-[transform,opacity] duration-200 ease-in-out
-                ${isMenuOpen ? '-rotate-45' : 'translate-y-1.5'}
-              `}
-            />
-          </div>
+          <MobileMenuIcon isOpen={false} />
         </Button>
       </div>
 
-      <AssistantSheet currentWorkspace={currentWorkspace} />
+      <div className='contents' inert={mobileMenuOpen}>
+        <AssistantSheet currentWorkspace={currentWorkspace} />
+      </div>
     </div>
+  );
+}
+
+function MobileMenuIcon({ isOpen }: { isOpen: boolean }) {
+  return (
+    <span
+      aria-hidden='true'
+      className='absolute top-1/2 left-1/2 block w-5 -translate-1/2 transform'
+    >
+      <span
+        className={`
+          absolute block h-0.5 w-7 transform bg-current
+          transition-[transform,opacity] duration-200 ease-in-out
+          ${isOpen ? 'rotate-45' : '-translate-y-1.5'}
+        `}
+      />
+      <span
+        className={`
+          absolute block h-0.5 w-5 transform bg-current
+          transition-[transform,opacity] duration-200 ease-in-out
+          ${isOpen ? 'opacity-0' : ''}
+        `}
+      />
+      <span
+        className={`
+          absolute block h-0.5 w-7 transform bg-current
+          transition-[transform,opacity] duration-200 ease-in-out
+          ${isOpen ? '-rotate-45' : 'translate-y-1.5'}
+        `}
+      />
+    </span>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 
 import {
   TbChevronDown,
@@ -48,6 +48,9 @@ function PropertyEditor({
   const { dict } = useLocale();
   const [expanded, setExpanded] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const nestedSchemaId = useId();
+  const settingsId = useId();
+  const requiredCheckboxId = useId();
 
   // Local state for name to allow typing intermediate invalid states
   const [localName, setLocalName] = useState(name);
@@ -155,7 +158,7 @@ function PropertyEditor({
     >
       <div
         className={cn(
-          'flex items-center gap-2 rounded-md py-0.5 pr-2 pl-1',
+          'flex items-center gap-2 rounded-[2px] py-0.5 pr-2 pl-1',
           `
             transition-colors
             hover:bg-muted/50
@@ -172,11 +175,14 @@ function PropertyEditor({
                 hover:text-foreground
               `}
               onClick={() => setExpanded(!expanded)}
+              aria-label={`${expanded ? dict.common.hideDetails : dict.common.showDetails}: ${name}`}
+              aria-expanded={expanded}
+              aria-controls={nestedSchemaId}
             >
               {expanded ? (
-                <TbChevronDown className='size-3' />
+                <TbChevronDown aria-hidden='true' className='size-3' />
               ) : (
-                <TbChevronRight className='size-3' />
+                <TbChevronRight aria-hidden='true' className='size-3' />
               )}
             </Button>
           )}
@@ -197,7 +203,7 @@ function PropertyEditor({
                 focus:bg-background
               `
             )}
-            placeholder='Property name'
+            placeholder={dict.schemaBuilder.name}
             disabled={disabled}
           />
           <Select
@@ -234,6 +240,7 @@ function PropertyEditor({
             title={dict.schemaBuilder.required}
           >
             <Checkbox
+              id={requiredCheckboxId}
               checked={isRequired}
               onCheckedChange={(checked) =>
                 onChange(name, schema, checked === true)
@@ -241,7 +248,12 @@ function PropertyEditor({
               disabled={disabled}
               className='size-3.5'
             />
-            <span className='text-xs text-muted-foreground'>Required</span>
+            <Label
+              htmlFor={requiredCheckboxId}
+              className='text-xs text-muted-foreground'
+            >
+              {dict.schemaBuilder.required}
+            </Label>
           </div>
         </div>
 
@@ -254,31 +266,39 @@ function PropertyEditor({
           <Button
             variant={showSettings ? 'secondary' : 'ghost'}
             size='sm'
-            className='size-6 p-0'
+            className='
+              size-11 p-0
+              md:size-6
+            '
             onClick={() => setShowSettings(!showSettings)}
             title={dict.schemaBuilder.constraints}
+            aria-label={dict.schemaBuilder.constraints}
+            aria-expanded={showSettings}
+            aria-controls={showSettings ? settingsId : undefined}
           >
-            <TbSettings className='size-3.5' />
+            <TbSettings aria-hidden='true' className='size-3.5' />
           </Button>
           <Button
             variant='ghost'
             size='sm'
             className={`
-              size-6 p-0 text-red-500
-              hover:text-red-600
+              size-11 p-0 text-destructive
+              hover:bg-destructive/10 hover:text-destructive
+              md:size-6
             `}
             onClick={onDelete}
             disabled={disabled}
             title={dict.common.delete}
+            aria-label={dict.common.delete}
           >
-            <TbTrash className='size-3.5' />
+            <TbTrash aria-hidden='true' className='size-3.5' />
           </Button>
         </div>
       </div>
 
       {showSettings && (
-        <div className='pr-2 pb-2 pl-8'>
-          <div className='rounded-md border bg-muted/20 p-3'>
+        <div id={settingsId} className='pr-2 pb-2 pl-8'>
+          <div className='rounded-[2px] border bg-muted/20 p-3'>
             <div className='grid grid-cols-2 gap-4'>
               <div className='col-span-2'>
                 <Label className='text-xs'>{dict.common.description}</Label>
@@ -308,10 +328,12 @@ function PropertyEditor({
                       disabled={disabled}
                     >
                       <SelectTrigger className='h-8'>
-                        <SelectValue placeholder='None' />
+                        <SelectValue placeholder={dict.schemaBuilder.none} />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value='__none__'>None</SelectItem>
+                        <SelectItem value='__none__'>
+                          {dict.schemaBuilder.none}
+                        </SelectItem>
                         {formats.map((f) => (
                           <SelectItem key={f} value={f}>
                             {dict.schemaBuilder.formats[
@@ -497,28 +519,34 @@ function PropertyEditor({
         </div>
       )}
 
-      {expanded && (
-        <div className='ml-3 border-l border-border/50 pl-3'>
-          {schema.type === 'object' && (
-            <JSONSchemaEditor
-              value={schema}
-              onChange={(newSchema) => onChange(name, newSchema, isRequired)}
-              disabled={disabled}
-              isRoot={false}
-            />
-          )}
-          {schema.type === 'array' && (
-            <div className='my-1 ml-0.5'>
+      <div
+        id={nestedSchemaId}
+        hidden={!expanded}
+        className='ml-3 border-l border-border/50 pl-3'
+      >
+        {expanded && (
+          <>
+            {schema.type === 'object' && (
               <JSONSchemaEditor
-                value={schema.items || { type: 'string' }}
-                onChange={(newItems) => updateSchema({ items: newItems })}
+                value={schema}
+                onChange={(newSchema) => onChange(name, newSchema, isRequired)}
                 disabled={disabled}
-                isRoot={false} // Avoid root styling for array items
+                isRoot={false}
               />
-            </div>
-          )}
-        </div>
-      )}
+            )}
+            {schema.type === 'array' && (
+              <div className='my-1 ml-0.5'>
+                <JSONSchemaEditor
+                  value={schema.items || { type: 'string' }}
+                  onChange={(newItems) => updateSchema({ items: newItems })}
+                  disabled={disabled}
+                  isRoot={false}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -726,7 +754,7 @@ export default function JSONSchemaEditor({
         <div className='space-y-2'>
           <div className='my-1 ml-0.5'>
             <Label className='mb-2 block text-xs text-muted-foreground'>
-              Items schema:
+              {dict.schemaBuilder.itemsSchema}:
             </Label>
             <JSONSchemaEditor
               value={value.items || { type: 'string' }}

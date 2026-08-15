@@ -47,45 +47,79 @@ describe('RunEventV1', () => {
     ]);
   });
 
-  it('filters internal summarization streams and operational usage', () => {
+  it('filters internal summarization model events', () => {
     assert.deepEqual(
       normalizeLangChainEvent({
         event: 'on_chat_model_stream',
         metadata: { lc_source: 'summarization' },
-        data: { chunk: { content: 'private summary' } },
+        data: { chunk: { content: 'private conversation summary' } },
       }),
       []
+    );
+  });
+
+  it('never forwards raw tool payloads or exact token counts', () => {
+    assert.deepEqual(
+      normalizeLangChainEvent({
+        event: 'on_tool_start',
+        run_id: 'tool-1',
+        name: 'irmin_repository_upload',
+        data: { input: { Authorization: 'secret' } },
+      }).at(-1),
+      {
+        type: 'tool.started',
+        data: {
+          toolCallId: 'tool-1',
+          toolName: 'irmin_repository_upload',
+        },
+      }
     );
     assert.deepEqual(
       normalizeLangChainEvent({
         event: 'on_chat_model_stream',
         data: {
           chunk: {
-            content: '',
-            usage_metadata: { input_tokens: 10, output_tokens: 2 },
+            usage_metadata: {
+              input_tokens: 100,
+              output_tokens: 10,
+              total_tokens: 110,
+            },
           },
         },
       }),
-      []
+      [{ type: 'usage', data: { reported: true } }]
     );
   });
 
-  it('never forwards raw tool arguments or results', () => {
-    const serialized = JSON.stringify([
-      ...normalizeLangChainEvent({
-        event: 'on_tool_start',
-        run_id: 'tool-1',
-        name: 'irmin_repository_object_upload_url',
-        data: { input: { headers: { Authorization: 'Bearer secret' } } },
-      }),
-      ...normalizeLangChainEvent({
+  it('emits a safe approval event for a staged destructive tool', () => {
+    assert.deepEqual(
+      normalizeLangChainEvent({
         event: 'on_tool_end',
-        run_id: 'tool-1',
-        name: 'irmin_repository_object_upload_url',
-        data: { output: { token: 'secret', content: 'private' } },
+        run_id: 'tool-2',
+        name: 'irmin_repository_object_delete',
+        data: {
+          output: JSON.stringify({
+            requires_approval: true,
+            pending_operation_id: 'pending-1',
+            approval_preview: 'Delete object',
+            workspace_slug: 'acme',
+            arguments: { token: 'secret' },
+          }),
+        },
       }),
-    ]);
-    assert.doesNotMatch(serialized, /Bearer secret|private|"token"|"headers"/);
+      [
+        {
+          type: 'tool.approval_required',
+          data: {
+            toolCallId: 'tool-2',
+            toolName: 'irmin_repository_object_delete',
+            pendingOperationId: 'pending-1',
+            approvalPreview: 'Delete object',
+            workspaceSlug: 'acme',
+          },
+        },
+      ]
+    );
   });
 
   it('emits monotonic envelopes and exactly one successful terminal event', async () => {
@@ -139,28 +173,26 @@ describe('RunEventV1', () => {
     );
   });
 
-  it('delivers a terminal event even when persistence callbacks reject', async () => {
-    const stream = createRunEventStream({
-      runId: 'run-callback-failure',
-      agentId: 'assistant',
-      conversationId: 'conversation-callback-failure',
-      signal: new AbortController().signal,
-      onEvent: async (event) => {
-        if (event.type === 'run.completed') throw new Error('database down');
-      },
-      source: async () =>
-        new ReadableStream({
-          start(controller) {
-            controller.enqueue({
-              event: 'on_chat_model_stream',
-              data: { chunk: { content: 'Complete' } },
-            });
-            controller.close();
-          },
-        }),
-    });
-
-    const events = await readEvents(stream);
+  it('delivers a terminal event even when persistence fails', async () => {
+    const events = await readEvents(
+      createRunEventStream({
+        runId: 'run-side-effect-failure',
+        agentId: 'assistant',
+        conversationId: 'conversation-4',
+        signal: new AbortController().signal,
+        onEvent: (event) => {
+          if (event.type === 'run.completed') {
+            throw new Error('database unavailable');
+          }
+        },
+        source: async () =>
+          new ReadableStream({
+            start(controller) {
+              controller.close();
+            },
+          }),
+      })
+    );
     assert.equal(events.at(-1)?.type, 'run.completed');
   });
 
@@ -186,6 +218,7 @@ describe('RunEventV1', () => {
     const reader = stream.getReader();
     await reader.read();
     await reader.cancel();
+    await Promise.resolve();
 
     assert.equal(recorded.at(-1), 'run.cancelled');
     assert.equal(controller.signal.aborted, true);

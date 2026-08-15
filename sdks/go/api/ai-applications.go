@@ -250,7 +250,7 @@ func (c *Client) ApproveAIApplicationPendingOperation(
 	ctx context.Context,
 	workspace, aiApplicationID, pendingOperationID string,
 ) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error) {
-	var result irminmodels.AIApplicationPendingOperationActionResult
+	var pendingOperation irminmodels.AIApplicationPendingOperationActionResult
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodPost,
 		Endpoint: fmt.Sprintf(
@@ -259,11 +259,11 @@ func (c *Client) ApproveAIApplicationPendingOperation(
 			aiApplicationID,
 			pendingOperationID,
 		),
-	}, &result)
+	}, &pendingOperation)
 	if err != nil {
 		return nil, nil, fmt.Errorf("approve AI application pending operation error: %w", err)
 	}
-	return &result, apiResp, nil
+	return &pendingOperation, apiResp, nil
 }
 
 // RejectAIApplicationPendingOperation rejects a pending operation.
@@ -271,7 +271,7 @@ func (c *Client) RejectAIApplicationPendingOperation(
 	ctx context.Context,
 	workspace, aiApplicationID, pendingOperationID string,
 ) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error) {
-	var result irminmodels.AIApplicationPendingOperationActionResult
+	var pendingOperation irminmodels.AIApplicationPendingOperationActionResult
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodPost,
 		Endpoint: fmt.Sprintf(
@@ -280,11 +280,11 @@ func (c *Client) RejectAIApplicationPendingOperation(
 			aiApplicationID,
 			pendingOperationID,
 		),
-	}, &result)
+	}, &pendingOperation)
 	if err != nil {
 		return nil, nil, fmt.Errorf("reject AI application pending operation error: %w", err)
 	}
-	return &result, apiResp, nil
+	return &pendingOperation, apiResp, nil
 }
 
 // GetAIApplicationToolLogsOptions contains optional parameters for fetching tool logs.

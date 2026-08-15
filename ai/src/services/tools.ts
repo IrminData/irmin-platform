@@ -79,12 +79,7 @@ class ToolsService {
         tool.metadata = { ...tool.metadata, irminDescriptor: descriptor };
       }
     }
-    // The user MCP endpoint cannot replay a generic staged destructive
-    // operation yet. Keep those handlers unavailable to model credentials.
-    return tools.filter((tool) => {
-      if (tool.name === 'irmin_tool_catalog_list') return true;
-      return byName.get(tool.name)?.risk !== 'destructive';
-    });
+    return tools;
   }
 
   private extractDescriptors(value: unknown): IrminToolDescriptor[] {
@@ -110,7 +105,7 @@ class ToolsService {
     return found;
   }
 
-  getIrminMCPConfig(authToken?: string) {
+  getIrminMCPConfig(authToken?: string, workspaceSlug?: string) {
     if (!authToken) {
       throw new Error('Auth token is required for Irmin MCP server');
     }
@@ -123,6 +118,7 @@ class ToolsService {
         type: 'http' as const,
         headers: {
           Authorization: `Bearer ${authToken}`,
+          ...(workspaceSlug ? { 'X-Irmin-Workspace': workspaceSlug } : {}),
           // Accept header is automatically added by the adapter for SSE connections
         },
         // Enforce tool execution timeout

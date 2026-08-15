@@ -48,6 +48,31 @@ describe('specialist runner', () => {
       }).kind,
       'clarification'
     );
+
+    assert.equal(
+      specialistRunner.acceptSql({
+        messages: [
+          new AIMessage({
+            content: '',
+            tool_calls: [
+              {
+                id: 'call-2',
+                name: 'irmin_query_execute_sql',
+                args: { sql: 'SELECT 1;' },
+              },
+            ],
+          }),
+          new ToolMessage({
+            content: '{"success":true}',
+            tool_call_id: 'call-2',
+            name: 'irmin_query_execute_sql',
+            status: 'success',
+          }),
+          new AIMessage('SELECT 2;'),
+        ],
+      }).kind,
+      'clarification'
+    );
   });
 
   it('rejects SQL changed after an earlier successful execution', () => {

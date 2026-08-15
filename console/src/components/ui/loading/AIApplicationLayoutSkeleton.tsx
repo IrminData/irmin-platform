@@ -27,14 +27,14 @@ function AIApplicationLayoutSkeleton({
           rightSlot={
             <div className='flex items-center gap-2'>
               {/* AssetSharePopover trigger (size='sm') */}
-              <LoadingSkeleton className='h-9 w-20 rounded-md' />
+              <LoadingSkeleton className='h-9 w-20 rounded-[2px]' />
             </div>
           }
         />
         <TabsWithBackButtonSkeleton tabCount={2} showMore />
       </div>
       <div className='relative container mx-auto max-w-7xl px-4'>
-        <LoadingSkeleton className='h-80 w-full rounded-lg' />
+        <LoadingSkeleton className='h-80 w-full rounded-[2px]' />
       </div>
     </div>
   );

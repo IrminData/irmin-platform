@@ -15,12 +15,12 @@ const buttonVariants = cva(
   // (ghost, link, secondary) truly borderless avoids the 1px cream-tinted
   // phantom stroke that base.css `*` rules would otherwise apply.
   `
-    inline-flex cursor-pointer appearance-none items-center justify-center
-    rounded-[2px] text-sm font-medium tracking-tight whitespace-nowrap
-    transition-[color,background-color,border-color,transform] duration-150
-    ease-out
-    focus-visible:outline-1 focus-visible:outline-offset-1
-    focus-visible:outline-accent/70
+    relative inline-flex cursor-pointer appearance-none items-center
+    justify-center rounded-[2px] text-sm font-medium tracking-tight
+    whitespace-nowrap transition-[color,background-color,border-color,transform]
+    duration-150 ease-out
+    focus-visible:outline-2 focus-visible:outline-offset-2
+    focus-visible:outline-accent
     active:scale-[0.96]
     disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50
     disabled:active:scale-100
@@ -28,14 +28,11 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        // Default = soft muted fill, no border. Reads as a button (not
-        // prose) without stacking stroke noise against adjacent chrome.
-        // Middle ground between the bordered-pill (too loud) and the
-        // fully-transparent ghost (too quiet — wizard CTAs were reading
-        // as centered text rather than clickable actions).
+        // Default = transparent, as defined by the Almanac design system.
+        // Hover supplies the affordance without adding persistent chrome.
         default: `
-          bg-muted text-foreground
-          hover:bg-secondary
+          bg-transparent text-foreground
+          hover:bg-muted
         `,
         destructive: `
           border border-destructive bg-destructive text-destructive-foreground
@@ -70,18 +67,21 @@ const buttonVariants = cva(
           decoration-1 underline-offset-[6px]
           hover:decoration-2
         `,
-        // Legacy alias — identical to `accent`. DESIGN.md documents the
-        // deprecation; kept so ~20 existing callers don't break.
-        gradient: `
-          border border-accent bg-accent text-accent-foreground
-          hover:bg-accent/85
-        `,
       },
       size: {
-        sm: 'h-9 px-4 text-xs',
-        default: 'h-10 px-5',
+        sm: `
+          h-11 px-4 text-xs
+          md:h-9
+        `,
+        default: `
+          h-11 px-5
+          md:h-10
+        `,
         lg: 'h-12 px-7 text-[15px]',
-        icon: 'size-10',
+        icon: `
+          size-11
+          md:size-10
+        `,
       },
       iconFirst: {
         true: 'flex-row',
@@ -112,6 +112,7 @@ export interface ButtonProps
   iconFirst?: boolean;
   href?: string;
   target?: React.AnchorHTMLAttributes<HTMLAnchorElement>['target'];
+  download?: React.AnchorHTMLAttributes<HTMLAnchorElement>['download'];
   prefetch?: boolean | null;
 }
 
@@ -124,7 +125,7 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
       asChild = false,
       icon,
       loading = false,
-      loadingText = 'Loading...',
+      loadingText,
       iconFirst = true,
       children,
       href,
@@ -150,23 +151,30 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
 
     const content = (
       <>
-        {loading ? (
+        <span
+          className={cn(
+            'inline-flex items-center justify-center gap-1.5',
+            iconFirst ? 'flex-row' : 'flex-row-reverse',
+            loading && 'opacity-0'
+          )}
+        >
+          {icon}
+          {children}
+        </span>
+        {loading && (
           <>
             <span
+              aria-hidden='true'
               className={`
-                mr-2 inline-block size-4 animate-spin rounded-full border-2
-                border-t-2 border-muted border-t-current
+                absolute inset-0 m-auto size-4 animate-spin rounded-full
+                border-2 border-muted border-t-current
               `}
             />
-            {size !== 'icon' && <span>{loadingText}</span>}
-          </>
-        ) : (
-          <>
-            {icon && size !== 'icon' && (
-              <span className='mr-1.5 inline-flex items-center'>{icon}</span>
+            {loadingText && (
+              <span className='sr-only' aria-live='polite'>
+                {loadingText}
+              </span>
             )}
-            {icon && size === 'icon' && icon}
-            {children}
           </>
         )}
       </>
@@ -211,6 +219,7 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
             isDisabled && 'pointer-events-none opacity-50'
           )}
           aria-disabled={isDisabled || undefined}
+          aria-busy={loading || undefined}
           tabIndex={isDisabled ? -1 : undefined}
         >
           {content}
@@ -224,6 +233,7 @@ const Button = forwardRef<HTMLButtonElement | HTMLAnchorElement, ButtonProps>(
         className={computedClassName}
         ref={ref as React.Ref<HTMLButtonElement>}
         disabled={loading || props.disabled}
+        aria-busy={loading || undefined}
         type={props.type || 'button'}
       >
         {content}

@@ -782,14 +782,19 @@ func (api *APIServices) createCustomToolFromRequest(
 		return nil, ErrCustomToolNameRequired
 	}
 
-	// MCP registration uses canonical names, so uniqueness must use the same
-	// normalization rather than the administrator-facing label.
-	exists, err := customToolCanonicalNameExists(tx, req.Name, aiApplicationID, nil)
+	// Validate tool name uniqueness
+	txDB := &db.Database{DB: tx}
+	exists, err := txDB.CustomToolNameExists(req.Name, aiApplicationID, nil)
 	if err != nil {
 		return nil, NewInternalErrorf("error checking tool name: %w", err)
 	}
 	if exists {
 		return nil, fmt.Errorf("%w: custom tool with name '%s' already exists", ErrInvalidRequest, req.Name)
+	}
+	if canonicalErr := ensureCanonicalCustomToolNameUnique(
+		tx, req.Name, aiApplicationID, nil,
+	); canonicalErr != nil {
+		return nil, canonicalErr
 	}
 
 	tool := &db.AIApplicationCustomTool{
@@ -942,13 +947,19 @@ func (api *APIServices) updateExistingCustomTool(
 		return 0, fmt.Errorf("%w: custom tool not found", ErrInvalidRequest)
 	}
 
-	// Check canonical name uniqueness (excluding current tool).
-	exists, err := customToolCanonicalNameExists(tx, ct.Name, aiApplicationID, &toolIDUint)
+	// Check name uniqueness (excluding current tool)
+	txDB := &db.Database{DB: tx}
+	exists, err := txDB.CustomToolNameExists(ct.Name, aiApplicationID, &toolIDUint)
 	if err != nil {
 		return 0, NewInternalErrorf("error checking tool name: %w", err)
 	}
 	if exists {
 		return 0, fmt.Errorf("%w: custom tool with name '%s' already exists", ErrInvalidRequest, ct.Name)
+	}
+	if canonicalErr := ensureCanonicalCustomToolNameUnique(
+		tx, ct.Name, aiApplicationID, &toolIDUint,
+	); canonicalErr != nil {
+		return 0, canonicalErr
 	}
 
 	if updateErr := api.updateCustomToolFromRequest(tx, workspace, toolIDUint, ct); updateErr != nil {
@@ -957,27 +968,31 @@ func (api *APIServices) updateExistingCustomTool(
 	return toolIDUint, nil
 }
 
-func customToolCanonicalNameExists(
+func ensureCanonicalCustomToolNameUnique(
 	tx *gorm.DB,
 	name string,
 	aiApplicationID uint,
 	excludeID *uint,
-) (bool, error) {
+) error {
 	var tools []db.AIApplicationCustomTool
 	query := tx.Select("id", "name").Where("ai_application_id = ?", aiApplicationID)
 	if excludeID != nil {
-		query = query.Where("id <> ?", *excludeID)
+		query = query.Where("id != ?", *excludeID)
 	}
 	if err := query.Find(&tools).Error; err != nil {
-		return false, err
+		return NewInternalErrorf("error checking canonical tool name: %w", err)
 	}
-	wanted := toolregistry.CanonicalCustomName(name)
+	canonical := toolregistry.CanonicalCustomName(name)
 	for _, tool := range tools {
-		if toolregistry.CanonicalCustomName(tool.Name) == wanted {
-			return true, nil
+		if toolregistry.CanonicalCustomName(tool.Name) == canonical {
+			return fmt.Errorf(
+				"%w: custom tool name collides with canonical name %q",
+				ErrInvalidRequest,
+				canonical,
+			)
 		}
 	}
-	return false, nil
+	return nil
 }
 
 // deleteRemovedCustomTools deletes tools that are no longer in the request.
@@ -1013,8 +1028,9 @@ func (api *APIServices) updateCustomToolFromRequest(
 		return ErrCustomToolNameRequired
 	}
 
-	// Validate the registration name, not only the display label.
-	exists, err := customToolCanonicalNameExists(tx, req.Name, tool.AIApplicationID, &toolID)
+	// Validate tool name uniqueness (excluding current tool)
+	txDB := &db.Database{DB: tx}
+	exists, err := txDB.CustomToolNameExists(req.Name, tool.AIApplicationID, &toolID)
 	if err != nil {
 		return NewInternalErrorf("error checking tool name: %w", err)
 	}

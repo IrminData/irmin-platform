@@ -129,7 +129,7 @@ const BillingUsageDashboard = ({
               percentage > 90
                 ? 'bg-destructive'
                 : percentage > 70
-                  ? 'bg-yellow-500'
+                  ? 'bg-warning'
                   : 'bg-primary';
 
             return (
@@ -142,11 +142,11 @@ const BillingUsageDashboard = ({
                 <CardContent>
                   <div className='flex items-baseline gap-1'>
                     <span className='text-2xl font-bold'>
-                      {formatUsageNumber(item.current_usage)}
+                      {formatUsageNumber(item.current_usage, locale)}
                     </span>
                     {item.limit != null && (
                       <span className='text-sm text-muted-foreground'>
-                        / {formatUsageNumber(item.limit)} {item.unit}
+                        / {formatUsageNumber(item.limit, locale)} {item.unit}
                       </span>
                     )}
                     {item.limit == null && (
@@ -189,16 +189,17 @@ const BillingUsageDashboard = ({
  * Formats a usage number for display.
  *
  * @param value - The numeric value to format.
+ * @param locale - BCP 47 locale code.
  * @returns A formatted string.
  */
-function formatUsageNumber(value: number): string {
-  if (value >= 999_950) {
-    return `${(value / 1_000_000).toFixed(1)}M`;
-  }
+function formatUsageNumber(value: number, locale: string): string {
   if (value >= 1_000) {
-    return `${(value / 1_000).toFixed(1)}K`;
+    return new Intl.NumberFormat(locale, {
+      notation: 'compact',
+      maximumFractionDigits: 1,
+    }).format(value);
   }
-  return value.toLocaleString();
+  return value.toLocaleString(locale);
 }
 
 /**

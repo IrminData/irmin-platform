@@ -13,10 +13,10 @@ export default function AIApplicationsLoading() {
     <div className='relative container mx-auto max-w-7xl px-4 py-8'>
       <div className='my-4 flex flex-row items-center justify-between gap-4'>
         <LoadingSkeleton className='h-9 w-64 max-w-full' />
-        <LoadingSkeleton className='h-11 w-44 shrink-0 rounded-md' />
+        <LoadingSkeleton className='h-11 w-44 shrink-0 rounded-[2px]' />
       </div>
       <div className='py-4'>
-        <LoadingSkeleton className='mb-4 h-11 w-full rounded-md' />
+        <LoadingSkeleton className='mb-4 h-11 w-full rounded-[2px]' />
         <div
           className={`
             grid grid-cols-1 gap-4

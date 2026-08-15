@@ -53,12 +53,7 @@ const ObjectViewer = ({
   if (!objectContent) {
     // If the content is not available, show a message
     return (
-      <div
-        className={`
-          w-full pt-4 pb-12 text-center text-gray-600
-          dark:text-gray-400
-        `}
-      >
+      <div className={`w-full pt-4 pb-12 text-center text-muted-foreground`}>
         <p
           className={`
             text-sm
@@ -100,12 +95,7 @@ const ObjectViewer = ({
   } else {
     // Group objects (e.g. directories are not supported in the Object Viewer)
     return (
-      <div
-        className={`
-          w-full pt-4 pb-12 text-center text-gray-600
-          dark:text-gray-400
-        `}
-      >
+      <div className={`w-full pt-4 pb-12 text-center text-muted-foreground`}>
         <p
           className={`
             text-sm

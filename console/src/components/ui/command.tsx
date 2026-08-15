@@ -14,6 +14,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { cn } from '@/utils/tw';
 
 function Command({
@@ -25,7 +27,7 @@ function Command({
       data-slot='command'
       className={cn(
         `
-          flex size-full flex-col overflow-hidden rounded-md bg-popover
+          flex size-full flex-col overflow-hidden rounded-[2px] bg-popover
           text-popover-foreground
         `,
         className
@@ -36,8 +38,8 @@ function Command({
 }
 
 function CommandDialog({
-  title = 'Command Palette',
-  description = 'Search for a command to run...',
+  title,
+  description,
   children,
   className,
   showCloseButton = true,
@@ -48,11 +50,15 @@ function CommandDialog({
   className?: string;
   showCloseButton?: boolean;
 }) {
+  const { dict } = useLocale();
+
   return (
     <Dialog {...props}>
       <DialogHeader className='sr-only'>
-        <DialogTitle>{title}</DialogTitle>
-        <DialogDescription>{description}</DialogDescription>
+        <DialogTitle>{title ?? dict.common.commandPalette}</DialogTitle>
+        <DialogDescription>
+          {description ?? dict.common.commandPaletteDescription}
+        </DialogDescription>
       </DialogHeader>
       <DialogContent
         className={cn('overflow-hidden p-0', className)}
@@ -92,7 +98,7 @@ function CommandInput({
         data-slot='command-input'
         className={cn(
           `
-            flex h-10 w-full rounded-md bg-transparent py-3 text-sm
+            flex h-10 w-full rounded-[2px] bg-transparent py-3 text-sm
             outline-hidden
             placeholder:text-muted-foreground
             disabled:cursor-not-allowed disabled:opacity-50
@@ -177,8 +183,8 @@ function CommandItem({
       data-slot='command-item'
       className={cn(
         `
-          relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5
-          text-sm outline-hidden select-none
+          relative flex cursor-default items-center gap-2 rounded-[2px] px-2
+          py-1.5 text-sm outline-hidden select-none
           data-[disabled=true]:pointer-events-none
           data-[disabled=true]:opacity-50
           data-[selected=true]:bg-accent

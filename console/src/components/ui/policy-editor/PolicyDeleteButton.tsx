@@ -19,7 +19,8 @@ function PolicyDeleteButton({ policyId }: { policyId: string }) {
   const handleDelete = async () => {
     const confirmed = await irminConfirm(
       'warning',
-      dict.policy.deletePolicyDescription
+      dict.policy.deletePolicyDescription,
+      dict.policy.deletePolicy
     );
     if (confirmed) {
       deletePolicyMutation.mutate(policyId);
@@ -31,7 +32,7 @@ function PolicyDeleteButton({ policyId }: { policyId: string }) {
       variant='ghost'
       size='icon'
       onClick={handleDelete}
-      aria-label='Delete policy'
+      aria-label={dict.policy.deletePolicy}
     >
       <TbTrash className='size-4' />
     </Button>

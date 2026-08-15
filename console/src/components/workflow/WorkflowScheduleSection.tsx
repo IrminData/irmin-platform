@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 
-import { FaPause, FaPlay } from 'react-icons/fa6';
+import { TbPlayerPause, TbPlayerPlay } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import { ContentWrapper } from '@/components/ui/ContentWrapper';
@@ -54,7 +54,7 @@ const WorkflowScheduleSection = ({ workflowID }: { workflowID: string }) => {
           <Button
             size='sm'
             variant='secondary'
-            icon={<FaPlay size={14} />}
+            icon={<TbPlayerPlay size={14} />}
             onClick={handlePauseOrResume}
           >
             {dict.workflow.settings.resumeWorkflow}
@@ -63,7 +63,7 @@ const WorkflowScheduleSection = ({ workflowID }: { workflowID: string }) => {
           <Button
             size='sm'
             variant='secondary'
-            icon={<FaPause size={14} />}
+            icon={<TbPlayerPause size={14} />}
             onClick={handlePauseOrResume}
           >
             {dict.workflow.settings.pauseWorkflow}

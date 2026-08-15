@@ -60,7 +60,8 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
         if (data.owner !== workflowQuery.data?.data?.owner.id) {
           const confirmed = await irminConfirm(
             'warning',
-            `${dict.common.areYouSureYouWantToTransferOwnership} (${workflowQuery.data?.data?.name})`
+            `${dict.common.areYouSureYouWantToTransferOwnership} (${workflowQuery.data?.data?.name})`,
+            dict.users.transferOwnership
           );
           if (confirmed) {
             await transferWorkflowMutation.mutateAsync(data.owner);
@@ -89,7 +90,8 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
   const handleDeleteWorkflow = useCallback(async () => {
     const confirmed = await irminConfirm(
       'warning',
-      `${dict.common.areYouSureYouWantToDelete} (${workflowQuery.data?.data?.name})`
+      `${dict.common.areYouSureYouWantToDelete} (${workflowQuery.data?.data?.name})`,
+      dict.workflow.settings.delete
     );
     if (!confirmed) return;
     await deleteWorkflowMutation.mutateAsync(workflowID);
@@ -288,7 +290,7 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
         fieldConfiguration={fieldConfiguration}
         deleteItem={handleDeleteWorkflow}
         deleteItemLoading={deleteWorkflowMutation.isPending}
-        itemName='Workflow'
+        itemName={dict.workflow.workflow}
         submitButtonLabel={dict.workflow.settings.saveChanges}
         deleteButtonLabel={dict.workflow.settings.delete}
         dangerZoneMessage={dict.workflow.settings.deletionNote}
@@ -299,12 +301,7 @@ const WorkflowSettingsSection = ({ workflowID }: { workflowID: string }) => {
         additionalContentRight={
           <>
             {canViewTags && (
-              <div
-                className={`
-                  border-b border-gray-200 pb-4
-                  dark:border-gray-800
-                `}
-              >
+              <div className={`border-b border-border pb-4`}>
                 <WorkspaceTagSelector
                   selectedTags={selectedTags}
                   onTagsChange={handleUpdateTags}

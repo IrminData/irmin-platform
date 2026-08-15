@@ -204,33 +204,12 @@ export const hasFields = (schema: ObjectSchema | null): boolean => {
 export const getFileIcon = (fileType: string) => {
   switch (fileType) {
     case 'group':
-      return (
-        <TbFolder
-          className={`
-            size-5 text-yellow-500
-            dark:text-yellow-400
-          `}
-        />
-      );
+      return <TbFolder className={`size-5 text-warning`} />;
     case 'structured':
-      return (
-        <TbTable
-          className={`
-            size-5 text-blue-500
-            dark:text-blue-400
-          `}
-        />
-      );
+      return <TbTable className={`size-5 text-chart-2`} />;
     case 'binary':
     default:
-      return (
-        <TbFile
-          className={`
-            size-5 text-gray-500
-            dark:text-gray-400
-          `}
-        />
-      );
+      return <TbFile className={`size-5 text-muted-foreground`} />;
   }
 };
 

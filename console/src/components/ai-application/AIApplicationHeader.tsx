@@ -129,18 +129,13 @@ export default function AIApplicationHeader() {
         `}
       >
         <div className='flex flex-1 flex-col gap-2 py-4'>
-          <div
-            className={`
-              flex flex-row items-center divide-x divide-gray-300
-              dark:divide-gray-700
-            `}
-          >
+          <div className={`flex flex-row items-center divide-x divide-border`}>
             <div className='flex flex-row items-center gap-2 pr-2'>
-              <span className='text-sm text-gray-400'>
+              <span className='text-sm text-muted-foreground'>
                 {dict.aiApplication.aiApplication}
               </span>
             </div>
-            <span className='px-2 text-sm text-gray-400'>
+            <span className='px-2 text-sm text-muted-foreground'>
               {dict.common.owner}:{' '}
               {`${aiApplication.owner.first_name} ${aiApplication.owner.last_name}`}
               {aiApplication.owner.company
@@ -152,14 +147,16 @@ export default function AIApplicationHeader() {
           <DisplayTitle>{aiApplication.name}</DisplayTitle>
           <p
             className={`
-              max-w-lg text-xs text-gray-400
+              max-w-lg text-xs text-muted-foreground
               lg:text-sm
             `}
           >
             {aiApplication.description || dict.wizard.noDescription}
           </p>
           <div
-            className={`flex flex-wrap items-center gap-2 text-xs text-gray-500`}
+            className={`
+              flex flex-wrap items-center gap-2 text-xs text-muted-foreground
+            `}
           >
             <span>
               {aiApplication.data_sources?.length ?? 0}{' '}

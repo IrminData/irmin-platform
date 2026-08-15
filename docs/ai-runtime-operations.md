@@ -123,10 +123,12 @@ Application destructive operations always stage. Approval is an atomic state
 transition available only to authenticated workspace users; duplicate approval
 conflicts, and AI Application credentials cannot self-approve.
 
-The generic replay path for destructive tools on the user MCP endpoint is not
-part of this release. The AI runtime filters those descriptors out and the
-registry rejects any direct destructive call before its handler runs. Such
-tools remain unavailable until the authenticated staging/replay path ships.
+The user MCP endpoint stages destructive calls in `mcp_pending_operations`
+instead of invoking their handlers. The run protocol emits the opaque operation
+ID and descriptor approval preview; an authenticated workspace user can approve
+or reject it from the chat. Approval claims the operation once and replays the
+registered handler with an internal approval context. Machine and AI
+Application credentials cannot approve their own operations.
 
 ## Release order
 

@@ -13,6 +13,8 @@ import {
   CollapsibleTrigger,
 } from '@/components/ui/collapsible';
 
+import { useLocale } from '@/context/LocaleContext';
+
 import { cn } from '@/utils/tw';
 
 import { Response } from './response';
@@ -107,7 +109,7 @@ export const Reasoning = memo(
         <Collapsible
           className={cn(
             `
-              mb-4 w-full max-w-full overflow-hidden rounded-lg border
+              mb-4 w-full max-w-full overflow-hidden rounded-[2px] border
               bg-muted/30 p-3
             `,
             className
@@ -132,6 +134,14 @@ export type ReasoningTriggerProps = ComponentProps<
 export const ReasoningTrigger = memo(
   ({ className, children, ...props }: ReasoningTriggerProps) => {
     const { isStreaming, isOpen, duration } = useReasoning();
+    const { dict, locale } = useLocale();
+    const durationLabel =
+      duration === 1
+        ? dict.assistant.thoughtForOneSecond
+        : dict.assistant.thoughtForSeconds.replace(
+            '{duration}',
+            new Intl.NumberFormat(locale).format(duration)
+          );
 
     return (
       <CollapsibleTrigger
@@ -145,9 +155,9 @@ export const ReasoningTrigger = memo(
           <>
             <TbBrain className='size-4' />
             {isStreaming || duration === 0 ? (
-              <p>Thinking...</p>
+              <p>{dict.assistant.thinking}</p>
             ) : (
-              <p>Thought for {duration} seconds</p>
+              <p className='tabular-nums'>{durationLabel}</p>
             )}
             <TbChevronDown
               className={cn(

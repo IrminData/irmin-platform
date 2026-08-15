@@ -19,7 +19,7 @@ const LocaleContext = createContext<{
   switchLocale: (_newLocale: Locale) => void;
 }>({
   locale: defaultLocale,
-  dict: {} as Dictionary,
+  dict: dictionaries[defaultLocale],
   switchLocale: () => {},
 });
 

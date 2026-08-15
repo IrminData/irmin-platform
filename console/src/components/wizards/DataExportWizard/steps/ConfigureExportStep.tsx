@@ -21,7 +21,6 @@ import MultiplePathsSelector from '@/components/workflow/MultiplePathsSelector';
 import WorkflowScheduleForm from '@/components/workflow/WorkflowScheduleForm';
 
 import { useLocale } from '@/context/LocaleContext';
-import { usePopup } from '@/context/PopupContext';
 
 import type { SyncMode } from '@/types/core/Workflow';
 
@@ -44,12 +43,11 @@ export default function ConfigureExportStep({
   goNext: () => void;
 }) {
   const { dict } = useLocale();
-  const { irminAlert } = usePopup();
 
   const {
     handleSubmit,
     control,
-    formState: { errors: _errors, isSubmitting },
+    formState: { errors, isSubmitting },
   } = useForm({
     defaultValues: {
       name: wizardData.workflowData.name,
@@ -72,26 +70,6 @@ export default function ConfigureExportStep({
       export_from_repository_paths: string[];
       export_to_connection_path: string;
     }) => {
-      if (!data.name.trim()) {
-        irminAlert('error', dict.wizard.pleaseEnterWorkflowName);
-        return;
-      }
-
-      if (!data.repository_branch.trim()) {
-        irminAlert('error', dict.wizard.pleaseSelectRepositoryBranch);
-        return;
-      }
-
-      if (!data.export_from_repository_paths.length) {
-        irminAlert('error', dict.wizard.pleaseSelectRepositoryPaths);
-        return;
-      }
-
-      if (!data.export_to_connection_path.trim()) {
-        irminAlert('error', dict.wizard.pleaseSelectConnectionPath);
-        return;
-      }
-
       updateWizardData({
         workflowData: {
           ...wizardData.workflowData,
@@ -101,7 +79,7 @@ export default function ConfigureExportStep({
 
       goNext();
     },
-    [wizardData.workflowData, updateWizardData, goNext, irminAlert, dict]
+    [wizardData.workflowData, updateWizardData, goNext]
   );
 
   return (
@@ -126,13 +104,31 @@ export default function ConfigureExportStep({
           <Controller
             name='name'
             control={control}
-            rules={{ required: true }}
+            rules={{
+              validate: (value) =>
+                value.trim().length > 0 || dict.wizard.pleaseEnterWorkflowName,
+            }}
             render={({ field }) => (
-              <Input
-                {...field}
-                id='name'
-                placeholder={dict.wizard.workflowNamePlaceholder}
-              />
+              <>
+                <Input
+                  {...field}
+                  id='name'
+                  placeholder={dict.wizard.workflowNamePlaceholder}
+                  aria-invalid={Boolean(errors.name)}
+                  aria-describedby={
+                    errors.name ? 'export-workflow-name-error' : undefined
+                  }
+                />
+                {errors.name && (
+                  <p
+                    id='export-workflow-name-error'
+                    className='text-sm text-destructive'
+                    role='alert'
+                  >
+                    {errors.name.message}
+                  </p>
+                )}
+              </>
             )}
           />
         </div>
@@ -151,7 +147,6 @@ export default function ConfigureExportStep({
                 {...field}
                 id='description'
                 placeholder={dict.wizard.workflowDescriptionPlaceholder}
-                rows={3}
               />
             )}
           />
@@ -170,7 +165,6 @@ export default function ConfigureExportStep({
                 {...field}
                 id='documentation'
                 placeholder={dict.wizard.workflowDocumentationPlaceholder}
-                rows={4}
               />
             )}
           />
@@ -184,60 +178,138 @@ export default function ConfigureExportStep({
           <Controller
             name='repository_branch'
             control={control}
-            rules={{ required: true }}
+            rules={{
+              validate: (value) =>
+                value.trim().length > 0 ||
+                dict.wizard.pleaseSelectRepositoryBranch,
+            }}
             render={({ field }) => (
-              <Input
-                {...field}
-                id='repository_branch'
-                placeholder={dict.wizard.repositoryBranchPlaceholder}
-              />
+              <>
+                <Input
+                  {...field}
+                  id='repository_branch'
+                  placeholder={dict.wizard.repositoryBranchPlaceholder}
+                  aria-invalid={Boolean(errors.repository_branch)}
+                  aria-describedby={
+                    errors.repository_branch
+                      ? 'export-repository-branch-error'
+                      : undefined
+                  }
+                />
+                {errors.repository_branch && (
+                  <p
+                    id='export-repository-branch-error'
+                    className='text-sm text-destructive'
+                    role='alert'
+                  >
+                    {errors.repository_branch.message}
+                  </p>
+                )}
+              </>
             )}
           />
         </div>
 
         {/* Export From Repository Paths */}
         <div className='flex flex-col gap-2'>
-          <Label className='text-sm font-medium'>
+          <Label
+            id='export-repository-paths-label'
+            className='text-sm font-medium'
+          >
             {dict.wizard.exportFromRepositoryPaths} *
           </Label>
           <Controller
             name='export_from_repository_paths'
             control={control}
-            rules={{ required: true }}
+            rules={{
+              validate: (paths) =>
+                paths.some((path) => path.trim().length > 0) ||
+                dict.wizard.pleaseSelectRepositoryPaths,
+            }}
             render={({ field }) => (
-              <MultiplePathsSelector
-                label={dict.wizard.exportFromRepositoryPaths}
-                paths={field.value}
-                onPathsChange={field.onChange}
-                renderPathSelector={(path, onPathChange) => (
-                  <RepositoryPathSelector
-                    repositorySlug={wizardData.repository?.slug ?? ''}
-                    repositoryRef={wizardData.workflowData.repository_branch}
-                    defaultPath={path}
-                    onPathChange={onPathChange}
-                  />
+              <div
+                role='group'
+                aria-labelledby='export-repository-paths-label'
+                aria-describedby={
+                  errors.export_from_repository_paths
+                    ? 'export-repository-paths-error'
+                    : undefined
+                }
+              >
+                <MultiplePathsSelector
+                  label={dict.wizard.exportFromRepositoryPaths}
+                  paths={field.value}
+                  onPathsChange={field.onChange}
+                  renderPathSelector={(path, onPathChange) => (
+                    <RepositoryPathSelector
+                      repositorySlug={wizardData.repository?.slug ?? ''}
+                      repositoryRef={wizardData.workflowData.repository_branch}
+                      defaultPath={path}
+                      onPathChange={onPathChange}
+                      ariaInvalid={Boolean(errors.export_from_repository_paths)}
+                      ariaDescribedBy={
+                        errors.export_from_repository_paths
+                          ? 'export-repository-paths-error'
+                          : undefined
+                      }
+                    />
+                  )}
+                />
+                {errors.export_from_repository_paths && (
+                  <p
+                    id='export-repository-paths-error'
+                    className='text-sm text-destructive'
+                    role='alert'
+                  >
+                    {errors.export_from_repository_paths.message}
+                  </p>
                 )}
-              />
+              </div>
             )}
           />
         </div>
 
         {/* Export To Connection Path */}
         <div className='flex flex-col gap-2'>
-          <Label className='text-sm font-medium'>
+          <Label
+            htmlFor='export-connection-path'
+            className='text-sm font-medium'
+          >
             {dict.wizard.exportToConnectionPath} *
           </Label>
           <Controller
             name='export_to_connection_path'
             control={control}
-            rules={{ required: true }}
+            rules={{
+              validate: (value) =>
+                value.trim().length > 0 ||
+                dict.wizard.pleaseSelectConnectionPath,
+            }}
             render={({ field }) => (
-              <ConnectionPathSelector
-                connectionId={wizardData.connection?.id ?? ''}
-                defaultPath={field.value}
-                operationMethod={'push'}
-                onPathChange={field.onChange}
-              />
+              <>
+                <ConnectionPathSelector
+                  connectionId={wizardData.connection?.id ?? ''}
+                  defaultPath={field.value}
+                  operationMethod={'push'}
+                  onPathChange={field.onChange}
+                  inputId='export-connection-path'
+                  ariaInvalid={Boolean(errors.export_to_connection_path)}
+                  ariaDescribedBy={
+                    errors.export_to_connection_path
+                      ? 'export-connection-path-error'
+                      : undefined
+                  }
+                />
+                {errors.export_to_connection_path && (
+                  <p
+                    id='export-connection-path-error'
+                    className='text-sm text-destructive'
+                    role='alert'
+                  >
+                    {errors.export_to_connection_path.message}
+                  </p>
+                )}
+              </>
             )}
           />
         </div>
@@ -247,16 +319,10 @@ export default function ConfigureExportStep({
           <h4 className='font-medium'>{dict.workflow.syncMode}</h4>
           <div
             className={`
-              rounded-md border border-blue-200 bg-blue-50 p-4
-              dark:border-blue-800 dark:bg-blue-950
+              rounded-[2px] border border-chart-2/30 bg-chart-2/10 p-4
             `}
           >
-            <p
-              className={`
-                text-sm text-blue-800
-                dark:text-blue-200
-              `}
-            >
+            <p className={`text-sm text-foreground`}>
               {dict.workflow.syncModeExportExplanation}
             </p>
           </div>
@@ -295,7 +361,7 @@ export default function ConfigureExportStep({
         </div>
 
         {/* Schedule Configuration */}
-        <div className='rounded-md border border-foreground/20 px-2 py-4'>
+        <div className='rounded-[2px] border border-border px-2 py-4'>
           <WorkflowScheduleForm
             initialData={wizardData.workflowData.schedule}
             disableSaveButton={true}

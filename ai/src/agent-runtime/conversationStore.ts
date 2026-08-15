@@ -72,18 +72,16 @@ export class ConversationStore {
   }
 
   async delete(conversationId: string): Promise<void> {
-    // Ensure LangGraph's tables exist even when a newly created conversation
-    // is deleted before its first model run.
     await agentService.configurePostgresSaver();
     await db.transaction(async (transaction) => {
       await transaction.execute(
-        sql`DELETE FROM checkpoint_blobs WHERE thread_id = ${conversationId}`
+        sql`DELETE FROM checkpoint_writes WHERE thread_id = ${conversationId}`
       );
       await transaction.execute(
         sql`DELETE FROM checkpoints WHERE thread_id = ${conversationId}`
       );
       await transaction.execute(
-        sql`DELETE FROM checkpoint_writes WHERE thread_id = ${conversationId}`
+        sql`DELETE FROM checkpoint_blobs WHERE thread_id = ${conversationId}`
       );
       await transaction
         .delete(conversations)

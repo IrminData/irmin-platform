@@ -79,8 +79,8 @@ describe('tools service canonical catalog', () => {
     });
     assert.equal(
       tools.some((tool) => tool.name === destructiveTool.name),
-      false,
-      'destructive tools must remain unavailable until approval replay exists'
+      true,
+      'destructive tools must remain available through staged approval'
     );
   });
 });

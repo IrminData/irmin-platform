@@ -361,7 +361,7 @@ const AIApplicationCustomToolsEditor = () => {
                         size='icon'
                         className='size-8'
                         onClick={() => handleOpenDialog(tool)}
-                        aria-label='Edit tool code'
+                        aria-label={`${dict.common.edit} ${tool.name}`}
                       >
                         <TbCode size={14} />
                       </Button>
@@ -374,7 +374,10 @@ const AIApplicationCustomToolsEditor = () => {
                         `}
                         onClick={() => handleDeleteTool(tool.id!)}
                         disabled={updateAIApplicationMutation.isPending}
-                        aria-label='Delete tool'
+                        aria-label={dict.common.deleteNamed.replace(
+                          '{item}',
+                          tool.name
+                        )}
                       >
                         <TbTrash size={14} />
                       </Button>
@@ -430,7 +433,6 @@ const AIApplicationCustomToolsEditor = () => {
                   setFormData({ ...formData, description: e.target.value })
                 }
                 placeholder='List all users in the system'
-                rows={2}
               />
               <p className='text-xs text-muted-foreground'>
                 {dict.aiApplication.toolDescriptionHint}
@@ -605,7 +607,6 @@ const AIApplicationCustomToolsEditor = () => {
                       });
                     }}
                     placeholder='category=documentation&#10;type=guide'
-                    rows={3}
                   />
                   <p className='text-xs text-muted-foreground'>
                     {dict.aiApplication.embeddingFilterHint}
@@ -634,6 +635,7 @@ const AIApplicationCustomToolsEditor = () => {
               {dict.common.cancel}
             </Button>
             <Button
+              variant='accent'
               onClick={handleSaveTool}
               disabled={!isFormValid() || updateAIApplicationMutation.isPending}
               className='px-8'

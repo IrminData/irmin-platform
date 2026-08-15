@@ -4,13 +4,21 @@ import { useCallback, useMemo, useState } from 'react';
 
 import Link from 'next/link';
 
-import { BsFilePdf, BsLayers, BsPerson, BsSearch } from 'react-icons/bs';
-import { GoWorkflow } from 'react-icons/go';
-import { TbClipboardX, TbDatabase, TbSparkles } from 'react-icons/tb';
+import {
+  TbClipboardX,
+  TbDatabase,
+  TbFileTypePdf,
+  TbPlugConnected,
+  TbSearch,
+  TbSparkles,
+  TbStack2,
+  TbUser,
+} from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import DisplayTitle from '@/components/ui/display-title';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { QueryError } from '@/components/ui/error/QueryError';
 import { Input } from '@/components/ui/input';
@@ -335,6 +343,7 @@ export default function DocumentationSchemaSection() {
         workspace: { name: workspace.name, slug: workspace.slug },
         profile: profile ?? null,
         locale: locale ?? 'en',
+        dict,
         workflows,
         connections,
         repositories,
@@ -351,6 +360,7 @@ export default function DocumentationSchemaSection() {
     workspaceSlug,
     profile,
     locale,
+    dict,
     workflows,
     connections,
     repositories,
@@ -442,12 +452,10 @@ export default function DocumentationSchemaSection() {
         <div className='container mx-auto max-w-6xl px-4 py-12'>
           <div className='space-y-6'>
             <div className='flex items-center gap-3'>
-              <div className='rounded-lg bg-muted p-2'>
-                <BsLayers className='size-6 text-muted-foreground' />
+              <div className='rounded-[2px] bg-muted p-2'>
+                <TbStack2 className='size-6 text-muted-foreground' />
               </div>
-              <h1 className='text-3xl font-semibold text-foreground capitalize'>
-                {dict.catalog.schemaTitle}
-              </h1>
+              <DisplayTitle>{dict.catalog.schemaTitle}</DisplayTitle>
             </div>
             <EmptyState
               icon={<TbClipboardX className='size-full' />}
@@ -466,10 +474,10 @@ export default function DocumentationSchemaSection() {
       <div className='container mx-auto max-w-6xl px-4 py-12'>
         <div className='mb-10 flex flex-col gap-6'>
           <div className='flex items-center gap-3'>
-            <div className='rounded-lg bg-muted p-2'>
-              <BsLayers className='size-6 text-muted-foreground' />
+            <div className='rounded-[2px] bg-muted p-2'>
+              <TbStack2 className='size-6 text-muted-foreground' />
             </div>
-            <h1 className='text-3xl'>{dict.catalog.schemaTitle}</h1>
+            <DisplayTitle>{dict.catalog.schemaTitle}</DisplayTitle>
           </div>
           <p className='max-w-3xl text-sm text-muted-foreground'>
             {dict.catalog.schemaIntro}
@@ -481,7 +489,7 @@ export default function DocumentationSchemaSection() {
                 sm:w-80
               `}
             >
-              <BsSearch
+              <TbSearch
                 className={`
                   pointer-events-none absolute top-1/2 left-3 size-4
                   -translate-y-1/2 text-muted-foreground
@@ -496,7 +504,7 @@ export default function DocumentationSchemaSection() {
             </div>
             <Button
               variant='default'
-              icon={<BsFilePdf size={18} />}
+              icon={<TbFileTypePdf size={18} />}
               onClick={handleDownloadPDF}
             >
               {dict.catalog.downloadPdf}
@@ -554,7 +562,7 @@ export default function DocumentationSchemaSection() {
                               text-muted-foreground
                             `}
                           >
-                            <BsPerson className='size-3' />
+                            <TbUser className='size-3' />
                             {owner}
                           </p>
                         )}
@@ -571,7 +579,7 @@ export default function DocumentationSchemaSection() {
                                 <Link
                                   href={node.href}
                                   className={`
-                                    rounded-md border px-3 py-1 text-sm
+                                    rounded-[2px] border px-3 py-1 text-sm
                                     transition-colors
                                     hover:bg-muted
                                   `}
@@ -590,7 +598,7 @@ export default function DocumentationSchemaSection() {
                               ) : (
                                 <span
                                   className={`
-                                    rounded-md border px-3 py-1 text-sm
+                                    rounded-[2px] border px-3 py-1 text-sm
                                   `}
                                 >
                                   {node.label}
@@ -671,7 +679,7 @@ export default function DocumentationSchemaSection() {
                                 text-muted-foreground
                               `}
                             >
-                              <BsPerson aria-hidden='true' className='size-3' />
+                              <TbUser aria-hidden='true' className='size-3' />
                               {owner}
                             </p>
                           )}
@@ -690,7 +698,7 @@ export default function DocumentationSchemaSection() {
                             >
                               {path.repositoryNodes.map((node, index) => {
                                 const nodeClass = `
-                                  rounded-md border px-3 py-1 text-sm
+                                  rounded-[2px] border px-3 py-1 text-sm
                                   transition-[background-color] duration-150
                                   hover:bg-muted
                                 `;
@@ -726,10 +734,10 @@ export default function DocumentationSchemaSection() {
                                   <Link
                                     href={path.applicationNode.href}
                                     className={`
-                                      rounded-md border border-accent/40 px-3
-                                      py-1 text-sm text-accent
+                                      rounded-[2px] border border-accent/40 px-3
+                                      py-1 text-sm text-foreground
                                       transition-[background-color,color]
-                                      duration-150
+                                      duration-150 ease-out
                                       hover:bg-accent/10
                                     `}
                                   >
@@ -738,8 +746,8 @@ export default function DocumentationSchemaSection() {
                                 ) : (
                                   <span
                                     className={`
-                                      rounded-md border border-accent/40 px-3
-                                      py-1 text-sm text-accent
+                                      rounded-[2px] border border-accent/40 px-3
+                                      py-1 text-sm text-foreground
                                     `}
                                   >
                                     {path.applicationNode.label}
@@ -860,7 +868,7 @@ export default function DocumentationSchemaSection() {
               <Card>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2 text-lg'>
-                    <GoWorkflow className='size-5 text-muted-foreground' />
+                    <TbPlugConnected className='size-5 text-muted-foreground' />
                     {dict.connections.connections}
                   </CardTitle>
                 </CardHeader>

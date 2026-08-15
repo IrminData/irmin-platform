@@ -19,7 +19,7 @@ function PageSkeleton({
     <div className={className}>
       {showHeader && (
         <div className='mb-6'>
-          <LoadingSkeleton className='mb-4 h-8 w-1/3 max-w-sm rounded-md' />
+          <LoadingSkeleton className='mb-4 h-8 w-1/3 max-w-sm rounded-[2px]' />
           <LoadingSkeleton className='h-4 w-2/3 max-w-md' />
         </div>
       )}
@@ -33,11 +33,11 @@ function PageSkeleton({
         {showSidebar && (
           <div className='w-80 shrink-0'>
             <div className='flex flex-col gap-3'>
-              <LoadingSkeleton className='h-10 w-full rounded-md' />
+              <LoadingSkeleton className='h-10 w-full rounded-[2px]' />
               {Array.from({ length: 5 }).map((_, i) => (
                 <LoadingSkeleton
                   key={`side-${i}`}
-                  className='h-16 w-full rounded-md'
+                  className='h-16 w-full rounded-[2px]'
                 />
               ))}
             </div>
@@ -49,7 +49,7 @@ function PageSkeleton({
             {Array.from({ length: contentRows }).map((_, i) => (
               <div key={`content-${i}`} className='flex flex-col gap-2'>
                 <LoadingSkeleton className='h-6 w-1/4' />
-                <LoadingSkeleton className='h-20 w-full rounded-md' />
+                <LoadingSkeleton className='h-20 w-full rounded-[2px]' />
               </div>
             ))}
           </div>

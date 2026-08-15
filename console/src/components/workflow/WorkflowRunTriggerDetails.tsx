@@ -160,7 +160,7 @@ export default function WorkflowRunTriggerDetails({
             type: 'unknown',
             icon: <TbRun className='size-4' />,
             title: dict.workflow.schedule.unknownTrigger,
-            description: 'Trigger type not recognized',
+            description: dict.workflow.schedule.unknownTriggerDescription,
             details: null,
           };
       }
@@ -170,7 +170,7 @@ export default function WorkflowRunTriggerDetails({
       type: 'unknown',
       icon: <TbRun className='size-4' />,
       title: dict.workflow.schedule.noTriggerInformation,
-      description: 'No trigger information available',
+      description: dict.workflow.schedule.noTriggerInformationDescription,
       details: null,
     };
   };
@@ -182,7 +182,7 @@ export default function WorkflowRunTriggerDetails({
       <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
         <CollapsibleTrigger
           className={`
-            flex w-full items-center justify-between rounded-md border
+            flex w-full items-center justify-between rounded-[2px] border
             border-border bg-card p-3 text-left
           `}
         >
@@ -210,7 +210,7 @@ export default function WorkflowRunTriggerDetails({
 
         {triggerInfo.details || triggeredBy ? (
           <CollapsibleContent className='space-y-3'>
-            <div className='rounded-md border border-border bg-muted/30 p-3'>
+            <div className='rounded-[2px] border border-border bg-muted/30 p-3'>
               {triggerInfo.details}
 
               {triggeredBy && (
@@ -220,7 +220,7 @@ export default function WorkflowRunTriggerDetails({
                   </p>
                   <div
                     className={`
-                      rounded-md border border-border bg-background p-2
+                      rounded-[2px] border border-border bg-background p-2
                     `}
                   >
                     <JSONViewer

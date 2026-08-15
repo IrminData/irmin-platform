@@ -24,11 +24,6 @@ const (
 	defaultTimeout            = 30 * time.Second
 )
 
-// ErrApprovalRequired is returned when model credentials attempt a destructive
-// operation. Destructive handlers are only executable by the authenticated
-// pending-operation approval path.
-var ErrApprovalRequired = errors.New("destructive tool requires authenticated approval")
-
 type Risk string
 
 const (
@@ -111,7 +106,57 @@ func OutputFromResult(result *sdkmcp.CallToolResult) ToolOutput {
 	return ToolOutput{Data: data}
 }
 
-type Handler func(context.Context, *sdkmcp.CallToolRequest, json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
+type Handler func(
+	context.Context,
+	*sdkmcp.CallToolRequest,
+	json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
+
+type ApprovalStager func(
+	context.Context,
+	Descriptor,
+	*sdkmcp.CallToolRequest,
+	json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
+
+var ErrApprovalRequired = errors.New("destructive tool requires authenticated approval")
+
+type approvalKey struct{}
+
+// WithApproval marks an approval replay after the operation was atomically claimed.
+func WithApproval(ctx context.Context) context.Context {
+	return context.WithValue(ctx, approvalKey{}, true)
+}
+
+type workspaceBindingKey struct{}
+
+// WithWorkspaceBinding binds a user-token MCP session to the selected workspace.
+func WithWorkspaceBinding(ctx context.Context, workspaceSlug string) context.Context {
+	return context.WithValue(ctx, workspaceBindingKey{}, workspaceSlug)
+}
+
+func validateWorkspaceBinding(ctx context.Context, arguments json.RawMessage) error {
+	bound, _ := ctx.Value(workspaceBindingKey{}).(string)
+	if bound == "" || len(arguments) == 0 {
+		return nil
+	}
+	var input map[string]json.RawMessage
+	if err := json.Unmarshal(arguments, &input); err != nil {
+		return err
+	}
+	raw, hasWorkspace := input["workspace_slug"]
+	if !hasWorkspace {
+		return nil
+	}
+	var requested string
+	if err := json.Unmarshal(raw, &requested); err != nil {
+		return errors.New("workspace_slug must be a string")
+	}
+	if requested != bound {
+		return errors.New("tool workspace does not match the authenticated agent workspace")
+	}
+	return nil
+}
 
 type Descriptor struct {
 	Name            string             `json:"name"`
@@ -133,15 +178,15 @@ type Descriptor struct {
 type Registry struct {
 	mu          sync.RWMutex
 	descriptors map[string]Descriptor
+	stager      ApprovalStager
 }
 
-// published is the process-wide handler-free catalog used by prompt and API adapters.
-//
-//nolint:gochecknoglobals // Registrations happen across independently constructed MCP servers.
-var published sync.Map
-
-func New() *Registry {
-	return &Registry{descriptors: make(map[string]Descriptor)}
+func New(stager ...ApprovalStager) *Registry {
+	registry := &Registry{descriptors: make(map[string]Descriptor)}
+	if len(stager) > 0 {
+		registry.stager = stager[0]
+	}
+	return registry
 }
 
 func (r *Registry) Add(descriptor Descriptor) error {
@@ -154,20 +199,7 @@ func (r *Registry) Add(descriptor Descriptor) error {
 		return fmt.Errorf("tool %q already registered", descriptor.Name)
 	}
 	r.descriptors[descriptor.Name] = descriptor
-	contract := descriptor
-	contract.Handler = nil
-	published.Store(descriptor.Name, contract)
 	return nil
-}
-
-// Published returns the latest handler-free contract registered for a canonical name.
-func Published(name string) (Descriptor, bool) {
-	value, ok := published.Load(name)
-	if !ok {
-		return Descriptor{}, false
-	}
-	descriptor, ok := value.(Descriptor)
-	return descriptor, ok
 }
 
 func (r *Registry) List() []Descriptor {
@@ -202,16 +234,22 @@ func (r *Registry) Execute(
 	if err := ctx.Err(); err != nil {
 		return nil, ToolOutput{}, err
 	}
-	if descriptor.Risk == RiskDestructive {
-		return nil, ToolOutput{}, ErrApprovalRequired
+	if err := validateWorkspaceBinding(ctx, arguments); err != nil {
+		return nil, ToolOutput{}, err
 	}
-	timeout := time.Duration(descriptor.Cancellation.TimeoutMS) * time.Millisecond
-	if timeout <= 0 {
-		timeout = defaultTimeout
+	if descriptor.Cancellation.TimeoutMS > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(descriptor.Cancellation.TimeoutMS)*time.Millisecond)
+		defer cancel()
 	}
-	executionContext, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	return descriptor.Handler(executionContext, request, arguments)
+	approved, _ := ctx.Value(approvalKey{}).(bool)
+	if descriptor.Risk == RiskDestructive && !approved {
+		if r.stager == nil {
+			return nil, ToolOutput{}, ErrApprovalRequired
+		}
+		return r.stager(ctx, descriptor, request, arguments)
+	}
+	return descriptor.Handler(ctx, request, arguments)
 }
 
 var validName = regexp.MustCompile(`^irmin_[a-z0-9]+(?:_[a-z0-9]+)+$`)
@@ -242,6 +280,31 @@ func ValidateDescriptor(descriptor Descriptor) error {
 	return nil
 }
 
+// Describe returns the canonical policy metadata shared by registration, prompts, and audit adapters.
+func Describe(name, description string) Descriptor {
+	domain, action := splitName(name)
+	risk := inferRisk(action)
+	if description == "" {
+		description = strings.ReplaceAll(strings.TrimPrefix(name, "irmin_"), "_", " ")
+	}
+	return Descriptor{
+		Name:            name,
+		CatalogVersion:  CatalogVersion,
+		Domain:          domain,
+		Action:          action,
+		Description:     description,
+		Summary:         description,
+		ApprovalPreview: fmt.Sprintf("%s %s", action, strings.ReplaceAll(domain, "_", " ")),
+		Risk:            risk,
+		Capability:      inferCapability(domain, action, risk),
+		Cancellation: CancellationPolicy{
+			Cancellable: true,
+			TimeoutMS:   inferTimeout(action).Milliseconds(),
+		},
+		AuditRedaction: AuditRedactionFor(name),
+	}
+}
+
 // Register binds one typed handler to both the MCP SDK and the canonical registry.
 func Register[In any](
 	registry *Registry,
@@ -260,38 +323,21 @@ func Register[In any](
 		panic(fmt.Sprintf("derive output schema for %s: %v", name, err))
 	}
 	outputSchema.AdditionalProperties = &jsonschema.Schema{Not: &jsonschema.Schema{}}
-	domain, action := splitName(name)
-	risk := inferRisk(action)
-	descriptor := Descriptor{
-		Name:            name,
-		CatalogVersion:  CatalogVersion,
-		Domain:          domain,
-		Action:          action,
-		Description:     description,
-		Summary:         description,
-		ApprovalPreview: fmt.Sprintf("%s %s", action, strings.ReplaceAll(domain, "_", " ")),
-		Risk:            risk,
-		Capability:      inferCapability(domain, action, risk),
-		InputSchema:     inputSchema,
-		OutputSchema:    outputSchema,
-		Cancellation: CancellationPolicy{
-			Cancellable: true,
-			TimeoutMS:   inferTimeout(action).Milliseconds(),
-		},
-		AuditRedaction: AuditRedactionFor(name),
-		Handler: func(ctx context.Context, request *sdkmcp.CallToolRequest, raw json.RawMessage) (
-			*sdkmcp.CallToolResult,
-			ToolOutput,
-			error,
-		) {
-			var input In
-			if len(raw) > 0 {
-				if unmarshalErr := json.Unmarshal(raw, &input); unmarshalErr != nil {
-					return nil, ToolOutput{}, fmt.Errorf("decode %s input: %w", name, unmarshalErr)
-				}
+	descriptor := Describe(name, description)
+	descriptor.InputSchema = inputSchema
+	descriptor.OutputSchema = outputSchema
+	descriptor.Handler = func(ctx context.Context, request *sdkmcp.CallToolRequest, raw json.RawMessage) (
+		*sdkmcp.CallToolResult,
+		ToolOutput,
+		error,
+	) {
+		var input In
+		if len(raw) > 0 {
+			if unmarshalErr := json.Unmarshal(raw, &input); unmarshalErr != nil {
+				return nil, ToolOutput{}, fmt.Errorf("decode %s input: %w", name, unmarshalErr)
 			}
-			return handler(ctx, request, input)
-		},
+		}
+		return handler(ctx, request, input)
 	}
 	if addErr := registry.Add(descriptor); addErr != nil {
 		panic(addErr)
@@ -301,11 +347,7 @@ func Register[In any](
 		Description:  description,
 		InputSchema:  inputSchema,
 		OutputSchema: outputSchema,
-	}, func(ctx context.Context, request *sdkmcp.CallToolRequest, input In) (
-		*sdkmcp.CallToolResult,
-		ToolOutput,
-		error,
-	) {
+	}, func(ctx context.Context, request *sdkmcp.CallToolRequest, input In) (*sdkmcp.CallToolResult, ToolOutput, error) {
 		raw, marshalErr := json.Marshal(input)
 		if marshalErr != nil {
 			return nil, ToolOutput{}, fmt.Errorf("encode %s input: %w", name, marshalErr)
@@ -353,10 +395,11 @@ func splitName(name string) (string, string) {
 func inferRisk(action string) Risk {
 	switch {
 	case strings.Contains(action, "cancel"), strings.Contains(action, "delete"),
-		strings.Contains(action, "merge"), strings.Contains(action, "revert"):
+		strings.Contains(action, "merge"), strings.Contains(action, "move_or_copy"),
+		strings.Contains(action, "revert"):
 		return RiskDestructive
 	case strings.Contains(action, "create"), strings.Contains(action, "execute"),
-		strings.Contains(action, "move_or_copy"), strings.Contains(action, "patch"),
+		strings.Contains(action, "patch"),
 		strings.Contains(action, "save"), strings.Contains(action, "update"),
 		strings.Contains(action, "upload"), strings.Contains(action, "write"):
 		return RiskWrite

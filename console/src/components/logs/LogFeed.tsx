@@ -106,7 +106,7 @@ const LogFeed = ({
         title={copied ? dict.common.copied : dict.common.copy}
         icon={
           copied ? (
-            <TbCheck size={12} className='text-green-400' />
+            <TbCheck size={12} className='text-success' />
           ) : (
             <TbCopy size={12} />
           )

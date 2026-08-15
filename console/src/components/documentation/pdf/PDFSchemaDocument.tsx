@@ -2,12 +2,14 @@
 
 import { Document, Link, Page, Text, View } from '@react-pdf/renderer';
 
+import type { Dictionary } from '@/lib/dict';
+
 import type { AIApplication } from '@/types/core/AIApplication';
 import type { Connection } from '@/types/core/Connection';
 import type { Repository } from '@/types/core/Repository';
 import type { Workflow } from '@/types/core/Workflow';
 
-import { ownerText } from './helpers';
+import { formatPDFCount, ownerText, workflowTypeText } from './helpers';
 import { styles } from './styles';
 
 /** Props for the data flows PDF document. */
@@ -20,6 +22,7 @@ export interface SchemaPDFProps {
     company?: string;
   } | null;
   locale: string;
+  dict: Dictionary;
   workflows: Workflow[];
   connections: Connection[];
   repositories: Repository[];
@@ -34,6 +37,7 @@ export default function PDFSchemaDocument({
   workspace,
   profile,
   locale,
+  dict,
   workflows,
   connections,
   repositories,
@@ -79,10 +83,10 @@ export default function PDFSchemaDocument({
       <Page size='A4' style={styles.page}>
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.logoText}>IRMIN</Text>
+          <Text style={styles.logoText}>Irmin</Text>
           {profile && (
             <Text style={styles.headerMeta}>
-              Created by: {ownerText(profile)}
+              {dict.catalog.createdBy}: {ownerText(profile)}
             </Text>
           )}
           <Text style={styles.headerMeta}>
@@ -91,9 +95,9 @@ export default function PDFSchemaDocument({
         </View>
 
         {/* Data Flows */}
-        <Text style={styles.sectionTitle}>Data flows</Text>
+        <Text style={styles.sectionTitle}>{dict.catalog.dataFlowsTitle}</Text>
         <Text style={styles.sectionDescription}>
-          How connections, workflows, and repositories relate to each other.
+          {dict.catalog.schemaIntro}
         </Text>
 
         {workflowPaths.map(
@@ -109,19 +113,19 @@ export default function PDFSchemaDocument({
                 <Text style={styles.cardDescription}>{wf.description}</Text>
               )}
               <View style={styles.fieldRow}>
-                <Text style={styles.fieldLabel}>Type</Text>
+                <Text style={styles.fieldLabel}>
+                  {dict.catalog.pdfTypeLabel}
+                </Text>
                 <Text style={styles.fieldValue}>
-                  {wf.type
-                    ? wf.type.charAt(0).toUpperCase() + wf.type.slice(1)
-                    : ''}
+                  {workflowTypeText(wf.type, dict)}
                 </Text>
               </View>
               <View style={styles.fieldRow}>
-                <Text style={styles.fieldLabel}>Status</Text>
+                <Text style={styles.fieldLabel}>{dict.list.status}</Text>
                 <Text style={styles.fieldValue}>{wf.status ?? ''}</Text>
               </View>
               <View style={styles.fieldRow}>
-                <Text style={styles.fieldLabel}>Owner</Text>
+                <Text style={styles.fieldLabel}>{dict.common.owner}</Text>
                 <Text style={styles.fieldValue}>{ownerText(wf.owner)}</Text>
               </View>
               {/* Flow chain — direction depends on workflow type */}
@@ -141,7 +145,7 @@ export default function PDFSchemaDocument({
                         <Text style={styles.flowNode}>{conn.name}</Text>
                         <Text style={styles.flowArrow}>{'\u2192'}</Text>
                         <Text style={styles.flowNode}>
-                          {conn.connector?.name ?? 'Connector'}
+                          {conn.connector?.name ?? dict.connectors.connector}
                         </Text>
                       </>
                     )}
@@ -151,7 +155,7 @@ export default function PDFSchemaDocument({
                     {conn && (
                       <>
                         <Text style={styles.flowNode}>
-                          {conn.connector?.name ?? 'Connector'}
+                          {conn.connector?.name ?? dict.connectors.connector}
                         </Text>
                         <Text style={styles.flowArrow}>{'\u2192'}</Text>
                         <Text style={styles.flowNode}>{conn.name}</Text>
@@ -176,10 +180,10 @@ export default function PDFSchemaDocument({
         {aiApplications.length > 0 && (
           <View>
             <Text style={[styles.sectionTitle, { marginTop: 24 }]}>
-              AI Application flows
+              {dict.catalog.aiApplicationFlowsTitle}
             </Text>
             <Text style={styles.sectionDescription}>
-              Which AI Applications read from which repositories.
+              {dict.catalog.pdfAiApplicationFlowsDescription}
             </Text>
             {aiApplications.map((app) => {
               const slugs = Array.from(
@@ -200,20 +204,26 @@ export default function PDFSchemaDocument({
                     </Text>
                   )}
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Access</Text>
+                    <Text style={styles.fieldLabel}>
+                      {dict.catalog.pdfAccessLabel}
+                    </Text>
                     <Text style={styles.fieldValue}>
-                      {writeEnabled ? 'Read/Write' : 'Read only'}
+                      {writeEnabled
+                        ? dict.catalog.aiApplicationWriteEnabled
+                        : dict.catalog.aiApplicationReadOnly}
                     </Text>
                   </View>
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Owner</Text>
+                    <Text style={styles.fieldLabel}>{dict.common.owner}</Text>
                     <Text style={styles.fieldValue}>
                       {ownerText(app.owner)}
                     </Text>
                   </View>
                   <View style={[styles.flowChain, { marginTop: 8 }]}>
                     {slugs.length === 0 ? (
-                      <Text style={styles.flowNode}>No data sources</Text>
+                      <Text style={styles.flowNode}>
+                        {dict.catalog.aiApplicationNoDataSources}
+                      </Text>
                     ) : (
                       <>
                         {slugs.map((slug, idx) => {
@@ -245,13 +255,15 @@ export default function PDFSchemaDocument({
 
         {/* Component Directory */}
         <Text style={[styles.sectionTitle, { marginTop: 32 }]}>
-          Component directory
+          {dict.catalog.componentDirectoryTitle}
         </Text>
 
         {/* Repositories */}
         {repositories.length > 0 && (
           <View>
-            <Text style={styles.groupTitle}>Repositories</Text>
+            <Text style={styles.groupTitle}>
+              {dict.repository.repositories}
+            </Text>
             {repositories.map((repo) => (
               <View key={repo.id} style={styles.card} wrap={false}>
                 <Link
@@ -264,13 +276,20 @@ export default function PDFSchemaDocument({
                   <Text style={styles.cardDescription}>{repo.description}</Text>
                 )}
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Owner</Text>
+                  <Text style={styles.fieldLabel}>{dict.common.owner}</Text>
                   <Text style={styles.fieldValue}>{ownerText(repo.owner)}</Text>
                 </View>
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Used by</Text>
+                  <Text style={styles.fieldLabel}>
+                    {dict.catalog.referencedBy}
+                  </Text>
                   <Text style={styles.fieldValue}>
-                    {repoUsage.get(repo.slug) ?? 0} workflows
+                    {formatPDFCount(
+                      repoUsage.get(repo.slug) ?? 0,
+                      locale,
+                      dict.catalog.pdfWorkflowCountOne,
+                      dict.catalog.pdfWorkflowCountOther
+                    )}
                   </Text>
                 </View>
               </View>
@@ -281,7 +300,9 @@ export default function PDFSchemaDocument({
         {/* Connections */}
         {connections.length > 0 && (
           <View>
-            <Text style={styles.groupTitle}>Connections</Text>
+            <Text style={styles.groupTitle}>
+              {dict.connections.connections}
+            </Text>
             {connections.map((conn) => (
               <View key={conn.id} style={styles.card} wrap={false}>
                 <Link
@@ -294,19 +315,28 @@ export default function PDFSchemaDocument({
                   <Text style={styles.cardDescription}>{conn.description}</Text>
                 )}
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Connector</Text>
+                  <Text style={styles.fieldLabel}>
+                    {dict.connectors.connector}
+                  </Text>
                   <Text style={styles.fieldValue}>
                     {conn.connector?.name ?? ''}
                   </Text>
                 </View>
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Owner</Text>
+                  <Text style={styles.fieldLabel}>{dict.common.owner}</Text>
                   <Text style={styles.fieldValue}>{ownerText(conn.owner)}</Text>
                 </View>
                 <View style={styles.fieldRow}>
-                  <Text style={styles.fieldLabel}>Used by</Text>
+                  <Text style={styles.fieldLabel}>
+                    {dict.catalog.referencedBy}
+                  </Text>
                   <Text style={styles.fieldValue}>
-                    {connectionUsage.get(conn.id) ?? 0} workflows
+                    {formatPDFCount(
+                      connectionUsage.get(conn.id) ?? 0,
+                      locale,
+                      dict.catalog.pdfWorkflowCountOne,
+                      dict.catalog.pdfWorkflowCountOther
+                    )}
                   </Text>
                 </View>
               </View>
@@ -317,7 +347,9 @@ export default function PDFSchemaDocument({
         {/* AI Applications */}
         {aiApplications.length > 0 && (
           <View>
-            <Text style={styles.groupTitle}>AI Applications</Text>
+            <Text style={styles.groupTitle}>
+              {dict.consoleNavigation.aiApplications}
+            </Text>
             {aiApplications.map((app) => {
               const slugs = Array.from(
                 new Set((app.data_sources ?? []).map((ds) => ds.repository))
@@ -336,15 +368,22 @@ export default function PDFSchemaDocument({
                     </Text>
                   )}
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Owner</Text>
+                    <Text style={styles.fieldLabel}>{dict.common.owner}</Text>
                     <Text style={styles.fieldValue}>
                       {ownerText(app.owner)}
                     </Text>
                   </View>
                   <View style={styles.fieldRow}>
-                    <Text style={styles.fieldLabel}>Consumes</Text>
+                    <Text style={styles.fieldLabel}>
+                      {dict.catalog.aiApplicationDataSources}
+                    </Text>
                     <Text style={styles.fieldValue}>
-                      {slugs.length} repositories
+                      {formatPDFCount(
+                        slugs.length,
+                        locale,
+                        dict.catalog.pdfRepositoryCountOne,
+                        dict.catalog.pdfRepositoryCountOther
+                      )}
                     </Text>
                   </View>
                 </View>

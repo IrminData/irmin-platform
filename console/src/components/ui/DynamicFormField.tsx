@@ -33,16 +33,29 @@ function DynamicFormField(
     disabled = false,
     fieldProps,
     hasError = false,
+    fieldId,
+    errorId,
   }: {
     field: DynamicField;
     disabled?: boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     fieldProps?: any;
     hasError?: boolean;
+    fieldId: string;
+    errorId: string;
   },
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   ref: React.Ref<any>
 ) {
+  const labelId = `${fieldId}-label`;
+  const helpTextId = `${fieldId}-help`;
+  const describedBy =
+    [field.help_text ? helpTextId : null, hasError ? errorId : null]
+      .filter(Boolean)
+      .join(' ') || undefined;
+  const isGroupedField =
+    field.type === 'radio' || (field.type === 'select' && field.multiple);
+
   const options: SelectOption[] = useMemo(
     () =>
       field.options?.map((option) => ({
@@ -64,6 +77,10 @@ function DynamicFormField(
           ref={ref}
           disabled={disabled}
           {...fieldProps}
+          id={fieldId}
+          aria-describedby={describedBy}
+          aria-invalid={hasError || undefined}
+          aria-required={field.required || undefined}
         />
       );
     }
@@ -76,6 +93,10 @@ function DynamicFormField(
           ref={ref}
           disabled={disabled}
           {...fieldProps}
+          id={fieldId}
+          aria-describedby={describedBy}
+          aria-invalid={hasError || undefined}
+          aria-required={field.required || undefined}
         />
       );
     }
@@ -92,6 +113,10 @@ function DynamicFormField(
             ref={ref}
             disabled={disabled}
             {...fieldProps}
+            id={fieldId}
+            aria-describedby={describedBy}
+            aria-invalid={hasError || undefined}
+            aria-required={field.required || undefined}
           />
         );
       case 'textarea':
@@ -103,18 +128,34 @@ function DynamicFormField(
             ref={ref}
             disabled={disabled}
             {...fieldProps}
+            id={fieldId}
+            aria-describedby={describedBy}
+            aria-invalid={hasError || undefined}
+            aria-required={field.required || undefined}
           />
         );
       case 'checkbox':
         return (
-          <div className='flex flex-row items-center'>
+          <div className='flex flex-row items-center gap-2'>
             <Checkbox
               checked={fieldProps.value || false}
               ref={ref}
               disabled={disabled}
               {...fieldProps}
+              id={fieldId}
+              name={fieldProps?.name}
+              aria-describedby={describedBy}
+              aria-invalid={hasError || undefined}
+              aria-required={field.required || undefined}
             />
-            <Label>{field.label}</Label>
+            <Label htmlFor={fieldId}>
+              {field.label}
+              {field.required && (
+                <span aria-hidden='true' className='ml-2 text-destructive'>
+                  *
+                </span>
+              )}
+            </Label>
           </div>
         );
       case 'select':
@@ -122,25 +163,44 @@ function DynamicFormField(
           // For multiple select, we'll need to implement a custom multi-select component
           // For now, we'll use a simple checkbox list
           return (
-            <div className='flex flex-col gap-2'>
-              {options.map((option) => (
-                <label key={option.value} className='flex items-center gap-2'>
-                  <Checkbox
-                    checked={(fieldProps.value ?? []).includes(option.value)}
-                    onCheckedChange={(checked) => {
-                      const currentValues = fieldProps.value ?? [];
-                      const newValues = checked
-                        ? [...currentValues, option.value]
-                        : currentValues.filter(
-                            (v: string) => v !== option.value
-                          );
-                      fieldProps?.onChange?.(newValues);
-                    }}
-                    disabled={disabled}
-                  />
-                  {option.label}
-                </label>
-              ))}
+            <div
+              id={fieldId}
+              role='group'
+              aria-labelledby={labelId}
+              aria-describedby={describedBy}
+              className='flex flex-col gap-2'
+            >
+              {options.map((option, index) => {
+                const optionId = `${fieldId}-option-${index}`;
+                return (
+                  <label
+                    key={option.value}
+                    htmlFor={optionId}
+                    className='flex items-center gap-2'
+                  >
+                    <Checkbox
+                      ref={index === 0 ? (fieldProps?.ref ?? ref) : undefined}
+                      id={optionId}
+                      name={fieldProps?.name}
+                      value={option.value}
+                      checked={(fieldProps.value ?? []).includes(option.value)}
+                      onCheckedChange={(checked) => {
+                        const currentValues = fieldProps.value ?? [];
+                        const newValues = checked
+                          ? [...currentValues, option.value]
+                          : currentValues.filter(
+                              (v: string) => v !== option.value
+                            );
+                        fieldProps?.onChange?.(newValues);
+                      }}
+                      disabled={disabled}
+                      aria-invalid={hasError || undefined}
+                      aria-required={field.required || undefined}
+                    />
+                    {option.label}
+                  </label>
+                );
+              })}
             </div>
           );
         }
@@ -149,8 +209,15 @@ function DynamicFormField(
             value={fieldProps.value}
             onValueChange={fieldProps?.onChange}
             disabled={disabled}
+            name={fieldProps?.name}
           >
-            <SelectTrigger className='w-full'>
+            <SelectTrigger
+              id={fieldId}
+              className='w-full'
+              aria-describedby={describedBy}
+              aria-invalid={hasError || undefined}
+              aria-required={field.required || undefined}
+            >
               <SelectValue placeholder={field.label} />
             </SelectTrigger>
             <SelectContent>
@@ -164,22 +231,38 @@ function DynamicFormField(
         );
       case 'radio':
         return (
-          <>
-            {field.options?.map((option) => (
-              <label key={option.key} className='mb-1 flex items-center'>
-                <Input
-                  type='radio'
-                  value={option.value}
-                  className='mr-2'
-                  checked={fieldProps.value === option.value}
-                  ref={ref}
-                  disabled={disabled}
-                  {...fieldProps}
-                />
-                {option.value}
-              </label>
-            ))}
-          </>
+          <div
+            id={fieldId}
+            role='radiogroup'
+            aria-labelledby={labelId}
+            aria-describedby={describedBy}
+            aria-invalid={hasError || undefined}
+            aria-required={field.required || undefined}
+          >
+            {field.options?.map((option, index) => {
+              const optionId = `${fieldId}-option-${index}`;
+              return (
+                <label
+                  key={option.key}
+                  htmlFor={optionId}
+                  className='mb-1 flex items-center'
+                >
+                  <Input
+                    {...fieldProps}
+                    id={optionId}
+                    type='radio'
+                    value={option.value}
+                    className='mr-2'
+                    checked={fieldProps.value === option.value}
+                    ref={index === 0 ? (fieldProps?.ref ?? ref) : undefined}
+                    disabled={disabled}
+                    name={fieldProps?.name}
+                  />
+                  {option.value}
+                </label>
+              );
+            })}
+          </div>
         );
       case 'date':
       case 'time':
@@ -199,6 +282,10 @@ function DynamicFormField(
             ref={ref}
             disabled={disabled}
             {...fieldProps}
+            id={fieldId}
+            aria-describedby={describedBy}
+            aria-invalid={hasError || undefined}
+            aria-required={field.required || undefined}
           />
         );
       case 'file':
@@ -209,6 +296,10 @@ function DynamicFormField(
             ref={ref}
             disabled={disabled}
             {...fieldProps}
+            id={fieldId}
+            aria-describedby={describedBy}
+            aria-invalid={hasError || undefined}
+            aria-required={field.required || undefined}
           />
         );
       case 'password':
@@ -227,14 +318,28 @@ function DynamicFormField(
             ref={ref}
             disabled={disabled}
             {...fieldProps}
+            id={fieldId}
+            aria-describedby={describedBy}
+            aria-invalid={hasError || undefined}
+            aria-required={field.required || undefined}
           />
         );
     }
-  }, [field, fieldProps, options, disabled, ref]);
+  }, [
+    describedBy,
+    disabled,
+    field,
+    fieldId,
+    fieldProps,
+    hasError,
+    labelId,
+    options,
+    ref,
+  ]);
 
   return (
     <div
-      id='dynamic-form-field'
+      id={`${fieldId}-container`}
       className={`
         mb-2 flex flex-col gap-2
         ${
@@ -249,14 +354,20 @@ function DynamicFormField(
       `}
     >
       {field.type !== 'checkbox' && (
-        <Label>
+        <Label id={labelId} htmlFor={isGroupedField ? undefined : fieldId}>
           {field.label}
-          {field.required && <span className='ml-2 text-destructive'>*</span>}
+          {field.required && (
+            <span aria-hidden='true' className='ml-2 text-destructive'>
+              *
+            </span>
+          )}
         </Label>
       )}
       {fieldElement}
       {field.help_text && (
-        <p className='pl-1 text-xs text-muted-foreground'>{field.help_text}</p>
+        <p id={helpTextId} className='pl-1 text-xs text-muted-foreground'>
+          {field.help_text}
+        </p>
       )}
     </div>
   );

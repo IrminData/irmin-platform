@@ -469,7 +469,7 @@ export default function PolicyForm({
         >
           {dict.common.cancel}
         </Button>
-        <Button type='submit' loading={isSubmitting}>
+        <Button variant='accent' type='submit' loading={isSubmitting}>
           {isEditMode ? dict.common.save : dict.common.create}
         </Button>
       </div>

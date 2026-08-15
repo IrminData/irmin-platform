@@ -74,6 +74,9 @@ func (mcpTools *MCPTools) RegisterWorkflowsTools()
 func (mcpTools *MCPTools) RegisterWorkspaceTools()
     RegisterWorkspaceTools registers the tools for workspace management.
 
+func (mcpTools *MCPTools) Registry() *toolregistry.Registry
+    Registry returns the request-scoped canonical execution catalog.
+
 type RetrieveContextRequest struct {
 	Query       string   `json:"query"`
 	Collections []string `json:"collections,omitempty"`

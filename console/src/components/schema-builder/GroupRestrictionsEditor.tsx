@@ -38,7 +38,7 @@ export default function GroupRestrictionsEditor({
   };
 
   return (
-    <div className='flex flex-col gap-4 rounded-md border p-4'>
+    <div className='flex flex-col gap-4 rounded-[2px] border p-4'>
       <h3 className='font-medium'>{dict.schemaBuilder.restrictions}</h3>
 
       <div

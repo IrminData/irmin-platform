@@ -26,15 +26,15 @@ function DocumentationSkeleton({
           {showHero && (
             <div className='mb-10 flex flex-col gap-6'>
               <div className='flex items-center gap-3'>
-                <LoadingSkeleton className='size-10 rounded-lg' />
+                <LoadingSkeleton className='size-10 rounded-[2px]' />
                 <LoadingSkeleton className='h-6 w-24' />
               </div>
               <LoadingSkeleton className='h-10 w-3/4 max-w-xl' />
               <LoadingSkeleton className='h-5 w-1/2 max-w-md' />
               {showControls && (
                 <div className='flex flex-wrap items-center gap-4'>
-                  <LoadingSkeleton className='h-10 w-32 rounded-md' />
-                  <LoadingSkeleton className='h-10 w-72 max-w-full rounded-md' />
+                  <LoadingSkeleton className='h-10 w-32 rounded-[2px]' />
+                  <LoadingSkeleton className='h-10 w-72 max-w-full rounded-[2px]' />
                 </div>
               )}
             </div>
@@ -43,7 +43,7 @@ function DocumentationSkeleton({
           {showStats && (
             <section className='mb-12 space-y-6'>
               <LoadingSkeleton className='h-8 w-48' />
-              <div className='rounded-lg border border-border bg-card p-6'>
+              <div className='rounded-[2px] border border-border bg-card p-6'>
                 <LoadingSkeleton className='mb-4 h-6 w-32' />
                 <div
                   className={`
@@ -67,7 +67,7 @@ function DocumentationSkeleton({
             {Array.from({ length: contentSections }).map((_, sectionIndex) => (
               <section key={`section-${sectionIndex}`} className='space-y-6'>
                 <div className='flex items-center gap-3'>
-                  <LoadingSkeleton className='size-10 rounded-lg' />
+                  <LoadingSkeleton className='size-10 rounded-[2px]' />
                   <div className='space-y-2'>
                     <LoadingSkeleton className='h-8 w-48' />
                     <LoadingSkeleton className='h-4 w-64' />
@@ -82,7 +82,7 @@ function DocumentationSkeleton({
                   {Array.from({ length: 4 }).map((_, cardIndex) => (
                     <div
                       key={`card-${sectionIndex}-${cardIndex}`}
-                      className='rounded-lg border border-border bg-card p-6'
+                      className='rounded-[2px] border border-border bg-card p-6'
                     >
                       <LoadingSkeleton className='mb-2 h-6 w-3/4' />
                       <LoadingSkeleton className='mb-4 h-4 w-full' />

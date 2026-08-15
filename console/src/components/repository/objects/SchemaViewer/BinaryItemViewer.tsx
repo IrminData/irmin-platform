@@ -1,6 +1,6 @@
 'use client';
 
-import { MdImage, MdInsertDriveFile, MdTextFields } from 'react-icons/md';
+import { TbFile, TbPhoto, TbTextCaption } from 'react-icons/tb';
 
 import { useLocale } from '@/context/LocaleContext';
 
@@ -27,25 +27,17 @@ export function BinaryItemViewer({
   const getIcon = () => {
     const ct = item.content_type ?? '';
     if (ct.startsWith('image/'))
-      return <MdImage className='size-6 text-green-500' />;
+      return <TbPhoto className='size-6 text-success' />;
     if (ct.startsWith('text/'))
-      return <MdTextFields className='size-6 text-orange-500' />;
-    return <MdInsertDriveFile className='size-6 text-gray-500' />;
+      return <TbTextCaption className='size-6 text-chart-3' />;
+    return <TbFile className='size-6 text-muted-foreground' />;
   };
 
   return (
     <div
       className={`
-        rounded-md border bg-popover/10 p-2
-        dark:border-gray-800
-        ${
-          isFocused
-            ? `
-              ring-2 ring-blue-500
-              dark:ring-blue-400
-            `
-            : ''
-        }
+        rounded-[2px] border border-border bg-popover/10 p-2
+        ${isFocused ? `ring-2 ring-accent` : ''}
       `}
     >
       <div className='flex items-start gap-3'>
@@ -57,48 +49,27 @@ export function BinaryItemViewer({
               sm:flex-row sm:items-center
             `}
           >
-            <h3
-              className={`
-                truncate font-medium text-gray-900
-                dark:text-gray-100
-              `}
-            >
+            <h3 className={`truncate font-medium text-foreground`}>
               {item.name}
             </h3>
             {item.last_modified && (
-              <span
-                className={`
-                  text-xs text-gray-500
-                  dark:text-gray-400
-                `}
-              >
+              <span className={`text-xs text-muted-foreground`}>
                 {dict.common.lastModified}:{' '}
                 {formatTimestamp(item.last_modified, locale)}
               </span>
             )}
           </div>
-          <p
-            className={`
-              truncate text-sm text-gray-500
-              dark:text-gray-400
-            `}
-          >
+          <p className={`truncate text-sm text-muted-foreground`}>
             {item.path}
           </p>
           {item.description && (
-            <p
-              className={`
-                mt-1 text-sm text-gray-600
-                dark:text-gray-300
-              `}
-            >
+            <p className={`mt-1 text-sm text-muted-foreground`}>
               {item.description}
             </p>
           )}
           <div
             className={`
-              mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500
-              dark:text-gray-400
+              mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground
             `}
           >
             <span>
@@ -107,7 +78,11 @@ export function BinaryItemViewer({
             <span>
               {dict.common.size}: {formatFileSizeForUI(item.size)}
             </span>
-            {item.content_type && <span>MIME: {item.content_type}</span>}
+            {item.content_type && (
+              <span>
+                {dict.repository.objects.mime}: {item.content_type}
+              </span>
+            )}
           </div>
         </div>
       </div>

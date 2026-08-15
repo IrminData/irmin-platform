@@ -68,7 +68,8 @@ const createAssistantMessage = (
   const toolCalls = parts.filter((p) => {
     if (
       p.type !== 'tool-input-available' &&
-      p.type !== 'tool-output-available'
+      p.type !== 'tool-output-available' &&
+      p.type !== 'tool-approval-required'
     ) {
       return false;
     }
@@ -197,11 +198,13 @@ const AgentChat = ({
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const text = input.trim();
-    if (!text) return;
+    const text = input;
+    if (!text.trim()) return;
 
     let responseConversationId: string | null = null;
     let requestController: AbortController | null = null;
+    let streamedContent = '';
+    let streamedParts: ServerStreamEvent[] = [];
 
     try {
       setInput('');
@@ -247,21 +250,27 @@ const AgentChat = ({
         const { content, parts, status, messageId } = await processStream(
           response.stream as ReadableStream,
           requestController.signal,
-          streamingState.setStreamingMessage,
-          streamingState.setStreamingParts
+          (content) => {
+            streamedContent = content;
+            streamingState.setStreamingMessage(content);
+          },
+          (parts) => {
+            streamedParts = parts;
+            streamingState.setStreamingParts(parts);
+          }
         );
 
         if (status === 'failed') {
           const failure = parts.find((part) => part.type === 'stream-error');
-          const failureMessage =
+          const error =
             (failure as { error?: string } | undefined)?.error ||
-            dict.assistant.runFailed;
+            dict.assistant.error;
           appendMessage(
             createAssistantMessage(
-              content || dict.assistant.runFailed,
-              [...parts, { type: 'error', error: failureMessage } as const],
+              content || dict.assistant.error,
+              [...parts, { type: 'error', error }],
               agentId,
-              messageId ?? `assistant-error-${Date.now()}`
+              messageId || `assistant-error-${Date.now()}`
             )
           );
           return;
@@ -288,11 +297,14 @@ const AgentChat = ({
       console.error('Error sending message:', error);
 
       const errorMessage = createAssistantMessage(
-        dict.assistant.runFailed,
+        streamedContent || dict.assistant.error,
         [
+          ...streamedParts.filter(
+            (part) => part.type === 'stream-error' || part.type === 'error'
+          ),
           {
             type: 'error',
-            error: dict.assistant.runFailed,
+            error: error instanceof Error ? error.message : 'Unknown error',
           },
         ],
         agentId,
@@ -575,7 +587,7 @@ const AgentChat = ({
                 {showContextBanner && (
                   <div
                     className={`
-                      mt-4 flex items-center gap-2 rounded-md border
+                      mt-4 flex items-center gap-2 rounded-[2px] border
                       border-border bg-muted/60 p-2 text-xs
                       text-muted-foreground
                     `}

@@ -32,14 +32,14 @@ const FormSkeleton = ({
         {Array.from({ length: fieldCount }).map((_, i) => (
           <div key={`field-${i}`} className='flex flex-col gap-2'>
             <LoadingSkeleton className='h-4 w-32' />
-            <LoadingSkeleton className='h-10 w-full rounded-md' />
+            <LoadingSkeleton className='h-10 w-full rounded-[2px]' />
             <LoadingSkeleton className='h-3 w-2/3' />
           </div>
         ))}
         {showSubmit && (
           <div className='mt-2 flex items-center justify-end gap-2'>
-            <LoadingSkeleton className='h-10 w-24 rounded-md' />
-            <LoadingSkeleton className='h-10 w-28 rounded-md' />
+            <LoadingSkeleton className='h-10 w-24 rounded-[2px]' />
+            <LoadingSkeleton className='h-10 w-28 rounded-[2px]' />
           </div>
         )}
       </div>

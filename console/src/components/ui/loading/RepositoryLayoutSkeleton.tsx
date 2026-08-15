@@ -22,18 +22,18 @@ function RepositoryLayoutSkeleton({ className = '' }: { className?: string }) {
           rightSlot={
             <div className='flex min-w-60 flex-col gap-2'>
               {/* Branch selector */}
-              <LoadingSkeleton className='h-9 w-full rounded-md' />
+              <LoadingSkeleton className='h-9 w-full rounded-[2px]' />
               {/* Asset share popover (size='sm') */}
-              <LoadingSkeleton className='h-9 w-full rounded-md' />
+              <LoadingSkeleton className='h-9 w-full rounded-[2px]' />
               {/* ZIP share popover trigger (size='sm') */}
-              <LoadingSkeleton className='h-9 w-full rounded-md' />
+              <LoadingSkeleton className='h-9 w-full rounded-[2px]' />
             </div>
           }
         />
         <TabsWithBackButtonSkeleton tabCount={6} showMore />
       </div>
       <div className='relative container mx-auto max-w-7xl px-4'>
-        <LoadingSkeleton className='h-80 w-full rounded-lg' />
+        <LoadingSkeleton className='h-80 w-full rounded-[2px]' />
       </div>
     </div>
   );

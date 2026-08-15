@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 
 import { clientEnv } from '@/config/env.client';
 
-import { IoInformationCircle } from 'react-icons/io5';
+import { TbInfoCircle } from 'react-icons/tb';
 
 import {
   CodeBlock,
@@ -77,14 +77,11 @@ const WorkspaceApiMcpSection = () => {
 
         <div
           className={`
-            mb-4 flex items-start gap-3 rounded-lg border border-accent/30
+            mb-4 flex items-start gap-3 rounded-[2px] border border-accent/30
             bg-accent/10 p-3
-            dark:border-accent-foreground dark:bg-accent/10
           `}
         >
-          <IoInformationCircle
-            className={`mt-0.5 size-5 shrink-0 text-accent`}
-          />
+          <TbInfoCircle className={`mt-0.5 size-5 shrink-0 text-accent`} />
           <div className={`flex-1 text-sm text-foreground`}>
             <p>{dict.workspace.api.apiDescription}</p>
             <p className='mt-2'>{dict.workspace.api.apiUsageNote}</p>
@@ -92,12 +89,7 @@ const WorkspaceApiMcpSection = () => {
         </div>
 
         <div className='mb-4'>
-          <label
-            className={`
-              mb-2 block text-sm font-medium text-gray-700
-              dark:text-gray-300
-            `}
-          >
+          <label className={`mb-2 block text-sm font-medium text-foreground`}>
             {dict.workspace.api.apiBaseUrl}
           </label>
           <div className='relative'>
@@ -111,12 +103,7 @@ const WorkspaceApiMcpSection = () => {
           <h4 className={`mb-2 text-base font-semibold`}>
             {dict.workspace.api.apiExampleTitle}
           </h4>
-          <p
-            className={`
-              mb-3 text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+          <p className={`mb-3 text-sm text-muted-foreground`}>
             {dict.workspace.api.apiExampleDescription}
           </p>
           <div className='relative'>
@@ -124,18 +111,13 @@ const WorkspaceApiMcpSection = () => {
               <CodeBlockCopyButton />
             </CodeBlock>
           </div>
-          <p
-            className={`
-              mt-2 text-xs text-gray-500
-              dark:text-gray-500
-            `}
-          >
+          <p className={`mt-2 text-xs text-muted-foreground`}>
             {dict.workspace.api.apiExampleNote}
           </p>
         </div>
 
         <div className='flex flex-wrap gap-2'>
-          <Button href={tokensPageUrl} size='sm' variant='default'>
+          <Button href={tokensPageUrl} size='sm' variant='accent'>
             {dict.workspace.api.getApiToken}
           </Button>
           <Button
@@ -151,12 +133,7 @@ const WorkspaceApiMcpSection = () => {
       </div>
 
       {/* Divider */}
-      <div
-        className={`
-          my-8 border-t border-gray-200
-          dark:border-gray-800
-        `}
-      />
+      <div className={`my-8 border-t border-border`} />
 
       {/* MCP Section */}
       <div>
@@ -171,14 +148,11 @@ const WorkspaceApiMcpSection = () => {
 
         <div
           className={`
-            mb-4 flex items-start gap-3 rounded-lg border border-accent/30
+            mb-4 flex items-start gap-3 rounded-[2px] border border-accent/30
             bg-accent/10 p-3
-            dark:border-accent-foreground dark:bg-accent/10
           `}
         >
-          <IoInformationCircle
-            className={`mt-0.5 size-5 shrink-0 text-accent`}
-          />
+          <TbInfoCircle className={`mt-0.5 size-5 shrink-0 text-accent`} />
           <div className={`flex-1 text-sm text-foreground`}>
             <p>{dict.workspace.api.mcpDescription}</p>
             <p className='mt-2'>{dict.workspace.api.mcpUsageNote}</p>
@@ -186,12 +160,7 @@ const WorkspaceApiMcpSection = () => {
         </div>
 
         <div className='mb-4'>
-          <label
-            className={`
-              mb-2 block text-sm font-medium text-gray-700
-              dark:text-gray-300
-            `}
-          >
+          <label className={`mb-2 block text-sm font-medium text-foreground`}>
             {dict.workspace.api.mcpUrl}
           </label>
           <div className='relative'>
@@ -202,12 +171,7 @@ const WorkspaceApiMcpSection = () => {
         </div>
 
         <div className='mb-4'>
-          <label
-            className={`
-              mb-2 block text-sm font-medium text-gray-700
-              dark:text-gray-300
-            `}
-          >
+          <label className={`mb-2 block text-sm font-medium text-foreground`}>
             {dict.workspace.api.mcpAuthHeaderLabel}
           </label>
           <div className='relative'>
@@ -221,12 +185,7 @@ const WorkspaceApiMcpSection = () => {
           <h4 className={`mb-2 text-base font-semibold`}>
             {dict.workspace.api.mcpClaudeDesktopTitle}
           </h4>
-          <p
-            className={`
-              mb-3 text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+          <p className={`mb-3 text-sm text-muted-foreground`}>
             {dict.workspace.api.mcpClaudeDesktopDescription}
           </p>
           <Tabs defaultValue='streamable-http'>
@@ -249,18 +208,13 @@ const WorkspaceApiMcpSection = () => {
               </CodeBlock>
             </TabsContent>
           </Tabs>
-          <p
-            className={`
-              mt-2 text-xs text-gray-500
-              dark:text-gray-500
-            `}
-          >
+          <p className={`mt-2 text-xs text-muted-foreground`}>
             {dict.workspace.api.mcpConfigNote}
           </p>
         </div>
 
         <div className='flex flex-wrap gap-2'>
-          <Button href={tokensPageUrl} size='sm' variant='default'>
+          <Button href={tokensPageUrl} size='sm' variant='accent'>
             {dict.workspace.api.getMcpToken}
           </Button>
           <Button

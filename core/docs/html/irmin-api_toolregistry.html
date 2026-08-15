@@ -13,10 +13,6 @@ const CatalogVersion = 1
 VARIABLES
 
 var ErrApprovalRequired = errors.New("destructive tool requires authenticated approval")
-    ErrApprovalRequired is returned when model credentials attempt a destructive
-    operation. Destructive handlers are only executable by the authenticated
-    pending-operation approval path.
-
 
 FUNCTIONS
 
@@ -39,8 +35,23 @@ func Register[In any](
     registry.
 
 func ValidateDescriptor(descriptor Descriptor) error
+func WithApproval(ctx context.Context) context.Context
+    WithApproval marks an approval replay after the operation was atomically
+    claimed.
+
+func WithWorkspaceBinding(ctx context.Context, workspaceSlug string) context.Context
+    WithWorkspaceBinding binds a user-token MCP session to the selected
+    workspace.
+
 
 TYPES
+
+type ApprovalStager func(
+	context.Context,
+	Descriptor,
+	*sdkmcp.CallToolRequest,
+	json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
 
 type AuditRedaction struct {
 	Fields []string `json:"fields"`
@@ -71,17 +82,21 @@ type Descriptor struct {
 	Handler         Handler            `json:"-"`
 }
 
-func Published(name string) (Descriptor, bool)
-    Published returns the latest handler-free contract registered for a
-    canonical name.
+func Describe(name, description string) Descriptor
+    Describe returns the canonical policy metadata shared by registration,
+    prompts, and audit adapters.
 
-type Handler func(context.Context, *sdkmcp.CallToolRequest, json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
+type Handler func(
+	context.Context,
+	*sdkmcp.CallToolRequest,
+	json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
 
 type Registry struct {
 	// Has unexported fields.
 }
 
-func New() *Registry
+func New(stager ...ApprovalStager) *Registry
 
 func (r *Registry) Add(descriptor Descriptor) error
 

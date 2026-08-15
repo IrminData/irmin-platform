@@ -56,27 +56,27 @@ export const EmptyState: FC<EmptyStateProps> = ({
   size = 'md',
 }) => {
   const sizeClasses: Record<string, string> = {
-    sm: 'py-4 px-2',
-    md: 'py-8 px-4',
-    lg: 'py-12 px-6',
+    sm: 'px-2 py-5',
+    md: 'px-4 py-10',
+    lg: 'px-6 py-14',
   };
 
   const iconSizeClasses: Record<string, string> = {
-    sm: 'h-12 w-12',
-    md: 'h-16 w-16',
-    lg: 'h-20 w-20',
+    sm: 'size-7',
+    md: 'size-9',
+    lg: 'size-11',
   };
 
   const titleSizeClasses: Record<string, string> = {
-    sm: 'text-lg',
-    md: 'text-xl',
-    lg: 'text-2xl',
-  };
-
-  const descriptionSizeClasses: Record<string, string> = {
     sm: 'text-sm',
     md: 'text-base',
     lg: 'text-lg',
+  };
+
+  const descriptionSizeClasses: Record<string, string> = {
+    sm: 'text-xs',
+    md: 'text-sm',
+    lg: 'text-base',
   };
 
   return (
@@ -89,21 +89,20 @@ export const EmptyState: FC<EmptyStateProps> = ({
     >
       {/* Icon */}
       <div
+        aria-hidden='true'
         className={`
           ${iconSizeClasses[size]}
-          mb-4 text-gray-400
-          dark:text-gray-500
+          mb-4 text-muted-foreground
         `}
       >
-        {icon || <TbInbox className='size-full' />}
+        {icon || <TbInbox className='size-full' strokeWidth={1.5} />}
       </div>
 
       {/* Title */}
       {title && (
         <h3
           className={`
-            mb-2 font-semibold text-gray-700
-            dark:text-gray-300
+            mb-2 font-semibold text-balance text-foreground
             ${titleSizeClasses[size]}
           `}
         >
@@ -115,8 +114,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
       {description && (
         <p
           className={`
-            mb-6 max-w-md text-gray-500
-            dark:text-gray-400
+            mb-6 max-w-prose leading-relaxed text-pretty text-muted-foreground
             ${descriptionSizeClasses[size]}
           `}
         >
@@ -127,7 +125,7 @@ export const EmptyState: FC<EmptyStateProps> = ({
       {/* Action Button */}
       {action && !hideActionButton && (
         <Button
-          variant={action.variant || 'gradient'}
+          variant={action.variant || 'accent'}
           onClick={action.onClick}
           href={action.href}
           className='mt-2'

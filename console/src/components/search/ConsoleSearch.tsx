@@ -13,16 +13,16 @@ import {
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
-import { GoWorkflow } from 'react-icons/go';
-import { LuSearchX } from 'react-icons/lu';
 import {
   TbCode,
   TbDashboard,
   TbDatabase,
   TbFile,
   TbFolder,
+  TbRoute,
   TbRun,
   TbSearch,
+  TbSearchOff,
   TbSql,
   TbTable,
   TbTools,
@@ -249,7 +249,7 @@ export default function ConsoleSearch() {
       case 'group-object':
         return <TbFolder size={12} />;
       case 'connection':
-        return <GoWorkflow size={12} />;
+        return <TbRoute size={12} />;
       case 'workflow':
         return <TbRun size={12} />;
       case 'workspace':
@@ -323,11 +323,13 @@ export default function ConsoleSearch() {
             }
           }}
           className={`
-            block w-full rounded-full bg-muted/50 px-4 py-3 ps-10 pr-16 text-sm
-            text-foreground
+            block w-full rounded-[2px] bg-muted/50 px-4 py-3 ps-10 pr-16
+            text-base text-foreground
             placeholder:invisible placeholder:opacity-40
             group-focus-within:placeholder:visible
-            focus:outline-hidden
+            focus-visible:outline-2 focus-visible:outline-offset-2
+            focus-visible:outline-accent
+            md:text-sm
             md:placeholder:visible
           `}
           placeholder={dict.consoleNavigation.searchPlaceholder}
@@ -342,7 +344,7 @@ export default function ConsoleSearch() {
           >
             <div
               className={`
-                hidden items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5
+                hidden items-center gap-1 rounded-[2px] bg-muted px-1.5 py-0.5
                 text-xs text-muted-foreground
                 md:flex
               `}
@@ -388,7 +390,7 @@ export default function ConsoleSearch() {
         <div
           className={`
             absolute mt-1 flex max-h-[calc(100vh-200px)] w-full flex-col
-            rounded-xl border border-border bg-background shadow-lg
+            rounded-[2px] border border-border bg-background
           `}
         >
           <div className='flex-1 overflow-y-scroll'>
@@ -439,9 +441,11 @@ export default function ConsoleSearch() {
                           {type === 'script' && dict.consoleNavigation.scripts}
                           {type === 'query' && dict.query.queries}
                           {type === 'irmin' && dict.consoleNavigation.irmin}
-                          {type === 'structured-object' && 'Structured Objects'}
-                          {type === 'binary-object' && 'Binary Objects'}
-                          {type === 'group-object' && 'Group Objects'}
+                          {type === 'structured-object' &&
+                            dict.search.structuredObjects}
+                          {type === 'binary-object' &&
+                            dict.search.binaryObjects}
+                          {type === 'group-object' && dict.search.groupObjects}
                         </span>
                       </div>
                       {/* Render options as flat children of the group (no
@@ -458,10 +462,12 @@ export default function ConsoleSearch() {
                             role='option'
                             aria-selected={false}
                             className={`
-                              block rounded-lg p-2 text-sm text-muted-foreground
+                              block rounded-[2px] p-2 text-sm
+                              text-muted-foreground
                               hover:bg-muted hover:text-foreground
-                              focus-visible:ring-1 focus-visible:ring-ring
-                              focus-visible:outline-none
+                              focus-visible:outline-2
+                              focus-visible:outline-offset-2
+                              focus-visible:outline-accent
                               lg:text-base
                             `}
                             onClick={() => setIsFocused(false)}
@@ -486,7 +492,7 @@ export default function ConsoleSearch() {
                   gap-4
                 `}
               >
-                <LuSearchX
+                <TbSearchOff
                   className='size-12 text-muted-foreground/60'
                   aria-hidden='true'
                 />
@@ -509,12 +515,8 @@ export default function ConsoleSearch() {
                 variant='gray'
                 icon={<TbSearch size={16} />}
                 className='w-full'
-                onClick={() => {
-                  setIsFocused(false);
-                  router.push(
-                    `/${locale}/workspace/${workspaceSlug}/search?q=${encodeURIComponent(debouncedQuery)}`
-                  );
-                }}
+                href={`/${locale}/workspace/${workspaceSlug}/search?q=${encodeURIComponent(debouncedQuery)}`}
+                onClick={() => setIsFocused(false)}
               >
                 {dict.search.advancedSearch}
               </Button>
