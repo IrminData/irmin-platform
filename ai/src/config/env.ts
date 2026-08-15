@@ -27,101 +27,75 @@ const sampleRate = (fallback: number) =>
       return n;
     });
 
-const envSchema = z
-  .object({
-    PORT: z.string().default('3000').transform(Number),
-    HOST: z.string().default('0.0.0.0'),
-    URL: z.string().default('http://localhost:3000'),
-    NODE_ENV: z
-      .enum(['development', 'production', 'test'])
-      .default('development'),
-    AI_API_SYSTEM_TOKEN: z
-      .string()
-      .min(
-        1,
-        'AI API system token is required; used to authenticate system level requests to the AI API'
-      ),
-    DATABASE_URL: z.string().min(1, 'Database URL is required'),
-    OPENROUTER_API_KEY: z
-      .string()
-      .min(1, 'OpenRouter API key is required to run inference'),
-    OPENROUTER_SITE_URL: z.string().url().default('https://irmin.co'),
-    OPENROUTER_SITE_NAME: z.string().default('Irmin'),
-    OPENROUTER_PROVIDER_ALLOWLIST: z
-      .string()
-      .default('Anthropic,OpenAI,Google AI Studio'),
-    OPENROUTER_CANARY_PERCENT: z.coerce.number().min(0).max(100).default(5),
-    AI_INFERENCE_BACKEND: z
-      .enum(['openrouter', 'direct-anthropic'])
-      .default('openrouter'),
-    OPENAI_API_KEY: z
-      .string()
-      .min(
-        1,
-        'OpenAI API key is required to run inference and create embeddings'
-      ),
-    ANTHROPIC_API_KEY: z.string().optional(),
-    IRMIN_API_BASE_URL: z
-      .string()
-      .default('https://irmin-development.up.railway.app'),
-    IRMIN_SYSTEM_TOKEN: z.string().optional(),
-    LANGSMITH_TRACING: z
-      .string()
-      .default('false')
-      .transform((val) => val === 'true'),
-    LANGSMITH_API_KEY: z.string().min(1, 'Langsmith API key is required'),
-    LANGSMITH_PROJECT: z.string().default('irmin-ai-agents-dev'),
-    QDRANT_URL: z
-      .string()
-      .default('http://localhost:6333')
-      .refine(
-        (url) => url.startsWith('http://') || url.startsWith('https://'),
-        {
-          message: 'QDRANT_URL must start with http:// or https://',
-        }
-      ),
-    QDRANT_PORT: z
-      .string()
-      .optional()
-      .transform((val) => (val ? parseInt(val, 10) : undefined)),
-    QDRANT_API_KEY: z.string().optional(),
-    CORS_ORIGINS: z
-      .string()
-      .default('https://localhost:3000,http://localhost:8082'),
-    CORS_CREDENTIALS: z
-      .string()
-      .default('true')
-      .transform((val) => val === 'true'),
-    LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
-    SENTRY_ENABLED: z
-      .string()
-      .default('false')
-      .transform((val) => val === 'true'),
-    SENTRY_DSN: z.string().optional(),
-    SENTRY_ENVIRONMENT: z.string().optional(),
-    SENTRY_ORG: z.string().optional(),
-    SENTRY_PROJECT: z.string().optional(),
-    SENTRY_URL: z.string().optional(),
-    SENTRY_AUTH_TOKEN: z.string().optional(),
-    SENTRY_TRACES_SAMPLE_RATE: sampleRate(0.1),
-    SENTRY_PROFILE_SESSION_SAMPLE_RATE: sampleRate(0.1),
-    TEST_IRMIN_AUTH_TOKEN: z.string().optional(),
-    TEST_WORKSPACE_SLUG: z.string().optional(),
-  })
-  .superRefine((value, context) => {
-    if (
-      (value.AI_INFERENCE_BACKEND === 'direct-anthropic' ||
-        value.OPENROUTER_CANARY_PERCENT < 100) &&
-      !value.ANTHROPIC_API_KEY
-    ) {
-      context.addIssue({
-        code: 'custom',
-        path: ['ANTHROPIC_API_KEY'],
-        message:
-          'Anthropic API key is required while direct rollback receives traffic',
-      });
-    }
-  });
+const envSchema = z.object({
+  PORT: z.string().default('3000').transform(Number),
+  HOST: z.string().default('0.0.0.0'),
+  URL: z.string().default('http://localhost:3000'),
+  NODE_ENV: z
+    .enum(['development', 'production', 'test'])
+    .default('development'),
+  AI_API_SYSTEM_TOKEN: z
+    .string()
+    .min(
+      1,
+      'AI API system token is required; used to authenticate system level requests to the AI API'
+    ),
+  DATABASE_URL: z.string().min(1, 'Database URL is required'),
+  OPENROUTER_API_KEY: z
+    .string()
+    .min(1, 'OpenRouter API key is required to run inference'),
+  OPENROUTER_SITE_URL: z.string().url().default('https://irmin.co'),
+  OPENROUTER_SITE_NAME: z.string().default('Irmin'),
+  OPENROUTER_PROVIDER_ALLOWLIST: z
+    .string()
+    .default('Anthropic,OpenAI,Google AI Studio'),
+  OPENAI_API_KEY: z
+    .string()
+    .min(1, 'OpenAI API key is required to create embeddings'),
+  IRMIN_API_BASE_URL: z
+    .string()
+    .default('https://irmin-development.up.railway.app'),
+  IRMIN_SYSTEM_TOKEN: z.string().optional(),
+  LANGSMITH_TRACING: z
+    .string()
+    .default('false')
+    .transform((val) => val === 'true'),
+  LANGSMITH_API_KEY: z.string().min(1, 'Langsmith API key is required'),
+  LANGSMITH_PROJECT: z.string().default('irmin-ai-agents-dev'),
+  QDRANT_URL: z
+    .string()
+    .default('http://localhost:6333')
+    .refine((url) => url.startsWith('http://') || url.startsWith('https://'), {
+      message: 'QDRANT_URL must start with http:// or https://',
+    }),
+  QDRANT_PORT: z
+    .string()
+    .optional()
+    .transform((val) => (val ? parseInt(val, 10) : undefined)),
+  QDRANT_API_KEY: z.string().optional(),
+  CORS_ORIGINS: z
+    .string()
+    .default('https://localhost:3000,http://localhost:8082'),
+  CORS_CREDENTIALS: z
+    .string()
+    .default('true')
+    .transform((val) => val === 'true'),
+  LOG_LEVEL: z.enum(['debug', 'info', 'warn', 'error']).default('info'),
+  SENTRY_ENABLED: z
+    .string()
+    .default('false')
+    .transform((val) => val === 'true'),
+  SENTRY_DSN: z.string().optional(),
+  SENTRY_ENVIRONMENT: z.string().optional(),
+  SENTRY_ORG: z.string().optional(),
+  SENTRY_PROJECT: z.string().optional(),
+  SENTRY_URL: z.string().optional(),
+  SENTRY_AUTH_TOKEN: z.string().optional(),
+  SENTRY_TRACES_SAMPLE_RATE: sampleRate(0.1),
+  SENTRY_PROFILE_SESSION_SAMPLE_RATE: sampleRate(0.1),
+  TEST_IRMIN_AUTH_TOKEN: z.string().optional(),
+  TEST_WORKSPACE_SLUG: z.string().optional(),
+});
 
 // During static analysis, provide mock values to avoid validation errors
 // This allows tools like knip to analyze the codebase without real env vars
@@ -134,7 +108,6 @@ const envToParse = isStaticAnalysis
       OPENROUTER_API_KEY:
         process.env.OPENROUTER_API_KEY || 'mock-openrouter-key',
       OPENAI_API_KEY: process.env.OPENAI_API_KEY || 'mock-openai-key',
-      ANTHROPIC_API_KEY: process.env.ANTHROPIC_API_KEY || 'mock-anthropic-key',
       LANGSMITH_API_KEY: process.env.LANGSMITH_API_KEY || 'mock-langsmith-key',
     }
   : process.env;

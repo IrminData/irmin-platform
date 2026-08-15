@@ -4,13 +4,15 @@ import { ChatOpenRouter } from '@langchain/openrouter';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
-import {
-  DirectAnthropicAdapter,
-  FakeInferenceAdapter,
-  OpenRouterAdapter,
-} from './adapters';
+import { FakeInferenceAdapter, OpenRouterAdapter } from './adapters';
 import { ProfiledInferenceGateway } from './profiledGateway';
-import { MODEL_PROFILE, REVIEWED_ZDR_PROVIDERS } from './profiles';
+import {
+  assertReviewedModelProfile,
+  BASELINE_MODEL,
+  MODEL_PROFILE,
+  REVIEWED_ZDR_PROVIDER_CONFIGS,
+  REVIEWED_ZDR_PROVIDERS,
+} from './profiles';
 import { InferenceTelemetryCallback } from './telemetryCallback';
 import type { InferenceAdapter, InferenceTelemetry, ModelRole } from './types';
 
@@ -50,7 +52,7 @@ describe('inference gateway', () => {
     assert.equal(model.provider?.allow_fallbacks, false);
   });
 
-  it('rejects unreviewed providers and missing rollback credentials', () => {
+  it('rejects unreviewed providers', () => {
     assert.throws(
       () =>
         new OpenRouterAdapter({
@@ -62,48 +64,53 @@ describe('inference gateway', () => {
         }),
       /unreviewed providers/
     );
-    assert.throws(
-      () =>
-        new DirectAnthropicAdapter().modelFor(
-          'assistant',
-          MODEL_PROFILE.roles.assistant,
-          {}
-        ),
-      /ANTHROPIC_API_KEY/
-    );
   });
 
-  it('selects canary backends deterministically by workspace and conversation', () => {
+  it('keeps complete review records for every admitted provider', () => {
+    assert.deepEqual(
+      REVIEWED_ZDR_PROVIDER_CONFIGS.map(({ name }) => name),
+      REVIEWED_ZDR_PROVIDERS
+    );
+    for (const provider of REVIEWED_ZDR_PROVIDER_CONFIGS) {
+      assert.match(provider.zdrEvidence, /^https:/);
+      assert.match(provider.reviewedAt, /^\d{4}-\d{2}-\d{2}$/);
+      assert.ok(provider.operator.length > 0);
+      assert.ok(provider.capabilities.length > 0);
+      assert.ok(provider.rollbackOwner.length > 0);
+    }
+  });
+
+  it('routes every role through the configured OpenRouter adapter', () => {
     const openRouter = new TrackingAdapter();
-    const direct = new TrackingAdapter();
     const gateway = new ProfiledInferenceGateway({
       profile: MODEL_PROFILE,
       openRouter,
-      directAnthropic: direct,
-      backend: 'openrouter',
-      canaryPercent: 50,
     });
     const context = { workspaceSlug: 'acme', conversationId: 'conversation-1' };
     gateway.modelFor('assistant', context);
-    gateway.modelFor('assistant', context);
-
-    assert.ok(openRouter.roles.length === 2 || direct.roles.length === 2);
-    assert.equal(openRouter.roles.length + direct.roles.length, 2);
+    gateway.modelFor('query', { workspaceSlug: 'acme' });
+    assert.deepEqual(openRouter.roles, ['assistant', 'query']);
   });
 
-  it('honors the emergency direct-Anthropic backend override', () => {
-    const openRouter = new TrackingAdapter();
-    const direct = new TrackingAdapter();
-    const gateway = new ProfiledInferenceGateway({
-      profile: MODEL_PROFILE,
-      openRouter,
-      directAnthropic: direct,
-      backend: 'direct-anthropic',
-      canaryPercent: 100,
-    });
-    gateway.modelFor('query', { workspaceSlug: 'acme' });
-    assert.deepEqual(direct.roles, ['query']);
-    assert.deepEqual(openRouter.roles, []);
+  it('keeps unevaluated candidates out of the active profile', () => {
+    for (const role of Object.values(MODEL_PROFILE.roles)) {
+      assert.equal(role.primaryModel, BASELINE_MODEL);
+      assert.deepEqual(role.fallbackModels, []);
+    }
+  });
+
+  it('rejects an unreviewed model or fallback before startup', () => {
+    const profile = {
+      ...MODEL_PROFILE,
+      roles: {
+        ...MODEL_PROFILE.roles,
+        assistant: {
+          ...MODEL_PROFILE.roles.assistant,
+          fallbackModels: ['vendor/unreviewed-model'],
+        },
+      },
+    };
+    assert.throws(() => assertReviewedModelProfile(profile), /unreviewed/);
   });
 
   it('uses exact generation metadata for provider, tokens, and cost', async () => {

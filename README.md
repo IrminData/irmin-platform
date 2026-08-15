@@ -56,6 +56,11 @@ never commit populated environment files:
 Existing deployments and runtime configuration remain project-specific. See
 the README in each project before running or deploying it.
 
+AI inference is OpenRouter-only; OpenAI credentials in `ai/` are used for
+embeddings. Model-profile review, ZDR admission, release sequencing, rollback,
+telemetry retention, and the guarded pre-launch reset are documented in
+[AI runtime operations](docs/ai-runtime-operations.md).
+
 ## Validation
 
 Run the default hermetic local gate:

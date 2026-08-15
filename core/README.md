@@ -45,8 +45,11 @@ This project includes [Air](https://github.com/air-verse/air) configuration for 
 The following command line flags are available when running the application:
 
 - `-reset`: Reset the database (empties all tables)
-- `-migrate`: Run database migrations (creates tables, adds indexes, seeds initial roles, sets default policies)
-- `-override-policies`: When used with `-migrate`, overrides existing policies with default ones
+- `-migrate`: Deprecated no-op; migrations run automatically
+- `-skip-migrate`: Skip automatic migrations for a controlled one-shot task
+- `-override-policies`: Override existing policies while automatic migrations run
+- `-reset-prelaunch-ai-data`: Delete pre-launch AI Application pending operations
+  and obsolete pending-write schema; requires the exact reset acknowledgement
 - `-seed-tags`: Seeds default tags for all workspaces
 - `-seed-templates`: Seeds templates from embedded files
 
@@ -56,11 +59,12 @@ Example usage:
 # Reset the database
 go run main.go -reset
 
-# Run migrations
-go run main.go -migrate
+# Run automatic migrations and override existing policies
+go run . -override-policies
 
-# Run migrations and override existing policies
-go run main.go -migrate -override-policies
+# Pre-launch AI Application reset (permanent, guarded, and idempotent)
+IRMIN_PRELAUNCH_RESET_ACK=RESET_IRMIN_PRELAUNCH_AI_DATA \
+  go run . -reset-prelaunch-ai-data
 
 # Seed default tags for all workspaces and templates from embedded files
 go run main.go -seed-tags -seed-templates

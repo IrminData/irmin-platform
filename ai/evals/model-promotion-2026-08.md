@@ -5,6 +5,9 @@
 No cost-optimized candidate is promoted by this change. The default remains
 Claude Sonnet 4.6, routed through OpenRouter. This is the required fallback when
 no candidate has a reviewed result set that clears every promotion gate.
+Profile `irmin-balanced@2026-08-15.2` therefore uses that baseline for every
+role and configures no unevaluated fallback. Direct Anthropic and Groq runtime
+paths are removed; direct OpenAI remains embeddings-only.
 
 ## Fixed matrix
 
@@ -36,3 +39,11 @@ The required corpus covers assistant/RAG/tool selection, executable SQL,
 compiling Go, prompt injection, unauthorized tools, malformed tool output, and
 provider failures. Results must contain only task IDs, scores, safety flags,
 latency, tokens, and cost—never prompts, responses, reasoning, or tool payloads.
+
+## Release status
+
+The inference and evaluation machinery is deployable, but model promotion is
+intentionally still open. Completion requires a credentialed matrix run plus
+the 5%, 25%, and 100% internal release holds documented in
+`../../docs/ai-runtime-operations.md`; source changes alone cannot manufacture that
+production evidence.

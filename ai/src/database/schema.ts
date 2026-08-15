@@ -1,11 +1,13 @@
 import {
+  bigint,
   boolean,
+  date,
   index,
   integer,
   jsonb,
   numeric,
   pgTable,
-  real,
+  primaryKey,
   text,
   timestamp,
   uniqueIndex,
@@ -139,33 +141,73 @@ export const messageFeedback = pgTable(
   ]
 );
 
-export const aiModels = pgTable('ai_models', {
-  id: integer('id').primaryKey().generatedByDefaultAsIdentity(),
-  name: text('name').notNull(),
-  provider: text('provider').notNull(), // 'openai', 'groq', 'anthropic', etc.
-  modelId: text('model_id').notNull().unique(), // actual model identifier
-  description: text('description').notNull(), // model description
-
-  // Pricing information (per 1M tokens)
-  inputPricePerMillionTokens: real('input_price_per_million_tokens').default(0),
-  outputPricePerMillionTokens: real('output_price_per_million_tokens').default(
-    0
-  ),
-
-  // Metadata
-  metadata: jsonb('metadata').default({}),
-
-  // Status
-  isActive: boolean('is_active').default(true),
-
-  // Timestamps
-  createdAt: timestamp('created_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
+export const modelRunDailyMetrics = pgTable(
+  'model_run_daily_metrics',
+  {
+    day: date('day').notNull(),
+    role: text('role').notNull(),
+    profileVersion: text('profile_version').notNull(),
+    requestedModel: text('requested_model').notNull(),
+    resolvedModel: text('resolved_model').notNull(),
+    resolvedProvider: text('resolved_provider').notNull(),
+    status: text('status').notNull(),
+    runCount: bigint('run_count', { mode: 'number' }).notNull().default(0),
+    inputTokens: bigint('input_tokens', { mode: 'number' })
+      .notNull()
+      .default(0),
+    outputTokens: bigint('output_tokens', { mode: 'number' })
+      .notNull()
+      .default(0),
+    totalTokens: bigint('total_tokens', { mode: 'number' })
+      .notNull()
+      .default(0),
+    openRouterCost: numeric('openrouter_cost', {
+      precision: 20,
+      scale: 10,
+    })
+      .notNull()
+      .default('0'),
+    totalLatencyMs: bigint('total_latency_ms', { mode: 'number' })
+      .notNull()
+      .default(0),
+    latencySampleCount: bigint('latency_sample_count', { mode: 'number' })
+      .notNull()
+      .default(0),
+    totalTimeToFirstTokenMs: bigint('total_time_to_first_token_ms', {
+      mode: 'number',
+    })
+      .notNull()
+      .default(0),
+    timeToFirstTokenSampleCount: bigint('time_to_first_token_sample_count', {
+      mode: 'number',
+    })
+      .notNull()
+      .default(0),
+    missingUsageCount: bigint('missing_usage_count', { mode: 'number' })
+      .notNull()
+      .default(0),
+    createdAt: timestamp('created_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    primaryKey({
+      columns: [
+        table.day,
+        table.role,
+        table.profileVersion,
+        table.requestedModel,
+        table.resolvedModel,
+        table.resolvedProvider,
+        table.status,
+      ],
+    }),
+    index('model_run_daily_metrics_day_idx').on(table.day),
+  ]
+);
 
 export const analytics = pgTable(
   'analytics',
@@ -182,19 +224,12 @@ export const analytics = pgTable(
     conversationId: text('conversation_id').references(() => conversations.id, {
       onDelete: 'cascade',
     }),
-    aiModelId: integer('ai_model_id').references(() => aiModels.id, {
-      onDelete: 'set null',
-    }),
-
     // Timestamps
     createdAt: timestamp('created_at', { withTimezone: true })
       .notNull()
       .defaultNow(),
   },
-  (table) => [
-    index('idx_analytics_conversation_id').on(table.conversationId),
-    index('idx_analytics_ai_model_id').on(table.aiModelId),
-  ]
+  (table) => [index('idx_analytics_conversation_id').on(table.conversationId)]
 );
 
 export const vectorCollections = pgTable(
@@ -258,8 +293,7 @@ export type NewModelRun = typeof modelRuns.$inferInsert;
 export type MessageFeedback = typeof messageFeedback.$inferSelect;
 export type NewMessageFeedback = typeof messageFeedback.$inferInsert;
 
-export type AIModel = typeof aiModels.$inferSelect;
-export type NewAIModel = typeof aiModels.$inferInsert;
+export type ModelRunDailyMetric = typeof modelRunDailyMetrics.$inferSelect;
 
 export type Analytics = typeof analytics.$inferSelect;
 export type NewAnalytics = typeof analytics.$inferInsert;

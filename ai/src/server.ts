@@ -72,7 +72,7 @@ server.register(swagger, {
     info: {
       title: 'Irmin AI API',
       description:
-        'LangChain-based AI chat and agents API for Irmin, with streaming responses, Groq/OpenAI integration, and MCP tools support.',
+        'Irmin AI runtime with OpenRouter inference, OpenAI embeddings, versioned streaming events, and MCP tool support.',
       version: process.env.npm_package_version || '1.0.0',
       contact: {
         name: 'Irmin Team',

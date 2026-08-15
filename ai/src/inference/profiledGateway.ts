@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { ulid } from 'ulid';
 
 import type {
@@ -12,9 +11,6 @@ import type {
 interface GatewayOptions {
   profile: ModelProfile;
   openRouter: InferenceAdapter;
-  directAnthropic: InferenceAdapter;
-  backend: 'openrouter' | 'direct-anthropic';
-  canaryPercent: number;
 }
 
 export class ProfiledInferenceGateway implements InferenceGateway {
@@ -26,14 +22,10 @@ export class ProfiledInferenceGateway implements InferenceGateway {
 
   modelFor(role: ModelRole, runContext: InferenceRunContext = {}) {
     const roleProfile = this.profile.roles[role];
-    const useOpenRouter = this.useOpenRouter(runContext);
-    const adapter = useOpenRouter
-      ? this.options.openRouter
-      : this.options.directAnthropic;
-    return adapter.modelFor(
+    return this.options.openRouter.modelFor(
       role,
       roleProfile,
-      this.withPersistentTelemetry(role, runContext, useOpenRouter)
+      this.withPersistentTelemetry(role, runContext)
     );
   }
 
@@ -53,20 +45,9 @@ export class ProfiledInferenceGateway implements InferenceGateway {
     return (await model.invoke(messages, { signal })) as T;
   }
 
-  private useOpenRouter(runContext: InferenceRunContext): boolean {
-    if (this.options.backend === 'direct-anthropic') return false;
-    if (this.options.canaryPercent >= 100) return true;
-    if (this.options.canaryPercent <= 0) return false;
-    const key = `${runContext.workspaceSlug ?? 'system'}:${runContext.conversationId ?? 'one-shot'}`;
-    const bucket =
-      createHash('sha256').update(key).digest().readUInt32BE(0) % 100;
-    return bucket < this.options.canaryPercent;
-  }
-
   private withPersistentTelemetry(
     role: ModelRole,
-    context: InferenceRunContext,
-    expectOpenRouterCost: boolean
+    context: InferenceRunContext
   ): InferenceRunContext {
     // The top-level assistant call owns the HTTP run row created by the route.
     // Middleware and one-shot role calls are separate model runs so they cannot
@@ -126,7 +107,7 @@ export class ProfiledInferenceGateway implements InferenceGateway {
                 updatedAt: new Date(),
               })
               .where(eq(modelRuns.runId, runId));
-            if (expectOpenRouterCost && telemetry.status === 'completed') {
+            if (telemetry.status === 'completed') {
               if (telemetry.cost === undefined) {
                 console.error(
                   `[InferenceTelemetry] Missing OpenRouter cost for run ${runId}`

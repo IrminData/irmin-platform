@@ -6,6 +6,11 @@ import {
 import { env } from '@/config/env';
 import { TIMEOUTS } from '@/config/timeouts';
 
+type IrminToolDescriptor = Record<string, unknown> & {
+  name: string;
+  risk?: 'read' | 'write' | 'destructive';
+};
+
 class ToolsService {
   createClient(mcpServers: ClientConfig['mcpServers']) {
     // Create client and connect to server
@@ -48,13 +53,16 @@ class ToolsService {
         tool.metadata = { ...tool.metadata, irminDescriptor: descriptor };
       }
     }
-    return tools;
+    // The user MCP endpoint cannot replay a generic staged destructive
+    // operation yet. Keep those handlers unavailable to model credentials.
+    return tools.filter((tool) => {
+      if (tool.name === 'irmin_tool_catalog_list') return true;
+      return byName.get(tool.name)?.risk !== 'destructive';
+    });
   }
 
-  private extractDescriptors(
-    value: unknown
-  ): Array<Record<string, unknown> & { name: string }> {
-    const found: Array<Record<string, unknown> & { name: string }> = [];
+  private extractDescriptors(value: unknown): IrminToolDescriptor[] {
+    const found: IrminToolDescriptor[] = [];
     const visit = (candidate: unknown) => {
       if (Array.isArray(candidate)) {
         for (const item of candidate) visit(item);
@@ -67,7 +75,7 @@ class ToolsService {
         typeof record.capability === 'string' &&
         typeof record.catalog_version === 'number'
       ) {
-        found.push(record as Record<string, unknown> & { name: string });
+        found.push(record as IrminToolDescriptor);
         return;
       }
       for (const child of Object.values(record)) visit(child);

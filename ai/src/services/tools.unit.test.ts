@@ -9,9 +9,12 @@ describe('tools service canonical catalog', () => {
     process.env.OPENROUTER_API_KEY = 'test-openrouter-key';
     process.env.OPENAI_API_KEY = 'test-openai-key';
     process.env.LANGSMITH_API_KEY = 'test-langsmith-key';
-    process.env.ANTHROPIC_API_KEY = 'test-anthropic-key';
     const { toolsService } = await import('./tools');
     const queryTool = { name: 'renamable-query-tool', metadata: {} };
+    const destructiveTool = {
+      name: 'irmin_repository_object_delete',
+      metadata: {},
+    };
     const catalogTool = {
       name: 'irmin_tool_catalog_list',
       metadata: {},
@@ -25,6 +28,13 @@ describe('tools service canonical catalog', () => {
                   name: 'renamable-query-tool',
                   capability: 'query.execute',
                   catalog_version: 1,
+                  risk: 'write',
+                },
+                {
+                  name: 'irmin_repository_object_delete',
+                  capability: 'repository.destructive',
+                  catalog_version: 1,
+                  risk: 'destructive',
                 },
               ],
             },
@@ -33,7 +43,7 @@ describe('tools service canonical catalog', () => {
       }),
     };
     const client = {
-      getTools: async () => [queryTool, catalogTool],
+      getTools: async () => [queryTool, destructiveTool, catalogTool],
     };
 
     const tools = await toolsService.getTools(client as never);
@@ -41,6 +51,12 @@ describe('tools service canonical catalog', () => {
       name: 'renamable-query-tool',
       capability: 'query.execute',
       catalog_version: 1,
+      risk: 'write',
     });
+    assert.equal(
+      tools.some((tool) => tool.name === destructiveTool.name),
+      false,
+      'destructive tools must remain unavailable until approval replay exists'
+    );
   });
 });

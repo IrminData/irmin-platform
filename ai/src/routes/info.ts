@@ -5,7 +5,6 @@ import { swaggerSchemas } from '@/config/swagger';
 
 import {
   ModelProfileResponseSchema,
-  ModelsResponseSchema,
   UserProfileResponseSchema,
   WorkspaceInfoResponseSchema,
 } from '@/types/info';
@@ -79,37 +78,6 @@ export async function infoRoutes(fastify: FastifyInstance) {
             ? error.message
             : 'Failed to fetch workspace information';
         fastify.log.error('Workspace info endpoint error: %s', errorMessage);
-        sendInternalServerError(reply, errorMessage, fastify.log);
-        return;
-      }
-    }
-  );
-
-  // GET /api/info/models - List available AI models
-  fastify.get(
-    '/info/models',
-    {
-      schema: swaggerSchemas.listModels,
-    },
-    async (_, reply) => {
-      try {
-        const models = Object.entries(MODEL_PROFILE.roles).map(
-          ([role, profile]) => ({
-            name: role,
-            provider: 'openrouter',
-            modelId: profile.primaryModel,
-            description: `Version-controlled model profile for the ${role} role`,
-            inputPricePerMillionTokens: null,
-            outputPricePerMillionTokens: null,
-          })
-        );
-
-        sendOkResponse(reply, ModelsResponseSchema, { models }, fastify.log);
-        return;
-      } catch (error) {
-        const errorMessage =
-          error instanceof Error ? error.message : 'Failed to fetch models';
-        fastify.log.error('Models endpoint error: %s', errorMessage);
         sendInternalServerError(reply, errorMessage, fastify.log);
         return;
       }

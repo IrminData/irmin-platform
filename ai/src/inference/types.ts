@@ -20,7 +20,6 @@ interface ModelCapabilities {
 export interface ModelRoleProfile {
   primaryModel: string;
   fallbackModels: readonly string[];
-  directAnthropicModel: string;
   capabilities: ModelCapabilities;
   maxInputTokens: number;
   maxOutputTokens: number;

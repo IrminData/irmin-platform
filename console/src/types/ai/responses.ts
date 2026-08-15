@@ -1,7 +1,7 @@
 import type { StoredMessage } from '@langchain/core/messages';
 import { z } from 'zod';
 
-import { AIAgentSchema, AIConversationSchema, AIModelSchema } from './base';
+import { AIAgentSchema, AIConversationSchema } from './base';
 
 // Response schemas for page-based pagination
 export const AIConversationsListResponseSchema = z.object({
@@ -60,10 +60,6 @@ export const AIWorkspaceInfoResponseSchema = z.object({
     updated_at: z.string().optional(),
   }),
   slug: z.string(),
-});
-
-export const AIModelsResponseSchema = z.object({
-  models: z.array(AIModelSchema),
 });
 
 // Type exports

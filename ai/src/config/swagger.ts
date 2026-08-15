@@ -52,19 +52,6 @@ const conversationSchema = {
   },
 } as const;
 
-// AI Model schema
-const aiModelSchema = {
-  type: 'object',
-  properties: {
-    name: { type: 'string' },
-    provider: { type: 'string' },
-    modelId: { type: 'string' },
-    description: { type: 'string' },
-    inputPricePerMillionTokens: { type: 'number', nullable: true },
-    outputPricePerMillionTokens: { type: 'number', nullable: true },
-  },
-} as const;
-
 // Vector Collection schema
 const vectorCollectionSchema = {
   type: 'object',
@@ -135,25 +122,6 @@ export const swaggerSchemas = {
         properties: {
           workspace: workspaceSchema,
           slug: { type: 'string' },
-        },
-      },
-    },
-  },
-
-  listModels: {
-    tags: ['Info'],
-    summary: 'List available AI models',
-    description:
-      'Retrieves the primary model assigned to each version-controlled inference role. Runtime cost comes from OpenRouter usage telemetry.',
-    response: {
-      200: {
-        description: 'AI models retrieved successfully',
-        type: 'object',
-        properties: {
-          models: {
-            type: 'array',
-            items: aiModelSchema,
-          },
         },
       },
     },

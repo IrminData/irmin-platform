@@ -36,14 +36,5 @@ export const AIAgentSchema = z.object({
   supportsStreaming: z.boolean().optional(),
 });
 
-export const AIModelSchema = z.object({
-  name: z.string(),
-  provider: z.string(),
-  modelId: z.string(),
-  description: z.string(),
-  inputPricePerMillionTokens: z.number().nullable(),
-  outputPricePerMillionTokens: z.number().nullable(),
-});
-
 // Type exports
 export type AIConversation = z.infer<typeof AIConversationSchema>;

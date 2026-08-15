@@ -1,4 +1,3 @@
-import { ChatAnthropic } from '@langchain/anthropic';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { FakeListChatModel } from '@langchain/core/utils/testing';
 import { ChatOpenRouter } from '@langchain/openrouter';
@@ -119,33 +118,6 @@ function finiteNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value)
     ? value
     : undefined;
-}
-
-export class DirectAnthropicAdapter implements InferenceAdapter {
-  constructor(private readonly apiKey?: string) {}
-
-  modelFor(
-    _role: ModelRole,
-    roleProfile: ModelRoleProfile,
-    runContext: InferenceRunContext
-  ): BaseChatModel {
-    if (!this.apiKey) {
-      throw new Error(
-        'ANTHROPIC_API_KEY is required for direct-anthropic rollback'
-      );
-    }
-    return new ChatAnthropic({
-      apiKey: this.apiKey,
-      model: roleProfile.directAnthropicModel,
-      maxTokens: roleProfile.maxOutputTokens,
-      callbacks: [
-        new InferenceTelemetryCallback(
-          roleProfile.directAnthropicModel,
-          runContext
-        ),
-      ],
-    });
-  }
 }
 
 export class FakeInferenceAdapter implements InferenceAdapter {

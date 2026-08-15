@@ -383,17 +383,17 @@ async function testInfoEndpoints(): Promise<boolean> {
     allPassed = false;
   }
 
-  // Test 3: Get available models
-  const modelsResult = await makeRequest(`${BASE_URL}/api/info/models`);
-  if (modelsResult.ok) {
-    const modelsData = modelsResult.data as Record<string, unknown>;
-    const models = modelsData?.models as Array<Record<string, unknown>>;
-    console.log(`  Available models: ${models?.length || 0}`);
-    if (models && models.length > 0) {
-      console.log(`    Sample: ${models[0].name} (${models[0].provider})`);
-    }
+  // Test 3: Get the reviewed model profile
+  const profileResult = await makeRequest(`${BASE_URL}/api/info/model-profile`);
+  if (profileResult.ok) {
+    const profileData = profileResult.data as {
+      profile?: { id?: string; version?: string };
+    };
+    console.log(
+      `  Model profile: ${profileData.profile?.id ?? 'unknown'}@${profileData.profile?.version ?? 'unknown'}`
+    );
   } else {
-    console.log('  Failed to get models');
+    console.log('  Failed to get model profile');
     allPassed = false;
   }
 

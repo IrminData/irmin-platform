@@ -14,20 +14,6 @@ export const WorkspaceInfoResponseSchema = z.object({
   slug: z.string().describe('Workspace slug'),
 });
 
-// Models response schema
-export const ModelsResponseSchema = z.object({
-  models: z.array(
-    z.object({
-      name: z.string(),
-      provider: z.string(),
-      modelId: z.string(),
-      description: z.string(),
-      inputPricePerMillionTokens: z.number().nullable(),
-      outputPricePerMillionTokens: z.number().nullable(),
-    })
-  ),
-});
-
 export const ModelProfileResponseSchema = z.object({
   profile: z.object({
     id: z.string(),

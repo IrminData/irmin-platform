@@ -1,5 +1,3 @@
-import { StreamEvent } from '@langchain/core/tracers/log_stream';
-import { IterableReadableStream } from '@langchain/core/utils/stream';
 import type { BaseMessage } from 'langchain';
 
 import type agentService from '@/services/agent';
@@ -45,7 +43,8 @@ export interface AgentInput {
 
 export interface AgentResponse {
   messages?: BaseMessage[];
-  stream?: IterableReadableStream<StreamEvent>;
+  /** Internal event source normalized to RunEventV1 before it crosses HTTP. */
+  stream?: ReadableStream<unknown>;
   conversationId?: string;
   metadata?: Record<string, unknown>;
   specialistResult?: SpecialistResult;

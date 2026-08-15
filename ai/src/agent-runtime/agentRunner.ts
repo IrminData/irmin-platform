@@ -8,7 +8,7 @@ import type {
 } from '@/agents/types';
 
 import { getContentAsString } from '@/utils/getContentAsString';
-import { textSanitizer } from '@/utils/sanitization';
+import { textNormalizer } from '@/utils/normalization';
 
 import { type Conversation, conversationStore } from './conversationStore';
 
@@ -20,9 +20,9 @@ export class AgentRunner {
     conversation: Conversation
   ): Promise<{ response: AgentResponse; normalizedMessage: string }> {
     if (input.signal?.aborted) throw input.signal.reason;
-    const normalizedMessage = textSanitizer.sanitizeUserMessage(
+    const normalizedMessage = textNormalizer.normalizeUserMessage(
       input.message
-    ).sanitized;
+    );
     if (!normalizedMessage.trim()) throw new Error('Message cannot be empty');
 
     const context =
