@@ -2,11 +2,11 @@
 
 import { useMemo } from 'react';
 
-import { RiFlowChart } from 'react-icons/ri';
 import {
   TbCode,
   TbDatabaseExport,
   TbDatabaseImport,
+  TbHierarchy,
   TbPlayerPlay,
   TbRun,
 } from 'react-icons/tb';
@@ -43,7 +43,7 @@ export default function WorkflowsLayoutWrapper({
         link: `${baseUrl}`,
       },
       {
-        icon: <RiFlowChart />,
+        icon: <TbHierarchy />,
         name: dict.workflow.pipelines,
         slug: 'pipeline-workflows',
         link: `${baseUrl}/pipelines`,

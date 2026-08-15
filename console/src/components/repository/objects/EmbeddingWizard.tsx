@@ -333,25 +333,12 @@ export default function EmbeddingWizard({
 
       {configLocked && (
         <div
-          className={`
-            rounded-lg border border-blue-200 bg-blue-50 p-3
-            dark:border-blue-900 dark:bg-blue-950/30
-          `}
+          className={`rounded-[2px] border border-chart-2/30 bg-chart-2/10 p-3`}
         >
-          <p
-            className={`
-              text-sm font-medium text-blue-700
-              dark:text-blue-400
-            `}
-          >
+          <p className={`text-sm font-medium text-foreground`}>
             {dict.repository.objects.embeddingsConfigLoaded}
           </p>
-          <p
-            className={`
-              text-xs text-blue-600
-              dark:text-blue-500
-            `}
-          >
+          <p className={`text-xs text-muted-foreground`}>
             {dict.repository.objects.embeddingsConfigLoadedDescription}
           </p>
         </div>
@@ -382,7 +369,7 @@ export default function EmbeddingWizard({
             disabled={configLocked}
           />
           <p className='text-xs text-muted-foreground'>
-            Characters per chunk (100-4000)
+            {dict.repository.objects.embeddingsCharactersPerChunk}
           </p>
         </div>
 
@@ -405,7 +392,7 @@ export default function EmbeddingWizard({
             disabled={configLocked}
           />
           <p className='text-xs text-muted-foreground'>
-            Overlap between chunks (0-500)
+            {dict.repository.objects.embeddingsOverlapRange}
           </p>
         </div>
 
@@ -426,11 +413,11 @@ export default function EmbeddingWizard({
                   : undefined,
               }))
             }
-            placeholder='Auto (model default)'
+            placeholder={dict.repository.objects.embeddingsAutoModelDefault}
             disabled={configLocked}
           />
           <p className='text-xs text-muted-foreground'>
-            Leave empty for model default
+            {dict.repository.objects.embeddingsLeaveEmptyModelDefault}
           </p>
         </div>
       </div>
@@ -493,33 +480,47 @@ export default function EmbeddingWizard({
         const displayPriority = submittedValues?.priority ?? priority;
 
         return (
-          <div className='rounded-lg border bg-muted/30 p-4'>
-            <h4 className='mb-2 font-medium'>Summary</h4>
+          <div className='rounded-[2px] border border-border bg-muted/30 p-4'>
+            <h4 className='mb-2 font-medium'>
+              {dict.repository.objects.embeddingsSummary}
+            </h4>
             <div className='flex flex-col gap-2 text-sm'>
               <div className='flex justify-between'>
-                <span className='text-muted-foreground'>Source Files:</span>
+                <span className='text-muted-foreground'>
+                  {dict.repository.objects.vectorizeSourcePaths}:
+                </span>
                 <span>{displaySourcePaths.length}</span>
               </div>
               <div className='flex justify-between'>
-                <span className='text-muted-foreground'>Output Path:</span>
-                <span className='max-w-48 truncate'>{displayOutputPath}</span>
+                <span className='text-muted-foreground'>
+                  {dict.repository.objects.vectorizeOutputPath}:
+                </span>
+                <span className='max-w-48 truncate' title={displayOutputPath}>
+                  {displayOutputPath}
+                </span>
               </div>
               <div className='flex justify-between'>
-                <span className='text-muted-foreground'>Model:</span>
+                <span className='text-muted-foreground'>
+                  {dict.repository.objects.embeddingsModel}:
+                </span>
                 <span>{displayConfig.model ?? 'text-embedding-3-small'}</span>
               </div>
               <div className='flex justify-between'>
-                <span className='text-muted-foreground'>Chunk Size:</span>
+                <span className='text-muted-foreground'>
+                  {dict.repository.objects.embeddingsChunkSize}:
+                </span>
                 <span>{displayConfig.chunk_size ?? 1000}</span>
               </div>
               <div className='flex justify-between'>
-                <span className='text-muted-foreground'>Priority:</span>
+                <span className='text-muted-foreground'>
+                  {dict.repository.objects.embeddingsPriority}:
+                </span>
                 <span>{displayPriority.toFixed(2)}</span>
               </div>
               {Object.keys(displayMetadata).length > 0 && (
                 <div className='flex justify-between'>
                   <span className='text-muted-foreground'>
-                    Metadata Fields:
+                    {dict.repository.objects.embeddingsMetadataFields}:
                   </span>
                   <span>{Object.keys(displayMetadata).length}</span>
                 </div>
@@ -532,18 +533,10 @@ export default function EmbeddingWizard({
       {/* Results */}
       {results && (
         <div
-          className={`
-            rounded-lg border border-green-200 bg-green-50 p-4
-            dark:border-green-900 dark:bg-green-950/30
-          `}
+          className={`rounded-[2px] border border-success/30 bg-success/10 p-4`}
         >
-          <h4
-            className={`
-              mb-2 font-medium text-green-700
-              dark:text-green-400
-            `}
-          >
-            Completed
+          <h4 className={`mb-2 font-medium text-foreground`}>
+            {dict.repository.objects.embeddingsCompleted}
           </h4>
           <div className='flex gap-4'>
             <Badge variant='secondary'>

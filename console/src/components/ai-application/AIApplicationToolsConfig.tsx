@@ -251,7 +251,9 @@ const AIApplicationToolsConfig = () => {
               <Collapsible
                 open={writeConfigOpen}
                 onOpenChange={setWriteConfigOpen}
-                className='mt-2 rounded-md border bg-muted/30 p-3'
+                className='
+                  mt-2 rounded-[2px] border border-border bg-muted/30 p-3
+                '
               >
                 <CollapsibleTrigger asChild>
                   <Button

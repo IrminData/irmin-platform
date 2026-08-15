@@ -276,16 +276,10 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
         <div className='flex items-center gap-3'>
           <div
             className={`
-              rounded-md bg-purple-100 p-2
-              dark:bg-purple-900/20
+              rounded-[2px] border border-chart-4/30 bg-chart-4/10 p-2
             `}
           >
-            <TbVectorTriangle
-              className={`
-                size-6 text-purple-600
-                dark:text-purple-400
-              `}
-            />
+            <TbVectorTriangle className={`size-6 text-chart-4`} />
           </div>
           <div>
             <h2 className='text-lg leading-none font-semibold tracking-tight'>
@@ -452,7 +446,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
 
         {/* Search Results */}
         {searchState.results.length > 0 && (
-          <div className='rounded-md border'>
+          <div className='rounded-[2px] border border-border'>
             <Table className='table-fixed'>
               <TableHeader>
                 <TableRow>
@@ -523,7 +517,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
                               size-3
                               ${
                                 result.priority >= 0.8
-                                  ? 'text-yellow-500'
+                                  ? 'text-warning'
                                   : 'text-muted-foreground/50'
                               }
                             `}
@@ -595,7 +589,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
           searchState.searchContext?.query === searchState.query.trim() && (
             <div
               className={`
-                flex flex-col items-center justify-center gap-3 rounded-lg
+                flex flex-col items-center justify-center gap-3 rounded-[2px]
                 border border-dashed py-12 text-center text-muted-foreground
               `}
             >
@@ -606,7 +600,7 @@ export default function EmbeddingViewer({ object }: EmbeddingViewerProps) {
                 <p className='font-medium text-foreground'>
                   {dict.repository.objects.noSearchResults}
                 </p>
-                <p className='text-sm'>Try adjusting your query or filters</p>
+                <p className='text-sm'>{dict.search.tryAdjustingFilters}</p>
               </div>
             </div>
           )}

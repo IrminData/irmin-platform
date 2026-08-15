@@ -32,48 +32,28 @@ export default function APITokenDisplay({ token }: { token: string }) {
 
   return (
     <div
-      className={`
-        w-full max-w-md overflow-hidden rounded-lg bg-white shadow-lg
-        dark:bg-gray-800
-      `}
+      className={`w-full max-w-md overflow-hidden rounded-[2px] border bg-card`}
     >
       <div className='p-6'>
-        <h2
-          className={`
-            mb-2 text-2xl text-gray-800
-            dark:text-white
-          `}
-        >
+        <h2 className={`mb-2 text-2xl text-foreground`}>
           {dict.tokens.yourAPIToken}
         </h2>
-        <p
-          className={`
-            mb-4 text-sm text-gray-600
-            dark:text-gray-300
-          `}
-        >
+        <p className={`mb-4 text-sm text-muted-foreground`}>
           {dict.tokens.storeTokenDescription}
         </p>
         <div
           className={`
-            mb-4 flex items-center justify-between rounded-md bg-gray-100 p-4
-            dark:bg-gray-700
+            mb-4 flex items-center justify-between rounded-[2px] bg-muted p-4
           `}
         >
           {isRevealed ? (
-            <code
-              className={`
-                font-mono text-sm break-all text-gray-800
-                dark:text-gray-200
-              `}
-            >
+            <code className={`font-mono text-sm break-all text-foreground`}>
               {token}
             </code>
           ) : (
             <div
               className={`
-                h-6 w-full animate-pulse rounded-sm bg-gray-300
-                dark:bg-gray-600
+                h-6 w-full animate-pulse rounded-[2px] bg-muted-foreground/20
               `}
             />
           )}

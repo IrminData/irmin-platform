@@ -69,12 +69,7 @@ const ConnectionList = ({
               className='inline-flex flex-col gap-1'
             >
               <p className='text-base'>{item.name}</p>
-              <span
-                className={`
-                  text-sm text-gray-600
-                  dark:text-gray-400
-                `}
-              >
+              <span className={`text-sm text-muted-foreground`}>
                 {dict.common.owner}: {item.owner.email}
               </span>
             </div>,
@@ -106,12 +101,7 @@ const ConnectionList = ({
           ],
           actions,
           details: (
-            <div
-              className={`
-                flex max-w-sm flex-col text-gray-600
-                dark:text-gray-400
-              `}
-            >
+            <div className={`flex max-w-sm flex-col text-muted-foreground`}>
               <p className='pb-4 text-sm'>{item.description}</p>
             </div>
           ),

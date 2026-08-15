@@ -28,6 +28,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAIApplicationContext } from '@/context/AIApplicationContext';
 import { useLocale } from '@/context/LocaleContext';
 
+function HighlightedMessage({
+  message,
+  placeholder,
+  children,
+}: {
+  message: string;
+  placeholder: string;
+  children: string;
+}) {
+  const placeholderIndex = message.indexOf(placeholder);
+
+  if (placeholderIndex === -1) return message;
+
+  return (
+    <>
+      {message.slice(0, placeholderIndex)}
+      <strong>{children}</strong>
+      {message.slice(placeholderIndex + placeholder.length)}
+    </>
+  );
+}
+
 /**
  * AI Application connection details section
  * Displays API key, MCP endpoint, REST API endpoint, and connection instructions
@@ -139,7 +161,7 @@ const AIApplicationConnectionDetails = () => {
                     aria-label={dict.aiApplication.copyApiKey}
                   >
                     {apiKeyCopied ? (
-                      <TbCheck size={14} className='text-green-500' />
+                      <TbCheck size={14} className='text-success' />
                     ) : (
                       <TbCopy size={14} />
                     )}
@@ -172,13 +194,15 @@ const AIApplicationConnectionDetails = () => {
                   readOnly
                   value={mcpEndpoint}
                   className='pr-10 font-mono text-xs'
+                  aria-label={dict.aiApplication.mcpEndpoint}
                 />
                 <Button
                   variant='ghost'
                   size='icon'
                   className='absolute right-1 size-7'
                   onClick={() => handleCopy(mcpEndpoint)}
-                  aria-label='Copy MCP endpoint'
+                  title={dict.aiApplication.copyMcpEndpoint}
+                  aria-label={dict.aiApplication.copyMcpEndpoint}
                 >
                   <TbCopy size={14} />
                 </Button>
@@ -198,13 +222,15 @@ const AIApplicationConnectionDetails = () => {
                   readOnly
                   value={restApiEndpoint}
                   className='pr-10 font-mono text-xs'
+                  aria-label={dict.aiApplication.restApiEndpoint}
                 />
                 <Button
                   variant='ghost'
                   size='icon'
                   className='absolute right-1 size-7'
                   onClick={() => handleCopy(restApiEndpoint)}
-                  aria-label='Copy REST API endpoint'
+                  title={dict.aiApplication.copyRestApiEndpoint}
+                  aria-label={dict.aiApplication.copyRestApiEndpoint}
                 >
                   <TbCopy size={14} />
                 </Button>
@@ -240,18 +266,20 @@ const AIApplicationConnectionDetails = () => {
               `}
             >
               <li>
-                <span>
-                  {dict.aiApplication.howToConnectMcpPrefix}
-                  <strong>{dict.aiApplication.howToConnectMcpBold}</strong>
-                  {dict.aiApplication.howToConnectMcpSuffix}
-                </span>
+                <HighlightedMessage
+                  message={dict.aiApplication.howToConnectMcp}
+                  placeholder='{mcpEndpoint}'
+                >
+                  {dict.aiApplication.mcpEndpoint}
+                </HighlightedMessage>
               </li>
               <li>
-                <span>
-                  {dict.aiApplication.howToConnectApiKeyPrefix}
-                  <strong>{dict.aiApplication.howToConnectApiKeyBold}</strong>
-                  {dict.aiApplication.howToConnectApiKeySuffix}
-                </span>
+                <HighlightedMessage
+                  message={dict.aiApplication.howToConnectApiKey}
+                  placeholder='{apiKey}'
+                >
+                  {dict.aiApplication.apiKey}
+                </HighlightedMessage>
               </li>
               <li>{dict.aiApplication.howToConnectTools}</li>
             </ul>
@@ -271,7 +299,7 @@ const AIApplicationConnectionDetails = () => {
                   `}
                 >
                   <span className='text-sm font-medium'>
-                    Claude Desktop Config
+                    {dict.aiApplication.claudeDesktopConfig}
                   </span>
                   {configOpen ? (
                     <TbChevronDown size={16} />
@@ -297,7 +325,7 @@ const AIApplicationConnectionDetails = () => {
                       <TabsContent key={tab} value={tab}>
                         <div
                           className={`
-                            relative rounded-md bg-muted/50 p-3 font-mono
+                            relative rounded-[2px] bg-muted/50 p-3 font-mono
                             text-xs
                           `}
                         >
@@ -316,7 +344,8 @@ const AIApplicationConnectionDetails = () => {
                               text-muted-foreground
                               hover:bg-background hover:text-foreground
                             `}
-                            aria-label='Copy configuration'
+                            title={dict.aiApplication.copyConfiguration}
+                            aria-label={dict.aiApplication.copyConfiguration}
                             onClick={() => {
                               navigator.clipboard.writeText(
                                 JSON.stringify(config, null, 2)

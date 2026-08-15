@@ -251,6 +251,7 @@ export default async function middleware(
  * - _next/image (image optimisation files)
  * - monitoring (sentry tunnel route)
  * - all .svg, .png, .jpg, .webp, .ico and .jpeg files
+ * - generated Open Graph and Twitter image routes
  * - sitemap.xml
  * - robots.txt
  *
@@ -258,6 +259,6 @@ export default async function middleware(
  */
 export const config = {
   matcher: [
-    '/((?!ui-assets|_next/static|_next/image|monitoring|favicon.ico|[^/]+\\.svg|[^/]+\\.png|[^/]+\\.ico|[^/]+\\.jpg|[^/]+\\.webp|[^/]+\\.jpeg|sitemap\\.xml|robots\\.txt).*)',
+    '/((?!ui-assets|_next/static|_next/image|monitoring|favicon.ico|opengraph-image|twitter-image|[^/]+\\.svg|[^/]+\\.png|[^/]+\\.ico|[^/]+\\.jpg|[^/]+\\.webp|[^/]+\\.jpeg|sitemap\\.xml|robots\\.txt).*)',
   ],
 };

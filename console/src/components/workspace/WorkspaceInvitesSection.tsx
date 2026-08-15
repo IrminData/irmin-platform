@@ -2,7 +2,7 @@
 
 import { useCallback } from 'react';
 
-import { IoExit, IoMailOpenOutline } from 'react-icons/io5';
+import { TbLogout, TbMailOpened } from 'react-icons/tb';
 
 import { Button } from '@/components/ui/button';
 import { ButtonWithTooltip } from '@/components/ui/button-with-tooltip';
@@ -75,12 +75,7 @@ const WorkspaceInvitesSection = () => {
     return (
       <ContentWrapper wrapperClassName='max-w-7xl py-4'>
         <div className='mb-4 flex flex-row items-center justify-end px-2'>
-          <div
-            className={`
-              h-8 w-24 animate-pulse rounded-sm bg-gray-200
-              dark:bg-gray-800
-            `}
-          />
+          <div className={`h-8 w-24 animate-pulse rounded-[2px] bg-muted`} />
         </div>
         <TableSkeleton rows={5} columns={3} />
       </ContentWrapper>
@@ -120,7 +115,7 @@ const WorkspaceInvitesSection = () => {
     <ContentWrapper wrapperClassName='max-w-7xl py-4'>
       {/* Row containing the invite button */}
       <div className='mb-4 flex flex-row items-center justify-end px-2'>
-        <Button size='sm' variant='default' onClick={handleSendInvite}>
+        <Button size='sm' variant='accent' onClick={handleSendInvite}>
           {dict.users.inviteUser}
         </Button>
       </div>
@@ -132,7 +127,6 @@ const WorkspaceInvitesSection = () => {
           action={{
             label: dict.users.inviteUser,
             onClick: handleSendInvite,
-            variant: 'gradient',
           }}
           hideActionButton={!isResourceAllowed('invite', 'create')}
           className='py-16'
@@ -171,24 +165,15 @@ const WorkspaceInvitesSection = () => {
             {invites.map((invite) => (
               <TableRow
                 key={`workspace-invite-${invite.id}`}
-                className={`
-                  h-14 border-b
-                  dark:border-gray-800
-                `}
+                className={`h-14 border-b border-border`}
               >
                 <TableCell
-                  className={`
-                    px-4 py-2 text-sm text-gray-700
-                    dark:text-gray-400
-                  `}
+                  className={`px-4 py-2 text-sm text-muted-foreground`}
                 >
                   {invite.email}
                 </TableCell>
                 <TableCell
-                  className={`
-                    px-4 py-2 text-xs text-gray-700
-                    dark:text-gray-400
-                  `}
+                  className={`px-4 py-2 text-xs text-muted-foreground`}
                 >
                   <Select
                     value={invite.role.id}
@@ -222,16 +207,16 @@ const WorkspaceInvitesSection = () => {
                     <ButtonWithTooltip
                       size='icon'
                       variant='secondary'
-                      aria-label='Resend invite'
-                      icon={<IoMailOpenOutline size={14} />}
+                      aria-label={dict.users.resendInvite}
+                      icon={<TbMailOpened size={14} />}
                       onClick={() => resendInviteMutation.mutate(invite.id)}
                       tooltip={dict.users.resendInvite}
                     />
                     <ButtonWithTooltip
                       size='icon'
                       variant='secondary'
-                      aria-label='Cancel invite'
-                      icon={<IoExit size={14} />}
+                      aria-label={dict.users.cancelInvite}
+                      icon={<TbLogout size={14} />}
                       onClick={() => deleteInviteMutation.mutate(invite.id)}
                       tooltip={dict.users.cancelInvite}
                     />

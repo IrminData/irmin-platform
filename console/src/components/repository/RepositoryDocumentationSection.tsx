@@ -51,7 +51,7 @@ const RepositoryDocumentationSectionContent = () => {
     >
       <Button
         size='default'
-        variant='default'
+        variant='accent'
         type='submit'
         disabled={!isResourceAllowed('repository', 'update', repository.id)}
       >

@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 import Link from 'next/link';
 
-import { BsChevronDown, BsChevronUp, BsPerson, BsTag } from 'react-icons/bs';
+import { TbChevronDown, TbChevronUp, TbTag, TbUser } from 'react-icons/tb';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -81,7 +81,7 @@ export default function RepositoryDocumentationCard({
           {owner && (
             <div className='flex flex-col gap-1'>
               <dt className='flex items-center gap-2 text-muted-foreground'>
-                <BsPerson className='size-4' />
+                <TbUser className='size-4' />
                 {dict.common.owner}
               </dt>
               <dd className='text-foreground'>
@@ -112,7 +112,7 @@ export default function RepositoryDocumentationCard({
           {tags && (
             <div className='flex flex-col gap-1'>
               <dt className='flex items-center gap-2 text-muted-foreground'>
-                <BsTag className='size-4' />
+                <TbTag className='size-4' />
                 {dict.repository.tags.tags}
               </dt>
               <dd className='flex flex-wrap gap-2'>{tags}</dd>
@@ -192,9 +192,9 @@ export default function RepositoryDocumentationCard({
                 ? dict.catalog.collapseDetails
                 : dict.catalog.expandDetails}
               {isOpen ? (
-                <BsChevronUp className='size-4' />
+                <TbChevronUp className='size-4' />
               ) : (
-                <BsChevronDown className='size-4' />
+                <TbChevronDown className='size-4' />
               )}
             </Button>
           </CollapsibleTrigger>

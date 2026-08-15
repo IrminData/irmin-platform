@@ -160,12 +160,18 @@ export const useCancelWorkflowRun = () => {
     async (input: CancelWorkflowRunInput) => {
       const confirmed = await irminConfirm(
         'warning',
-        dict.workflow.cancelRun.confirm
+        dict.workflow.cancelRun.confirm,
+        dict.workflow.cancelRun.label
       );
       if (!confirmed) return;
       await cancelMutateAsync(input);
     },
-    [cancelMutateAsync, irminConfirm, dict.workflow.cancelRun.confirm]
+    [
+      cancelMutateAsync,
+      irminConfirm,
+      dict.workflow.cancelRun.confirm,
+      dict.workflow.cancelRun.label,
+    ]
   );
 
   return {

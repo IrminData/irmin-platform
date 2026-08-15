@@ -14,12 +14,7 @@ import type { GridRow, ListProps } from '@/types/internal/ListProps';
 
 const LoadingRow = ({ totalColumns }: { totalColumns: number }) => {
   return (
-    <tr
-      className={`
-        border-b border-gray-200
-        dark:border-gray-800
-      `}
-    >
+    <tr className='border-b border-border'>
       <td colSpan={totalColumns} className='p-2'>
         <LoadingSkeleton className='my-2 h-14 w-full' />
       </td>
@@ -102,30 +97,17 @@ const NormalList = ({
       ) ?? []
     );
   });
-  const detailsKeys = rows
-    .map((row, index) => {
-      const rowKey = generateRowKey(row, index);
-      return row.details ? `${rowKey}-details` : null;
-    })
-    .filter((key) => key !== null);
-
   return (
-    <div className='scrollbar-hide size-full overflow-auto' id='list'>
+    <div className='scrollbar-hide size-full overflow-auto'>
       <table
         className={`
-          w-full max-w-full border-collapse rounded-lg bg-popover/10 p-2 text-sm
-          shadow-xs transition-shadow
+          w-full max-w-full border-collapse rounded-[2px] bg-card p-2 text-sm
         `}
       >
         {/* Table head */}
         {!hideHeaders && (
           <thead>
-            <tr
-              className={`
-                border-b border-gray-200 bg-gray-100
-                dark:border-gray-800
-              `}
-            >
+            <tr className='border-b border-border bg-muted'>
               {headers.map((header, index) => {
                 // If we have NO actions, the last header cell is aligned right
                 // If we do have actions, all these headers are left-aligned
@@ -138,7 +120,6 @@ const NormalList = ({
                     key={headerKeys[index]}
                     className={`
                       p-2 align-middle text-xs font-normal
-                      dark:bg-irmin-black-700
                       ${textAlignment}
                     `}
                   >
@@ -170,12 +151,7 @@ const NormalList = ({
               return (
                 <Fragment key={rowKeys[rowIndex]}>
                   {/* Main row */}
-                  <tr
-                    className={`
-                      border-b border-gray-200
-                      dark:border-gray-800
-                    `}
-                  >
+                  <tr className='border-b border-border'>
                     {row.columns.map((column, colIndex) => (
                       <td
                         key={rowColumnKeys[rowIndex][colIndex]}
@@ -228,14 +204,22 @@ const NormalList = ({
                                 }}
                                 aria-label={
                                   openDetails.includes(rowIndex)
-                                    ? 'Hide details'
-                                    : 'Show details'
+                                    ? dict.common.hideDetails
+                                    : dict.common.showDetails
                                 }
+                                aria-expanded={openDetails.includes(rowIndex)}
+                                aria-controls={`${rowKeys[rowIndex]}-details`}
                               >
                                 {openDetails.includes(rowIndex) ? (
-                                  <TbChevronUp className='size-5' />
+                                  <TbChevronUp
+                                    aria-hidden='true'
+                                    className='size-5'
+                                  />
                                 ) : (
-                                  <TbChevronDown className='size-5' />
+                                  <TbChevronDown
+                                    aria-hidden='true'
+                                    className='size-5'
+                                  />
                                 )}
                               </Button>
                             )}
@@ -246,9 +230,13 @@ const NormalList = ({
                   </tr>
 
                   {/* Details row (shown if toggled) */}
-                  {row.details && openDetails.includes(rowIndex) && (
-                    <tr key={detailsKeys[rowIndex]}>
-                      <td colSpan={totalColumns} className='p-2 shadow-inner'>
+                  {row.details && (
+                    <tr
+                      key={`${rowKeys[rowIndex]}-details`}
+                      id={`${rowKeys[rowIndex]}-details`}
+                      hidden={!openDetails.includes(rowIndex)}
+                    >
+                      <td colSpan={totalColumns} className='p-2'>
                         {row.details}
                       </td>
                     </tr>

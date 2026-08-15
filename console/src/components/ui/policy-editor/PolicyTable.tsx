@@ -53,46 +53,73 @@ interface SortState {
 function SortableHeader({
   column,
   children,
+  tooltip,
   sortState,
   onSort,
 }: {
   column: SortableColumn;
   children: React.ReactNode;
+  tooltip: string;
   sortState: SortState;
   onSort: (column: SortableColumn) => void;
 }) {
   const getSortIcon = () => {
     if (sortState.column !== column) {
-      return <TbSelector className='size-4 text-muted-foreground' />;
+      return (
+        <TbSelector
+          aria-hidden='true'
+          className='size-4 text-muted-foreground'
+        />
+      );
     }
 
     if (sortState.direction === 'asc') {
-      return <TbChevronUp className='size-4' />;
+      return <TbChevronUp aria-hidden='true' className='size-4' />;
     } else if (sortState.direction === 'desc') {
-      return <TbChevronDown className='size-4' />;
+      return <TbChevronDown aria-hidden='true' className='size-4' />;
     }
 
-    return <TbSelector className='size-4 text-muted-foreground' />;
+    return (
+      <TbSelector aria-hidden='true' className='size-4 text-muted-foreground' />
+    );
   };
 
   return (
-    <div
-      role='button'
-      tabIndex={0}
-      onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onSort(column);
-        }
-      }}
-      className={`
-        flex cursor-pointer items-center gap-2 transition-colors select-none
-        hover:text-foreground
-      `}
-      onClick={() => onSort(column)}
-    >
-      {children}
-      {getSortIcon()}
+    <div className='flex items-center gap-2'>
+      <button
+        type='button'
+        className={`
+          flex min-h-6 cursor-pointer items-center gap-2 bg-transparent
+          text-left transition-colors select-none
+          hover:text-foreground
+          focus-visible:outline-2 focus-visible:outline-offset-2
+          focus-visible:outline-accent
+        `}
+        onClick={() => onSort(column)}
+      >
+        {children}
+        {getSortIcon()}
+      </button>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger
+            type='button'
+            aria-label={tooltip}
+            className={`
+              flex size-6 cursor-help items-center justify-center rounded-[2px]
+              focus-visible:outline-2 focus-visible:outline-offset-2
+              focus-visible:outline-accent
+            `}
+          >
+            <TbInfoCircle
+              aria-hidden='true'
+              className='text-muted-foreground'
+              size={16}
+            />
+          </TooltipTrigger>
+          <TooltipContent>{tooltip}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 }
@@ -180,6 +207,13 @@ export default function PolicyTable({
         return { column, direction: 'asc' };
       }
     });
+  };
+
+  const getAriaSort = (
+    column: SortableColumn
+  ): React.AriaAttributes['aria-sort'] => {
+    if (sortState.column !== column || !sortState.direction) return 'none';
+    return sortState.direction === 'asc' ? 'ascending' : 'descending';
   };
 
   const sortedPolicies = useMemo(() => {
@@ -296,127 +330,57 @@ export default function PolicyTable({
               />
             </TableHead>
           )}
-          <TableHead className='max-w-[80]'>
+          <TableHead className='max-w-[80]' aria-sort={getAriaSort('effect')}>
             <SortableHeader
               column='effect'
+              tooltip={dict.policy.tooltips.effect}
               sortState={sortState}
               onSort={handleSort}
             >
-              <div className='flex items-center gap-2'>
-                {dict.policy.effect}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger onClick={(e) => e.stopPropagation()}>
-                      <TbInfoCircle
-                        className='cursor-help text-muted-foreground'
-                        size={16}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {dict.policy.tooltips.effect}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+              {dict.policy.effect}
             </SortableHeader>
           </TableHead>
-          <TableHead>
+          <TableHead aria-sort={getAriaSort('action')}>
             <SortableHeader
               column='action'
+              tooltip={dict.policy.tooltips.action}
               sortState={sortState}
               onSort={handleSort}
             >
-              <div className='flex items-center gap-2'>
-                {dict.policy.action}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger onClick={(e) => e.stopPropagation()}>
-                      <TbInfoCircle
-                        className='cursor-help text-muted-foreground'
-                        size={16}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {dict.policy.tooltips.action}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+              {dict.policy.action}
             </SortableHeader>
           </TableHead>
-          <TableHead>
+          <TableHead aria-sort={getAriaSort('principal')}>
             <SortableHeader
               column='principal'
+              tooltip={dict.policy.tooltips.principal}
               sortState={sortState}
               onSort={handleSort}
             >
-              <div className='flex items-center gap-2'>
-                {dict.policy.principal}
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger onClick={(e) => e.stopPropagation()}>
-                      <TbInfoCircle
-                        className='cursor-help text-muted-foreground'
-                        size={16}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      {dict.policy.tooltips.principal}
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
+              {dict.policy.principal}
             </SortableHeader>
           </TableHead>
           {showResourceColumn && (
-            <TableHead>
+            <TableHead aria-sort={getAriaSort('resource')}>
               <SortableHeader
                 column='resource'
+                tooltip={dict.policy.tooltips.resource}
                 sortState={sortState}
                 onSort={handleSort}
               >
-                <div className='flex items-center gap-2'>
-                  {dict.policy.resource}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger onClick={(e) => e.stopPropagation()}>
-                        <TbInfoCircle
-                          className='cursor-help text-muted-foreground'
-                          size={16}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {dict.policy.tooltips.resource}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
+                {dict.policy.resource}
               </SortableHeader>
             </TableHead>
           )}
           {showResourceIdColumn && (
-            <TableHead>
+            <TableHead aria-sort={getAriaSort('resourceId')}>
               <SortableHeader
                 column='resourceId'
+                tooltip={dict.policy.tooltips.resourceId}
                 sortState={sortState}
                 onSort={handleSort}
               >
-                <div className='flex items-center gap-2'>
-                  {dict.policy.resourceId}
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger onClick={(e) => e.stopPropagation()}>
-                        <TbInfoCircle
-                          className='cursor-help text-muted-foreground'
-                          size={16}
-                        />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        {dict.policy.tooltips.resourceId}
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
+                {dict.policy.resourceId}
               </SortableHeader>
             </TableHead>
           )}
@@ -469,7 +433,7 @@ export default function PolicyTable({
             )}
             {showResourceIdColumn && (
               <TableCell>
-                <code className='rounded-sm bg-muted px-1 py-0.5 text-xs'>
+                <code className='rounded-[2px] bg-muted px-1 py-0.5 text-xs'>
                   {formatResourceId(policy.resource, policy.resourceId)}
                 </code>
               </TableCell>
@@ -498,9 +462,9 @@ export default function PolicyTable({
                         variant='ghost'
                         size='icon'
                         onClick={() => onEditClick(policy)}
-                        aria-label='Edit policy'
+                        aria-label={dict.policy.editPolicy}
                       >
-                        <TbEdit className='size-4' />
+                        <TbEdit aria-hidden='true' className='size-4' />
                       </Button>
                     )}
                     {allowDelete && <PolicyDeleteButton policyId={policy.id} />}

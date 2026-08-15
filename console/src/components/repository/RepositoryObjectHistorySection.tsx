@@ -45,10 +45,7 @@ function RepositoryObjectHistorySectionContent({ path }: { path: string }) {
   if (!canViewHistory) {
     return (
       <div
-        className={`
-          w-full rounded-lg border border-gray-200 bg-card px-2 py-8
-          dark:border-gray-800
-        `}
+        className={`w-full rounded-[2px] border border-border bg-card px-2 py-8`}
       >
         <p
           className={`
@@ -74,7 +71,7 @@ function RepositoryObjectHistorySectionContent({ path }: { path: string }) {
           <h2 className='text-lg font-bold'>
             {dict.repository.objects.changeHistory}
           </h2>
-          <p className='text-sm text-gray-500'>
+          <p className='text-sm text-muted-foreground'>
             {path} @ {currentRef ?? repository.default_branch}
           </p>
         </div>

@@ -94,6 +94,35 @@ class IrminCore {
     this.token = newToken;
   }
 
+  /** Approve or reject one staged destructive MCP operation. */
+  public async reviewMCPPendingOperation(
+    workspaceSlug: string,
+    pendingOperationId: string,
+    action: 'approve' | 'reject'
+  ): Promise<{ status: string }> {
+    const endpoint = new URL(
+      `/mcp/pending-operations/${encodeURIComponent(pendingOperationId)}/${action}`,
+      this.apiBase
+    );
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        Accept: 'application/json',
+        'Accept-Language': this.locale,
+        Authorization: `Bearer ${this.token}`,
+        'X-Irmin-Workspace': workspaceSlug,
+      },
+    });
+    if (!response.ok) {
+      const payload = (await response.json().catch(() => ({}))) as {
+        message?: string;
+      };
+      throw new Error(payload.message || `Review failed (${response.status})`);
+    }
+    return (await response.json()) as { status: string };
+  }
+
   /**
    * Creates an instance of IrminCore.
    *

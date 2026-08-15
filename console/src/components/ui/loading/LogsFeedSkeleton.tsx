@@ -27,20 +27,20 @@ const LogsFeedSkeleton = ({
 
         {showFilters && (
           <div className='flex flex-wrap items-center gap-2'>
-            <LoadingSkeleton className='h-9 w-32 rounded-md' />
-            <LoadingSkeleton className='h-9 w-36 rounded-md' />
-            <LoadingSkeleton className='h-9 w-28 rounded-md' />
+            <LoadingSkeleton className='h-9 w-32 rounded-[2px]' />
+            <LoadingSkeleton className='h-9 w-36 rounded-[2px]' />
+            <LoadingSkeleton className='h-9 w-28 rounded-[2px]' />
           </div>
         )}
 
-        <LoadingSkeleton className='h-11 w-full rounded-md' />
+        <LoadingSkeleton className='h-11 w-full rounded-[2px]' />
 
         <div className='flex flex-col gap-2'>
           {Array.from({ length: rowCount }).map((_, i) => (
             <div
               key={`log-${i}`}
               className={`
-                flex items-center gap-3 rounded-md border border-border p-3
+                flex items-center gap-3 rounded-[2px] border border-border p-3
               `}
             >
               <LoadingSkeleton className='h-4 w-28 shrink-0' />

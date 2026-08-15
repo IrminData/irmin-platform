@@ -23,6 +23,7 @@ import {
 import { useLocale } from '@/context/LocaleContext';
 
 import { getMessageMetadata, getMessageRole } from './storedMessageHelpers';
+import { ToolApprovalCard } from './ToolApprovalCard';
 import {
   isIterationsNumber,
   isServerToolEvent,
@@ -146,6 +147,22 @@ export const MessageMetadata = ({
       </div>
     ) : null;
 
+  const approvalEvents = isServerToolEventsArray(metadata.toolCalls)
+    ? metadata.toolCalls.filter(
+        (event) => event.type === 'tool-approval-required'
+      )
+    : [];
+
+  const approvalElement = approvalEvents.map((event, index) => (
+    <ToolApprovalCard
+      key={`approval-${message.data?.id || message.type}-${event.toolCallId || index}`}
+      toolName={event.toolName}
+      approvalPreview={event.approvalPreview}
+      pendingOperationId={event.pendingOperationId}
+      workspaceSlug={event.workspaceSlug}
+    />
+  ));
+
   const toolCallsElement =
     consolidatedToolCalls.length === 0 ? null : (
       <div className='mt-4 space-y-2'>
@@ -213,13 +230,14 @@ export const MessageMetadata = ({
         <div className='flex items-center gap-2'>
           <div
             className={`
-              flex size-6 items-center justify-center rounded-full bg-blue-500
-              text-xs font-medium text-white
+              flex size-6 items-center justify-center rounded-full border
+              border-chart-2/30 bg-chart-2/10 text-xs font-medium
+              text-foreground
             `}
           >
             {metadata.iterations}
           </div>
-          <div className='text-sm font-medium text-blue-900'>
+          <div className='text-sm font-medium text-foreground'>
             {metadata.iterations} {dict.assistant.iteration.toLowerCase()}
             {metadata.iterations !== 1 ? 's' : ''}
             {(isStoredToolCallsArray(metadata.toolCalls) ||
@@ -248,6 +266,7 @@ export const MessageMetadata = ({
     return (
       <>
         {toolCallsElement}
+        {approvalElement}
         {iterationsElement}
       </>
     );
@@ -258,6 +277,7 @@ export const MessageMetadata = ({
     <>
       {thinkingElement}
       {toolCallsElement}
+      {approvalElement}
       {iterationsElement}
     </>
   );

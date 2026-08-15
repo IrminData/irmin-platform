@@ -1,5 +1,9 @@
 'use client';
 
+import {
+  almanacClerkElements,
+  getAlmanacPrimaryColor,
+} from '@/config/appearance';
 import { UserButton } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
 import { useTheme } from 'next-themes';
@@ -35,7 +39,10 @@ export default function IrminUserButton() {
       <UserButton
         appearance={{
           theme: resolvedTheme === 'dark' ? dark : undefined,
-          variables: { colorPrimary: '#a3c2ac' },
+          elements: almanacClerkElements,
+          variables: {
+            colorPrimary: getAlmanacPrimaryColor(resolvedTheme),
+          },
         }}
         userProfileMode='navigation'
         userProfileUrl={`/${locale}/profile`}

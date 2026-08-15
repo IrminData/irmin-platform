@@ -21,6 +21,16 @@ describe('specialist runner', () => {
     );
     const sql = specialistRunner.acceptSql({
       messages: [
+        new AIMessage({
+          content: '',
+          tool_calls: [
+            {
+              id: 'call-1',
+              name: 'irmin_execute_sql',
+              args: { sql: 'SELECT 1;' },
+            },
+          ],
+        }),
         new ToolMessage({
           content: '{"success":true}',
           tool_call_id: 'call-1',
@@ -35,6 +45,31 @@ describe('specialist runner', () => {
     assert.equal(
       specialistRunner.acceptSql({
         messages: [new AIMessage('SELECT 1;')],
+      }).kind,
+      'clarification'
+    );
+
+    assert.equal(
+      specialistRunner.acceptSql({
+        messages: [
+          new AIMessage({
+            content: '',
+            tool_calls: [
+              {
+                id: 'call-2',
+                name: 'irmin_execute_sql',
+                args: { sql: 'SELECT 1;' },
+              },
+            ],
+          }),
+          new ToolMessage({
+            content: '{"success":true}',
+            tool_call_id: 'call-2',
+            name: 'irmin_execute_sql',
+            status: 'success',
+          }),
+          new AIMessage('SELECT 2;'),
+        ],
       }).kind,
       'clarification'
     );

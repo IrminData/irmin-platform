@@ -20,15 +20,25 @@ const ListPageSkeleton = ({
 }) => {
   return (
     <div className='relative container mx-auto max-w-7xl px-4 py-8'>
-      <div className='my-4 flex flex-row items-center justify-between gap-4'>
+      <div
+        className={`
+          my-4 flex flex-col items-stretch gap-4
+          sm:flex-row sm:items-center sm:justify-between
+        `}
+      >
         <LoadingSkeleton className='h-9 w-56 max-w-full' />
         {showCreateButton && (
-          <LoadingSkeleton className='h-11 w-44 shrink-0 rounded-md' />
+          <LoadingSkeleton
+            className={`
+              h-11 w-full shrink-0 rounded-[2px]
+              sm:w-44
+            `}
+          />
         )}
       </div>
       <div className='py-4'>
         {showSearch && (
-          <LoadingSkeleton className='mb-4 h-11 w-full rounded-md' />
+          <LoadingSkeleton className='mb-4 h-11 w-full rounded-[2px]' />
         )}
         <ListShellSkeleton columnCount={columnCount} />
       </div>

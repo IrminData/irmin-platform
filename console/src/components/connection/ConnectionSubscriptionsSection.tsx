@@ -200,6 +200,7 @@ const ConnectionSubscriptionsSection = () => {
         <CardHeader className='flex flex-row items-center justify-between'>
           <CardTitle>{dict.subscriptions.title}</CardTitle>
           <Button
+            variant='accent'
             size='sm'
             onClick={() => setIsCreateModalOpen(true)}
             className='gap-2'
@@ -276,7 +277,7 @@ const ConnectionSubscriptionsSection = () => {
                           aria-label={dict.subscriptions.copyWebhookUrl}
                         >
                           {copiedKey === `url-${subscription.id}` ? (
-                            <TbCheck className='size-4 text-green-500' />
+                            <TbCheck className='size-4 text-success' />
                           ) : (
                             <TbCopy className='size-4' />
                           )}
@@ -435,6 +436,7 @@ const ConnectionSubscriptionsSection = () => {
               {dict.common.cancel}
             </Button>
             <Button
+              variant='accent'
               onClick={handleCreateSubscription}
               loading={createSubscriptionMutation.isPending}
               disabled={!formData.name}
@@ -571,6 +573,7 @@ const ConnectionSubscriptionsSection = () => {
               {dict.common.cancel}
             </Button>
             <Button
+              variant='accent'
               onClick={handleUpdateSubscription}
               loading={updateSubscriptionMutation.isPending}
               disabled={!editFormData.name}
@@ -594,32 +597,20 @@ const ConnectionSubscriptionsSection = () => {
             {/* Auto-configuration notice */}
             <div
               className={`
-                rounded-md border border-green-200 bg-green-50 p-3
-                dark:border-green-800 dark:bg-green-950
+                rounded-[2px] border border-success/30 bg-success/10 p-3
               `}
             >
-              <p
-                className={`
-                  text-sm text-green-800
-                  dark:text-green-200
-                `}
-              >
+              <p className={`text-sm text-foreground`}>
                 {dict.subscriptions.autoConfigureNotice}
               </p>
             </div>
             {/* Manual webhook notice */}
             <div
               className={`
-                rounded-md border border-amber-200 bg-amber-50 p-3
-                dark:border-amber-800 dark:bg-amber-950
+                rounded-[2px] border border-warning/30 bg-warning/10 p-3
               `}
             >
-              <p
-                className={`
-                  text-sm text-amber-800
-                  dark:text-amber-200
-                `}
-              >
+              <p className={`text-sm text-foreground`}>
                 {dict.subscriptions.manualWebhookNotice}
               </p>
             </div>
@@ -647,7 +638,7 @@ const ConnectionSubscriptionsSection = () => {
                   }
                 >
                   {copiedKey === 'modal-url' ? (
-                    <TbCheck className='size-4 text-green-500' />
+                    <TbCheck className='size-4 text-success' />
                   ) : (
                     <TbCopy className='size-4' />
                   )}
@@ -680,7 +671,7 @@ const ConnectionSubscriptionsSection = () => {
                     }
                   >
                     {copiedKey === 'modal-token' ? (
-                      <TbCheck className='size-4 text-green-500' />
+                      <TbCheck className='size-4 text-success' />
                     ) : (
                       <TbCopy className='size-4' />
                     )}

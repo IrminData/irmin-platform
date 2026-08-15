@@ -26,6 +26,8 @@ import {
 } from '@mdxeditor/editor';
 import '@mdxeditor/editor/style.css';
 
+import { useLocale } from '@/context/LocaleContext';
+
 export type InitialisedMDXEditorProps = MDXEditorProps & {
   children: React.ReactNode;
 };
@@ -48,10 +50,17 @@ function PlainTextCodeEditor({
   language: string;
 }) {
   const cb = useCodeBlockEditorContext();
+  const { dict } = useLocale();
   return (
-    <pre className='rounded-md bg-muted p-4 font-mono text-sm'>
+    <pre className='rounded-[2px] bg-muted p-4 font-mono text-sm'>
       <textarea
-        className='w-full resize-none bg-transparent outline-none'
+        aria-label={dict.common.codeEditor}
+        className={`
+          w-full resize-none bg-transparent text-base
+          focus-visible:outline-2 focus-visible:outline-offset-2
+          focus-visible:outline-accent
+          md:text-sm
+        `}
         rows={Math.max(code.split('\n').length, 3)}
         defaultValue={code}
         onChange={(e) => cb.setCode(e.target.value)}

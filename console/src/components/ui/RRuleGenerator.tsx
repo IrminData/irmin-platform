@@ -34,71 +34,72 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { formatTimestamp } from '@/utils/formatTimestamp';
 import { cn } from '@/utils/tw';
 
 // Common RRule presets
 const PRESETS = [
   {
-    label: 'Every minute',
+    labelKey: 'everyMinute',
     value: (startDate: Date) =>
       `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\nFREQ=MINUTELY;INTERVAL=1`,
   },
   {
-    label: 'Every hour',
+    labelKey: 'everyHour',
     value: (startDate: Date) =>
       `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\nFREQ=HOURLY;INTERVAL=1`,
   },
   {
-    label: 'Every day at midnight',
+    labelKey: 'everyDayAtMidnight',
     value: (startDate: Date) =>
       `DTSTART:${format(startDate, "yyyyMMdd'T'000000'Z'")}\nFREQ=DAILY;BYHOUR=0;BYMINUTE=0`,
   },
   {
-    label: 'Every day at noon',
+    labelKey: 'everyDayAtNoon',
     value: (startDate: Date) =>
       `DTSTART:${format(startDate, "yyyyMMdd'T'120000'Z'")}\nFREQ=DAILY;BYHOUR=12;BYMINUTE=0`,
   },
   {
-    label: 'Every Monday',
+    labelKey: 'everyMonday',
     value: (startDate: Date) =>
       `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\nFREQ=WEEKLY;BYDAY=MO`,
   },
   {
-    label: 'Every weekday',
+    labelKey: 'everyWeekday',
     value: (startDate: Date) =>
       `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\nFREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR`,
   },
   {
-    label: 'Every weekend',
+    labelKey: 'everyWeekend',
     value: (startDate: Date) =>
       `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\nFREQ=WEEKLY;BYDAY=SA,SU`,
   },
   {
-    label: 'Every month on the 1st',
+    labelKey: 'everyMonthOnFirst',
     value: (startDate: Date) =>
       `DTSTART:${format(startDate, "yyyyMMdd'T'HHmmss'Z'")}\nFREQ=MONTHLY;BYMONTHDAY=1`,
   },
-];
+] as const;
 
 const frequencies = [
-  { value: Frequency.SECONDLY, label: 'Secondly' },
-  { value: Frequency.MINUTELY, label: 'Minutely' },
-  { value: Frequency.HOURLY, label: 'Hourly' },
-  { value: Frequency.DAILY, label: 'Daily' },
-  { value: Frequency.WEEKLY, label: 'Weekly' },
-  { value: Frequency.MONTHLY, label: 'Monthly' },
-  { value: Frequency.YEARLY, label: 'Yearly' },
-];
+  { value: Frequency.SECONDLY, labelKey: 'secondly' },
+  { value: Frequency.MINUTELY, labelKey: 'minutely' },
+  { value: Frequency.HOURLY, labelKey: 'hourly' },
+  { value: Frequency.DAILY, labelKey: 'daily' },
+  { value: Frequency.WEEKLY, labelKey: 'weekly' },
+  { value: Frequency.MONTHLY, labelKey: 'monthly' },
+  { value: Frequency.YEARLY, labelKey: 'yearly' },
+] as const;
 
 const weekdays = [
-  { value: RRule.MO, label: 'Monday' },
-  { value: RRule.TU, label: 'Tuesday' },
-  { value: RRule.WE, label: 'Wednesday' },
-  { value: RRule.TH, label: 'Thursday' },
-  { value: RRule.FR, label: 'Friday' },
-  { value: RRule.SA, label: 'Saturday' },
-  { value: RRule.SU, label: 'Sunday' },
-];
+  { value: RRule.MO, labelKey: 'monday' },
+  { value: RRule.TU, labelKey: 'tuesday' },
+  { value: RRule.WE, labelKey: 'wednesday' },
+  { value: RRule.TH, labelKey: 'thursday' },
+  { value: RRule.FR, labelKey: 'friday' },
+  { value: RRule.SA, labelKey: 'saturday' },
+  { value: RRule.SU, labelKey: 'sunday' },
+] as const;
 
 // Calculate next execution dates for an RRule string
 const getNextExecutionDates = (rruleString: string, count = 5): Date[] => {
@@ -128,7 +129,7 @@ export default function RRuleGenerator({
   onGenerate: (rule: string) => void;
   isDisabled?: boolean;
 }) {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
 
   // Parse the `rule` prop once on mount to seed form state. Treated as an
   // initial value — callers that need to reset should remount via `key`.
@@ -198,7 +199,7 @@ export default function RRuleGenerator({
 
   // Preset selection updates form state; generatedRule re-derives automatically.
   const handlePresetChange = useCallback(
-    (preset: (typeof PRESETS)[0]) => {
+    (preset: (typeof PRESETS)[number]) => {
       const ruleStr = preset.value(startDate);
       try {
         const rrule = rrulestr(ruleStr);
@@ -257,7 +258,7 @@ export default function RRuleGenerator({
             </Label>
             <Select
               onValueChange={(value) => {
-                const preset = PRESETS.find((p) => p.label === value);
+                const preset = PRESETS.find((p) => p.labelKey === value);
                 if (preset) handlePresetChange(preset);
               }}
               defaultValue={rule}
@@ -270,8 +271,8 @@ export default function RRuleGenerator({
               </SelectTrigger>
               <SelectContent>
                 {PRESETS.map((preset) => (
-                  <SelectItem key={preset.label} value={preset.label}>
-                    {preset.label}
+                  <SelectItem key={preset.labelKey} value={preset.labelKey}>
+                    {dict.workflow.schedule.presetOptions[preset.labelKey]}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -285,7 +286,7 @@ export default function RRuleGenerator({
         >
           <div
             className={`
-              flex w-full max-w-80 flex-col space-y-3 rounded-md border
+              flex w-full max-w-80 flex-col space-y-3 rounded-[2px] border
               border-border/20 p-2
             `}
           >
@@ -302,14 +303,17 @@ export default function RRuleGenerator({
 
           <div
             className={`
-              flex w-full max-w-80 flex-col space-y-3 rounded-md border
+              flex w-full max-w-80 flex-col space-y-3 rounded-[2px] border
               border-border/20 p-2
             `}
           >
             <div className='flex items-center justify-between'>
               <Label>{dict.workflow.schedule.rrule.frequency}</Label>
               <Badge variant='secondary'>
-                {frequencies.find((f) => f.value === frequency)?.label}
+                {frequencies.find((f) => f.value === frequency)?.labelKey &&
+                  dict.workflow.schedule.rrule.frequencyOptions[
+                    frequencies.find((f) => f.value === frequency)!.labelKey
+                  ]}
               </Badge>
             </div>
             <Select
@@ -321,13 +325,20 @@ export default function RRuleGenerator({
             >
               <SelectTrigger className='w-full'>
                 <SelectValue>
-                  {frequencies.find((f) => f.value === frequency)?.label}
+                  {frequencies.find((f) => f.value === frequency)?.labelKey &&
+                    dict.workflow.schedule.rrule.frequencyOptions[
+                      frequencies.find((f) => f.value === frequency)!.labelKey
+                    ]}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {frequencies.map((freq) => (
                   <SelectItem key={freq.value} value={freq.value.toString()}>
-                    {freq.label}
+                    {
+                      dict.workflow.schedule.rrule.frequencyOptions[
+                        freq.labelKey
+                      ]
+                    }
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -336,7 +347,7 @@ export default function RRuleGenerator({
 
           <div
             className={`
-              flex w-full max-w-80 flex-col space-y-3 rounded-md border
+              flex w-full max-w-80 flex-col space-y-3 rounded-[2px] border
               border-border/20 p-2
             `}
           >
@@ -355,7 +366,7 @@ export default function RRuleGenerator({
 
           <div
             className={`
-              flex w-full max-w-80 flex-col space-y-3 rounded-md border
+              flex w-full max-w-80 flex-col space-y-3 rounded-[2px] border
               border-border/20 p-2
             `}
           >
@@ -371,14 +382,16 @@ export default function RRuleGenerator({
             </div>
             <div className='flex flex-wrap gap-3 pl-2'>
               {weekdays.map((day) => (
-                <div key={day.label} className='flex items-center space-x-1'>
+                <div key={day.labelKey} className='flex items-center space-x-1'>
                   <Checkbox
-                    id={day.label}
+                    id={`rrule-${day.labelKey}`}
                     checked={selectedWeekdays.includes(day.value)}
                     onCheckedChange={() => handleWeekdayChange(day.value)}
                     disabled={isDisabled}
                   />
-                  <Label htmlFor={day.label}>{day.label}</Label>
+                  <Label htmlFor={`rrule-${day.labelKey}`}>
+                    {dict.workflow.schedule.weekdayNames[day.labelKey]}
+                  </Label>
                 </div>
               ))}
             </div>
@@ -398,7 +411,7 @@ export default function RRuleGenerator({
                     size='icon'
                     onClick={handleCopy}
                     disabled={isDisabled}
-                    aria-label='Copy rule'
+                    aria-label={dict.workflow.schedule.rrule.copyRRule}
                   >
                     <TbCopy
                       className={cn('size-4', copied ? 'text-accent' : '')}
@@ -423,7 +436,7 @@ export default function RRuleGenerator({
                   variant='ghost'
                   size='icon'
                   className='size-6'
-                  aria-label='Syntax help'
+                  aria-label={dict.workflow.schedule.rrule.rruleSyntaxHelp}
                 >
                   <TbInfoCircle className='size-4' />
                   <span className='sr-only'>
@@ -482,9 +495,9 @@ export default function RRuleGenerator({
             {nextDates.map((date) => (
               <li
                 key={`next-execution-${date.getTime()}`}
-                className='rounded-md bg-muted p-2 text-sm'
+                className='rounded-[2px] bg-muted p-2 text-sm'
               >
-                {format(date, 'PPpp')}
+                {formatTimestamp(date.toISOString(), locale)}
               </li>
             ))}
           </ul>

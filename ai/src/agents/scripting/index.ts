@@ -16,6 +16,7 @@ import type { AgentInput, AgentResponse } from '@/agents/types';
 import { agentConfig } from './config';
 
 export class ScriptingAgent extends BaseAgent {
+  protected override executionRole: ModelRole = 'scripting';
   constructor() {
     super(agentConfig);
   }
@@ -29,7 +30,10 @@ export class ScriptingAgent extends BaseAgent {
     // Create MCP tools with auth token and filter to only include the required tools
     const tools: DynamicStructuredTool[] = [];
     if (input.authToken) {
-      const mcpConfig = toolsService.getIrminMCPConfig(input.authToken);
+      const mcpConfig = toolsService.getIrminMCPConfig(
+        input.authToken,
+        input.workspace.slug
+      );
       const mcpClient = toolsService.createClient({
         ...mcpConfig,
       });

@@ -47,7 +47,10 @@ export class AssistantAgent extends BaseAgent {
     let tools: DynamicStructuredTool[] = [];
     if (input.authToken) {
       const toolsStart = Date.now();
-      tools = await toolCacheService.getTools(input.authToken);
+      tools = await toolCacheService.getTools(
+        input.authToken,
+        input.workspace.slug
+      );
       console.log(
         `[Agent Timing] MCP tools loaded: ${Date.now() - toolsStart}ms (${tools.length} tools)`
       );
@@ -147,7 +150,8 @@ export class AssistantAgent extends BaseAgent {
       agent,
       input.message,
       conversationId,
-      input.signal
+      input.signal,
+      this.executionRole
     );
 
     // Return streaming response

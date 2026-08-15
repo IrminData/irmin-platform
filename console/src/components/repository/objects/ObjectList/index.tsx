@@ -4,7 +4,6 @@ import { useCallback, useMemo, useState } from 'react';
 
 import type { UseQueryResult } from '@tanstack/react-query';
 
-import { LuSearchX } from 'react-icons/lu';
 import {
   TbArrowDown,
   TbArrowsSort,
@@ -13,6 +12,7 @@ import {
   TbFile,
   TbFolder,
   TbLink,
+  TbSearchOff,
   TbTable,
   TbVectorTriangle,
 } from 'react-icons/tb';
@@ -178,45 +178,17 @@ export default function ObjectList({
   const getTypeIcon = useCallback((obj: RepositoryObject) => {
     // Check for embedding files first
     if (isEmbeddingFile(obj)) {
-      return (
-        <TbVectorTriangle
-          className={`
-            size-5 text-purple-500
-            dark:text-purple-400
-          `}
-        />
-      );
+      return <TbVectorTriangle className={`size-5 text-chart-4`} />;
     }
 
     switch (obj.type) {
       case 'group':
-        return (
-          <TbFolder
-            className={`
-              size-5 text-yellow-500
-              dark:text-yellow-400
-            `}
-          />
-        );
+        return <TbFolder className={`size-5 text-warning`} />;
       case 'structured':
-        return (
-          <TbTable
-            className={`
-              size-5 text-blue-500
-              dark:text-blue-400
-            `}
-          />
-        );
+        return <TbTable className={`size-5 text-chart-2`} />;
       case 'binary':
       default:
-        return (
-          <TbFile
-            className={`
-              size-5 text-gray-500
-              dark:text-gray-400
-            `}
-          />
-        );
+        return <TbFile className={`size-5 text-muted-foreground`} />;
     }
   }, []);
 
@@ -232,8 +204,7 @@ export default function ObjectList({
             <TbLink
               className={`
                 absolute -right-1 -bottom-1 size-3 rounded-full bg-background
-                text-cyan-500
-                dark:text-cyan-400
+                text-chart-2
               `}
             />
           </div>
@@ -246,7 +217,7 @@ export default function ObjectList({
   );
 
   return (
-    <div className='mb-4 w-full overflow-hidden rounded-lg border border-card'>
+    <div className='mb-4 w-full overflow-hidden rounded-[2px] border border-border'>
       <ObjectListHeader
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
@@ -271,7 +242,12 @@ export default function ObjectList({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className='w-[300px]'>
+                  <TableHead
+                    className='w-[300px]'
+                    aria-sort={
+                      sortConfig.key === 'name' ? sortConfig.direction : 'none'
+                    }
+                  >
                     <SortHeaderButton
                       label={dict.common.name}
                       sortKey='name'
@@ -280,7 +256,14 @@ export default function ObjectList({
                       onSort={handleSort}
                     />
                   </TableHead>
-                  <TableHead className='font-normal'>
+                  <TableHead
+                    className='font-normal'
+                    aria-sort={
+                      sortConfig.key === 'content_type'
+                        ? sortConfig.direction
+                        : 'none'
+                    }
+                  >
                     <SortHeaderButton
                       label={dict.repository.objects.contentType}
                       sortKey='content_type'
@@ -289,7 +272,13 @@ export default function ObjectList({
                       onSort={handleSort}
                     />
                   </TableHead>
-                  <TableHead>
+                  <TableHead
+                    aria-sort={
+                      sortConfig.key === 'last_modified'
+                        ? sortConfig.direction
+                        : 'none'
+                    }
+                  >
                     <SortHeaderButton
                       label={dict.common.lastModified}
                       sortKey='last_modified'
@@ -340,8 +329,7 @@ export default function ObjectList({
                             <Badge
                               variant='secondary'
                               className={`
-                                bg-purple-100 text-purple-700
-                                dark:bg-purple-900/30 dark:text-purple-300
+                                border-chart-4/30 bg-chart-4/10 text-foreground
                               `}
                             >
                               {dict.repository.objects.vectors}
@@ -352,8 +340,7 @@ export default function ObjectList({
                             <Badge
                               variant='secondary'
                               className={`
-                                bg-cyan-100 text-cyan-700
-                                dark:bg-cyan-900/30 dark:text-cyan-300
+                                border-chart-2/30 bg-chart-2/10 text-foreground
                               `}
                               title={
                                 obj.pointer_target
@@ -385,11 +372,12 @@ export default function ObjectList({
                       <Button
                         variant='ghost'
                         className='p-2'
+                        aria-label={`${dict.common.showDetails}: ${obj.name}`}
                         onClick={() => {
                           selectObject(obj);
                         }}
                       >
-                        <TbDotsVertical className='size-5' />
+                        <TbDotsVertical className='size-5' aria-hidden='true' />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -404,22 +392,16 @@ export default function ObjectList({
                   gap-4
                 `}
               >
-                <LuSearchX className='size-12 text-gray-400' />
+                <TbSearchOff className='size-12 text-muted-foreground' />
                 <div
                   className={`
-                    text-base text-gray-600
+                    text-base text-muted-foreground
                     lg:text-lg
-                    dark:text-gray-300
                   `}
                 >
                   {dict.repository.objects.noObjects}
                 </div>
-                <div
-                  className={`
-                    text-sm text-gray-500
-                    dark:text-gray-400
-                  `}
-                >
+                <div className={`text-sm text-muted-foreground`}>
                   {dict.repository.objects.noObjectsMessage}
                 </div>
               </div>
@@ -452,6 +434,7 @@ function SortHeaderButton({
   direction: 'ascending' | 'descending';
   onSort: (key: SortKey) => void;
 }) {
+  const { dict } = useLocale();
   const isActive = activeKey === sortKey;
   const Chevron = !isActive
     ? TbArrowsSort
@@ -467,13 +450,18 @@ function SortHeaderButton({
         text-[11px] font-medium tracking-[0.08em] text-muted-foreground
         uppercase transition-colors duration-150
         hover:text-foreground
-        focus-visible:outline-1 focus-visible:outline-offset-1
-        focus-visible:outline-accent/70
+        focus-visible:outline-2 focus-visible:outline-offset-2
+        focus-visible:outline-accent
         data-[active=true]:text-foreground
       `}
       data-active={isActive}
       aria-label={
-        isActive ? `${label}, sorted ${direction}` : `${label}, not sorted`
+        isActive
+          ? (direction === 'ascending'
+              ? dict.common.sortedAscending
+              : dict.common.sortedDescending
+            ).replace('{label}', label)
+          : dict.common.notSorted.replace('{label}', label)
       }
     >
       {label}

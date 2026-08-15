@@ -141,7 +141,7 @@ function ConfigureWorkflowStep({
             }
           />
         </div>
-        <div className='rounded-md border border-foreground/20 px-2 py-4'>
+        <div className='rounded-[2px] border border-border px-2 py-4'>
           <WorkflowScheduleForm
             initialData={initialWorkflowSchedule}
             disableSaveButton={true}

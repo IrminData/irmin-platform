@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import Link from 'next/link';
 
 import * as Tooltip from '@radix-ui/react-tooltip';
-import { formatDistanceToNow, intervalToDuration } from 'date-fns';
+import { intervalToDuration } from 'date-fns';
 
 import { TbClock, TbHourglassLow } from 'react-icons/tb';
 
@@ -24,6 +24,7 @@ import { useAllWorkflowRuns, useCancelWorkflowRun } from '@/hooks/api';
 import { useBaseUrl, useResourceAllowed } from '@/hooks/utils';
 
 import { formatDurationForUI } from '@/utils/formatDurationForUI';
+import { formatRelativeTime } from '@/utils/formatTimestamp';
 
 import type { WorkflowRun } from '@/types/core/WorkflowRun';
 import type { GridRow } from '@/types/internal/ListProps';
@@ -93,7 +94,7 @@ const AllWorkflowRunsSection = () => {
                     dict.workflow.pipeline.pipeline}
                 </Badge>
               </div>
-              <span className='text-sm text-gray-400'>
+              <span className='text-sm text-muted-foreground'>
                 {dict.workflow.run}: {run.id}
               </span>
             </div>,
@@ -107,9 +108,7 @@ const AllWorkflowRunsSection = () => {
                     `}
                   >
                     <TbClock className='mr-1' />
-                    {formatDistanceToNow(new Date(run.started_at ?? ''), {
-                      addSuffix: true,
-                    })}
+                    {formatRelativeTime(run.started_at, locale)}
                   </p>
                   <p
                     className={`
@@ -132,7 +131,7 @@ const AllWorkflowRunsSection = () => {
               <Tooltip.Content
                 side='top'
                 align='center'
-                className='rounded-sm bg-background p-2'
+                className='rounded-[2px] bg-background p-2'
               >
                 <p
                   className={`
@@ -181,7 +180,7 @@ const AllWorkflowRunsSection = () => {
               className='inline-flex flex-col gap-1'
             >
               {run.triggered_by_user && (
-                <span className='text-sm text-gray-400'>
+                <span className='text-sm text-muted-foreground'>
                   {dict.common.owner}: {run.triggered_by_user.email}
                   {run.triggered_by_user.company
                     ? ` (${run.triggered_by_user.company})`
@@ -190,28 +189,30 @@ const AllWorkflowRunsSection = () => {
               )}
               {run.triggered_by && (
                 <div className='space-y-1'>
-                  <span className='text-sm text-gray-400'>
+                  <span className='text-sm text-muted-foreground'>
                     {dict.workflow.triggeredBy}: {run.triggered_by.type}
                   </span>
                   {run.triggered_by.type === 'time' &&
                     run.triggered_by.cron && (
-                      <span className='block text-xs text-gray-500'>
+                      <span className='block text-xs text-muted-foreground'>
                         {run.triggered_by.cron}
                       </span>
                     )}
                   {run.triggered_by.type === 'time' &&
                     run.triggered_by.rrule && (
-                      <span className='block text-xs text-gray-500'>RRule</span>
+                      <span className='block text-xs text-muted-foreground'>
+                        RRule
+                      </span>
                     )}
                   {run.triggered_by.type === 'repository-event' && (
-                    <span className='block text-xs text-gray-500'>
+                    <span className='block text-xs text-muted-foreground'>
                       {run.triggered_by.event}
                       {run.triggered_by.repository &&
                         ` (${run.triggered_by.repository})`}
                     </span>
                   )}
                   {run.triggered_by.type === 'workflow-run-event' && (
-                    <span className='block text-xs text-gray-500'>
+                    <span className='block text-xs text-muted-foreground'>
                       {run.triggered_by.event}
                     </span>
                   )}
@@ -252,7 +253,7 @@ const AllWorkflowRunsSection = () => {
           ],
           details: (
             <div className='flex max-w-lg flex-col space-y-4'>
-              <div className='text-gray-400'>
+              <div className='text-muted-foreground'>
                 <p className='pb-2 text-sm'>
                   <strong>{dict.workflow.run}:</strong> {run.id}
                 </p>
@@ -301,7 +302,12 @@ const AllWorkflowRunsSection = () => {
   if (!canViewRuns) {
     return (
       <div className='relative container mx-auto max-w-7xl px-4 py-8'>
-        <div className='my-4 flex flex-row items-center justify-between gap-4'>
+        <div
+          className={`
+            my-4 flex flex-col items-stretch gap-4
+            sm:flex-row sm:items-center sm:justify-between
+          `}
+        >
           <DisplayTitle>{dict.workflow.allWorkflowRuns}</DisplayTitle>
         </div>
         <LocalizedErrorDisplay
@@ -318,7 +324,12 @@ const AllWorkflowRunsSection = () => {
   if (allWorkflowRunsQuery.isError) {
     return (
       <div className='relative container mx-auto max-w-7xl px-4 py-8'>
-        <div className='my-4 flex flex-row items-center justify-between gap-4'>
+        <div
+          className={`
+            my-4 flex flex-col items-stretch gap-4
+            sm:flex-row sm:items-center sm:justify-between
+          `}
+        >
           <DisplayTitle>{dict.workflow.allWorkflowRuns}</DisplayTitle>
         </div>
         <LocalizedErrorDisplay
@@ -336,7 +347,12 @@ const AllWorkflowRunsSection = () => {
 
   return (
     <div className='relative container mx-auto max-w-7xl px-4 py-8'>
-      <div className='my-4 flex flex-row items-center justify-between gap-4'>
+      <div
+        className={`
+          my-4 flex flex-col items-stretch gap-4
+          sm:flex-row sm:items-center sm:justify-between
+        `}
+      >
         <DisplayTitle>{dict.workflow.allWorkflowRuns}</DisplayTitle>
       </div>
       <div className='py-4'>

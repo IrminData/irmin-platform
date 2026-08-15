@@ -72,7 +72,7 @@ const WorkspaceBillingSection = () => {
   if (isLoading) {
     return (
       <ContentWrapper wrapperClassName='py-8'>
-        <LoadingSpinner />
+        <LoadingSpinner label={dict.common.loading} />
       </ContentWrapper>
     );
   }

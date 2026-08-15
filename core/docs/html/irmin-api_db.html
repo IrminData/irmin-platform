@@ -894,6 +894,8 @@ func (d *Database) AggregateUsageSummaries(periodStart, periodEnd time.Time) err
 
 func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool
 
+func (d *Database) ClaimMCPPendingOperation(id, reviewerID uint) (bool, error)
+
 func (d *Database) Close()
     Close closes the shared database connection pool.
 
@@ -921,6 +923,8 @@ func (d *Database) CreateConnectionOAuthSession(tx *gorm.DB, session *Connection
 func (d *Database) CreateConnectionSubscription(subscription *ConnectionSubscription) error
     CreateConnectionSubscription creates a new subscription in the database.
     It automatically generates a webhook token if not provided.
+
+func (d *Database) CreateMCPPendingOperation(operation *MCPPendingOperation) error
 
 func (d *Database) CreateSearchIndexes() error
     CreateSearchIndexes creates indexes to optimize search performance.
@@ -1030,6 +1034,8 @@ func (d *Database) FindObject(path *string, repositoryID *uint, ref *string) (*R
 func (d *Database) FindRepositorySchemaCache(repositoryID uint, path, ref string) (*RepositorySchemaCache, error)
     FindRepositorySchemaCache finds a repository schema cache by repository ID,
     path, and ref.
+
+func (d *Database) FinishMCPPendingOperation(id uint, status PendingOperationStatus, executionError string) error
 
 func (d *Database) GenerateAllPossiblePolicies(
 	workspaceID uint,
@@ -1236,6 +1242,8 @@ func (d *Database) GetLogEventsForWorkspace(
     substring to search for in the description; if empty, ignored limit:
     maximum number of events to return offset: number of events to skip returns:
     slice of LogEvent, total count of matching events, and error if any
+
+func (d *Database) GetMCPPendingOperation(id uint) (*MCPPendingOperation, error)
 
 func (d *Database) GetOwnerRole() (*Role, error)
 
@@ -1507,6 +1515,12 @@ func (d *Database) SearchWorkspaceCount(
     SearchWorkspaceCount performs a search and returns only the total count of
     results with timeout protection.
 
+func (d *Database) TransitionMCPPendingOperation(
+	id uint,
+	expected, next PendingOperationStatus,
+	reviewerID uint,
+) (bool, error)
+
 func (d *Database) UpdateConnectionSubscription(subscription *ConnectionSubscription) error
     UpdateConnectionSubscription updates an existing subscription.
 
@@ -1661,6 +1675,26 @@ const (
 	LogEventTypeInfo    LogEventType = "INFO"
 	LogEventTypeWarning LogEventType = "WARNING"
 )
+type MCPPendingOperation struct {
+	gorm.Model
+	WorkspaceID     uint                   `json:"workspace_id" gorm:"not null;index"`
+	Workspace       Workspace              `json:"workspace" gorm:"foreignKey:WorkspaceID"`
+	RequestedByID   uint                   `json:"requested_by_id" gorm:"not null;index"`
+	RequestedBy     User                   `json:"requested_by" gorm:"foreignKey:RequestedByID"`
+	ToolName        string                 `json:"tool_name" gorm:"not null;index"`
+	Risk            string                 `json:"risk" gorm:"not null"`
+	Capability      string                 `json:"capability"`
+	ApprovalPreview string                 `json:"approval_preview"`
+	ArgumentsJSON   string                 `json:"-" gorm:"type:jsonb;not null"`
+	Status          PendingOperationStatus `json:"status" gorm:"default:pending;index"`
+	ReviewedByID    *uint                  `json:"reviewed_by_id,omitempty"`
+	ReviewedBy      *User                  `json:"reviewed_by,omitempty" gorm:"foreignKey:ReviewedByID"`
+	ReviewedAt      *time.Time             `json:"reviewed_at,omitempty"`
+	ExecutionError  string                 `json:"execution_error,omitempty"`
+}
+    MCPPendingOperation stores a destructive canonical tool call until a user
+    approves it.
+
 type PatchDirection string
     PatchDirection indicates whether to apply patches to a connection or
     repository

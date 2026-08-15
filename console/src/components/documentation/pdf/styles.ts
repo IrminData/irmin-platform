@@ -1,28 +1,40 @@
 import { StyleSheet } from '@react-pdf/renderer';
 
+export const PDF_COLORS = {
+  paper: '#f6f4ed',
+  card: '#faf9f6',
+  ink: '#171c1c',
+  mutedInk: '#5c6666',
+  border: '#cbc8c2',
+  muted: '#e2dfd7',
+  accent: '#799310',
+  accentTint: '#e5e9cc',
+} as const;
+
 export const styles = StyleSheet.create({
   page: {
     padding: 40,
     fontSize: 10,
     fontFamily: 'Helvetica',
-    color: '#111827',
+    color: PDF_COLORS.ink,
+    backgroundColor: PDF_COLORS.paper,
   },
   header: {
     marginBottom: 24,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: PDF_COLORS.accent,
   },
   logoText: {
     fontSize: 24,
     fontFamily: 'Helvetica-Bold',
     letterSpacing: 4,
-    color: '#17506b',
+    color: PDF_COLORS.ink,
     marginBottom: 8,
   },
   headerMeta: {
     fontSize: 9,
-    color: '#6b7280',
+    color: PDF_COLORS.mutedInk,
   },
   sectionTitle: {
     fontSize: 16,
@@ -32,26 +44,27 @@ export const styles = StyleSheet.create({
   },
   sectionDescription: {
     fontSize: 9,
-    color: '#6b7280',
+    color: PDF_COLORS.mutedInk,
     marginBottom: 16,
   },
   card: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 4,
+    borderColor: PDF_COLORS.border,
+    borderRadius: 2,
     padding: 12,
     marginBottom: 12,
+    backgroundColor: PDF_COLORS.card,
   },
   cardTitle: {
     fontSize: 12,
     fontFamily: 'Helvetica-Bold',
     marginBottom: 2,
-    color: '#17506b',
+    color: PDF_COLORS.ink,
     textDecoration: 'underline',
   },
   cardDescription: {
     fontSize: 9,
-    color: '#6b7280',
+    color: PDF_COLORS.mutedInk,
     marginBottom: 8,
   },
   fieldRow: {
@@ -60,23 +73,23 @@ export const styles = StyleSheet.create({
   },
   fieldLabel: {
     fontSize: 9,
-    color: '#6b7280',
+    color: PDF_COLORS.mutedInk,
     width: 100,
   },
   fieldValue: {
     fontSize: 10,
-    color: '#111827',
+    color: PDF_COLORS.ink,
     flex: 1,
   },
   tag: {
     fontSize: 8,
     borderWidth: 0.5,
-    borderColor: '#d1d5db',
+    borderColor: PDF_COLORS.border,
     borderRadius: 2,
     paddingHorizontal: 4,
     paddingVertical: 1,
     marginRight: 4,
-    color: '#374151',
+    color: PDF_COLORS.ink,
   },
   tagsRow: {
     flexDirection: 'row',
@@ -91,8 +104,8 @@ export const styles = StyleSheet.create({
   statBox: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
-    borderRadius: 4,
+    borderColor: PDF_COLORS.border,
+    borderRadius: 2,
     padding: 8,
     alignItems: 'center',
   },
@@ -102,23 +115,24 @@ export const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 8,
-    color: '#6b7280',
+    color: PDF_COLORS.mutedInk,
     marginTop: 2,
   },
   groupTitle: {
     fontSize: 8,
     fontFamily: 'Helvetica-Bold',
-    color: '#6b7280',
+    color: PDF_COLORS.mutedInk,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 8,
   },
   summaryCard: {
     borderWidth: 1,
-    borderColor: '#d1d5db',
-    borderRadius: 4,
+    borderColor: PDF_COLORS.border,
+    borderRadius: 2,
     padding: 16,
     marginBottom: 16,
+    backgroundColor: PDF_COLORS.card,
   },
   summaryTitle: {
     fontSize: 13,
@@ -127,7 +141,7 @@ export const styles = StyleSheet.create({
   },
   summarySlug: {
     fontSize: 10,
-    color: '#6b7280',
+    color: PDF_COLORS.mutedInk,
   },
   mdHeading: {
     fontSize: 13,
@@ -159,18 +173,18 @@ export const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   link: {
-    color: '#17506b',
+    color: PDF_COLORS.ink,
     textDecoration: 'underline',
   },
   notesSection: {
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: PDF_COLORS.border,
   },
   notesHeading: {
     fontSize: 9,
-    color: '#6b7280',
+    color: PDF_COLORS.mutedInk,
     marginBottom: 4,
   },
   flowChain: {
@@ -183,30 +197,32 @@ export const styles = StyleSheet.create({
   flowNode: {
     fontSize: 9,
     borderWidth: 0.5,
-    borderColor: '#d1d5db',
+    borderColor: PDF_COLORS.border,
     borderRadius: 2,
     paddingHorizontal: 6,
     paddingVertical: 2,
-    backgroundColor: '#f9fafb',
+    backgroundColor: PDF_COLORS.card,
   },
   flowArrow: {
     fontSize: 9,
-    color: '#9ca3af',
+    color: PDF_COLORS.mutedInk,
   },
   statusBadge: {
     fontSize: 8,
     borderRadius: 2,
+    borderWidth: 0.5,
+    borderColor: PDF_COLORS.accent,
     paddingHorizontal: 4,
     paddingVertical: 1,
-    color: '#ffffff',
-    backgroundColor: '#22c55e',
+    color: PDF_COLORS.ink,
+    backgroundColor: PDF_COLORS.accentTint,
   },
   typeBadge: {
     fontSize: 8,
     borderRadius: 2,
     paddingHorizontal: 4,
     paddingVertical: 1,
-    color: '#374151',
-    backgroundColor: '#e5e7eb',
+    color: PDF_COLORS.ink,
+    backgroundColor: PDF_COLORS.muted,
   },
 });

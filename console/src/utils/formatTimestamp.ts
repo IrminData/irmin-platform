@@ -15,6 +15,24 @@ export const formatTimestamp = (
 };
 
 /**
+ * Format a timestamp as a locale-aware calendar date.
+ */
+export const formatDate = (
+  timestamp: string | null | undefined,
+  locale?: string
+): string => {
+  if (!timestamp) return '';
+
+  try {
+    const date = new Date(timestamp);
+    if (isNaN(date.getTime())) return '';
+    return date.toLocaleDateString(locale);
+  } catch {
+    return '';
+  }
+};
+
+/**
  * Format a timestamp as relative time (e.g., "2 hours ago", "yesterday")
  */
 export const formatRelativeTime = (

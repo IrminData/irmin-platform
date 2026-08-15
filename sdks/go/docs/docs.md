@@ -177,7 +177,7 @@ import "github.com/IrminData/irmin-platform/sdks/go/api"
   - [func NewClientWithSQIDManager\(baseURL, token, locale string, sqidManager \*irminsqids.SQIDManager\) \*Client](<#NewClientWithSQIDManager>)
   - [func \(c \*Client\) AcceptInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.AcceptInvite>)
   - [func \(c \*Client\) AddTagToEntity\(ctx context.Context, workspace, tagID string, entityType irminmodels.TagEntityType, entityID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.AddTagToEntity>)
-  - [func \(c \*Client\) ApproveAIApplicationPendingOperation\(ctx context.Context, workspace, aiApplicationID, pendingOperationID string\) \(\*irminmodels.AIApplicationPendingOperation, \*irminmodels.IrminAPIResponse, error\)](<#Client.ApproveAIApplicationPendingOperation>)
+  - [func \(c \*Client\) ApproveAIApplicationPendingOperation\(ctx context.Context, workspace, aiApplicationID, pendingOperationID string\) \(\*irminmodels.AIApplicationPendingOperationActionResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ApproveAIApplicationPendingOperation>)
   - [func \(c \*Client\) AssociatePresignedUpload\(ctx context.Context, workspace, repository, ref, path string, req AssociatePresignedUploadRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.AssociatePresignedUpload>)
   - [func \(c \*Client\) CallSystemWebhook\(ctx context.Context, webhookType string, headers map\[string\]string, body any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CallSystemWebhook>)
   - [func \(c \*Client\) CancelWorkflowRun\(ctx context.Context, workspace, workflowID, runID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.CancelWorkflowRun>)
@@ -312,7 +312,7 @@ import "github.com/IrminData/irmin-platform/sdks/go/api"
   - [func \(c \*Client\) PauseWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.PauseWorkflow>)
   - [func \(c \*Client\) RegenerateConnectionSubscriptionToken\(ctx context.Context, workspace, connectionID, subscriptionID string\) \(\*irminmodels.ConnectionSubscriptionWithToken, \*irminmodels.IrminAPIResponse, error\)](<#Client.RegenerateConnectionSubscriptionToken>)
   - [func \(c \*Client\) RegisterNewConnector\(ctx context.Context, req ConnectorRequest\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.RegisterNewConnector>)
-  - [func \(c \*Client\) RejectAIApplicationPendingOperation\(ctx context.Context, workspace, aiApplicationID, pendingOperationID string\) \(\*irminmodels.AIApplicationPendingOperation, \*irminmodels.IrminAPIResponse, error\)](<#Client.RejectAIApplicationPendingOperation>)
+  - [func \(c \*Client\) RejectAIApplicationPendingOperation\(ctx context.Context, workspace, aiApplicationID, pendingOperationID string\) \(\*irminmodels.AIApplicationPendingOperationActionResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.RejectAIApplicationPendingOperation>)
   - [func \(c \*Client\) RemoveTagFromEntity\(ctx context.Context, workspace, tagID string, entityType irminmodels.TagEntityType, entityID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RemoveTagFromEntity>)
   - [func \(c \*Client\) RemoveUser\(ctx context.Context, workspace, userID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RemoveUser>)
   - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
@@ -908,7 +908,7 @@ AddTagToEntity adds an entity to a tag using the workspace tag route.
 ### func \(\*Client\) [ApproveAIApplicationPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/api/ai-applications.go#L249-L252>)
 
 ```go
-func (c *Client) ApproveAIApplicationPendingOperation(ctx context.Context, workspace, aiApplicationID, pendingOperationID string) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ApproveAIApplicationPendingOperation(ctx context.Context, workspace, aiApplicationID, pendingOperationID string) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error)
 ```
 
 ApproveAIApplicationPendingOperation approves a pending operation.
@@ -2143,7 +2143,7 @@ RegisterNewConnector registers a new connector with the system. Requests to this
 ### func \(\*Client\) [RejectAIApplicationPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/api/ai-applications.go#L270-L273>)
 
 ```go
-func (c *Client) RejectAIApplicationPendingOperation(ctx context.Context, workspace, aiApplicationID, pendingOperationID string) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error)
+func (c *Client) RejectAIApplicationPendingOperation(ctx context.Context, workspace, aiApplicationID, pendingOperationID string) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error)
 ```
 
 RejectAIApplicationPendingOperation rejects a pending operation.
@@ -4786,6 +4786,7 @@ import "github.com/IrminData/irmin-platform/sdks/go/models"
 - [type AIApplicationCustomTool](<#AIApplicationCustomTool>)
 - [type AIApplicationDataSource](<#AIApplicationDataSource>)
 - [type AIApplicationPendingOperation](<#AIApplicationPendingOperation>)
+- [type AIApplicationPendingOperationActionResult](<#AIApplicationPendingOperationActionResult>)
 - [type AIApplicationPendingOperationsResponse](<#AIApplicationPendingOperationsResponse>)
 - [type AIApplicationToolConfig](<#AIApplicationToolConfig>)
 - [type AIApplicationToolLog](<#AIApplicationToolLog>)
@@ -5037,6 +5038,23 @@ type AIApplicationPendingOperation struct {
 }
 ```
 
+<a name="AIApplicationPendingOperationActionResult"></a>
+## type [AIApplicationPendingOperationActionResult](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L165-L173>)
+
+AIApplicationPendingOperationActionResult is returned after approving or rejecting an operation.
+
+```go
+type AIApplicationPendingOperationActionResult struct {
+    ID        string                 `json:"id"        validate:"required,validsqid=ai_application_pending_operations"`
+    Status    PendingOperationStatus `json:"status"    validate:"required"`
+    Message   string                 `json:"message"`
+    Operation string                 `json:"operation,omitempty"`
+    Path      string                 `json:"path,omitempty"`
+    Committed bool                   `json:"committed,omitempty"`
+    CommitID  *string                `json:"commit_id,omitempty"`
+}
+```
+
 <a name="AIApplicationPendingOperationsResponse"></a>
 ## type [AIApplicationPendingOperationsResponse](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L157-L162>)
 
@@ -5100,7 +5118,7 @@ type AIApplicationToolLog struct {
 ```
 
 <a name="AIApplicationToolLogStats"></a>
-## type [AIApplicationToolLogStats](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L182-L188>)
+## type [AIApplicationToolLogStats](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L193-L199>)
 
 AIApplicationToolLogStats represents aggregated statistics for tool calls.
 
@@ -5115,7 +5133,7 @@ type AIApplicationToolLogStats struct {
 ```
 
 <a name="AIApplicationToolLogsResponse"></a>
-## type [AIApplicationToolLogsResponse](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L165-L170>)
+## type [AIApplicationToolLogsResponse](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L176-L181>)
 
 AIApplicationToolLogsResponse represents a paginated list of tool logs.
 
@@ -5129,7 +5147,7 @@ type AIApplicationToolLogsResponse struct {
 ```
 
 <a name="AIApplicationToolStat"></a>
-## type [AIApplicationToolStat](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L173-L179>)
+## type [AIApplicationToolStat](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L184-L190>)
 
 AIApplicationToolStat represents statistics for a specific tool.
 

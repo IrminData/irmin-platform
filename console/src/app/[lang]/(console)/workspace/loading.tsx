@@ -8,13 +8,13 @@ import { WorkspaceCardSkeleton } from '@/components/ui/loading/WorkspaceCardSkel
  * - Full-height wrapper (background grain handled globally).
  * - `container mx-auto max-w-4xl px-4 py-16`.
  * - Header row: `DisplayTitle` + description paragraph on the left,
- *   "Create new workspace" button on the right (gradient, size sm).
+ *   "Create new workspace" button on the right (accent, size sm).
  * - Below: single-column `flex flex-col gap-2` list of `WorkspaceCard`
  *   rows.
  *
  * The previous loading.tsx rendered a two-column layout (a sidebar
  * "create workspace form" card + a multi-column workspace-card grid)
- * with raw `bg-gray-200 dark:bg-gray-800` skeletons — none of which
+ * with raw neutral-palette skeletons — none of which
  * match the real page. Now aligned and using the `<LoadingSkeleton>`
  * primitive (semantic `bg-muted` token).
  */
@@ -35,8 +35,8 @@ export default function WorkspacesLoading() {
             {/* Description paragraph */}
             <LoadingSkeleton className='h-4 w-80 max-w-full' />
           </div>
-          {/* Create new workspace button (size='sm' gradient) */}
-          <LoadingSkeleton className='h-9 w-44 shrink-0 rounded-md' />
+          {/* Create new workspace button (size='sm', accent) */}
+          <LoadingSkeleton className='h-9 w-44 shrink-0 rounded-[2px]' />
         </div>
 
         {/* Workspace list — single-column flex, matches real layout */}

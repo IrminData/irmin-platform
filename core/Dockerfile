@@ -9,6 +9,7 @@ COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
+RUN CGO_ENABLED=1 go run ./cmd/install-duckdb-extensions
 RUN CGO_ENABLED=1 go build -ldflags="-w -s" -o /app/main .
 
 # Stage 2: Runtime
@@ -60,6 +61,7 @@ WORKDIR /app
 
 # Copy the compiled binary with correct ownership
 COPY --from=builder --chown=appuser:irmingroup /app/main .
+COPY --from=builder --chown=appuser:irmingroup /root/.duckdb /home/appuser/.duckdb
 
 # Lock down app directory and executable
 RUN chown -R appuser:irmingroup /app && \

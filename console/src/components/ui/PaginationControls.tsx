@@ -1,4 +1,4 @@
-import { Fragment, memo, type MouseEvent } from 'react';
+import { Fragment, memo } from 'react';
 
 import {
   Pagination,
@@ -9,6 +9,8 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination';
+
+import { useLocale } from '@/context/LocaleContext';
 
 interface PaginationControlsProps {
   /** current active page (1-indexed) */
@@ -33,9 +35,9 @@ function PaginationControls({
   previousLabel,
   nextLabel,
 }: PaginationControlsProps) {
-  // prevent default link behaviour and trigger the page change callback
-  const handleClick = (page: number) => (e: MouseEvent<HTMLAnchorElement>) => {
-    e.preventDefault();
+  const { dict } = useLocale();
+
+  const handleClick = (page: number) => () => {
     if (page !== currentPage && page >= 1 && page <= totalPages) {
       onPageChange(page);
     }
@@ -53,16 +55,16 @@ function PaginationControls({
   );
 
   return (
-    <Pagination>
+    <Pagination label={dict.common.paginationLabel}>
       <PaginationContent>
-        {currentPage > 1 && (
-          <PaginationItem>
-            <PaginationPrevious
-              label={previousLabel}
-              onClick={() => onPageChange(currentPage - 1)}
-            />
-          </PaginationItem>
-        )}
+        <PaginationItem>
+          <PaginationPrevious
+            accessibleLabel={dict.common.previousPage}
+            label={previousLabel}
+            disabled={currentPage <= 1}
+            onClick={() => onPageChange(currentPage - 1)}
+          />
+        </PaginationItem>
 
         {pageNumbers.map((page, idx) => {
           const isGap = idx > 0 && pageNumbers[idx - 1] !== page - 1;
@@ -70,7 +72,7 @@ function PaginationControls({
             <Fragment key={page}>
               {isGap && (
                 <PaginationItem>
-                  <PaginationEllipsis />
+                  <PaginationEllipsis label={dict.common.morePages} />
                 </PaginationItem>
               )}
               <PaginationItem>
@@ -85,14 +87,14 @@ function PaginationControls({
           );
         })}
 
-        {currentPage < totalPages && (
-          <PaginationItem>
-            <PaginationNext
-              label={nextLabel}
-              onClick={() => onPageChange(currentPage + 1)}
-            />
-          </PaginationItem>
-        )}
+        <PaginationItem>
+          <PaginationNext
+            accessibleLabel={dict.common.nextPage}
+            label={nextLabel}
+            disabled={currentPage >= totalPages}
+            onClick={() => onPageChange(currentPage + 1)}
+          />
+        </PaginationItem>
       </PaginationContent>
     </Pagination>
   );

@@ -22,7 +22,9 @@ export default function ConnectionLogsPage() {
 
   const { connectionQuery } = useConnection(params.connection);
 
-  if (connectionQuery.isLoading) return <LoadingSpinner />;
+  if (connectionQuery.isLoading) {
+    return <LoadingSpinner label={dict.common.loading} />;
+  }
   if (connectionQuery.isError) {
     return (
       <QueryError

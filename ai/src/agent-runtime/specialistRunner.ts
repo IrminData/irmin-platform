@@ -32,7 +32,7 @@ export class SpecialistRunner {
         message: 'The generated SQL did not pass the DuckDB safety parser.',
       };
     }
-    if (!hasSuccessfulToolCall(response.messages, ['query.execute'])) {
+    if (!hasSuccessfulSqlExecution(response.messages, cleaned)) {
       return {
         kind: 'clarification',
         message: 'The generated SQL could not be verified by DuckDB.',
@@ -72,19 +72,42 @@ function stripFence(content: string): string {
     .trim();
 }
 
-function hasSuccessfulToolCall(
+function hasSuccessfulSqlExecution(
   messages: BaseMessage[] | undefined,
-  capabilities: Parameters<typeof toolCatalog.hasCapability>[1]
+  finalSql: string
 ): boolean {
+  const matchingCallIds = new Set<string>();
+  for (const message of messages ?? []) {
+    const candidate = message as BaseMessage & {
+      tool_calls?: Array<{
+        id?: string;
+        name?: string;
+        args?: Record<string, unknown>;
+      }>;
+    };
+    for (const call of candidate.tool_calls ?? []) {
+      if (
+        call.id &&
+        call.name &&
+        toolCatalog.hasCapability(call.name, ['query.execute']) &&
+        call.args?.sql === finalSql
+      ) {
+        matchingCallIds.add(call.id);
+      }
+    }
+  }
   return (messages ?? []).some((message) => {
     const candidate = message as BaseMessage & {
       name?: string;
       status?: string;
+      tool_call_id?: string;
     };
     return (
       candidate.getType() === 'tool' &&
       typeof candidate.name === 'string' &&
-      toolCatalog.hasCapability(candidate.name, capabilities) &&
+      toolCatalog.hasCapability(candidate.name, ['query.execute']) &&
+      typeof candidate.tool_call_id === 'string' &&
+      matchingCallIds.has(candidate.tool_call_id) &&
       candidate.status !== 'error'
     );
   });

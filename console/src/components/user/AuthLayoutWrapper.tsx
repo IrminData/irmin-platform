@@ -15,7 +15,9 @@ export default function AuthLayoutWrapper({
       id='auth-layout-wrapper'
       className='relative overflow-hidden bg-background'
     >
-      <div
+      <main
+        id='main-content'
+        tabIndex={-1}
         className={`
           container mx-auto mb-16 flex min-h-screen max-w-7xl flex-wrap px-4
           py-12
@@ -23,7 +25,7 @@ export default function AuthLayoutWrapper({
         `}
       >
         {children}
-      </div>
+      </main>
     </div>
   );
 }

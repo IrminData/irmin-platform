@@ -183,15 +183,10 @@ const WorkflowWorkflowableSection = ({
         )}
       </div>
       {canUpdate && (
-        <div
-          className={`
-            mt-auto border-t pt-4
-            dark:border-gray-800
-          `}
-        >
+        <div className={`mt-auto border-t border-border pt-4`}>
           <Button
             className='mb-6 inline-block w-full'
-            variant='gradient'
+            variant='accent'
             size={'lg'}
             onClick={handleSave}
             loading={updateWorkflowableMutation.isPending}

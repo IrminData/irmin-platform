@@ -119,7 +119,11 @@ export default function PolicyEditor({
           </p>
         </div>
         {allowCreate && canCreate && (
-          <Button onClick={showCreateForm} loading={isCreating}>
+          <Button
+            variant='accent'
+            onClick={showCreateForm}
+            loading={isCreating}
+          >
             <TbPlus className='mr-2 size-4' />
             {dict.policy.addPolicy}
           </Button>

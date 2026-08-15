@@ -141,7 +141,8 @@ export function useAIConversation(
     if (!conversationID) return;
     const confirmed = await irminConfirm(
       'warning',
-      `${dict.common.areYouSureYouWantToDelete} (${aiConversationQuery.data?.title})`
+      `${dict.common.areYouSureYouWantToDelete} (${aiConversationQuery.data?.title})`,
+      dict.assistant.deleteConversation
     );
     if (confirmed) {
       deleteAIConversation(conversationID);

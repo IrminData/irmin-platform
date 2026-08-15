@@ -3,6 +3,10 @@
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
+import {
+  almanacClerkElements,
+  getAlmanacPrimaryColor,
+} from '@/config/appearance';
 import { clientEnv } from '@/config/env.client';
 import { SignIn, SignUp, useAuth } from '@clerk/nextjs';
 import { dark } from '@clerk/themes';
@@ -55,7 +59,10 @@ export default function AcceptInviteSection({
     const inviteUrl = `/${locale}/invite/${inviteID}`;
     const clerkAppearance = {
       theme: resolvedTheme === 'dark' ? dark : undefined,
-      variables: { colorPrimary: '#a3c2ac' },
+      elements: almanacClerkElements,
+      variables: {
+        colorPrimary: getAlmanacPrimaryColor(resolvedTheme),
+      },
     };
 
     return (
@@ -73,7 +80,7 @@ export default function AcceptInviteSection({
               transition-opacity
               hover:opacity-80
             `}
-            aria-label='Go to website'
+            aria-label={dict.consoleNavigation.goToWebsite}
           >
             <Logo
               className='
@@ -128,10 +135,9 @@ export default function AcceptInviteSection({
           <div className='flex gap-4'>
             <TbX className='size-6 text-destructive' />
             <div>
-              <p className='font-bold'>Invalid Invitation</p>
+              <p className='font-bold'>{dict.invite.invalidInvitation}</p>
               <p className='text-sm'>
-                The invitation link appears to be invalid or expired. Please
-                contact support for assistance.
+                {dict.invite.invalidInvitationDescription}
               </p>
             </div>
           </div>
@@ -157,7 +163,7 @@ export default function AcceptInviteSection({
             transition-opacity
             hover:opacity-80
           `}
-          aria-label='Go to website'
+          aria-label={dict.consoleNavigation.goToWebsite}
         >
           <Logo
             className='
@@ -170,7 +176,7 @@ export default function AcceptInviteSection({
         <LanguageSwitcher />
         <ThemeSwitch />
       </div>
-      <div className='w-screen max-w-sm space-y-4 rounded-sm bg-background p-4'>
+      <div className='w-screen max-w-sm space-y-4 rounded-[2px] bg-background p-4'>
         <div>
           <h2 className='text-2xl font-semibold text-foreground'>
             {dict.invite.workspaceInvitation}
@@ -214,6 +220,7 @@ export default function AcceptInviteSection({
               : dict.invite.declineInvitation}
           </Button>
           <Button
+            variant='accent'
             onClick={() => acceptInviteMutation.mutate(invite.id)}
             disabled={
               acceptInviteMutation.isPending || declineInviteMutation.isPending

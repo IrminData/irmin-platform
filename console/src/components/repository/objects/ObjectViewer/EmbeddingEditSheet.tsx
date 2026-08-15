@@ -125,7 +125,7 @@ export default function EmbeddingEditSheet({
       >
         <SheetHeader>
           <SheetTitle className='flex items-center gap-2'>
-            <TbVectorTriangle className='size-5 text-purple-500' />
+            <TbVectorTriangle className='size-5 text-chart-4' />
             {dict.repository.objects.embeddingsEditTitle}
           </SheetTitle>
           <SheetDescription>
@@ -143,8 +143,8 @@ export default function EmbeddingEditSheet({
               </Label>
               <div
                 className={`
-                  max-h-44 overflow-y-auto rounded-md border bg-muted/30 p-3
-                  text-sm/relaxed text-muted-foreground
+                  max-h-44 overflow-y-auto rounded-[2px] border border-border
+                  bg-muted/30 p-3 text-sm/relaxed text-muted-foreground
                 `}
               >
                 {embedding.content}
@@ -181,11 +181,7 @@ export default function EmbeddingEditSheet({
               <TbStar
                 className={`
                   size-4
-                  ${
-                    priority >= 0.8
-                      ? 'text-yellow-500'
-                      : `text-muted-foreground`
-                  }
+                  ${priority >= 0.8 ? 'text-warning' : `text-muted-foreground`}
                 `}
               />
               <Label htmlFor='edit-priority' className='text-sm font-medium'>

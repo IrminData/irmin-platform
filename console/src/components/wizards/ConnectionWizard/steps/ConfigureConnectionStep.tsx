@@ -298,7 +298,6 @@ export default function ConfigureConnectionStep({
             autoComplete: 'off',
             autoCorrect: 'off',
             autoSave: 'off',
-            autoFocus: true,
           }}
         />
       ) : (

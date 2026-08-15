@@ -5,7 +5,7 @@ export default function WorkflowFieldMapperLoading() {
     <div className='container mx-auto max-w-5xl px-4 py-6'>
       <div className='mb-6 flex items-center justify-between'>
         <LoadingSkeleton className='h-6 w-48' />
-        <LoadingSkeleton className='h-10 w-28 rounded-md' />
+        <LoadingSkeleton className='h-10 w-28 rounded-[2px]' />
       </div>
       <div
         className='
@@ -18,7 +18,7 @@ export default function WorkflowFieldMapperLoading() {
           {Array.from({ length: 6 }).map((_, i) => (
             <LoadingSkeleton
               key={`src-${i}`}
-              className='h-10 w-full rounded-md'
+              className='h-10 w-full rounded-[2px]'
             />
           ))}
         </div>
@@ -27,7 +27,7 @@ export default function WorkflowFieldMapperLoading() {
           {Array.from({ length: 6 }).map((_, i) => (
             <LoadingSkeleton
               key={`tgt-${i}`}
-              className='h-10 w-full rounded-md'
+              className='h-10 w-full rounded-[2px]'
             />
           ))}
         </div>

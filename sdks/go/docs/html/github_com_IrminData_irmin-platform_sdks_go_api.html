@@ -298,7 +298,7 @@ func (c *Client) AddTagToEntity(
 func (c *Client) ApproveAIApplicationPendingOperation(
 	ctx context.Context,
 	workspace, aiApplicationID, pendingOperationID string,
-) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error)
+) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error)
     ApproveAIApplicationPendingOperation approves a pending operation.
 
 func (c *Client) AssociatePresignedUpload(
@@ -1119,7 +1119,7 @@ func (c *Client) RegisterNewConnector(
 func (c *Client) RejectAIApplicationPendingOperation(
 	ctx context.Context,
 	workspace, aiApplicationID, pendingOperationID string,
-) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error)
+) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error)
     RejectAIApplicationPendingOperation rejects a pending operation.
 
 func (c *Client) RemoveTagFromEntity(

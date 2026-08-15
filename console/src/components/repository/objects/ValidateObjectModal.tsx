@@ -109,7 +109,7 @@ export default function ValidateObjectModal({
       <div className='flex flex-col gap-2'>
         <p className='text-xs text-muted-foreground'>
           {dict.repository.objects.validateObjectDescription}{' '}
-          <code className='rounded-sm bg-muted px-1'>{objectPath}</code>
+          <code className='rounded-[2px] bg-muted px-1'>{objectPath}</code>
         </p>
       </div>
 
@@ -125,52 +125,26 @@ export default function ValidateObjectModal({
       {validationResult && (
         <div
           className={`
-            flex flex-col gap-2 rounded-md border p-2 text-xs
+            flex flex-col gap-2 rounded-[2px] border p-2 text-xs
             ${
               validationResult.valid
-                ? `
-                  border-green-500 bg-green-50
-                  dark:bg-green-950
-                `
-                : `
-                  border-red-500 bg-red-50
-                  dark:bg-red-950
-                `
+                ? `border-success/30 bg-success/10`
+                : `border-destructive/30 bg-destructive/10`
             }
           `}
         >
           <div className='flex items-center gap-2'>
             {validationResult.valid ? (
               <>
-                <TbCheck
-                  className={`
-                    size-4 text-green-600
-                    dark:text-green-400
-                  `}
-                />
-                <span
-                  className={`
-                    font-semibold text-green-900
-                    dark:text-green-100
-                  `}
-                >
+                <TbCheck className={`size-4 text-success`} />
+                <span className={`font-semibold text-foreground`}>
                   {dict.repository.objects.validationPassed}
                 </span>
               </>
             ) : (
               <>
-                <TbX
-                  className={`
-                    size-4 text-red-600
-                    dark:text-red-400
-                  `}
-                />
-                <span
-                  className={`
-                    font-semibold text-red-900
-                    dark:text-red-100
-                  `}
-                >
+                <TbX className={`size-4 text-destructive`} />
+                <span className={`font-semibold text-foreground`}>
                   {dict.repository.objects.validationFailed}
                 </span>
               </>
@@ -184,7 +158,7 @@ export default function ValidateObjectModal({
               </span>
               <div
                 className={`
-                  max-h-[150px] overflow-y-auto rounded-sm bg-background p-2
+                  max-h-[150px] overflow-y-auto rounded-[2px] bg-background p-2
                   font-mono
                 `}
               >
@@ -192,30 +166,9 @@ export default function ValidateObjectModal({
                   <div
                     key={id}
                     className={`
-                      ${
-                        message.startsWith('✓')
-                          ? `
-                            text-green-600
-                            dark:text-green-400
-                          `
-                          : ''
-                      }
-                      ${
-                        message.startsWith('✗')
-                          ? `
-                            text-red-600
-                            dark:text-red-400
-                          `
-                          : ''
-                      }
-                      ${
-                        message.startsWith('⚠')
-                          ? `
-                            text-yellow-600
-                            dark:text-yellow-400
-                          `
-                          : ''
-                      }
+                      ${message.startsWith('✓') ? `text-success` : ''}
+                      ${message.startsWith('✗') ? `text-destructive` : ''}
+                      ${message.startsWith('⚠') ? `text-warning` : ''}
                     `}
                   >
                     {message}
@@ -228,21 +181,13 @@ export default function ValidateObjectModal({
           {validationResult.error && (
             <div
               className={`
-                mt-1 flex items-start gap-2 rounded-sm bg-background p-2
+                mt-1 flex items-start gap-2 rounded-[2px] bg-background p-2
               `}
             >
               <TbAlertCircle
-                className={`
-                  mt-0.5 size-3.5 shrink-0 text-red-600
-                  dark:text-red-400
-                `}
+                className={`mt-0.5 size-3.5 shrink-0 text-destructive`}
               />
-              <span
-                className={`
-                  text-red-900
-                  dark:text-red-100
-                `}
-              >
+              <span className={`text-foreground`}>
                 {validationResult.error}
               </span>
             </div>
@@ -251,7 +196,7 @@ export default function ValidateObjectModal({
       )}
 
       <Button
-        variant='gradient'
+        variant='accent'
         onClick={handleValidate}
         loading={validating}
         disabled={validating}

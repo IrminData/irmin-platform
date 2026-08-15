@@ -60,12 +60,50 @@ function chunkFromEvent(event: UnknownRecord): UnknownRecord | undefined {
 function usageFromChunk(chunk: UnknownRecord | undefined): unknown {
   const usage = asRecord(chunk?.usage_metadata);
   if (!usage) return undefined;
+  return { reported: true };
+}
 
-  return {
-    inputTokens: usage.input_tokens,
-    outputTokens: usage.output_tokens,
-    totalTokens: usage.total_tokens,
+function isInternalModelEvent(event: UnknownRecord): boolean {
+  const metadata = asRecord(event.metadata);
+  const source = metadata?.lc_source;
+  const node = metadata?.langgraph_node;
+  return (
+    source === 'summarization' ||
+    (typeof node === 'string' && /summari[sz]/i.test(node))
+  );
+}
+
+function approvalFromOutput(output: unknown): UnknownRecord | undefined {
+  const visit = (value: unknown): UnknownRecord | undefined => {
+    if (typeof value === 'string') {
+      try {
+        return visit(JSON.parse(value));
+      } catch {
+        return undefined;
+      }
+    }
+    if (Array.isArray(value)) {
+      for (const child of value) {
+        const found = visit(child);
+        if (found) return found;
+      }
+      return undefined;
+    }
+    const record = asRecord(value);
+    if (!record) return undefined;
+    if (
+      record.requires_approval === true &&
+      typeof record.pending_operation_id === 'string'
+    ) {
+      return record;
+    }
+    for (const child of Object.values(record)) {
+      const found = visit(child);
+      if (found) return found;
+    }
+    return undefined;
   };
+  return visit(output);
 }
 
 function completedMessageId(event: unknown): string | undefined {
@@ -82,8 +120,10 @@ export function normalizeLangChainEvent(
 ): Array<{ type: RunEventType; data: unknown }> {
   const event = asRecord(rawEvent);
   if (!event || typeof event.event !== 'string') return [];
+  if (event.event.startsWith('on_chat_model_') && isInternalModelEvent(event)) {
+    return [];
+  }
 
-  const data = asRecord(event.data) ?? {};
   const runId = typeof event.run_id === 'string' ? event.run_id : undefined;
   const name = typeof event.name === 'string' ? event.name : undefined;
 
@@ -113,16 +153,32 @@ export function normalizeLangChainEvent(
         },
         {
           type: 'tool.started',
-          data: { toolCallId: runId, toolName: name, input: data.input ?? {} },
+          data: { toolCallId: runId, toolName: name },
         },
       ];
-    case 'on_tool_end':
+    case 'on_tool_end': {
+      const approval = approvalFromOutput(asRecord(event.data)?.output);
+      if (approval) {
+        return [
+          {
+            type: 'tool.approval_required',
+            data: {
+              toolCallId: runId,
+              toolName: name,
+              pendingOperationId: approval.pending_operation_id,
+              approvalPreview: approval.approval_preview,
+              workspaceSlug: approval.workspace_slug,
+            },
+          },
+        ];
+      }
       return [
         {
           type: 'tool.completed',
-          data: { toolCallId: runId, toolName: name, output: data.output },
+          data: { toolCallId: runId, toolName: name },
         },
       ];
+    }
     case 'on_tool_error':
       return [
         {
@@ -177,9 +233,13 @@ export function createRunEventStream({
           type,
           data,
         };
-        if (TERMINAL_EVENT_TYPES.has(type)) terminal = true;
-        await onEvent?.(event);
         controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        if (TERMINAL_EVENT_TYPES.has(type)) terminal = true;
+        void Promise.resolve()
+          .then(() => onEvent?.(event))
+          .catch((error) => {
+            console.error('[RunEvents] Event side effect failed', error);
+          });
       };
 
       void (async () => {
@@ -237,14 +297,19 @@ export function createRunEventStream({
       await sourceReader?.cancel(reason).catch(() => undefined);
       if (!terminal) {
         terminal = true;
-        await onEvent?.({
+        const event: RunEventV1 = {
           version: RUN_EVENT_VERSION,
           sequence: ++sequence,
           timestamp: new Date().toISOString(),
           runId,
           type: 'run.cancelled',
           data: { reason: 'cancelled' },
-        });
+        };
+        void Promise.resolve()
+          .then(() => onEvent?.(event))
+          .catch((error) => {
+            console.error('[RunEvents] Cancellation side effect failed', error);
+          });
       }
     },
   });

@@ -105,16 +105,18 @@ const PendingOperationEntry = memo(function PendingOperationEntry({
   isProcessing: boolean;
   canEdit: boolean;
 }) {
+  const { dict } = useLocale();
+
   const getOperationIcon = () => {
     switch (pendingOperation.operation) {
       case 'upload':
-        return <TbFileUpload size={16} />;
+        return <TbFileUpload aria-hidden='true' size={16} />;
       case 'update':
-        return <TbFile size={16} />;
+        return <TbFile aria-hidden='true' size={16} />;
       case 'patch':
-        return <TbEdit size={16} />;
+        return <TbEdit aria-hidden='true' size={16} />;
       default:
-        return <TbFile size={16} />;
+        return <TbFile aria-hidden='true' size={16} />;
     }
   };
 
@@ -124,39 +126,38 @@ const PendingOperationEntry = memo(function PendingOperationEntry({
         return (
           <span
             className={`
-              inline-flex items-center gap-1 rounded-full bg-yellow-500/10 px-2
-              py-0.5 text-xs text-yellow-600
-              dark:text-yellow-400
+              inline-flex items-center gap-1 rounded-full border
+              border-warning/30 bg-warning/10 px-2 py-0.5 text-xs
+              text-foreground
             `}
           >
-            <TbClock size={12} />
-            Pending
+            <TbClock aria-hidden='true' size={12} />
+            {dict.aiApplication.pendingStatus}
           </span>
         );
       case 'completed':
         return (
           <span
             className={`
-              inline-flex items-center gap-1 rounded-full bg-green-500/10 px-2
-              py-0.5 text-xs text-green-600
-              dark:text-green-400
+              inline-flex items-center gap-1 rounded-full border
+              border-success/30 bg-success/10 px-2 py-0.5 text-xs
+              text-foreground
             `}
           >
-            <TbCheck size={12} />
-            Completed
+            <TbCheck aria-hidden='true' size={12} />
+            {dict.aiApplication.completedStatus}
           </span>
         );
       case 'executing':
         return (
           <span
-            className='
-              inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2
-              py-0.5 text-xs text-blue-600
-              dark:text-blue-400
-            '
+            className={`
+              inline-flex items-center gap-1 rounded-full border
+              border-accent/30 bg-accent/10 px-2 py-0.5 text-xs text-foreground
+            `}
           >
-            <TbClock size={12} />
-            Executing
+            <TbClock aria-hidden='true' size={12} />
+            {dict.aiApplication.executingStatus}
           </span>
         );
       case 'failed':
@@ -164,13 +165,15 @@ const PendingOperationEntry = memo(function PendingOperationEntry({
         return (
           <span
             className={`
-              inline-flex items-center gap-1 rounded-full bg-red-500/10 px-2
-              py-0.5 text-xs text-red-600
-              dark:text-red-400
+              inline-flex items-center gap-1 rounded-full border
+              border-destructive/30 bg-destructive/10 px-2 py-0.5 text-xs
+              text-foreground
             `}
           >
-            <TbX size={12} />
-            {status === 'failed' ? 'Failed' : 'Rejected'}
+            <TbX aria-hidden='true' size={12} />
+            {status === 'failed'
+              ? dict.aiApplication.failedStatus
+              : dict.aiApplication.rejectedStatus}
           </span>
         );
     }
@@ -180,10 +183,10 @@ const PendingOperationEntry = memo(function PendingOperationEntry({
     <div
       className={cn(
         `
-          flex flex-col gap-3 rounded-lg bg-card/80 p-4 transition-colors
+          flex flex-col gap-3 rounded-[2px] bg-card/80 p-4 transition-colors
           hover:bg-card
         `,
-        pendingOperation.status === 'pending' && 'border-l-2 border-yellow-500'
+        pendingOperation.status === 'pending' && 'border-l-2 border-warning'
       )}
     >
       <div className='flex items-start justify-between'>
@@ -216,7 +219,7 @@ const PendingOperationEntry = memo(function PendingOperationEntry({
 
       {/* Commit message */}
       <div className='text-sm text-muted-foreground'>
-        <span className='font-medium'>Message:</span>{' '}
+        <span className='font-medium'>{dict.aiApplication.commitMessage}:</span>{' '}
         {pendingOperation.commit_message}
       </div>
 
@@ -255,21 +258,21 @@ const PendingOperationEntry = memo(function PendingOperationEntry({
             onClick={() => onReject(pendingOperation.id)}
             disabled={!canEdit || isProcessing}
             className={`
-              text-red-600
-              hover:text-red-700
+              text-destructive
+              hover:text-destructive/80
             `}
           >
-            <TbX size={14} className='mr-1' />
-            Reject
+            <TbX aria-hidden='true' size={14} className='mr-1' />
+            {dict.aiApplication.rejectOperation}
           </Button>
           <Button
-            variant='default'
+            variant='accent'
             size='sm'
             onClick={() => onApprove(pendingOperation.id)}
             disabled={!canEdit || isProcessing}
           >
-            <TbCheck size={14} className='mr-1' />
-            Approve
+            <TbCheck aria-hidden='true' size={14} className='mr-1' />
+            {dict.aiApplication.approveOperation}
           </Button>
         </div>
       )}
@@ -277,9 +280,15 @@ const PendingOperationEntry = memo(function PendingOperationEntry({
       {/* Review info */}
       {pendingOperation.reviewed_by && pendingOperation.reviewed_at && (
         <div className='text-xs text-muted-foreground'>
-          Reviewed by {pendingOperation.reviewed_by.first_name}{' '}
-          {pendingOperation.reviewed_by.last_name} on{' '}
-          {new Date(pendingOperation.reviewed_at).toLocaleString(locale)}
+          {dict.aiApplication.reviewedByOn
+            .replace(
+              '{name}',
+              `${pendingOperation.reviewed_by.first_name} ${pendingOperation.reviewed_by.last_name}`
+            )
+            .replace(
+              '{date}',
+              new Date(pendingOperation.reviewed_at).toLocaleString(locale)
+            )}
         </div>
       )}
     </div>
@@ -442,8 +451,13 @@ const AIApplicationPendingOperationsSectionContent = () => {
             {totalPages > 1 && (
               <div className='mt-4 flex items-center justify-between'>
                 <span className='text-sm text-muted-foreground'>
-                  Showing {page * limit + 1}-
-                  {Math.min((page + 1) * limit, total)} of {total}
+                  {dict.aiApplication.pendingOperationsShowing
+                    .replace('{start}', String(page * limit + 1))
+                    .replace(
+                      '{end}',
+                      String(Math.min((page + 1) * limit, total))
+                    )
+                    .replace('{total}', String(total))}
                 </span>
                 <div className='flex gap-2'>
                   <Button

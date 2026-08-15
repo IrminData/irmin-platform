@@ -23,8 +23,11 @@ class ToolCacheService {
    * @param authToken - The bearer token for MCP authentication
    * @returns Array of dynamic structured tools
    */
-  async getTools(authToken: string): Promise<DynamicStructuredTool[]> {
-    const tokenHash = this.hashToken(authToken);
+  async getTools(
+    authToken: string,
+    workspaceSlug: string
+  ): Promise<DynamicStructuredTool[]> {
+    const tokenHash = this.hashToken(`${authToken}:${workspaceSlug}`);
     const cached = this.cache.get(tokenHash);
 
     // Return cached tools if still valid
@@ -33,7 +36,7 @@ class ToolCacheService {
     }
 
     // Fetch fresh tools from MCP
-    const tools = await this.fetchTools(authToken);
+    const tools = await this.fetchTools(authToken, workspaceSlug);
 
     // Cache the result
     this.cache.set(tokenHash, {
@@ -51,10 +54,13 @@ class ToolCacheService {
   /**
    * Force refresh tools for a specific token, bypassing cache.
    */
-  async refreshTools(authToken: string): Promise<DynamicStructuredTool[]> {
-    const tokenHash = this.hashToken(authToken);
+  async refreshTools(
+    authToken: string,
+    workspaceSlug: string
+  ): Promise<DynamicStructuredTool[]> {
+    const tokenHash = this.hashToken(`${authToken}:${workspaceSlug}`);
     this.cache.delete(tokenHash);
-    return this.getTools(authToken);
+    return this.getTools(authToken, workspaceSlug);
   }
 
   /**
@@ -84,9 +90,10 @@ class ToolCacheService {
   }
 
   private async fetchTools(
-    authToken: string
+    authToken: string,
+    workspaceSlug: string
   ): Promise<DynamicStructuredTool[]> {
-    const mcpConfig = toolsService.getIrminMCPConfig(authToken);
+    const mcpConfig = toolsService.getIrminMCPConfig(authToken, workspaceSlug);
     const mcpClient = toolsService.createClient({
       ...mcpConfig,
     });

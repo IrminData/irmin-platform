@@ -213,7 +213,7 @@ export default function CreatePointerModal({
                   </SelectContent>
                 </Select>
                 {errors.targetRepository && (
-                  <p className='mt-1 text-xs text-red-600'>
+                  <p className='mt-1 text-xs text-destructive'>
                     {errors.targetRepository.message}
                   </p>
                 )}
@@ -245,7 +245,7 @@ export default function CreatePointerModal({
                       }}
                     />
                     {errors.targetRef && (
-                      <p className='mt-1 text-xs text-red-600'>
+                      <p className='mt-1 text-xs text-destructive'>
                         {errors.targetRef.message}
                       </p>
                     )}
@@ -269,7 +269,7 @@ export default function CreatePointerModal({
                 existingOnly
               />
               {errors.targetPath && (
-                <p className='mt-1 text-xs text-red-600'>
+                <p className='mt-1 text-xs text-destructive'>
                   {errors.targetPath.message}
                 </p>
               )}
@@ -296,7 +296,7 @@ export default function CreatePointerModal({
                   {field.value || '<name>'}
                 </p>
                 {errors.pointerName && (
-                  <p className='mt-1 text-xs text-red-600'>
+                  <p className='mt-1 text-xs text-destructive'>
                     {errors.pointerName.message}
                   </p>
                 )}
@@ -309,7 +309,7 @@ export default function CreatePointerModal({
 
         <div className='pb-3'>
           <Button
-            variant='default'
+            variant='accent'
             className='w-full'
             loading={loading}
             type='submit'

@@ -45,7 +45,9 @@ function partsFromState(state: RunState): ServerStreamEvent[] {
         type: 'tool-approval-required',
         toolCallId: tool.id,
         toolName: tool.name,
-        approvalPreview: tool.error,
+        approvalPreview: tool.approvalPreview,
+        pendingOperationId: tool.pendingOperationId,
+        workspaceSlug: tool.workspaceSlug,
       });
     }
   }

@@ -76,7 +76,7 @@ class ToolsService {
     return found;
   }
 
-  getIrminMCPConfig(authToken?: string) {
+  getIrminMCPConfig(authToken?: string, workspaceSlug?: string) {
     if (!authToken) {
       throw new Error('Auth token is required for Irmin MCP server');
     }
@@ -89,6 +89,7 @@ class ToolsService {
         type: 'http' as const,
         headers: {
           Authorization: `Bearer ${authToken}`,
+          ...(workspaceSlug ? { 'X-Irmin-Workspace': workspaceSlug } : {}),
           // Accept header is automatically added by the adapter for SSE connections
         },
         // Enforce tool execution timeout

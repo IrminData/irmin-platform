@@ -12,6 +12,7 @@ import (
 )
 
 type userCtxKey struct{}
+type tokenTypeCtxKey struct{}
 type aiAppCtxKey struct{}
 type requestMetadataCtxKey struct{}
 
@@ -110,14 +111,27 @@ func userFromContext(ctx context.Context) (*db.User, bool) {
 	return u, ok && u != nil
 }
 
+func withTokenTypeInContext(ctx context.Context, tokenType services.TokenType) context.Context {
+	return context.WithValue(ctx, tokenTypeCtxKey{}, tokenType)
+}
+
+func tokenTypeFromContext(ctx context.Context) (services.TokenType, bool) {
+	tokenType, ok := ctx.Value(tokenTypeCtxKey{}).(services.TokenType)
+	return tokenType, ok
+}
+
 func withAIAppInContext(ctx context.Context, aiApp *db.AIApplication) context.Context {
 	return context.WithValue(ctx, aiAppCtxKey{}, aiApp)
 }
 
-func validateAuthAndGetUser(parent context.Context, cfg *authConfig, authHeader string) (*db.User, error) {
+func validateAuthAndGetUser(
+	parent context.Context,
+	cfg *authConfig,
+	authHeader string,
+) (*db.User, services.TokenType, error) {
 	token := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
 	if token == "" {
-		return nil, errors.New("missing token")
+		return nil, "", errors.New("missing token")
 	}
 
 	// Use a timeout context to prevent hanging
@@ -129,13 +143,13 @@ func validateAuthAndGetUser(parent context.Context, cfg *authConfig, authHeader 
 		if ctx.Err() == context.DeadlineExceeded {
 			cfg.apiServices.Logger.ErrorContext(ctx, "MCP auth: IdentifyUserFromToken timed out")
 		}
-		return nil, err
+		return nil, "", err
 	}
 	if tokenType == services.TokenTypeSystem {
-		return nil, errors.New("system token not permitted for MCP")
+		return nil, "", errors.New("system token not permitted for MCP")
 	}
 
-	return user, nil
+	return user, tokenType, nil
 }
 
 // validateAuthAndGetUserOrAIApp validates the auth header and returns either a user or an AI application.

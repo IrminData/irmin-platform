@@ -656,8 +656,9 @@ func registerAIAppGetContentTool(
 			// Detect content type
 			mimeType := irminutils.DetectMimeType(content, args.Path)
 
-			// Check if this is a format we can transform (binary or tabular text)
-			if IsBinaryFormatSupported(args.Path) || IsTabularTextFormat(args.Path) {
+			// Apply the common input and 16k-token output bounds to every format,
+			// including ordinary text, Markdown, JSON, and XML.
+			{
 				transformed, transformErr := TransformContentForLLM(ctx, content, args.Path)
 				if transformErr != nil {
 					apiServices.Logger.Warn("Failed to transform content, returning error",
@@ -705,48 +706,6 @@ func registerAIAppGetContentTool(
 				)
 				return result, toolregistry.OutputFromResult(result), nil
 			}
-
-			// For non-binary files, check if text-based
-			if !irminutils.IsTextMimeType(mimeType) {
-				result := mcpError("Content is not a supported text format")
-				logToolCall(
-					ctx,
-					al,
-					apiServices,
-					aiApp,
-					"irmin_repository_object_content_get",
-					"builtin",
-					args,
-					startTime,
-					result,
-				)
-				return result, toolregistry.OutputFromResult(result), nil
-			}
-
-			result := &sdkmcp.CallToolResult{
-				Content: []sdkmcp.Content{
-					&sdkmcp.TextContent{
-						Text: string(content),
-						Meta: sdkmcp.Meta{
-							"mimeType": mimeType,
-							"path":     args.Path,
-						},
-					},
-				},
-			}
-
-			logToolCall(
-				ctx,
-				al,
-				apiServices,
-				aiApp,
-				"irmin_repository_object_content_get",
-				"builtin",
-				args,
-				startTime,
-				result,
-			)
-			return result, toolregistry.OutputFromResult(result), nil
 		},
 	)
 }

@@ -161,6 +161,17 @@ type AIApplicationPendingOperationsResponse struct {
 	Offset            int                             `json:"offset"             example:"0"`
 }
 
+// AIApplicationPendingOperationActionResult is returned after approving or rejecting an operation.
+type AIApplicationPendingOperationActionResult struct {
+	ID        string                 `json:"id"        validate:"required,validsqid=ai_application_pending_operations"`
+	Status    PendingOperationStatus `json:"status"    validate:"required"`
+	Message   string                 `json:"message"`
+	Operation string                 `json:"operation,omitempty"`
+	Path      string                 `json:"path,omitempty"`
+	Committed bool                   `json:"committed,omitempty"`
+	CommitID  *string                `json:"commit_id,omitempty"`
+}
+
 // AIApplicationToolLogsResponse represents a paginated list of tool logs.
 type AIApplicationToolLogsResponse struct {
 	Logs   []AIApplicationToolLog `json:"logs"`

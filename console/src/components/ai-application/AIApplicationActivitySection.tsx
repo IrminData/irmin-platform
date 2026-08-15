@@ -41,42 +41,17 @@ const ToolLogSkeletonRow = () => {
   return (
     <div
       className={`
-        flex animate-pulse items-center gap-4 rounded-lg bg-card/80 p-3
+        flex animate-pulse items-center gap-4 rounded-[2px] bg-card/80 p-3
       `}
     >
-      <div
-        className={`
-          size-8 rounded-sm bg-gray-300
-          dark:bg-gray-700
-        `}
-      />
+      <div className={`size-8 rounded-[2px] bg-muted`} />
       <div className='flex-1'>
-        <div
-          className={`
-            mb-2 h-4 w-1/3 rounded-sm bg-gray-300
-            dark:bg-gray-700
-          `}
-        />
-        <div
-          className={`
-            h-3 w-2/3 rounded-sm bg-gray-300
-            dark:bg-gray-700
-          `}
-        />
+        <div className={`mb-2 h-4 w-1/3 rounded-[2px] bg-muted`} />
+        <div className={`h-3 w-2/3 rounded-[2px] bg-muted`} />
       </div>
       <div className='flex flex-col gap-1'>
-        <div
-          className={`
-            h-3 w-20 rounded-sm bg-gray-300
-            dark:bg-gray-700
-          `}
-        />
-        <div
-          className={`
-            h-3 w-16 rounded-sm bg-gray-300
-            dark:bg-gray-700
-          `}
-        />
+        <div className={`h-3 w-20 rounded-[2px] bg-muted`} />
+        <div className={`h-3 w-16 rounded-[2px] bg-muted`} />
       </div>
     </div>
   );
@@ -126,7 +101,7 @@ const ToolLogEntry = memo(function ToolLogEntry({
     <div
       className={cn(
         `
-          flex flex-col gap-3 rounded-lg bg-card/80 p-3 transition-colors
+          flex flex-col gap-3 rounded-[2px] bg-card/80 p-3 transition-colors
           hover:bg-card/90
           md:flex-row md:items-center
         `,
@@ -138,14 +113,8 @@ const ToolLogEntry = memo(function ToolLogEntry({
         className={cn(
           'flex size-8 shrink-0 items-center justify-center rounded-full',
           log.success
-            ? `
-              bg-green-100 text-green-600
-              dark:bg-green-900/30 dark:text-green-400
-            `
-            : `
-              bg-red-100 text-red-600
-              dark:bg-red-900/30 dark:text-red-400
-            `
+            ? `border border-success/30 bg-success/10 text-success`
+            : `border border-destructive/30 bg-destructive/10 text-destructive`
         )}
       >
         {log.success ? <TbCheck size={16} /> : <TbX size={16} />}
@@ -154,47 +123,29 @@ const ToolLogEntry = memo(function ToolLogEntry({
       {/* Main content */}
       <div className='min-w-0 flex-1'>
         <div className='flex flex-wrap items-center gap-2'>
+          <span className={`font-medium text-foreground`}>{log.tool_name}</span>
           <span
             className={`
-              font-medium text-gray-900
-              dark:text-gray-100
-            `}
-          >
-            {log.tool_name}
-          </span>
-          <span
-            className={`
-              rounded-full bg-gray-200 px-2 py-0.5 text-xs text-gray-600
-              dark:bg-gray-700 dark:text-gray-400
+              rounded-full border border-border bg-muted px-2 py-0.5 text-xs
+              text-muted-foreground
             `}
           >
             {log.tool_type || 'built-in'}
           </span>
           <span
             className={`
-              rounded-full bg-blue-100 px-2 py-0.5 text-xs text-blue-600
-              uppercase
-              dark:bg-blue-900/30 dark:text-blue-400
+              rounded-full border border-chart-2/30 bg-chart-2/10 px-2 py-0.5
+              text-xs text-foreground uppercase
             `}
           >
             {log.protocol}
           </span>
         </div>
-        <p
-          className={`
-            mt-1 truncate text-sm text-gray-500
-            dark:text-gray-400
-          `}
-        >
+        <p className={`mt-1 truncate text-sm text-muted-foreground`}>
           {inputsPreview}
         </p>
         {!log.success && log.error_msg && (
-          <p
-            className={`
-              mt-1 truncate text-sm text-red-600
-              dark:text-red-400
-            `}
-          >
+          <p className={`mt-1 truncate text-sm text-destructive`}>
             {log.error_msg}
           </p>
         )}
@@ -207,25 +158,15 @@ const ToolLogEntry = memo(function ToolLogEntry({
           md:flex-col md:items-end md:gap-1
         `}
       >
-        <div className='flex items-center gap-1 text-xs text-gray-500'>
+        <div className='flex items-center gap-1 text-xs text-muted-foreground'>
           <TbClock size={12} />
           <span>{log.duration_ms}ms</span>
         </div>
-        <span
-          className={`
-            text-xs text-gray-500
-            dark:text-gray-400
-          `}
-        >
+        <span className={`text-xs text-muted-foreground`}>
           {new Date(log.created_at).toLocaleString(locale)}
         </span>
         {log.request_ip && (
-          <span
-            className={`
-              text-xs text-gray-400
-              dark:text-gray-500
-            `}
-          >
+          <span className={`text-xs text-muted-foreground`}>
             {log.request_ip}
           </span>
         )}
@@ -251,61 +192,24 @@ const StatCard = ({
   return (
     <div
       className={cn(
-        `
-          flex items-center gap-3 rounded-lg border bg-card/50 p-3
-          dark:border-gray-800
-        `,
-        variant === 'success' &&
-          `
-            border-green-200
-            dark:border-green-900/50
-          `,
-        variant === 'error' &&
-          `
-            border-red-200
-            dark:border-red-900/50
-          `
+        `flex items-center gap-3 rounded-[2px] border bg-card/50 p-3`,
+        variant === 'success' && `border-success/30`,
+        variant === 'error' && `border-destructive/30`
       )}
     >
       <div
         className={cn(
           'flex size-10 items-center justify-center rounded-full',
-          variant === 'default' &&
-            `
-              bg-gray-100
-              dark:bg-gray-800
-            `,
-          variant === 'success' &&
-            `
-              bg-green-100 text-green-600
-              dark:bg-green-900/30 dark:text-green-400
-            `,
-          variant === 'error' &&
-            `
-              bg-red-100 text-red-600
-              dark:bg-red-900/30 dark:text-red-400
-            `
+          variant === 'default' && `bg-muted`,
+          variant === 'success' && `bg-success/10 text-success`,
+          variant === 'error' && `bg-destructive/10 text-destructive`
         )}
       >
         {icon}
       </div>
       <div>
-        <p
-          className={`
-            text-2xl font-semibold text-gray-900
-            dark:text-gray-100
-          `}
-        >
-          {value}
-        </p>
-        <p
-          className={`
-            text-sm text-gray-500
-            dark:text-gray-400
-          `}
-        >
-          {label}
-        </p>
+        <p className={`text-2xl font-semibold text-foreground`}>{value}</p>
+        <p className={`text-sm text-muted-foreground`}>{label}</p>
       </div>
     </div>
   );
@@ -399,20 +303,10 @@ const AIApplicationActivitySectionContent = () => {
     <ContentWrapper className='mt-4'>
       {/* Header with title and description */}
       <div className='mb-6'>
-        <h2
-          className={`
-            text-lg font-semibold text-gray-900
-            dark:text-gray-100
-          `}
-        >
+        <h2 className={`text-lg font-semibold text-foreground`}>
           {dict.aiApplication.activity}
         </h2>
-        <p
-          className={`
-            text-sm text-gray-500
-            dark:text-gray-400
-          `}
-        >
+        <p className={`text-sm text-muted-foreground`}>
           {dict.aiApplication.activityDescription}
         </p>
       </div>
@@ -489,7 +383,7 @@ const AIApplicationActivitySectionContent = () => {
             onValueChange={handleSuccessFilterChange}
           >
             <SelectTrigger className='w-32'>
-              <SelectValue placeholder='All status' />
+              <SelectValue placeholder={dict.common.all} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value='all'>{dict.common.all}</SelectItem>
@@ -528,25 +422,12 @@ const AIApplicationActivitySectionContent = () => {
           <div className={`py-12 text-center`}>
             <TbTool
               size={48}
-              className={`
-                mx-auto mb-4 text-gray-300
-                dark:text-gray-700
-              `}
+              className={`mx-auto mb-4 text-muted-foreground/50`}
             />
-            <p
-              className={`
-                text-lg text-gray-600
-                dark:text-gray-400
-              `}
-            >
+            <p className={`text-lg text-muted-foreground`}>
               {dict.aiApplication.noActivityYet}
             </p>
-            <p
-              className={`
-                text-sm text-gray-500
-                dark:text-gray-500
-              `}
-            >
+            <p className={`text-sm text-muted-foreground`}>
               {dict.aiApplication.noActivityDescription}
             </p>
           </div>
@@ -566,18 +447,13 @@ const AIApplicationActivitySectionContent = () => {
       {totalLogs > 0 && (
         <div
           className={`
-            mt-6 flex flex-col items-center justify-between gap-4 border-t pt-4
+            mt-6 flex flex-col items-center justify-between gap-4 border-t
+            border-border pt-4
             sm:flex-row
-            dark:border-gray-800
           `}
         >
           <div className='flex items-center gap-2'>
-            <span
-              className={`
-                text-sm text-gray-500
-                dark:text-gray-400
-              `}
-            >
+            <span className={`text-sm text-muted-foreground`}>
               {dict.common.showing} {(currentPage - 1) * limit + 1}-
               {Math.min(currentPage * limit, totalLogs)} {dict.common.of}{' '}
               {totalLogs}
@@ -607,12 +483,7 @@ const AIApplicationActivitySectionContent = () => {
               <TbChevronLeft size={16} />
               {dict.common.previous}
             </Button>
-            <span
-              className={`
-                text-sm text-gray-500
-                dark:text-gray-400
-              `}
-            >
+            <span className={`text-sm text-muted-foreground`}>
               {dict.common.page} {currentPage} {dict.common.of} {totalPages}
             </span>
             <Button

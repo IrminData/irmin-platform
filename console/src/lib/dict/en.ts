@@ -5,7 +5,7 @@ const en = {
   // === CORE APPLICATION ===
   common: {
     // Basic actions
-    loading: 'Loading...',
+    loading: 'Loading…',
     cancel: 'Cancel',
     confirm: 'Confirm',
     save: 'Save',
@@ -16,6 +16,7 @@ const en = {
     update: 'Update',
     add: 'Add',
     remove: 'Remove',
+    discardChanges: 'Discard Changes',
     download: 'Download',
     back: 'Back',
     next: 'Next',
@@ -27,6 +28,10 @@ const en = {
     tryAgain: 'Try again',
     hideAdvancedOption: 'Hide advanced options',
     showAdvancedOptions: 'Show advanced options',
+    item: 'Item',
+    deleteNamed: 'Delete {item}',
+    permanentDeleteDescription:
+      'This action cannot be undone. Deleting this item will remove it permanently.',
 
     // Error display
     pageNotFoundDescription:
@@ -39,6 +44,13 @@ const en = {
     copied: 'Copied',
     visual: 'Visual',
     stackTrace: 'Stack trace',
+    actionFailedDescription:
+      "We couldn't complete that action. Try again, or refresh the page if it keeps happening.",
+    sectionLoadingError:
+      'Something went wrong while loading. Try refreshing the page.',
+    componentLoadingError: 'Something went wrong while loading.',
+    genericErrorDescription: 'An error occurred.',
+    genericErrorRetryDescription: 'An error occurred. Please try again.',
 
     // Search and navigation
     search: 'Search',
@@ -46,7 +58,19 @@ const en = {
     noResults: 'No results',
     loadMore: 'Load more',
     more: 'More',
+    notifications: 'Notifications',
     selectAll: 'Select All',
+    skipToMainContent: 'Skip to main content',
+    commandPalette: 'Command palette',
+    commandPaletteDescription: 'Search for a command to run…',
+    switchToTab: 'Switch to the {tab} tab',
+    copyCode: 'Copy code',
+    scrollToBottom: 'Scroll to bottom',
+    codeEditor: 'Code editor',
+    resizeEditor: 'Resize editor',
+    selectResultFile: 'Select result file',
+    enableAnimations: 'Enable animations',
+    disableAnimations: 'Disable animations',
 
     // Status and feedback
     success: 'Success',
@@ -62,6 +86,10 @@ const en = {
     of: 'of',
     page: 'Page',
     clearFilters: 'Clear filters',
+    paginationLabel: 'Pagination',
+    previousPage: 'Go to previous page',
+    nextPage: 'Go to next page',
+    morePages: 'More pages',
 
     // Content
     name: 'Name',
@@ -77,10 +105,22 @@ const en = {
     color: 'Color',
     owner: 'Owner',
     tags: 'Tags',
+    from: 'From',
+    to: 'To',
+    sortedAscending: '{label}, sorted ascending',
+    sortedDescending: '{label}, sorted descending',
+    notSorted: '{label}, not sorted',
 
     // Forms
     fieldRequired: 'This field is required',
     fieldInvalid: 'This field is invalid',
+    fieldRequiredNamed: '{field} is required',
+    fieldMinimum: 'Minimum value is {value}',
+    fieldMaximum: 'Maximum value is {value}',
+    fieldRequiredWith: '{field} is required when a related field has a value',
+    fieldInvalidEmail: 'Enter a valid email address',
+    fieldInvalidInteger: 'Enter a valid integer',
+    fieldInvalidNumber: 'Enter a valid number',
     resetForm: 'Clear form',
     pleaseFixErrors: 'Please fix the errors above',
 
@@ -107,7 +147,7 @@ const en = {
     templates: {
       title: 'Template Library',
       description: 'Choose a template to get started quickly',
-      searchTemplates: 'Search templates...',
+      searchTemplates: 'Search templates…',
       noTemplatesFound: 'No templates found',
       noPlaceholders: 'No placeholders to fill in this template',
       selectTemplate: 'Select a template',
@@ -175,6 +215,25 @@ const en = {
       connectionTitle: "Couldn't display the connection",
       connectionDescription:
         'Something went wrong while rendering the connection. Try refreshing the page.',
+      queriesInterfaceTitle: "Couldn't load the query interface",
+      queriesInterfaceDescription:
+        'Something went wrong while loading the query interface. Try refreshing the page.',
+      scriptsInterfaceTitle: "Couldn't load the scripts interface",
+      scriptsInterfaceDescription:
+        'Something went wrong while loading the scripts interface. Try refreshing the page.',
+      workflowsInterfaceTitle: "Couldn't load the workflows interface",
+      workflowsInterfaceDescription:
+        'Something went wrong while loading the workflows interface. Try refreshing the page.',
+      aiApplicationsInterfaceTitle:
+        "Couldn't load the AI applications interface",
+      aiApplicationsInterfaceDescription:
+        'Something went wrong while loading the AI applications interface. Try refreshing the page.',
+      workspaceManagementTitle: "Couldn't load workspace management",
+      workspaceManagementDescription:
+        'Something went wrong while loading workspace management. Try refreshing the page.',
+      cronGeneratorTitle: "Couldn't load the cron generator",
+      cronGeneratorDescription:
+        'Something went wrong while loading the cron generator. Try refreshing the page.',
 
       // Query failure (network / server error) — shown with a Retry button
       failedToLoadRepository: "Couldn't load the repository",
@@ -388,19 +447,24 @@ const en = {
     advancedSearch: 'Advanced search',
     searchDescription:
       'Search across repositories, workflows, connections, and more',
-    searchPlaceholder: 'Search for anything...',
+    searchPlaceholder: 'Search for anything…',
     contentTypes: 'Content Types',
     fromDate: 'From Date',
     toDate: 'To Date',
     resultsPerPage: 'Results per page',
-    noResultsFound: 'No results found',
+    noResultsFor: 'No results for “{query}”',
     tryAdjustingFilters: 'Try adjusting your search terms or filters',
+    clearSearch: 'Clear Search',
+    resetFilters: 'Reset Filters',
     startSearching: 'Start searching',
     startSearchingDescription:
       'Enter a search term above to find repositories, workflows, connections, and more',
-    searchingText: 'Searching...',
-    resultsFoundFor: 'results found for',
-    resultFoundFor: 'result found for',
+    searchingText: 'Searching…',
+    resultsFoundForQuery: '{count} results for “{query}”',
+    resultFoundForQuery: '1 result for “{query}”',
+    structuredObjects: 'Structured objects',
+    binaryObjects: 'Binary objects',
+    groupObjects: 'Group objects',
   },
 
   // === NAVIGATION ===
@@ -531,22 +595,33 @@ const en = {
     pendingOperationsDescription:
       'Review and approve write operations from AI agents',
     noPendingOperations: 'No pending operations to review',
+    pendingStatus: 'Pending',
+    completedStatus: 'Completed',
+    executingStatus: 'Executing',
+    failedStatus: 'Failed',
+    rejectedStatus: 'Rejected',
+    commitMessage: 'Message',
+    rejectOperation: 'Reject',
+    approveOperation: 'Approve',
+    reviewedByOn: 'Reviewed by {name} on {date}',
+    pendingOperationsShowing: 'Showing {start}–{end} of {total}',
     howToConnect: 'How to Connect',
-    howToConnectMcpPrefix: 'Use the ',
-    howToConnectMcpBold: 'MCP Endpoint',
-    howToConnectMcpSuffix:
-      ' to connect with Cursor, Claude Desktop, or other MCP clients.',
-    howToConnectApiKeyPrefix: 'Include your ',
-    howToConnectApiKeyBold: 'API Key',
-    howToConnectApiKeySuffix: ' as a Bearer token in the Authorization header.',
+    howToConnectMcp:
+      'The {mcpEndpoint} connects Cursor, Claude Desktop, or another MCP client to this AI Application.',
+    howToConnectApiKey:
+      'The {apiKey} is sent as a Bearer token in the Authorization header.',
     howToConnectTools:
-      'Enable specific tools below to expose capabilities to your AI agent.',
+      'Enable the tools below that you want the AI agent to use.',
     apiReference: 'API Reference',
     toolsControlDescription:
       'Control which capabilities are exposed via the MCP server.',
     hideApiKey: 'Hide API Key',
     showApiKey: 'Show API Key',
     copyApiKey: 'Copy API Key',
+    copyMcpEndpoint: 'Copy MCP endpoint',
+    copyRestApiEndpoint: 'Copy REST API endpoint',
+    claudeDesktopConfig: 'Claude Desktop configuration',
+    copyConfiguration: 'Copy configuration',
     // Custom Tools
     customTools: 'Custom Tools',
     customToolsDescription:
@@ -599,11 +674,12 @@ const en = {
     deletionNote:
       'Deleting your workspace will remove all data associated with it. This action is irreversible.',
     deleteWorkspace: 'Delete Workspace',
+    deleteTag: 'Delete Tag',
     billingCurrentPlan: 'Current Plan',
     billingManageBilling: 'Manage Billing',
     billingAddPaymentMethod: 'Add Payment Method',
     billingFreeUser: 'Free — usage-based limits apply',
-    billingSubscribed: 'Subscribed — unlimited usage',
+    billingSubscribed: 'Payment method added — usage-based billing is active',
     billingCancelled: 'Cancelled — usage-based limits apply after period ends',
     billingPastDue: 'Payment issue — please update your payment method',
     billingStatusActive: 'Active',
@@ -639,7 +715,8 @@ const en = {
     billingOverage: 'Overage',
     billingCreditPerMeter: 'Credit per meter',
     billingBannerTitle: 'Free Plan',
-    billingBannerDescription: 'Add a payment method to unlock unlimited usage',
+    billingBannerDescription:
+      'Add a payment method to remove free-plan limits and enable usage-based billing',
     billingBannerAction: 'Configure Billing',
     billingLimitsResetIn: 'Limits reset in {n} days',
     billingInfo: 'Billing Information',
@@ -759,6 +836,7 @@ const en = {
       newBranchName: 'New branch name',
       fromBranch: 'From branch',
       confirmDeleteBranch: 'Are you sure you want to delete this branch?',
+      deleteBranch: 'Delete Branch',
     },
 
     tags: {
@@ -767,6 +845,7 @@ const en = {
       newTagName: 'New tag name',
       fromCommit: 'From commit',
       confirmDeleteTag: 'Are you sure you want to delete this tag?',
+      deleteTag: 'Delete Tag',
       currentlyViewing: 'Currently viewing',
     },
 
@@ -800,12 +879,18 @@ const en = {
 
     compare: {
       compare: 'Compare',
+      accessErrorTitle: 'Repository access error',
+      accessErrorDescription:
+        'You do not have permission to compare this repository.',
+      interfaceErrorTitle: 'Repository comparison error',
+      interfaceErrorDescription:
+        'The repository comparison could not be loaded. Try refreshing the page.',
       switchDirection: 'Switch direction',
       baseBranch: 'Base ref',
       compareBranch: 'Compare to ref',
       customRef: 'Custom ref',
       enterCustomRef: 'Enter tag name or commit hash',
-      customRefPlaceholder: 'e.g., v1.0.0 or abc123...',
+      customRefPlaceholder: 'e.g., v1.0.0 or abc123…',
       merge: 'Merge',
       into: 'into',
       comparing: 'Comparing',
@@ -848,6 +933,7 @@ const en = {
         dropZone: 'Drop files here or click to select',
         browseFiles: 'Browse Files',
         addMore: 'Add More Files',
+        removeFromQueue: 'Remove file from the upload queue',
         uploadingTo: 'Uploading to:',
         startUpload: 'Upload {count} Files',
         done: 'Done',
@@ -861,8 +947,8 @@ const en = {
         },
         status: {
           pending: 'Pending',
-          checking: 'Checking...',
-          uploading: 'Uploading...',
+          checking: 'Checking…',
+          uploading: 'Uploading…',
           completed: 'Uploaded',
           failed: 'Failed',
           skipped: 'Skipped',
@@ -879,9 +965,15 @@ const en = {
       currentName: 'Current name',
       type: 'Type',
       contentType: 'Content-Type',
+      mime: 'MIME',
+      schemaItems: 'Items',
+      schemaObjectSummaryOne: 'Object with 1 property',
+      schemaObjectSummaryOther: 'Object with {count} properties',
+      schemaArraySummary: 'Array of {type}',
       view: 'View',
       unsupportedContentType: 'Unsupported content type',
       contentUnavailable: 'Object content unavailable',
+      objectContentErrorTitle: "Couldn't load the object content",
       viewRendered: 'Rendered',
       viewSource: 'Source',
       contentTooLarge:
@@ -952,11 +1044,20 @@ const en = {
       embeddingsDimensions: 'Dimensions',
       embeddingsChunkSize: 'Chunk Size',
       embeddingsOverlap: 'Overlap',
+      embeddingsCharactersPerChunk: 'Characters per chunk (100–4,000)',
+      embeddingsOverlapRange: 'Overlap between chunks (0–500)',
+      embeddingsAutoModelDefault: 'Automatic (model default)',
+      embeddingsLeaveEmptyModelDefault: 'Leave empty to use the model default.',
+      embeddingsSummary: 'Summary',
+      embeddingsMetadataFields: 'Metadata Fields',
+      embeddingsCompleted: 'Completed',
+      sqlPlaceholderRecommended: 'Placeholder (recommended)',
+      alternativeS3Path: 'Alternative S3 path',
       embeddingsChunkCount: 'Chunks',
       embeddingsSourceFiles: 'Source Files',
       embeddingsTopK: 'Results',
       searchVectors: 'Search Vectors',
-      searchVectorsPlaceholder: 'Enter your search query...',
+      searchVectorsPlaceholder: 'Enter your search query…',
       searchVectorsError: 'Failed to search embeddings',
       searchResults: 'Search Results',
       noSearchResults: 'No results found',
@@ -977,6 +1078,23 @@ const en = {
       embeddingsMetadataRemoveField: 'Remove',
       embeddingsMetadataImportJson: 'Import JSON',
       embeddingsMetadataExportJson: 'Export JSON',
+      embeddingsMetadataKeyRequired: 'Enter a metadata key.',
+      embeddingsMetadataKeyInvalid:
+        'Use only letters, numbers, underscores, or hyphens in metadata keys.',
+      embeddingsMetadataKeyExists: 'This metadata key already exists.',
+      embeddingsMetadataJsonObjectOnly:
+        'Import a flat JSON object containing key-value pairs.',
+      embeddingsMetadataInvalidKey:
+        'Invalid key “{key}”. Use only letters, numbers, underscores, or hyphens.',
+      embeddingsMetadataNullValue:
+        '“{key}” needs a value; null and undefined are not allowed.',
+      embeddingsMetadataNestedValue:
+        '“{key}” must be a string, number, or boolean; nested objects and arrays are not allowed.',
+      embeddingsMetadataImportFailed: 'Could not import the JSON file.',
+      embeddingsMetadataRemoveEntry: 'Remove metadata entry',
+      embeddingsMetadataAddEntry: 'Add metadata entry',
+      embeddingsMetadataEmpty:
+        'No metadata fields yet. Add a key-value pair above.',
       embeddingsContentHash: 'Content Hash',
       embeddingsUpsert: 'Upsert Embeddings',
       embeddingsUpsertInserted: 'Inserted',
@@ -988,12 +1106,12 @@ const en = {
       embeddingsWizardAddMetadata: 'Add Metadata',
       embeddingsWizardGenerate: 'Generate Embeddings',
       embeddingsWizardPreviewChunks: 'Preview Chunks',
-      embeddingsWizardGenerating: 'Generating embeddings...',
+      embeddingsWizardGenerating: 'Generating embeddings…',
       embeddingsEditTitle: 'Edit Embedding',
       embeddingsEditDescription:
         'Update the metadata and priority for this embedding chunk',
       embeddingsEditSave: 'Save Changes',
-      embeddingsEditSaving: 'Saving...',
+      embeddingsEditSaving: 'Saving…',
       pointer: 'Pointer',
       pointsTo: 'Points to',
       createPointer: 'Create Pointer',
@@ -1125,7 +1243,7 @@ const en = {
       diffMode: 'Compare Schemas',
       operationMethod: 'Operation Method',
       uploadFile: 'Upload JSON File',
-      selectFile: 'Select a file...',
+      selectFile: 'Select a file…',
       validateButton: 'Validate',
       compareButton: 'Compare',
       validationPassed: 'Validation Passed',
@@ -1137,6 +1255,20 @@ const en = {
       schemasIncompatible: 'Breaking Changes Detected',
       breakingChanges: 'Breaking Changes',
       nonBreakingChanges: 'Non-Breaking Changes',
+      push: 'Push',
+      pull: 'Pull',
+      schemaPathOptional: 'Schema path (optional)',
+      schemaPathPlaceholder:
+        'Leave empty for the root schema, or enter a specific path',
+      expectedFiles: 'Expected files in this schema:',
+      multipleAllowed: '(multiple files allowed)',
+      filesSelected: '{count} files selected',
+      noMatchingSchema: 'No matching schema',
+      missingExpectedFiles: 'Missing expected files: {files}',
+      expected: 'Expected',
+      actual: 'Actual',
+      row: 'Row',
+      removeSelectedFile: 'Remove {file} from the selection',
     },
   },
 
@@ -1416,7 +1548,7 @@ const en = {
       embeddingsPath: 'Embedding File Path',
       embeddingsPathPlaceholder: 'e.g., embeddings/documents.parquet',
       embeddingsQuery: 'Search Query',
-      embeddingsQueryPlaceholder: 'Enter your search query...',
+      embeddingsQueryPlaceholder: 'Enter your search query…',
       embeddingsTopK: 'Number of Results',
       embeddingsPriority: 'Priority',
       embeddingsPriorityDescription:
@@ -1508,14 +1640,53 @@ const en = {
       saveSchedule: 'Save Schedule',
       presets: 'Presets',
       custom: 'Custom',
+      presetOptions: {
+        everyMinute: 'Every minute',
+        everyHour: 'Every hour',
+        everyDayAtMidnight: 'Every day at midnight',
+        everyDayAtNoon: 'Every day at noon',
+        everyMonday: 'Every Monday',
+        everyWeekday: 'Every weekday',
+        everyWeekend: 'Every weekend',
+        everyMonth: 'Every month',
+        everyMonthOnFirst: 'Every month on the 1st',
+      },
+      monthNames: {
+        january: 'January',
+        february: 'February',
+        march: 'March',
+        april: 'April',
+        may: 'May',
+        june: 'June',
+        july: 'July',
+        august: 'August',
+        september: 'September',
+        october: 'October',
+        november: 'November',
+        december: 'December',
+      },
+      weekdayNames: {
+        sunday: 'Sunday',
+        monday: 'Monday',
+        tuesday: 'Tuesday',
+        wednesday: 'Wednesday',
+        thursday: 'Thursday',
+        friday: 'Friday',
+        saturday: 'Saturday',
+      },
 
       // Trigger details
       manualTrigger: 'Manual Trigger',
       scheduledTrigger: 'Scheduled Trigger',
       unknownTrigger: 'Unknown Trigger',
       noTriggerInformation: 'No Trigger Information',
+      unknownTriggerDescription: 'The trigger type was not recognized.',
+      noTriggerInformationDescription:
+        'No trigger information is available for this run.',
       rawTriggerData: 'Raw Trigger Data',
       sourceWorkflow: 'Source Workflow',
+      eventOnSource: '{event} on {source}',
+      eventFromSource: '{event} from {source}',
 
       cron: {
         selectPreset: 'Select a preset schedule',
@@ -1572,6 +1743,15 @@ const en = {
         copied: 'Copied!',
         copyRRule: 'Copy RRule',
         rruleSyntaxHelp: 'RRule syntax help',
+        frequencyOptions: {
+          secondly: 'Secondly',
+          minutely: 'Minutely',
+          hourly: 'Hourly',
+          daily: 'Daily',
+          weekly: 'Weekly',
+          monthly: 'Monthly',
+          yearly: 'Yearly',
+        },
       },
     },
   },
@@ -1579,13 +1759,15 @@ const en = {
   // === DEVELOPMENT TOOLS ===
   scripts: {
     script: 'Script',
-    writeYourJS: 'Write your JavaScript here...',
-    writeYourGo: 'Write your Go script here...',
-    writeYourSQL: 'Write your SQL query here...',
-    writeYourPython: 'Write your Python script here...',
-    writeYourText: 'Write your text here...',
-    writeYourMarkdown: 'Write your Markdown here...',
-    writeYourJSON: 'Write your JSON here...',
+    writeYourJS: 'Write your JavaScript here…',
+    writeYourGo: 'Write your Go script here…',
+    writeYourSQL: 'Write your SQL query here…',
+    writeYourPython: 'Write your Python script here…',
+    writeYourText: 'Write your text here…',
+    writeYourMarkdown: 'Write your Markdown here…',
+    writeYourJSON: 'Write your JSON here…',
+    multipleLargeResultFilesWarning:
+      'Multiple large result files loaded ({size}). This may cause performance issues.',
     newScriptTitle: 'Create a new script',
     newScriptSubtitle:
       'Start writing your script in your preferred language and save it as a workflow',
@@ -1596,26 +1778,28 @@ const en = {
     scriptNeedsToBeSaved:
       'Script needs to be saved before running. Save the script and run it again.',
     selectScript: 'Select a script',
-    searchScripts: 'Search scripts...',
+    searchScripts: 'Search scripts…',
     createScript: 'Create Script',
     updateScript: 'Update Script',
     owner: 'Owner',
     scriptManagement: 'Script Management',
     scriptName: 'Script name',
     scriptDescription: 'Script description',
+    deleteScript: 'Delete Script',
     scriptNotFound: 'Script not found. Resetting to blank editor.',
     scriptDeleted: 'Script was deleted. Resetting to blank editor.',
     unsavedChangesDiscard:
       'You have unsaved changes. Do you want to discard them?',
     failedToCreateScript: 'Failed to create script',
     failedToUpdateScript: 'Failed to update script',
-    saving: 'Saving...',
+    saving: 'Saving…',
     reset: 'Reset',
   },
 
   query: {
     query: 'Query',
     queries: 'Queries',
+    deleteQuery: 'Delete Query',
     queryExecutionStarted: 'Query execution started',
     results: 'Results',
     errors: 'Errors',
@@ -1631,7 +1815,7 @@ const en = {
     editor: 'SQL Editor',
     queryNotFound: 'Query not found',
     queryDeleted: 'Query was deleted',
-    searchQueries: 'Search queries...',
+    searchQueries: 'Search queries…',
     failedToCreateQuery: 'Failed to create query',
     failedToUpdateQuery: 'Failed to update query',
     saveAs: 'Save as',
@@ -1665,6 +1849,7 @@ const en = {
     queryDocumentationTab: 'SQL Syntax',
     generateSql: 'Generate SQL',
     copySelector: 'Copy selector',
+    pathTableNameExamples: 'Path → table name examples:',
     availableColumns: 'Available Columns',
     basicSelect: 'Basic Select',
     filterAndSort: 'Filter & Sort',
@@ -1715,13 +1900,13 @@ const en = {
         'Query results are automatically converted to CSV format (query_results.csv). The output can be saved to repositories or passed to subsequent pipeline stages.',
     },
     sqlGeneration: {
-      placeholder: 'Describe what you want to query...',
+      placeholder: 'Describe what you want to query…',
       send: 'Send',
       generatedSql: 'Generated SQL',
       copySql: 'Copy SQL',
       response: 'Response',
       clearChat: 'Clear',
-      loading: 'Generating SQL...',
+      loading: 'Generating SQL…',
       error: 'Failed to generate SQL',
       noMessages: 'Start a conversation to generate SQL queries',
     },
@@ -1766,10 +1951,10 @@ const en = {
         'Each result file is persisted by the runtime and can be passed to subsequent stages or stored back into a repository.',
     },
     scriptGeneration: {
-      placeholder: 'Describe what the script should do...',
+      placeholder: 'Describe what the script should do…',
       send: 'Send',
       clearChat: 'Clear',
-      loading: 'Generating script...',
+      loading: 'Generating script…',
       error: 'Failed to generate script',
       noMessages: 'Start a conversation to generate a script',
     },
@@ -1780,6 +1965,7 @@ const en = {
     root: 'Root',
     rootDirectory: 'Root directory',
     deleteConfirmation: 'Are you sure you want to delete',
+    deleteObject: 'Delete Object',
 
     errors: {
       invalidPath: 'Invalid path',
@@ -1835,7 +2021,7 @@ const en = {
     setupNewConnectionToDataSource:
       'Set up a new connection to your data source',
     selectConnection: 'Select Connection',
-    searchConnections: 'Search connections...',
+    searchConnections: 'Search connections…',
     pleaseSelectConnection: 'Please select a connection',
     noConnectionsFound: 'No connections found matching your search.',
     noConnectionsAvailable: 'No connections available.',
@@ -1846,7 +2032,7 @@ const en = {
     setupRepositoryDescription:
       'Choose where to store your imported data. You can use an existing repository or create a new one.',
     selectFromExistingRepositories: 'Select from your existing repositories',
-    searchRepositories: 'Search repositories...',
+    searchRepositories: 'Search repositories…',
     defaultBranch: 'Default branch:',
     pleaseSelectRepository: 'Please select a repository',
     createNewRepositoryDescription: 'Create a new repository for your data',
@@ -1865,7 +2051,7 @@ const en = {
     connector: 'Connector:',
     destination: 'Destination:',
     branch: 'Branch:',
-    settingUpDataImport: 'Setting up your data import...',
+    settingUpDataImport: 'Setting up your data import…',
     creatingConnection: 'Creating connection',
     creatingRepository: 'Creating repository',
     creatingImportWorkflow: 'Creating import workflow',
@@ -1900,6 +2086,8 @@ const en = {
     pleaseEnterWorkflowName: 'Please enter a workflow name',
     pleaseSelectRepositoryBranch: 'Please select a repository branch',
     pleaseSelectRepositoryPaths: 'Please select repository paths',
+    pleaseSelectRepositoryDestinationPath:
+      'Please select a repository destination path',
     pleaseSelectConnectionPath: 'Please select a connection path',
     pleaseSelectConnector: 'Please select a connector',
     workflowNamePlaceholder: 'Enter workflow name',
@@ -1934,12 +2122,18 @@ const en = {
     // Conversations List
     newConversation: 'New Conversation',
     noConversations: 'No conversations yet',
-    searchConversations: 'Search conversations...',
-    noSearchResults: 'No conversations found',
+    searchConversations: 'Search conversations…',
+    searchConversationsLabel: 'Search conversations',
+    noSearchResultsFor: 'No conversations for “{query}”',
+    clearSearch: 'Clear Search',
+    deleteConversation: 'Delete Conversation',
+    deleteConversationNamed: 'Delete conversation “{title}”',
+    untitledConversation: 'Untitled',
 
     // Assistant Chat
     askMeAnything:
-      'Ask me anything - coding, business, writing, or general questions...',
+      'Ask me anything - coding, business, writing, or general questions…',
+    promptPlaceholder: 'What would you like to know?',
 
     // Chat Suggestions
     querySyntaxExamples: 'Show me query syntax examples',
@@ -1954,22 +2148,43 @@ const en = {
     copyFailed: 'Failed to copy message',
     responseCancelled: 'Response cancelled by user',
     approvalRequired: 'This operation needs your approval before it can run.',
+    rejectOperation: 'Reject',
+    approveOperation: 'Approve',
+    reviewingOperation: 'Submitting your decision…',
+    operationApproved: 'Operation approved and completed.',
+    operationRejected: 'Operation rejected.',
+    operationReviewFailed: 'The operation could not be reviewed. Try again.',
     runFailed: 'The assistant could not complete this response.',
     retryResponse: 'Retry response',
 
     // Tool and Reasoning Elements
     iteration: 'Iteration',
+    thinking: 'Thinking…',
+    thoughtForOneSecond: 'Thought for 1 second',
+    thoughtForSeconds: 'Thought for {duration} seconds',
     error: 'Error',
     likeThisResponse: 'Like this response',
     dislikeThisResponse: 'Dislike this response',
     thisResponseWasGeneratedThrough: 'This response was generated through',
     ofReasoningAndToolUsage: 'of reasoning and tool usage',
+    toolParameters: 'Parameters',
+    toolResult: 'Result',
+    toolStatus: {
+      pending: 'Pending',
+      running: 'Running',
+      approvalRequested: 'Approval requested',
+      approvalResponded: 'Approval responded',
+      completed: 'Completed',
+      error: 'Error',
+      denied: 'Denied',
+    },
   },
 
   // === USER MANAGEMENT ===
   users: {
     inviteUser: 'Invite a User',
     changeProfilePicture: 'Change profile picture',
+    profilePicture: 'Profile picture',
     firstName: 'First name',
     lastName: 'Last name',
     phone: 'Phone',
@@ -1989,6 +2204,9 @@ const en = {
     declineInvitation: 'Decline invitation',
     workspaceInvitation: 'Workspace Invitation',
     workspaceInvitationDescription: 'You have been invited to join a workspace',
+    invalidInvitation: 'Invalid invitation',
+    invalidInvitationDescription:
+      'This invitation link is invalid or has expired. Contact support for help.',
     invitedBy: 'Invited by',
     workspace: 'Workspace',
     role: 'Role',
@@ -1998,8 +2216,8 @@ const en = {
     expires: 'Expires',
     accept: 'Accept',
     decline: 'Decline',
-    accepting: 'Accepting...',
-    declining: 'Declining...',
+    accepting: 'Accepting…',
+    declining: 'Declining…',
     asRole: 'as',
   },
 
@@ -2007,6 +2225,7 @@ const en = {
     apiTokens: 'API tokens',
     createAPIToken: 'Create API token',
     validFor: 'Valid for (in seconds)',
+    enterSeconds: 'Enter seconds',
     expiresAt: 'Expires at',
     expiresOn: 'Expires on',
     revokeToken: 'Revoke token',
@@ -2042,6 +2261,7 @@ const en = {
     editPolicy: 'Edit Policy',
     deletePolicyDescription:
       'Are you sure you want to delete this policy? This action cannot be undone.',
+    deletePolicy: 'Delete Policy',
     effect: 'Effect',
     action: 'Action',
     resource: 'Resource',
@@ -2049,7 +2269,7 @@ const en = {
     resourceId: 'Resource ID (Optional)',
     error: 'Error loading policies',
     noPolicies: 'No policies found',
-    creating: 'Creating...',
+    creating: 'Creating…',
     effectAllow: 'Allow',
     effectDeny: 'Deny',
     actionRead: 'Read',
@@ -2109,6 +2329,7 @@ const en = {
       custom: 'Custom',
       removeAccessConfirm:
         'Are you sure you want to remove access? This will delete all policies for this user/role on this resource.',
+      removeAccess: 'Remove Access',
       noOneHasAccess: 'No one has been granted specific access yet',
       accessGranted: 'Access granted successfully',
       grantAccessPartial:
@@ -2139,6 +2360,21 @@ const en = {
       noAccess: 'No Access',
       denied: 'Denied',
       additionalPolicies: 'additional policies',
+      ownerSuffix: '(owner)',
+      resourceGroups: {
+        repository: 'Repository',
+        workflow: 'Workflow',
+        connection: 'Connection',
+        query: 'Query',
+        script: 'Script',
+        aiApplication: 'AI Application',
+        workspace: 'Workspace',
+        user: 'User',
+        policy: 'Policy',
+        auditLog: 'Audit Log',
+        billing: 'Billing',
+        docs: 'Docs',
+      },
     },
   },
 
@@ -2155,8 +2391,8 @@ const en = {
     storedQueryLogs: 'Query audit logs',
     policyLogs: 'Policy audit logs',
     repositoryObjectLogs: 'Repository object audit logs',
-    waitingForLogs: 'Waiting for logs...',
-    waitingForResults: 'Waiting for results...',
+    waitingForLogs: 'Waiting for logs…',
+    waitingForResults: 'Waiting for results…',
   },
 
   // === CATALOG & LINEAGE (workspace documentation view) ===
@@ -2170,11 +2406,11 @@ const en = {
       'Notes and documentation for this resource. Shows up in the workspace catalog.',
     workspaceDocumentation: 'Workspace catalog',
     downloadPdf: 'Download PDF',
-    startTypingDocumentation: 'Start typing your notes here...',
+    startTypingDocumentation: 'Start typing your notes here…',
     schema: 'Lineage',
     workspace: 'Workspace',
     createdBy: 'Created by',
-    searchPlaceholder: 'Search documentation...',
+    searchPlaceholder: 'Search documentation…',
     summaryTitle: 'Workspace summary',
     summaryDescription:
       'Snapshot of repositories, connections, and workflows in this workspace.',
@@ -2209,7 +2445,7 @@ const en = {
     querySearchEmptyDescription:
       'Adjust your search term to see query documentation.',
     aiApplicationSectionDescription:
-      'AI Applications connected to this workspace — which repositories they read, which tools they expose.',
+      'AI Applications connected to this workspace, including their data sources and exposed tools.',
     aiApplicationSearchEmptyTitle: 'No AI Applications match your search',
     aiApplicationSearchEmptyDescription:
       'Adjust your search term to see AI Application documentation.',
@@ -2233,7 +2469,7 @@ const en = {
     schemaTitle: 'Data flows',
     schemaIntro:
       'Visual overview of how connections, workflows, and repositories relate to each other.',
-    schemaSearchPlaceholder: 'Search workflows or components...',
+    schemaSearchPlaceholder: 'Search workflows or components…',
     dataFlowsTitle: 'Data flows',
     workflowRelationshipsEmptyDescription:
       'Adjust your search term to see workflow relationships.',
@@ -2251,10 +2487,19 @@ const en = {
     noBranches: 'No branches found.',
     noGitTags: 'No git tags found.',
     noObjects: 'No objects found.',
-    loadingDetails: 'Loading details...',
-    andMoreObjects: 'and {count} more...',
+    loadingDetails: 'Loading details…',
+    andMoreObjects: 'and {count} more…',
     relatedWorkflows: 'Related workflows',
     relatedAIApplications: 'Related AI Applications',
+    pdfAiApplicationFlowsDescription:
+      'Repositories available to each AI Application.',
+    pdfAccessLabel: 'Access',
+    pdfLanguageLabel: 'Language',
+    pdfTypeLabel: 'Type',
+    pdfWorkflowCountOne: '{count} workflow',
+    pdfWorkflowCountOther: '{count} workflows',
+    pdfRepositoryCountOne: '{count} repository',
+    pdfRepositoryCountOther: '{count} repositories',
   },
 
   // === LIST COMPONENTS ===
@@ -2265,7 +2510,7 @@ const en = {
     lastUpdated: 'Last updated',
     createdAt: 'Created at',
     immutable: 'Immutable',
-    searchPlaceholder: 'Type to search...',
+    searchPlaceholder: 'Type to search…',
     noItemsFound: 'No items found',
     noItems: 'No items found',
 
@@ -2355,7 +2600,7 @@ const en = {
     unwrapLabel: 'unwrap',
     fieldMappingStageDescription:
       'Apply field mappings to rename, retype, or restructure data',
-    addFieldPlaceholder: 'Field name...',
+    addFieldPlaceholder: 'Field name…',
     nestedFieldsTruncated: 'Deeper nested fields are not shown',
   },
 
@@ -2421,6 +2666,8 @@ const en = {
     maxItems: 'Max Items',
     default: 'Default Value',
     items: 'Array Items',
+    itemsSchema: 'Items schema',
+    none: 'None',
     noStructured: 'No Structured Children',
     noBinary: 'No Binary Children',
     noGroups: 'No Group Children',

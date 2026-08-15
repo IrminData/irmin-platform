@@ -47,11 +47,12 @@ const WorkspaceCard = ({
     <Link
       href={`/${locale}/workspace/${workspace.slug}`}
       className={`
-        group flex w-full items-center gap-4 rounded-xl border border-border
-        bg-card px-4 py-3 text-left shadow-xs
-        transition-[background-color,border-color,box-shadow] duration-150
-        hover:border-irmin-green-500/40 hover:bg-card/80 hover:shadow-sm
-        focus-visible:ring-1 focus-visible:ring-ring focus-visible:outline-none
+        group flex w-full items-center gap-4 rounded-[2px] border border-border
+        bg-card px-4 py-3 text-left transition-[background-color,border-color]
+        duration-150
+        hover:border-accent/40 hover:bg-card/80
+        focus-visible:outline-2 focus-visible:outline-offset-2
+        focus-visible:outline-accent
       `}
       aria-label={dict.workspace.goToWorkspaceAriaLabel.replace(
         '{name}',
@@ -61,8 +62,8 @@ const WorkspaceCard = ({
       {/* Icon */}
       <div
         className={`
-          flex size-9 shrink-0 items-center justify-center rounded-lg
-          bg-irmin-green-500/10 text-irmin-green-500
+          flex size-9 shrink-0 items-center justify-center rounded-[2px]
+          bg-accent/10 text-foreground
         `}
       >
         <TbBuilding className='size-4' aria-hidden='true' />
@@ -78,9 +79,9 @@ const WorkspaceCard = ({
             isRecentlyUsed && (
               <span
                 className={`
-                  flex shrink-0 items-center gap-1 rounded-full
-                  bg-irmin-green-500/10 px-1.5 py-0.5 text-[11px] font-medium
-                  text-irmin-green-500
+                  flex shrink-0 items-center gap-1 rounded-full border
+                  border-accent/30 bg-accent/10 px-1.5 py-0.5 text-[11px]
+                  font-medium text-foreground
                 `}
               >
                 <TbClock className='size-2.5' aria-hidden='true' />

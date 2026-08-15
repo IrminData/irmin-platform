@@ -78,13 +78,15 @@ export default function CommitChangesModalContent({
           )}
         />
         {errors.message && (
-          <p className='mt-1 text-xs text-red-600'>{errors.message.message}</p>
+          <p className='mt-1 text-xs text-destructive'>
+            {errors.message.message}
+          </p>
         )}
       </div>
       <Button
         className='mt-4 h-11 w-full'
         type='submit'
-        variant='default'
+        variant='accent'
         loading={loading}
       >
         {dict.repository.commit.commitChanges}

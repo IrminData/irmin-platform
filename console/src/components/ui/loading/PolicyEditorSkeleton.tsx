@@ -13,14 +13,14 @@ const PolicyEditorSkeleton = () => {
           <LoadingSkeleton className='h-6 w-48' />
           <LoadingSkeleton className='h-4 w-64 max-w-full' />
         </div>
-        <LoadingSkeleton className='h-10 w-32 rounded-md' />
+        <LoadingSkeleton className='h-10 w-32 rounded-[2px]' />
       </div>
       <div className='flex flex-wrap items-center gap-2'>
-        <LoadingSkeleton className='h-9 w-64 rounded-md' />
-        <LoadingSkeleton className='h-9 w-32 rounded-md' />
-        <LoadingSkeleton className='h-9 w-28 rounded-md' />
+        <LoadingSkeleton className='h-9 w-64 rounded-[2px]' />
+        <LoadingSkeleton className='h-9 w-32 rounded-[2px]' />
+        <LoadingSkeleton className='h-9 w-28 rounded-[2px]' />
       </div>
-      <LoadingSkeleton className='h-80 w-full rounded-md' />
+      <LoadingSkeleton className='h-80 w-full rounded-[2px]' />
     </div>
   );
 };

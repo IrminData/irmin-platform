@@ -249,8 +249,8 @@ func (c *Client) GetAIApplicationPendingOperation(
 func (c *Client) ApproveAIApplicationPendingOperation(
 	ctx context.Context,
 	workspace, aiApplicationID, pendingOperationID string,
-) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error) {
-	var pendingOperation irminmodels.AIApplicationPendingOperation
+) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error) {
+	var pendingOperation irminmodels.AIApplicationPendingOperationActionResult
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodPost,
 		Endpoint: fmt.Sprintf(
@@ -270,8 +270,8 @@ func (c *Client) ApproveAIApplicationPendingOperation(
 func (c *Client) RejectAIApplicationPendingOperation(
 	ctx context.Context,
 	workspace, aiApplicationID, pendingOperationID string,
-) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error) {
-	var pendingOperation irminmodels.AIApplicationPendingOperation
+) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error) {
+	var pendingOperation irminmodels.AIApplicationPendingOperationActionResult
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodPost,
 		Endpoint: fmt.Sprintf(

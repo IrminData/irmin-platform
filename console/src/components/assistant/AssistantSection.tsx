@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import { useParams, usePathname, useSearchParams } from 'next/navigation';
 
@@ -99,6 +99,7 @@ function AssistantSectionContent({
   };
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const mobileSidebarId = useId();
   const refetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Extract context from URL params
@@ -347,7 +348,11 @@ function AssistantSectionContent({
           {/* Mobile Sidebar - Sheet */}
           <div className='xl:hidden'>
             <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
-              <SheetContent side='left' className='w-80 p-0'>
+              <SheetContent
+                id={mobileSidebarId}
+                side='left'
+                className='w-80 p-0'
+              >
                 <SheetHeader className='p-4 pb-2'>
                   <SheetTitle>{dict.assistant.conversations}</SheetTitle>
                 </SheetHeader>
@@ -398,8 +403,12 @@ function AssistantSectionContent({
                     size='sm'
                     onClick={() => setSidebarOpen(true)}
                     className='xl:hidden'
+                    aria-label={dict.assistant.conversations}
+                    aria-haspopup='dialog'
+                    aria-expanded={sidebarOpen}
+                    aria-controls={sidebarOpen ? mobileSidebarId : undefined}
                   >
-                    <TbMenu2 size={16} />
+                    <TbMenu2 aria-hidden='true' size={16} />
                   </Button>
                   <CardTitle>
                     {selectedConversationId && aiConversationQuery.isLoading
@@ -417,8 +426,9 @@ function AssistantSectionContent({
                     size='sm'
                     onClick={() => setSelectedConversationId(null)}
                     className='xl:hidden'
+                    aria-label={dict.common.close}
                   >
-                    <TbX size={16} />
+                    <TbX aria-hidden='true' size={16} />
                   </Button>
                 )}
               </CardHeader>

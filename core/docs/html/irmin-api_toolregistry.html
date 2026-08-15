@@ -10,6 +10,10 @@ CONSTANTS
 
 const CatalogVersion = 1
 
+VARIABLES
+
+var ErrApprovalRequired = errors.New("destructive tool requires authenticated approval")
+
 FUNCTIONS
 
 func CanonicalCustomName(label string) string
@@ -31,8 +35,18 @@ func Register[In any](
     registry.
 
 func ValidateDescriptor(descriptor Descriptor) error
+func WithApproval(ctx context.Context) context.Context
+    WithApproval marks an approval replay after the operation was atomically
+    claimed.
+
+func WithWorkspaceBinding(ctx context.Context, workspaceSlug string) context.Context
+    WithWorkspaceBinding binds a user-token MCP session to the selected
+    workspace.
+
 
 TYPES
+
+type ApprovalStager func(context.Context, Descriptor, *sdkmcp.CallToolRequest, json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
 
 type AuditRedaction struct {
 	Fields []string `json:"fields"`
@@ -73,7 +87,7 @@ type Registry struct {
 	// Has unexported fields.
 }
 
-func New() *Registry
+func New(stager ...ApprovalStager) *Registry
 
 func (r *Registry) Add(descriptor Descriptor) error
 

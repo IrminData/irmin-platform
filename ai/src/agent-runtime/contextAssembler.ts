@@ -13,16 +13,25 @@ export interface ContextProvenance {
   summarized: boolean;
 }
 
-export class ContextBudgetExceededError extends Error {}
+interface ContextValue {
+  value: unknown;
+  source: string;
+  trust: ContextTrust;
+}
 
-const USER_CONTEXT_KEYS = new Set([
-  'current-sql',
-  'current-script-content',
-  'script-name',
-  'repository-slug',
-  'repository-object-path',
-  'repository-ref',
-]);
+const CONTEXT_VALUE = Symbol('irmin.context-value');
+type MarkedContextValue = ContextValue & { [CONTEXT_VALUE]: true };
+
+/** Mark server-derived context with provenance at its ingestion boundary. */
+export function contextValue(
+  value: unknown,
+  source: string,
+  trust: Exclude<ContextTrust, 'user-provided'>
+): unknown {
+  return { [CONTEXT_VALUE]: true, value, source, trust } as MarkedContextValue;
+}
+
+export class ContextBudgetExceededError extends Error {}
 
 /** Build deterministic, trust-labelled context within the role's input budget. */
 export class ContextAssembler {
@@ -44,11 +53,15 @@ export class ContextAssembler {
     let remaining = tokenBudget;
 
     for (const [key, value] of entries) {
-      const serialized = serialize(value);
+      const marked = markedContextValue(value);
+      const rawValue = marked?.value ?? value;
+      const serialized = serialize(rawValue);
       const estimatedTokens = estimateTokens(serialized);
       const allowance = Math.max(0, remaining);
       const summarized = estimatedTokens > allowance;
-      const stored = summarized ? summarize(serialized, allowance * 4) : value;
+      const stored = summarized
+        ? summarize(serialized, allowance * 4)
+        : rawValue;
       const storedTokens = estimateTokens(serialize(stored));
       if (storedTokens > remaining) {
         throw new ContextBudgetExceededError(
@@ -58,8 +71,8 @@ export class ContextAssembler {
       result[key] = stored;
       provenance.push({
         key,
-        source: sourceFor(key),
-        trust: trustFor(key),
+        source: marked?.source ?? 'request.context',
+        trust: marked?.trust ?? 'user-provided',
         estimatedTokens: storedTokens,
         summarized,
       });
@@ -103,16 +116,12 @@ function summarize(value: string, maxCharacters: number): string {
   return value.slice(0, head) + marker + value.slice(-(available - head));
 }
 
-function trustFor(key: string): ContextTrust {
-  if (USER_CONTEXT_KEYS.has(key)) return 'user-provided';
-  if (key.includes('documentation')) return 'trusted-system';
-  return 'workspace-data';
-}
-
-function sourceFor(key: string): string {
-  if (USER_CONTEXT_KEYS.has(key)) return 'request.context';
-  if (key.includes('documentation')) return 'retrieval';
-  return 'irmin-api';
+function markedContextValue(value: unknown): MarkedContextValue | undefined {
+  if (typeof value !== 'object' || value === null) return undefined;
+  const candidate = value as Partial<MarkedContextValue>;
+  return candidate[CONTEXT_VALUE] === true
+    ? (candidate as MarkedContextValue)
+    : undefined;
 }
 
 export const contextAssembler = new ContextAssembler();

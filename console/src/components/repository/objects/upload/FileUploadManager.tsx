@@ -116,12 +116,7 @@ const FileUploadManager = ({
   return (
     <div className='flex flex-col gap-4'>
       {/* Upload destination */}
-      <div
-        className={`
-          text-sm text-gray-600
-          dark:text-gray-400
-        `}
-      >
+      <div className={`text-sm text-muted-foreground`}>
         {uploadDict.uploadingTo}{' '}
         <span className='font-mono font-medium text-foreground'>
           {displayPath}
@@ -150,7 +145,7 @@ const FileUploadManager = ({
 
       {/* Done button (shown when upload is complete) */}
       {isComplete && (
-        <Button variant='default' onClick={handleDone} className='w-full'>
+        <Button variant='accent' onClick={handleDone} className='w-full'>
           {uploadDict.done}
         </Button>
       )}

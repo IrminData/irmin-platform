@@ -12,6 +12,8 @@ import {
 
 import { useLocale } from '@/context/LocaleContext';
 
+import { formatDate } from '@/utils/formatTimestamp';
+
 import type { PlanInfo } from '@/types/core/Billing';
 
 /**
@@ -37,7 +39,7 @@ const BillingPlanCard = ({
   isCheckoutLoading: boolean;
   isPortalLoading: boolean;
 }) => {
-  const { dict } = useLocale();
+  const { dict, locale } = useLocale();
 
   const hasPaymentMethod = plan?.has_payment_method ?? false;
 
@@ -59,7 +61,7 @@ const BillingPlanCard = ({
         : 'secondary';
 
   const renewalDate = plan?.current_period_end
-    ? new Date(plan.current_period_end).toLocaleDateString()
+    ? formatDate(plan.current_period_end, locale)
     : null;
 
   return (
@@ -94,12 +96,13 @@ const BillingPlanCard = ({
           {plan?.cancelled_at && (
             <p className='text-sm text-destructive'>
               {dict.workspace.billingStatusCancelled}:{' '}
-              {new Date(plan.cancelled_at).toLocaleDateString()}
+              {formatDate(plan.cancelled_at, locale)}
             </p>
           )}
           <div className='flex gap-2'>
             {!hasPaymentMethod && (
               <Button
+                variant='accent'
                 size='sm'
                 onClick={onAddPaymentMethod}
                 disabled={isCheckoutLoading}

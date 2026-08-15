@@ -559,7 +559,8 @@ class RetrievalService {
   private async generateHypotheticalContent(
     query: string,
     collectionName?: string,
-    agentContext?: Record<string, unknown>
+    agentContext?: Record<string, unknown>,
+    signal?: AbortSignal
   ): Promise<string | null> {
     const effectiveCollectionName =
       collectionName || this.defaultCollectionName;
@@ -602,7 +603,9 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
                 role: 'user',
                 content: query,
               },
-            ]
+            ],
+            undefined,
+            { signal }
           );
 
           const hypotheticalContent = getContentAsString(
@@ -652,6 +655,7 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
       scoreThreshold?: number;
       includeMetadata?: boolean;
       maxTokens?: number;
+      signal?: AbortSignal;
     } = {},
     agentContext?: Record<string, unknown>
   ): Promise<{
@@ -688,6 +692,7 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
         scoreThreshold = 0.0,
         includeMetadata = false,
         maxTokens = 4000, // Consistent with retrieveContext and API schema default
+        signal,
       } = options;
 
       // Track generation timing
@@ -695,7 +700,8 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
       const hypotheticalContent = await this.generateHypotheticalContent(
         query,
         collectionName,
-        agentContext
+        agentContext,
+        signal
       );
       const generationTimeMs = Date.now() - generationStartTime;
 

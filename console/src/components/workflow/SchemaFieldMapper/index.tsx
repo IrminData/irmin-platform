@@ -521,18 +521,8 @@ const SchemaFieldMapper = ({
 
     return (
       <div className='mx-auto w-full max-w-7xl space-y-4 py-4'>
-        <div
-          className={`
-            rounded-lg border border-gray-200 p-8 text-center
-            dark:border-gray-700
-          `}
-        >
-          <p
-            className={`
-              text-sm text-gray-600
-              dark:text-gray-400
-            `}
-          >
+        <div className={`rounded-[2px] border border-border p-8 text-center`}>
+          <p className={`text-sm text-muted-foreground`}>
             {dict.schemaFieldMapper.noFieldsToMap}
           </p>
         </div>
@@ -557,7 +547,7 @@ const SchemaFieldMapper = ({
       {mode === 'standalone' && (
         <div
           className={`
-            flex items-center gap-2 rounded-lg border border-border
+            flex items-center gap-2 rounded-[2px] border border-border
             bg-background px-4 py-2
           `}
         >
@@ -582,14 +572,10 @@ const SchemaFieldMapper = ({
         {/* Source Fields */}
         <div
           className={`
-            overflow-hidden rounded-xl border border-border bg-background
+            overflow-hidden rounded-[2px] border border-border bg-background
           `}
         >
-          <div
-            className={`
-              border-b border-border bg-linear-to-r from-card px-4 py-2
-            `}
-          >
+          <div className={`border-b border-border bg-card px-4 py-2`}>
             <h3 className='text-lg font-medium text-foreground'>
               {dict.schemaFieldMapper.sourceSchema}
             </h3>
@@ -611,12 +597,12 @@ const SchemaFieldMapper = ({
                       key={`src-${field.name}-${i}`}
                       className={`
                         flex cursor-pointer items-center justify-between
-                        rounded-md border px-3 py-2 text-sm transition-colors
+                        rounded-[2px] border px-3 py-2 text-sm transition-colors
                         ${
                           isSelected
                             ? 'border-primary bg-primary/10'
                             : isMapped
-                              ? 'border-irmin-green-300 bg-irmin-green-100'
+                              ? 'border-success/30 bg-success/10'
                               : `
                                 border-border
                                 hover:bg-muted/50
@@ -626,9 +612,14 @@ const SchemaFieldMapper = ({
                     >
                       <button
                         type='button'
-                        className='flex-1 text-left font-medium'
+                        className='
+                          flex-1 text-left font-medium
+                          focus-visible:outline-2 focus-visible:outline-offset-2
+                          focus-visible:outline-accent
+                        '
                         onClick={() => handleManualSourceClick(field)}
                         disabled={readOnly}
+                        aria-pressed={isSelected}
                       >
                         {field.name}
                       </button>
@@ -636,10 +627,14 @@ const SchemaFieldMapper = ({
                         <Button
                           variant='ghost'
                           size='sm'
-                          className='size-6 p-0'
+                          className='
+                            size-11 p-0
+                            md:size-6
+                          '
                           onClick={() => removeManualSourceField(i)}
+                          aria-label={`${dict.common.remove}: ${field.name}`}
                         >
-                          <TbX className='size-3' />
+                          <TbX aria-hidden='true' className='size-3' />
                         </Button>
                       )}
                     </div>
@@ -649,22 +644,30 @@ const SchemaFieldMapper = ({
                   <div className='flex items-center gap-2 pt-1'>
                     <Input
                       type='text'
+                      aria-label={`${dict.common.add}: ${dict.schemaFieldMapper.sourceSchema}`}
                       placeholder={dict.schemaFieldMapper.addFieldPlaceholder}
                       value={newSourceFieldName}
                       onChange={(e) => setNewSourceFieldName(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') addManualSourceField();
                       }}
-                      className='h-8 text-xs'
+                      className='
+                        h-11 text-base
+                        md:h-8 md:text-xs
+                      '
                     />
                     <Button
                       variant='outline'
                       size='sm'
                       onClick={addManualSourceField}
                       disabled={!newSourceFieldName.trim()}
-                      className='h-8 shrink-0'
+                      className='
+                        h-11 shrink-0
+                        md:h-8
+                      '
+                      aria-label={`${dict.common.add}: ${dict.schemaFieldMapper.fields}`}
                     >
-                      <TbPlus className='size-4' />
+                      <TbPlus aria-hidden='true' className='size-4' />
                     </Button>
                   </div>
                 )}
@@ -700,14 +703,10 @@ const SchemaFieldMapper = ({
         {/* Destination Fields */}
         <div
           className={`
-            overflow-hidden rounded-xl border border-border bg-background
+            overflow-hidden rounded-[2px] border border-border bg-background
           `}
         >
-          <div
-            className={`
-              border-b border-border bg-linear-to-r from-card px-4 py-2
-            `}
-          >
+          <div className={`border-b border-border bg-card px-4 py-2`}>
             <h3 className='text-lg font-medium text-foreground'>
               {dict.schemaFieldMapper.destinationSchema}
             </h3>
@@ -726,10 +725,10 @@ const SchemaFieldMapper = ({
                       key={`dst-${field.name}-${i}`}
                       className={`
                         flex cursor-pointer items-center justify-between
-                        rounded-md border px-3 py-2 text-sm transition-colors
+                        rounded-[2px] border px-3 py-2 text-sm transition-colors
                         ${
                           isMapped
-                            ? 'border-irmin-green-300 bg-irmin-green-100'
+                            ? 'border-success/30 bg-success/10'
                             : selectedSource
                               ? `
                                 border-primary/50
@@ -744,7 +743,11 @@ const SchemaFieldMapper = ({
                     >
                       <button
                         type='button'
-                        className='flex-1 text-left font-medium'
+                        className='
+                          flex-1 text-left font-medium
+                          focus-visible:outline-2 focus-visible:outline-offset-2
+                          focus-visible:outline-accent
+                        '
                         onClick={() => handleManualDestClick(field)}
                         disabled={readOnly || !selectedSource}
                       >
@@ -754,10 +757,14 @@ const SchemaFieldMapper = ({
                         <Button
                           variant='ghost'
                           size='sm'
-                          className='size-6 p-0'
+                          className='
+                            size-11 p-0
+                            md:size-6
+                          '
                           onClick={() => removeManualDestField(i)}
+                          aria-label={`${dict.common.remove}: ${field.name}`}
                         >
-                          <TbX className='size-3' />
+                          <TbX aria-hidden='true' className='size-3' />
                         </Button>
                       )}
                     </div>
@@ -767,22 +774,30 @@ const SchemaFieldMapper = ({
                   <div className='flex items-center gap-2 pt-1'>
                     <Input
                       type='text'
+                      aria-label={`${dict.common.add}: ${dict.schemaFieldMapper.destinationSchema}`}
                       placeholder={dict.schemaFieldMapper.addFieldPlaceholder}
                       value={newDestFieldName}
                       onChange={(e) => setNewDestFieldName(e.target.value)}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') addManualDestField();
                       }}
-                      className='h-8 text-xs'
+                      className='
+                        h-11 text-base
+                        md:h-8 md:text-xs
+                      '
                     />
                     <Button
                       variant='outline'
                       size='sm'
                       onClick={addManualDestField}
                       disabled={!newDestFieldName.trim()}
-                      className='h-8 shrink-0'
+                      className='
+                        h-11 shrink-0
+                        md:h-8
+                      '
+                      aria-label={`${dict.common.add}: ${dict.schemaFieldMapper.fields}`}
                     >
-                      <TbPlus className='size-4' />
+                      <TbPlus aria-hidden='true' className='size-4' />
                     </Button>
                   </div>
                 )}
@@ -819,12 +834,10 @@ const SchemaFieldMapper = ({
       {/* Mappings */}
       <div
         className={`
-          overflow-hidden rounded-xl border border-border bg-background
+          overflow-hidden rounded-[2px] border border-border bg-background
         `}
       >
-        <div
-          className={`border-b border-border bg-linear-to-r from-card px-4 py-2`}
-        >
+        <div className={`border-b border-border bg-card px-4 py-2`}>
           <h3 className='text-lg font-medium text-foreground'>
             {dict.schemaFieldMapper.fieldMappings}
             <span
@@ -866,9 +879,8 @@ const SchemaFieldMapper = ({
                   <div
                     key={`${mapping.destination_path}-${mapping.destination_field ?? idx}`}
                     className={`
-                      group relative rounded-lg border border-border
-                      bg-linear-to-r from-card to-background p-4
-                      transition-opacity duration-200
+                      group relative rounded-[2px] border border-border bg-card
+                      p-4 transition-opacity duration-200
                     `}
                   >
                     {!readOnly && (
@@ -881,14 +893,18 @@ const SchemaFieldMapper = ({
                             mapping.destination_field
                           )
                         }
+                        aria-label={`${dict.common.remove}: ${mapping.destination_field ?? mapping.destination_path}`}
                         className={`
-                          absolute top-2 right-2 size-6 p-0 opacity-0
+                          absolute top-2 right-2 size-11 p-0 opacity-100
                           transition-opacity duration-200
-                          group-hover:opacity-100
                           hover:bg-destructive/10 hover:text-destructive
+                          focus-visible:opacity-100
+                          md:size-6 md:opacity-0
+                          md:group-focus-within:opacity-100
+                          md:group-hover:opacity-100
                         `}
                       >
-                        <TbX className='size-3' />
+                        <TbX aria-hidden='true' className='size-3' />
                       </Button>
                     )}
                     <div className='space-y-3 pr-8'>
@@ -903,16 +919,20 @@ const SchemaFieldMapper = ({
                       <div className='flex items-center gap-3 text-sm'>
                         <span
                           className={`
-                            rounded-sm bg-irmin-blue-100 px-2 py-1 font-medium
-                            text-irmin-blue-700
+                            rounded-[2px] border border-chart-2/30 bg-chart-2/10
+                            px-2 py-1 font-medium text-foreground
                           `}
                         >
                           {mapping.source_field || '—'}
                         </span>
-                        <TbArrowRight className='size-4 text-primary' />
+                        <TbArrowRight
+                          aria-hidden='true'
+                          className='size-4 text-primary'
+                        />
                         {!readOnly && isEditing ? (
                           <Input
                             type='text'
+                            aria-label={`${dict.common.edit}: ${mapping.destination_field ?? dict.schemaFieldMapper.fieldMappings}`}
                             value={editingRenameValue}
                             onChange={(e) =>
                               setEditingRenameValue(e.target.value)
@@ -940,11 +960,15 @@ const SchemaFieldMapper = ({
                               }
                             }}
                             ref={(el) => el?.focus()}
-                            className='h-7 w-40 text-xs'
+                            className='
+                              h-11 w-40 text-base
+                              md:h-7 md:text-xs
+                            '
                           />
                         ) : (
                           <button
                             type='button'
+                            aria-label={`${dict.common.edit}: ${mapping.destination_field ?? dict.schemaFieldMapper.fieldMappings}`}
                             onClick={() => {
                               if (readOnly) return;
                               setEditingRenameValue(
@@ -954,21 +978,34 @@ const SchemaFieldMapper = ({
                             }}
                             disabled={readOnly}
                             className={`
-                              flex items-center gap-1 rounded-sm px-2 py-1
-                              font-medium
+                              flex items-center gap-1 rounded-[2px] border px-2
+                              py-1 font-medium
+                              focus-visible:outline-2
+                              focus-visible:outline-offset-2
+                              focus-visible:outline-accent
                               ${
                                 isRenamed
-                                  ? 'bg-amber-100 text-amber-700'
-                                  : 'bg-irmin-green-100 text-irmin-green-700'
+                                  ? `
+                                    border-warning/30 bg-warning/10
+                                    text-foreground
+                                  `
+                                  : `
+                                    border-success/30 bg-success/10
+                                    text-foreground
+                                  `
                               }
                             `}
                           >
                             {mapping.destination_field || '—'}
                             {isRenamed && (
-                              <TbArrowsExchange className='size-3' />
+                              <TbArrowsExchange
+                                aria-hidden='true'
+                                className='size-3'
+                              />
                             )}
                             {!readOnly && (
                               <TbEdit
+                                aria-hidden='true'
                                 className='
                                   size-3 opacity-0 transition-opacity
                                   group-hover:opacity-50
@@ -988,8 +1025,9 @@ const SchemaFieldMapper = ({
                           }
                           disabled={readOnly}
                           className={`
-                            h-6 rounded-sm border border-border bg-background
-                            px-1.5 text-xs text-muted-foreground
+                            h-11 rounded-[2px] border border-border
+                            bg-background px-1.5 text-base text-muted-foreground
+                            md:h-6 md:text-xs
                           `}
                         >
                           <option value=''>
@@ -1006,20 +1044,25 @@ const SchemaFieldMapper = ({
                         {mode === 'standalone' && (
                           <Input
                             type='text'
+                            aria-label={dict.schemaFieldMapper.unwrapLabel}
                             placeholder={dict.schemaFieldMapper.unwrapLabel}
                             value={mapping.source_json_path ?? ''}
                             onChange={(e) =>
                               updateMappingJsonPath(idx, e.target.value)
                             }
                             readOnly={readOnly}
-                            className='h-6 w-28 px-1.5 text-xs'
+                            className='
+                              h-11 w-28 px-1.5 text-base
+                              md:h-6 md:text-xs
+                            '
                           />
                         )}
                         {mode !== 'standalone' && mapping.source_json_path && (
                           <span
                             className={`
-                              rounded-sm bg-sky-100 px-1.5 py-0.5 text-xs
-                              font-medium text-sky-700
+                              rounded-[2px] border border-chart-2/30
+                              bg-chart-2/10 px-1.5 py-0.5 text-xs font-medium
+                              text-foreground
                             `}
                           >
                             {dict.schemaFieldMapper.unwrapLabel}:{' '}

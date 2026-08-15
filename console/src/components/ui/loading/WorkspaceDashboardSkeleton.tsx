@@ -19,7 +19,7 @@ const NavigationButtonsSkeleton = () => (
 const AssistantPanelSkeleton = () => (
   <div
     className={`
-      w-full overflow-hidden rounded-xl border border-border bg-card p-4
+      w-full overflow-hidden rounded-[2px] border border-border bg-card p-4
     `}
   >
     <div className='mb-4 flex items-center justify-between'>
@@ -31,13 +31,13 @@ const AssistantPanelSkeleton = () => (
       <LoadingSkeleton className='h-4 w-3/4' />
       <LoadingSkeleton className='h-4 w-1/2' />
     </div>
-    <LoadingSkeleton className='mt-4 h-10 w-full rounded-md' />
+    <LoadingSkeleton className='mt-4 h-10 w-full rounded-[2px]' />
   </div>
 );
 
 /**
  * Mirrors `DashboardWorkflowRunsFeed`'s own inline `isLoading` state:
- * wrapped in `<Card>` (rounded-lg + border), CardHeader with icon
+ * wrapped in `<Card>` (rounded-[2px] + border), CardHeader with icon
  * + "Recent runs" title + "View all" button on the right, CardContent
  * with 8 bordered row stubs each carrying a tiny title line + badge
  * and a bottom row of two short metadata pills.
@@ -46,7 +46,7 @@ const WorkflowRunsFeedSkeleton = () => (
   <div className='flex w-full max-w-md flex-col overflow-hidden'>
     <div
       className={`
-        flex h-full flex-col rounded-lg border border-border bg-card shadow-sm
+        flex h-full flex-col rounded-[2px] border border-border bg-card
       `}
     >
       {/* CardHeader: icon + title + View all */}
@@ -55,7 +55,7 @@ const WorkflowRunsFeedSkeleton = () => (
           <LoadingSkeleton className='size-4' />
           <LoadingSkeleton className='h-4 w-28' />
         </div>
-        <LoadingSkeleton className='h-7 w-16 rounded-md' />
+        <LoadingSkeleton className='h-7 w-16 rounded-[2px]' />
       </div>
       {/* CardContent: list of bordered run stubs — same shape the real
           component renders during its `workflowRunsQuery.isLoading` branch. */}
@@ -68,7 +68,7 @@ const WorkflowRunsFeedSkeleton = () => (
         {Array.from({ length: 8 }).map((_, i) => (
           <div
             key={`run-${i}`}
-            className='rounded-lg border border-border p-1.5'
+            className='rounded-[2px] border border-border p-1.5'
           >
             <div className='mb-0.5 flex items-center gap-1.5'>
               <LoadingSkeleton className='h-3 w-1/3' />
@@ -86,16 +86,16 @@ const WorkflowRunsFeedSkeleton = () => (
 );
 
 const ListCardSkeleton = () => (
-  <div className='rounded-xl bg-card p-4'>
+  <div className='rounded-[2px] bg-card p-4'>
     <div className='mb-4 flex items-center justify-between'>
       <LoadingSkeleton className='h-5 w-24' />
-      <LoadingSkeleton className='h-6 w-16 rounded-md' />
+      <LoadingSkeleton className='h-6 w-16 rounded-[2px]' />
     </div>
     <div className='flex flex-col gap-2'>
       {Array.from({ length: 5 }).map((_, i) => (
         <div
           key={`item-${i}`}
-          className='flex items-center justify-between rounded-sm p-2'
+          className='flex items-center justify-between rounded-[2px] p-2'
         >
           <div className='flex items-center gap-2'>
             <LoadingSkeleton className='size-4' />

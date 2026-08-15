@@ -132,12 +132,7 @@ const DataSourceRow = ({
   );
 
   return (
-    <div
-      className={`
-        rounded-lg border bg-background p-4
-        dark:border-gray-700
-      `}
-    >
+    <div className={`rounded-[2px] border border-border bg-background p-4`}>
       <div className='mb-4 flex items-center justify-between'>
         <span className='text-sm font-medium text-muted-foreground'>
           {dict.aiApplication.dataSource} #{index + 1}
@@ -421,8 +416,7 @@ const AIApplicationDataSourcesEditor = () => {
         {dataSources.length === 0 ? (
           <div
             className={`
-              rounded-lg border-2 border-dashed p-6 text-center
-              dark:border-gray-700
+              rounded-[2px] border-2 border-dashed border-border p-6 text-center
             `}
           >
             <TbDatabase className='mx-auto mb-2 size-8 text-muted-foreground' />
@@ -471,8 +465,8 @@ const AIApplicationDataSourcesEditor = () => {
         {canEdit && hasChanges && (
           <div
             className={`
-              flex items-center justify-between gap-4 border-t pt-4
-              dark:border-gray-700
+              flex items-center justify-between gap-4 border-t border-border
+              pt-4
             `}
           >
             <span className='text-sm text-muted-foreground capitalize'>
@@ -492,7 +486,7 @@ const AIApplicationDataSourcesEditor = () => {
               </Button>
               <Button
                 type='button'
-                variant='gradient'
+                variant='accent'
                 onClick={handleSave}
                 disabled={updateAIApplicationMutation.isPending}
               >

@@ -23,16 +23,16 @@ function ConnectionLayoutSkeleton({ className = '' }: { className?: string }) {
           rightSlot={
             <div className='flex items-center gap-2'>
               {/* Test connection (size='sm' outline) */}
-              <LoadingSkeleton className='h-9 w-36 rounded-md' />
+              <LoadingSkeleton className='h-9 w-36 rounded-[2px]' />
               {/* AssetSharePopover trigger (size='sm') */}
-              <LoadingSkeleton className='h-9 w-20 rounded-md' />
+              <LoadingSkeleton className='h-9 w-20 rounded-[2px]' />
             </div>
           }
         />
         <TabsWithBackButtonSkeleton tabCount={3} showMore />
       </div>
       <div className='relative container mx-auto max-w-7xl px-4'>
-        <LoadingSkeleton className='h-64 w-full rounded-lg' />
+        <LoadingSkeleton className='h-64 w-full rounded-[2px]' />
       </div>
     </div>
   );

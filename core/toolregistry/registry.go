@@ -107,6 +107,46 @@ func OutputFromResult(result *sdkmcp.CallToolResult) ToolOutput {
 }
 
 type Handler func(context.Context, *sdkmcp.CallToolRequest, json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
+type ApprovalStager func(context.Context, Descriptor, *sdkmcp.CallToolRequest, json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
+
+var ErrApprovalRequired = errors.New("destructive tool requires authenticated approval")
+
+type approvalKey struct{}
+
+// WithApproval marks an approval replay after the operation was atomically claimed.
+func WithApproval(ctx context.Context) context.Context {
+	return context.WithValue(ctx, approvalKey{}, true)
+}
+
+type workspaceBindingKey struct{}
+
+// WithWorkspaceBinding binds a user-token MCP session to the selected workspace.
+func WithWorkspaceBinding(ctx context.Context, workspaceSlug string) context.Context {
+	return context.WithValue(ctx, workspaceBindingKey{}, workspaceSlug)
+}
+
+func validateWorkspaceBinding(ctx context.Context, arguments json.RawMessage) error {
+	bound, _ := ctx.Value(workspaceBindingKey{}).(string)
+	if bound == "" || len(arguments) == 0 {
+		return nil
+	}
+	var input map[string]json.RawMessage
+	if err := json.Unmarshal(arguments, &input); err != nil {
+		return err
+	}
+	raw, hasWorkspace := input["workspace_slug"]
+	if !hasWorkspace {
+		return nil
+	}
+	var requested string
+	if err := json.Unmarshal(raw, &requested); err != nil {
+		return errors.New("workspace_slug must be a string")
+	}
+	if requested != bound {
+		return errors.New("tool workspace does not match the authenticated agent workspace")
+	}
+	return nil
+}
 
 type Descriptor struct {
 	Name            string             `json:"name"`
@@ -128,6 +168,7 @@ type Descriptor struct {
 type Registry struct {
 	mu          sync.RWMutex
 	descriptors map[string]Descriptor
+	stager      ApprovalStager
 }
 
 // published is the process-wide handler-free catalog used by prompt and API adapters.
@@ -135,8 +176,12 @@ type Registry struct {
 //nolint:gochecknoglobals // Registrations happen across independently constructed MCP servers.
 var published sync.Map
 
-func New() *Registry {
-	return &Registry{descriptors: make(map[string]Descriptor)}
+func New(stager ...ApprovalStager) *Registry {
+	registry := &Registry{descriptors: make(map[string]Descriptor)}
+	if len(stager) > 0 {
+		registry.stager = stager[0]
+	}
+	return registry
 }
 
 func (r *Registry) Add(descriptor Descriptor) error {
@@ -196,6 +241,21 @@ func (r *Registry) Execute(
 	}
 	if err := ctx.Err(); err != nil {
 		return nil, ToolOutput{}, err
+	}
+	if err := validateWorkspaceBinding(ctx, arguments); err != nil {
+		return nil, ToolOutput{}, err
+	}
+	if descriptor.Cancellation.TimeoutMS > 0 {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, time.Duration(descriptor.Cancellation.TimeoutMS)*time.Millisecond)
+		defer cancel()
+	}
+	approved, _ := ctx.Value(approvalKey{}).(bool)
+	if descriptor.Risk == RiskDestructive && !approved {
+		if r.stager == nil {
+			return nil, ToolOutput{}, ErrApprovalRequired
+		}
+		return r.stager(ctx, descriptor, request, arguments)
 	}
 	return descriptor.Handler(ctx, request, arguments)
 }
@@ -287,7 +347,13 @@ func Register[In any](
 		Description:  description,
 		InputSchema:  inputSchema,
 		OutputSchema: outputSchema,
-	}, handler)
+	}, func(ctx context.Context, request *sdkmcp.CallToolRequest, input In) (*sdkmcp.CallToolResult, ToolOutput, error) {
+		raw, marshalErr := json.Marshal(input)
+		if marshalErr != nil {
+			return nil, ToolOutput{}, fmt.Errorf("encode %s input: %w", name, marshalErr)
+		}
+		return registry.Execute(ctx, name, request, raw)
+	})
 }
 
 func inferCapability(domain, action string, risk Risk) string {
@@ -329,10 +395,11 @@ func splitName(name string) (string, string) {
 func inferRisk(action string) Risk {
 	switch {
 	case strings.Contains(action, "cancel"), strings.Contains(action, "delete"),
-		strings.Contains(action, "merge"), strings.Contains(action, "revert"):
+		strings.Contains(action, "merge"), strings.Contains(action, "move_or_copy"),
+		strings.Contains(action, "revert"):
 		return RiskDestructive
 	case strings.Contains(action, "create"), strings.Contains(action, "execute"),
-		strings.Contains(action, "move_or_copy"), strings.Contains(action, "patch"),
+		strings.Contains(action, "patch"),
 		strings.Contains(action, "save"), strings.Contains(action, "update"),
 		strings.Contains(action, "upload"), strings.Contains(action, "write"):
 		return RiskWrite
