@@ -36,6 +36,8 @@ import type { ScriptResult } from '@/types/core/Script';
 import type { ActionInputData } from '@/types/core/Workflow';
 import type { JSONValue } from '@/types/internal/GenericJSON';
 
+import { ScriptResultDataPanel } from './ScriptResultDataPanel';
+
 /**
  * Script Results component
  *
@@ -316,7 +318,7 @@ const ScriptResults = ({
         </div>
       </div>
       {activeTab === 'data' && (
-        <div className='flex-1 overflow-y-auto'>
+        <ScriptResultDataPanel>
           {currentDataFileContent ? (
             <TableViewer
               title={currentDataFile?.split('/').pop() ?? currentDataFile ?? ''}
@@ -333,7 +335,7 @@ const ScriptResults = ({
               {dict.common.noResults}
             </div>
           )}
-        </div>
+        </ScriptResultDataPanel>
       )}
       {activeTab === 'logs' && (
         <div className='flex-1 overflow-y-auto'>
