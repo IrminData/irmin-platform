@@ -778,12 +778,12 @@ AIAppWriteResult represents the result of a write operation.
 
 ```go
 type AIAppWriteResult struct {
-    Path               string  `json:"path"                 example:"/repo-slug/main/data/file.json"`
-    Operation          string  `json:"operation"            example:"upload"`
-    Committed          bool    `json:"committed"            example:"true"`
-    CommitID           *string `json:"commit_id,omitempty"  example:"abc123def456"`
+    Path               string  `json:"path"                           example:"/repo-slug/main/data/file.json"`
+    Operation          string  `json:"operation"                      example:"upload"`
+    Committed          bool    `json:"committed"                      example:"true"`
+    CommitID           *string `json:"commit_id,omitempty"            example:"abc123def456"`
     PendingOperationID *string `json:"pending_operation_id,omitempty" example:"po_1a2b3c4d"`
-    RequiresApproval   bool    `json:"requires_approval"    example:"false"`
+    RequiresApproval   bool    `json:"requires_approval"              example:"false"`
 }
 ```
 
@@ -5016,24 +5016,24 @@ AIApplicationPendingOperation represents a tool operation awaiting approval.
 ```go
 type AIApplicationPendingOperation struct {
     ID              string                 `json:"id"                        validate:"required,validsqid=ai_application_pending_operations" example:"po_1a2b3c4d"`
-    AIApplicationID string                 `json:"ai_application_id"         validate:"required,validsqid=ai_applications"               example:"ai_8x2m9k4n7p5q"`
-    Repository      string                 `json:"repository"                                                                            example:"customer-analytics"`
-    ToolName        string                 `json:"tool_name"                 example:"irmin_repository_object_write"`
-    Risk            string                 `json:"risk"                      example:"write"`
-    Capability      string                 `json:"capability"                example:"repository_object.write"`
-    ApprovalPreview string                 `json:"approval_preview"          example:"Write /data/customers.json"`
-    Path            string                 `json:"path"                                                                                  example:"/data/customers.json"`
-    Ref             string                 `json:"ref"                                                                                   example:"main"`
-    Operation       string                 `json:"operation"                                                                             example:"upload"`
+    AIApplicationID string                 `json:"ai_application_id"         validate:"required,validsqid=ai_applications"                   example:"ai_8x2m9k4n7p5q"`
+    Repository      string                 `json:"repository"                                                                                example:"customer-analytics"`
+    ToolName        string                 `json:"tool_name"                                                                                 example:"irmin_repository_object_write"`
+    Risk            string                 `json:"risk"                                                                                      example:"write"`
+    Capability      string                 `json:"capability"                                                                                example:"repository_object.write"`
+    ApprovalPreview string                 `json:"approval_preview"                                                                          example:"Write /data/customers.json"`
+    Path            string                 `json:"path"                                                                                      example:"/data/customers.json"`
+    Ref             string                 `json:"ref"                                                                                       example:"main"`
+    Operation       string                 `json:"operation"                                                                                 example:"upload"`
     ContentPreview  string                 `json:"content_preview,omitempty"`
     PatchJSON       string                 `json:"patch_json,omitempty"`
-    CommitMessage   string                 `json:"commit_message"                                                                        example:"Updated customer data"`
-    Status          PendingOperationStatus `json:"status"                                                                                example:"pending"`
+    CommitMessage   string                 `json:"commit_message"                                                                            example:"Updated customer data"`
+    Status          PendingOperationStatus `json:"status"                                                                                    example:"pending"`
     ReviewedBy      *User                  `json:"reviewed_by,omitempty"`
     ReviewedAt      *time.Time             `json:"reviewed_at,omitempty"`
     ExecutionError  string                 `json:"execution_error,omitempty"`
-    CreatedAt       time.Time              `json:"created_at"                validate:"required"                                         example:"2025-01-15T10:30:00Z"`
-    UpdatedAt       time.Time              `json:"updated_at"                validate:"required"                                         example:"2025-12-01T14:22:30Z"`
+    CreatedAt       time.Time              `json:"created_at"                validate:"required"                                             example:"2025-01-15T10:30:00Z"`
+    UpdatedAt       time.Time              `json:"updated_at"                validate:"required"                                             example:"2025-12-01T14:22:30Z"`
 }
 ```
 
@@ -5045,9 +5045,9 @@ AIApplicationPendingOperationsResponse represents a paginated list of pending op
 ```go
 type AIApplicationPendingOperationsResponse struct {
     PendingOperations []AIApplicationPendingOperation `json:"pending_operations"`
-    Total             int64                           `json:"total"          example:"10"`
-    Limit             int                             `json:"limit"          example:"50"`
-    Offset            int                             `json:"offset"         example:"0"`
+    Total             int64                           `json:"total"              example:"10"`
+    Limit             int                             `json:"limit"              example:"50"`
+    Offset            int                             `json:"offset"             example:"0"`
 }
 ```
 
@@ -5092,10 +5092,10 @@ type AIApplicationToolLog struct {
     CreatedAt  time.Time `json:"created_at"  example:"2025-01-15T10:30:00Z"`
 
     // Write-specific audit fields
-    WriteOperation     string  `json:"write_operation,omitempty"   example:"upload"`
-    WriteTargetPath    string  `json:"write_target_path,omitempty" example:"/repo/main/data/file.json"`
-    CommitID           string  `json:"commit_id,omitempty"         example:"abc123def456"`
-    PendingOperationID *string `json:"pending_operation_id,omitempty"  example:"po_1a2b3c4d"`
+    WriteOperation     string  `json:"write_operation,omitempty"      example:"upload"`
+    WriteTargetPath    string  `json:"write_target_path,omitempty"    example:"/repo/main/data/file.json"`
+    CommitID           string  `json:"commit_id,omitempty"            example:"abc123def456"`
+    PendingOperationID *string `json:"pending_operation_id,omitempty" example:"po_1a2b3c4d"`
 }
 ```
 

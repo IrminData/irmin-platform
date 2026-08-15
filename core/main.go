@@ -486,6 +486,41 @@ func startServer(app *fiber.App, env *utils.CoreAPIEnv) {
 	}()
 }
 
+func waitForShutdown(
+	app *fiber.App,
+	auditLogger *mcpserver.AuditLogger,
+	cancel context.CancelFunc,
+	database *db.Database,
+) {
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	log.Println("Shutting down server...")
+
+	// Drain in-flight HTTP and audit work before cancelling shared services.
+	if shutdownErr := app.ShutdownWithTimeout(GracefulShutdownTimeout); shutdownErr != nil {
+		log.Printf("Server forced to shutdown: %v", shutdownErr)
+	}
+	auditDrainCtx, auditDrainCancel := context.WithTimeout(context.Background(), GracefulShutdownTimeout)
+	if auditErr := auditLogger.Close(auditDrainCtx); auditErr != nil {
+		log.Printf("AI Application audit log drain failed: %v", auditErr)
+	}
+	auditDrainCancel()
+	if dropped := auditLogger.Dropped(); dropped > 0 {
+		log.Printf("AI Application audit log dropped entries: %d", dropped)
+	}
+
+	cancel()
+	if sqlDB, dbErr := database.DB.DB(); dbErr == nil {
+		if closeErr := sqlDB.Close(); closeErr != nil {
+			log.Printf("Error closing database connection: %v", closeErr)
+		}
+	}
+	sentryutil.Flush(sentryutil.FlushTimeout)
+	log.Println("Server gracefully stopped")
+}
+
 func main() {
 	// Load environment variables
 	env, err := utils.LoadEnv()
@@ -572,40 +607,5 @@ func main() {
 	// Start servers
 	startServer(app, env)
 
-	// Wait for interrupt signal for graceful shutdown
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
-
-	log.Println("Shutting down server...")
-
-	// Shutdown Fiber first to drain in-flight requests before cancelling the
-	// engine context. Cancelling ctx before shutdown would cause requests still
-	// using engine.Client (LakeFS, data operations) to fail with context-cancelled.
-	if shutdownErr := app.ShutdownWithTimeout(GracefulShutdownTimeout); shutdownErr != nil {
-		log.Printf("Server forced to shutdown: %v", shutdownErr)
-	}
-	auditDrainCtx, auditDrainCancel := context.WithTimeout(context.Background(), GracefulShutdownTimeout)
-	if auditErr := aiAppAuditLogger.Close(auditDrainCtx); auditErr != nil {
-		log.Printf("AI Application audit log drain failed: %v", auditErr)
-	}
-	auditDrainCancel()
-	if dropped := aiAppAuditLogger.Dropped(); dropped > 0 {
-		log.Printf("AI Application audit log dropped entries: %d", dropped)
-	}
-
-	// Cancel the context to stop orchestrator and background services
-	cancel()
-
-	// Close database connection pool
-	if sqlDB, dbErr := database.DB.DB(); dbErr == nil {
-		if closeErr := sqlDB.Close(); closeErr != nil {
-			log.Printf("Error closing database connection: %v", closeErr)
-		}
-	}
-
-	// Flush buffered Sentry events before exiting
-	sentryutil.Flush(sentryutil.FlushTimeout)
-
-	log.Println("Server gracefully stopped")
+	waitForShutdown(app, aiAppAuditLogger, cancel, database)
 }

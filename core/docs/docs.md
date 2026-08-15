@@ -1001,7 +1001,7 @@ func (api *APIControllers) AIAppAPIWriteFile(c fiber.Ctx) error
 AIAppAPIWriteFile godoc @Summary Write or update a file @Description Write or update a file at the specified path. Use unified path format: /\{repository\-slug\}/\{ref\}/\{path\} @Tags ai\-app\-api @Security AIAppAPIKey @Accept json @Produce json @Param body body object true "Write request with path \(required\), content \(required\), commit\_message \(optional\), auto\_commit \(optional\)" @Success 200 \{object\} irminmodels.IrminAPIResponse "Write result" @Failure 400 \{object\} irminmodels.IrminAPIResponse "Bad request \- missing required fields" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid API key" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- write not enabled or path not allowed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /ai\-app/write \[post\]
 
 <a name="APIControllers.AIApplicationPendingOperationApprove"></a>
-### func \(\*APIControllers\) [AIApplicationPendingOperationApprove](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L747>)
+### func \(\*APIControllers\) [AIApplicationPendingOperationApprove](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L752>)
 
 ```go
 func (api *APIControllers) AIApplicationPendingOperationApprove(c fiber.Ctx) error
@@ -1010,7 +1010,7 @@ func (api *APIControllers) AIApplicationPendingOperationApprove(c fiber.Ctx) err
 AIApplicationPendingOperationApprove godoc @Summary Approve a pending operation @Description Approve a pending operation, executing the write @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_operation path string true "Pending operation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending operation completed" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 409 \{object\} irminmodels.IrminAPIResponse "Conflict \- already processed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-operations/\{pending\_operation\}/approve \[post\]
 
 <a name="APIControllers.AIApplicationPendingOperationReject"></a>
-### func \(\*APIControllers\) [AIApplicationPendingOperationReject](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L884>)
+### func \(\*APIControllers\) [AIApplicationPendingOperationReject](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L889>)
 
 ```go
 func (api *APIControllers) AIApplicationPendingOperationReject(c fiber.Ctx) error
@@ -1019,7 +1019,7 @@ func (api *APIControllers) AIApplicationPendingOperationReject(c fiber.Ctx) erro
 AIApplicationPendingOperationReject godoc @Summary Reject a pending operation @Description Reject a pending operation @Tags ai\-applications @Security ApiKeyAuth @Accept json @Produce json @Param workspace\_slug path string true "Workspace slug" @Param ai\_application\_slug path string true "AI application slug" @Param pending\_operation path string true "Pending operation ID" @Success 200 \{object\} irminmodels.IrminAPIResponse "Pending operation rejected" @Failure 401 \{object\} irminmodels.IrminAPIResponse "Unauthorized \- invalid or missing authentication" @Failure 403 \{object\} irminmodels.IrminAPIResponse "Forbidden \- insufficient permissions" @Failure 404 \{object\} irminmodels.IrminAPIResponse "Not found" @Failure 409 \{object\} irminmodels.IrminAPIResponse "Conflict \- already processed" @Failure 500 \{object\} irminmodels.IrminAPIResponse "Internal server error" @Router /workspaces/\{workspace\_slug\}/ai\-applications/\{ai\_application\_slug\}/pending\-operations/\{pending\_operation\}/reject \[post\]
 
 <a name="APIControllers.AIApplicationPendingOperationShow"></a>
-### func \(\*APIControllers\) [AIApplicationPendingOperationShow](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L660>)
+### func \(\*APIControllers\) [AIApplicationPendingOperationShow](<https://github.com/IrminData/irmin-platform/blob/main/core/controllers/ai-applications.go#L665>)
 
 ```go
 func (api *APIControllers) AIApplicationPendingOperationShow(c fiber.Ctx) error
@@ -3520,11 +3520,11 @@ type AIApplicationPendingOperation struct {
     Ref          string     `json:"ref"`
 
     // Operation details
-    ToolName        string `json:"tool_name"        gorm:"not null;index"`
-    Risk            string `json:"risk"             gorm:"not null"`
+    ToolName        string `json:"tool_name"                 gorm:"not null;index"`
+    Risk            string `json:"risk"                      gorm:"not null"`
     Capability      string `json:"capability"`
     ApprovalPreview string `json:"approval_preview"`
-    ArgumentsJSON   string `json:"-"                gorm:"type:jsonb"`
+    ArgumentsJSON   string `json:"-"                         gorm:"type:jsonb"`
     Operation       string `json:"operation"`                                   // "upload", "update", "patch"
     Content         []byte `json:"-"                         gorm:"type:bytea"` // Full content for file operations (not serialized to JSON)
     ContentHash     string `json:"content_hash"`                                // Hash reference to staged content
@@ -3533,9 +3533,9 @@ type AIApplicationPendingOperation struct {
     CommitMessage   string `json:"commit_message"`
 
     // Status and review
-    Status         PendingOperationStatus `json:"status"                   gorm:"default:pending;index"`
+    Status         PendingOperationStatus `json:"status"                    gorm:"default:pending;index"`
     ReviewedByID   *uint                  `json:"reviewed_by_id,omitempty"`
-    ReviewedBy     *User                  `json:"reviewed_by,omitempty"    gorm:"foreignKey:ReviewedByID"`
+    ReviewedBy     *User                  `json:"reviewed_by,omitempty"     gorm:"foreignKey:ReviewedByID"`
     ReviewedAt     *time.Time             `json:"reviewed_at,omitempty"`
     ExecutionError string                 `json:"execution_error,omitempty"`
 }
@@ -12680,7 +12680,7 @@ func RegisterFiber(app *fiber.App, apiServices *services.APIServices)
 RegisterFiber mounts the existing MCP HTTP endpoint and the new HTTP\-only attach endpoint.
 
 <a name="AuditLogger"></a>
-## type [AuditLogger](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L43-L49>)
+## type [AuditLogger](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L44-L50>)
 
 AuditLogger buffers tool call audit logs and writes them via a background worker.
 
@@ -12691,7 +12691,7 @@ type AuditLogger struct {
 ```
 
 <a name="NewAuditLogger"></a>
-### func [NewAuditLogger](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L52>)
+### func [NewAuditLogger](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L53>)
 
 ```go
 func NewAuditLogger() *AuditLogger
@@ -12700,7 +12700,7 @@ func NewAuditLogger() *AuditLogger
 NewAuditLogger creates an AuditLogger and starts the background drain worker.
 
 <a name="RegisterAIAppMCP"></a>
-### func [RegisterAIAppMCP](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L215>)
+### func [RegisterAIAppMCP](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L216>)
 
 ```go
 func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices) *AuditLogger
@@ -12709,7 +12709,7 @@ func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices) *AuditL
 RegisterAIAppMCP mounts the AI Application MCP endpoint. This endpoint is authenticated by AI Application API keys instead of user tokens.
 
 <a name="AuditLogger.Close"></a>
-### func \(\*AuditLogger\) [Close](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L96>)
+### func \(\*AuditLogger\) [Close](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L97>)
 
 ```go
 func (al *AuditLogger) Close(ctx context.Context) error
@@ -12718,7 +12718,7 @@ func (al *AuditLogger) Close(ctx context.Context) error
 Close stops accepting entries and waits for the buffered audit log to drain.
 
 <a name="AuditLogger.Dropped"></a>
-### func \(\*AuditLogger\) [Dropped](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L93>)
+### func \(\*AuditLogger\) [Dropped](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L94>)
 
 ```go
 func (al *AuditLogger) Dropped() uint64
@@ -12727,7 +12727,7 @@ func (al *AuditLogger) Dropped() uint64
 Dropped returns the number of audit entries rejected because the buffer was full or closed.
 
 <a name="AuditLogger.Send"></a>
-### func \(\*AuditLogger\) [Send](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L60>)
+### func \(\*AuditLogger\) [Send](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L61>)
 
 ```go
 func (al *AuditLogger) Send(entry auditLogEntry)
@@ -12781,7 +12781,7 @@ func ExtractRequestMetadata(r *http.Request, trustedProxyCIDRs string) *RequestM
 ExtractRequestMetadata extracts request metadata from an HTTP request for audit logging.
 
 <a name="WriteAuditInfo"></a>
-## type [WriteAuditInfo](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L26-L31>)
+## type [WriteAuditInfo](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/ai-application.go#L27-L32>)
 
 WriteAuditInfo contains write\-specific audit information.
 
@@ -15107,7 +15107,7 @@ func (e *AIAppToolExecutor) ExecuteCustomTool(ctx context.Context, toolName stri
 ExecuteCustomTool executes a custom tool by name.
 
 <a name="AIAppToolExecutor.ExecutePendingOperation"></a>
-### func \(\*AIAppToolExecutor\) [ExecutePendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1789-L1792>)
+### func \(\*AIAppToolExecutor\) [ExecutePendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/services/ai-application-tools.go#L1797-L1800>)
 
 ```go
 func (e *AIAppToolExecutor) ExecutePendingOperation(ctx context.Context, pendingOperation *db.AIApplicationPendingOperation) (*WriteResult, error)
@@ -17343,7 +17343,7 @@ const CatalogVersion = 1
 ```
 
 <a name="CanonicalCustomName"></a>
-## func [CanonicalCustomName](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L202>)
+## func [CanonicalCustomName](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L207>)
 
 ```go
 func CanonicalCustomName(label string) string
@@ -17352,7 +17352,7 @@ func CanonicalCustomName(label string) string
 CanonicalCustomName turns an administrator\-defined label into a stable catalog name.
 
 <a name="RedactForAudit"></a>
-## func [RedactForAudit](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L52>)
+## func [RedactForAudit](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L54>)
 
 ```go
 func RedactForAudit(input any, policy AuditRedaction) any
@@ -17361,7 +17361,7 @@ func RedactForAudit(input any, policy AuditRedaction) any
 RedactForAudit recursively replaces descriptor\-selected fields before persistence.
 
 <a name="Register"></a>
-## func [Register](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L227-L233>)
+## func [Register](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L232-L238>)
 
 ```go
 func Register[In any](registry *Registry, server *sdkmcp.Server, name string, description string, handler sdkmcp.ToolHandlerFor[In, ToolOutput])
@@ -17370,7 +17370,7 @@ func Register[In any](registry *Registry, server *sdkmcp.Server, name string, de
 Register binds one typed handler to both the MCP SDK and the canonical registry.
 
 <a name="ValidateDescriptor"></a>
-## func [ValidateDescriptor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L210>)
+## func [ValidateDescriptor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L215>)
 
 ```go
 func ValidateDescriptor(descriptor Descriptor) error
@@ -17379,7 +17379,7 @@ func ValidateDescriptor(descriptor Descriptor) error
 
 
 <a name="AuditRedaction"></a>
-## type [AuditRedaction](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L34-L36>)
+## type [AuditRedaction](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L40-L42>)
 
 
 
@@ -17390,7 +17390,7 @@ type AuditRedaction struct {
 ```
 
 <a name="AuditRedactionFor"></a>
-### func [AuditRedactionFor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L43>)
+### func [AuditRedactionFor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L45>)
 
 ```go
 func AuditRedactionFor(name string) AuditRedaction
@@ -17399,7 +17399,7 @@ func AuditRedactionFor(name string) AuditRedaction
 AuditRedactionFor returns the catalog\-owned redaction policy for a tool.
 
 <a name="CancellationPolicy"></a>
-## type [CancellationPolicy](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L29-L32>)
+## type [CancellationPolicy](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L35-L38>)
 
 
 
@@ -17411,7 +17411,7 @@ type CancellationPolicy struct {
 ```
 
 <a name="Descriptor"></a>
-## type [Descriptor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L109-L124>)
+## type [Descriptor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L111-L126>)
 
 
 
@@ -17435,7 +17435,7 @@ type Descriptor struct {
 ```
 
 <a name="Published"></a>
-### func [Published](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L154>)
+### func [Published](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L159>)
 
 ```go
 func Published(name string) (Descriptor, bool)
@@ -17444,7 +17444,7 @@ func Published(name string) (Descriptor, bool)
 Published returns the latest handler\-free contract registered for a canonical name.
 
 <a name="Handler"></a>
-## type [Handler](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L107>)
+## type [Handler](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L109>)
 
 
 
@@ -17453,7 +17453,7 @@ type Handler func(context.Context, *sdkmcp.CallToolRequest, json.RawMessage) (*s
 ```
 
 <a name="Registry"></a>
-## type [Registry](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L126-L129>)
+## type [Registry](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L128-L131>)
 
 
 
@@ -17464,7 +17464,7 @@ type Registry struct {
 ```
 
 <a name="New"></a>
-### func [New](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L133>)
+### func [New](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L138>)
 
 ```go
 func New() *Registry
@@ -17473,7 +17473,7 @@ func New() *Registry
 
 
 <a name="Registry.Add"></a>
-### func \(\*Registry\) [Add](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L137>)
+### func \(\*Registry\) [Add](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L142>)
 
 ```go
 func (r *Registry) Add(descriptor Descriptor) error
@@ -17482,7 +17482,7 @@ func (r *Registry) Add(descriptor Descriptor) error
 
 
 <a name="Registry.Execute"></a>
-### func \(\*Registry\) [Execute](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L182-L187>)
+### func \(\*Registry\) [Execute](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L187-L192>)
 
 ```go
 func (r *Registry) Execute(ctx context.Context, name string, request *sdkmcp.CallToolRequest, arguments json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
@@ -17491,7 +17491,7 @@ func (r *Registry) Execute(ctx context.Context, name string, request *sdkmcp.Cal
 
 
 <a name="Registry.Get"></a>
-### func \(\*Registry\) [Get](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L175>)
+### func \(\*Registry\) [Get](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L180>)
 
 ```go
 func (r *Registry) Get(name string) (Descriptor, bool)
@@ -17500,7 +17500,7 @@ func (r *Registry) Get(name string) (Descriptor, bool)
 
 
 <a name="Registry.List"></a>
-### func \(\*Registry\) [List](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L163>)
+### func \(\*Registry\) [List](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L168>)
 
 ```go
 func (r *Registry) List() []Descriptor
@@ -17509,7 +17509,7 @@ func (r *Registry) List() []Descriptor
 
 
 <a name="Risk"></a>
-## type [Risk](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L21>)
+## type [Risk](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L27>)
 
 
 
@@ -17528,7 +17528,7 @@ const (
 ```
 
 <a name="ToolOutput"></a>
-## type [ToolOutput](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L87-L89>)
+## type [ToolOutput](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L89-L91>)
 
 ToolOutput is the stable structured MCP result envelope.
 
@@ -17539,7 +17539,7 @@ type ToolOutput struct {
 ```
 
 <a name="OutputFromResult"></a>
-### func [OutputFromResult](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L92>)
+### func [OutputFromResult](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L94>)
 
 ```go
 func OutputFromResult(result *sdkmcp.CallToolResult) ToolOutput
@@ -19530,7 +19530,7 @@ func (mcpTools *MCPTools) RegisterAll()
 RegisterAll registers all tools in this package.
 
 <a name="MCPTools.RegisterConnectionTools"></a>
-### func \(\*MCPTools\) [RegisterConnectionTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/connections.go#L49>)
+### func \(\*MCPTools\) [RegisterConnectionTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/connections.go#L50>)
 
 ```go
 func (mcpTools *MCPTools) RegisterConnectionTools()
@@ -19539,7 +19539,7 @@ func (mcpTools *MCPTools) RegisterConnectionTools()
 RegisterConnectionTools registers all connection\-related tools.
 
 <a name="MCPTools.RegisterConnectorTools"></a>
-### func \(\*MCPTools\) [RegisterConnectorTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/connectors.go#L33>)
+### func \(\*MCPTools\) [RegisterConnectorTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/connectors.go#L34>)
 
 ```go
 func (mcpTools *MCPTools) RegisterConnectorTools()
@@ -19548,7 +19548,7 @@ func (mcpTools *MCPTools) RegisterConnectorTools()
 RegisterConnectorTools registers all connector\-related tools.
 
 <a name="MCPTools.RegisterDocsTools"></a>
-### func \(\*MCPTools\) [RegisterDocsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/docs.go#L36>)
+### func \(\*MCPTools\) [RegisterDocsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/docs.go#L37>)
 
 ```go
 func (mcpTools *MCPTools) RegisterDocsTools()
@@ -19557,7 +19557,7 @@ func (mcpTools *MCPTools) RegisterDocsTools()
 RegisterDocsTools registers the tools for documentation retrieval
 
 <a name="MCPTools.RegisterQueryTools"></a>
-### func \(\*MCPTools\) [RegisterQueryTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/queries.go#L41>)
+### func \(\*MCPTools\) [RegisterQueryTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/queries.go#L42>)
 
 ```go
 func (mcpTools *MCPTools) RegisterQueryTools()
@@ -19566,7 +19566,7 @@ func (mcpTools *MCPTools) RegisterQueryTools()
 RegisterQueryTools registers all query\-related tools.
 
 <a name="MCPTools.RegisterRepositoryBranchesTools"></a>
-### func \(\*MCPTools\) [RegisterRepositoryBranchesTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-branches.go#L37>)
+### func \(\*MCPTools\) [RegisterRepositoryBranchesTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-branches.go#L38>)
 
 ```go
 func (mcpTools *MCPTools) RegisterRepositoryBranchesTools()
@@ -19575,7 +19575,7 @@ func (mcpTools *MCPTools) RegisterRepositoryBranchesTools()
 RegisterRepositoryBranchesTools registers all repository branch\-related tools.
 
 <a name="MCPTools.RegisterRepositoryCommitsTools"></a>
-### func \(\*MCPTools\) [RegisterRepositoryCommitsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-commits.go#L35>)
+### func \(\*MCPTools\) [RegisterRepositoryCommitsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-commits.go#L36>)
 
 ```go
 func (mcpTools *MCPTools) RegisterRepositoryCommitsTools()
@@ -19584,7 +19584,7 @@ func (mcpTools *MCPTools) RegisterRepositoryCommitsTools()
 RegisterRepositoryCommitsTools registers all repository commit\-related tools.
 
 <a name="MCPTools.RegisterRepositoryCompareTools"></a>
-### func \(\*MCPTools\) [RegisterRepositoryCompareTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-compare.go#L37>)
+### func \(\*MCPTools\) [RegisterRepositoryCompareTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-compare.go#L38>)
 
 ```go
 func (mcpTools *MCPTools) RegisterRepositoryCompareTools()
@@ -19593,7 +19593,7 @@ func (mcpTools *MCPTools) RegisterRepositoryCompareTools()
 RegisterRepositoryCompareTools registers all repository compare\-related tools.
 
 <a name="MCPTools.RegisterRepositoryObjectsTools"></a>
-### func \(\*MCPTools\) [RegisterRepositoryObjectsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-objects.go#L88>)
+### func \(\*MCPTools\) [RegisterRepositoryObjectsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-objects.go#L89>)
 
 ```go
 func (mcpTools *MCPTools) RegisterRepositoryObjectsTools()
@@ -19602,7 +19602,7 @@ func (mcpTools *MCPTools) RegisterRepositoryObjectsTools()
 RegisterRepositoryObjectsTools registers all repository object\-related tools.
 
 <a name="MCPTools.RegisterRepositoryTagsTools"></a>
-### func \(\*MCPTools\) [RegisterRepositoryTagsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-tags.go#L31>)
+### func \(\*MCPTools\) [RegisterRepositoryTagsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repository-tags.go#L32>)
 
 ```go
 func (mcpTools *MCPTools) RegisterRepositoryTagsTools()
@@ -19611,7 +19611,7 @@ func (mcpTools *MCPTools) RegisterRepositoryTagsTools()
 RegisterRepositoryTagsTools registers all repository tag\-related tools.
 
 <a name="MCPTools.RegisterRepositoryTools"></a>
-### func \(\*MCPTools\) [RegisterRepositoryTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repositories.go#L37>)
+### func \(\*MCPTools\) [RegisterRepositoryTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/repositories.go#L38>)
 
 ```go
 func (mcpTools *MCPTools) RegisterRepositoryTools()
@@ -19620,7 +19620,7 @@ func (mcpTools *MCPTools) RegisterRepositoryTools()
 RegisterRepositoryTools registers all repository\-related tools.
 
 <a name="MCPTools.RegisterScriptsTools"></a>
-### func \(\*MCPTools\) [RegisterScriptsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/scripts.go#L41>)
+### func \(\*MCPTools\) [RegisterScriptsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/scripts.go#L42>)
 
 ```go
 func (mcpTools *MCPTools) RegisterScriptsTools()
@@ -19629,7 +19629,7 @@ func (mcpTools *MCPTools) RegisterScriptsTools()
 
 
 <a name="MCPTools.RegisterWorkflowRunsTools"></a>
-### func \(\*MCPTools\) [RegisterWorkflowRunsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/workflow-runs.go#L30>)
+### func \(\*MCPTools\) [RegisterWorkflowRunsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/workflow-runs.go#L31>)
 
 ```go
 func (mcpTools *MCPTools) RegisterWorkflowRunsTools()
@@ -19638,7 +19638,7 @@ func (mcpTools *MCPTools) RegisterWorkflowRunsTools()
 
 
 <a name="MCPTools.RegisterWorkflowsTools"></a>
-### func \(\*MCPTools\) [RegisterWorkflowsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/workflows.go#L53>)
+### func \(\*MCPTools\) [RegisterWorkflowsTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/workflows.go#L54>)
 
 ```go
 func (mcpTools *MCPTools) RegisterWorkflowsTools()
@@ -19647,7 +19647,7 @@ func (mcpTools *MCPTools) RegisterWorkflowsTools()
 RegisterWorkflowsTools registers all workflows\-related tools.
 
 <a name="MCPTools.RegisterWorkspaceTools"></a>
-### func \(\*MCPTools\) [RegisterWorkspaceTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/workspaces.go#L16>)
+### func \(\*MCPTools\) [RegisterWorkspaceTools](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/workspaces.go#L17>)
 
 ```go
 func (mcpTools *MCPTools) RegisterWorkspaceTools()
@@ -19656,7 +19656,7 @@ func (mcpTools *MCPTools) RegisterWorkspaceTools()
 RegisterWorkspaceTools registers the tools for workspace management.
 
 <a name="RetrieveContextRequest"></a>
-## type [RetrieveContextRequest](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/docs.go#L20-L25>)
+## type [RetrieveContextRequest](<https://github.com/IrminData/irmin-platform/blob/main/core/mcp/tools/docs.go#L21-L26>)
 
 RetrieveContextRequest represents the request structure for retrieving context
 

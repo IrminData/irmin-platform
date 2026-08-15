@@ -218,12 +218,12 @@ type AIAppWriteFileRequest struct {
     AIAppWriteFileRequest represents the request body for writing a file.
 
 type AIAppWriteResult struct {
-	Path               string  `json:"path"                 example:"/repo-slug/main/data/file.json"`
-	Operation          string  `json:"operation"            example:"upload"`
-	Committed          bool    `json:"committed"            example:"true"`
-	CommitID           *string `json:"commit_id,omitempty"  example:"abc123def456"`
+	Path               string  `json:"path"                           example:"/repo-slug/main/data/file.json"`
+	Operation          string  `json:"operation"                      example:"upload"`
+	Committed          bool    `json:"committed"                      example:"true"`
+	CommitID           *string `json:"commit_id,omitempty"            example:"abc123def456"`
 	PendingOperationID *string `json:"pending_operation_id,omitempty" example:"po_1a2b3c4d"`
-	RequiresApproval   bool    `json:"requires_approval"    example:"false"`
+	RequiresApproval   bool    `json:"requires_approval"              example:"false"`
 }
     AIAppWriteResult represents the result of a write operation.
 
