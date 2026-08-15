@@ -46,7 +46,12 @@ func WithWorkspaceBinding(ctx context.Context, workspaceSlug string) context.Con
 
 TYPES
 
-type ApprovalStager func(context.Context, Descriptor, *sdkmcp.CallToolRequest, json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
+type ApprovalStager func(
+	context.Context,
+	Descriptor,
+	*sdkmcp.CallToolRequest,
+	json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
 
 type AuditRedaction struct {
 	Fields []string `json:"fields"`
@@ -81,7 +86,11 @@ func Describe(name, description string) Descriptor
     Describe returns the canonical policy metadata shared by registration,
     prompts, and audit adapters.
 
-type Handler func(context.Context, *sdkmcp.CallToolRequest, json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
+type Handler func(
+	context.Context,
+	*sdkmcp.CallToolRequest,
+	json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
 
 type Registry struct {
 	// Has unexported fields.

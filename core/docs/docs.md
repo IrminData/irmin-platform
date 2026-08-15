@@ -4302,7 +4302,7 @@ func (d *Database) CheckIfRepositoryExists(slug string, workspaceID uint) bool
 
 
 <a name="Database.ClaimMCPPendingOperation"></a>
-### func \(\*Database\) [ClaimMCPPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/mcp-pending-operations.go#L40>)
+### func \(\*Database\) [ClaimMCPPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/mcp-pending-operations.go#L41>)
 
 ```go
 func (d *Database) ClaimMCPPendingOperation(id, reviewerID uint) (bool, error)
@@ -4655,7 +4655,7 @@ func (d *Database) FindRepositorySchemaCache(repositoryID uint, path, ref string
 FindRepositorySchemaCache finds a repository schema cache by repository ID, path, and ref.
 
 <a name="Database.FinishMCPPendingOperation"></a>
-### func \(\*Database\) [FinishMCPPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/mcp-pending-operations.go#L64>)
+### func \(\*Database\) [FinishMCPPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/mcp-pending-operations.go#L65>)
 
 ```go
 func (d *Database) FinishMCPPendingOperation(id uint, status PendingOperationStatus, executionError string) error
@@ -5725,7 +5725,7 @@ func (d *Database) SearchWorkspaceCount(workspaceID uint, filters SearchFilters)
 SearchWorkspaceCount performs a search and returns only the total count of results with timeout protection.
 
 <a name="Database.TransitionMCPPendingOperation"></a>
-### func \(\*Database\) [TransitionMCPPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/mcp-pending-operations.go#L50-L54>)
+### func \(\*Database\) [TransitionMCPPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/core/db/mcp-pending-operations.go#L51-L55>)
 
 ```go
 func (d *Database) TransitionMCPPendingOperation(id uint, expected, next PendingOperationStatus, reviewerID uint) (bool, error)
@@ -5973,18 +5973,18 @@ MCPPendingOperation stores a destructive canonical tool call until a user approv
 ```go
 type MCPPendingOperation struct {
     gorm.Model
-    WorkspaceID     uint                   `json:"workspace_id" gorm:"not null;index"`
-    Workspace       Workspace              `json:"workspace" gorm:"foreignKey:WorkspaceID"`
-    RequestedByID   uint                   `json:"requested_by_id" gorm:"not null;index"`
-    RequestedBy     User                   `json:"requested_by" gorm:"foreignKey:RequestedByID"`
-    ToolName        string                 `json:"tool_name" gorm:"not null;index"`
-    Risk            string                 `json:"risk" gorm:"not null"`
+    WorkspaceID     uint                   `json:"workspace_id"              gorm:"not null;index"`
+    Workspace       Workspace              `json:"workspace"                 gorm:"foreignKey:WorkspaceID"`
+    RequestedByID   uint                   `json:"requested_by_id"           gorm:"not null;index"`
+    RequestedBy     User                   `json:"requested_by"              gorm:"foreignKey:RequestedByID"`
+    ToolName        string                 `json:"tool_name"                 gorm:"not null;index"`
+    Risk            string                 `json:"risk"                      gorm:"not null"`
     Capability      string                 `json:"capability"`
     ApprovalPreview string                 `json:"approval_preview"`
-    ArgumentsJSON   string                 `json:"-" gorm:"type:jsonb;not null"`
-    Status          PendingOperationStatus `json:"status" gorm:"default:pending;index"`
+    ArgumentsJSON   string                 `json:"-"                         gorm:"type:jsonb;not null"`
+    Status          PendingOperationStatus `json:"status"                    gorm:"default:pending;index"`
     ReviewedByID    *uint                  `json:"reviewed_by_id,omitempty"`
-    ReviewedBy      *User                  `json:"reviewed_by,omitempty" gorm:"foreignKey:ReviewedByID"`
+    ReviewedBy      *User                  `json:"reviewed_by,omitempty"     gorm:"foreignKey:ReviewedByID"`
     ReviewedAt      *time.Time             `json:"reviewed_at,omitempty"`
     ExecutionError  string                 `json:"execution_error,omitempty"`
 }
@@ -17431,7 +17431,7 @@ var ErrApprovalRequired = errors.New("destructive tool requires authenticated ap
 ```
 
 <a name="CanonicalCustomName"></a>
-## func [CanonicalCustomName](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L249>)
+## func [CanonicalCustomName](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L259>)
 
 ```go
 func CanonicalCustomName(label string) string
@@ -17449,7 +17449,7 @@ func RedactForAudit(input any, policy AuditRedaction) any
 RedactForAudit recursively replaces descriptor\-selected fields before persistence.
 
 <a name="Register"></a>
-## func [Register](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L299-L305>)
+## func [Register](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L309-L315>)
 
 ```go
 func Register[In any](registry *Registry, server *sdkmcp.Server, name string, description string, handler sdkmcp.ToolHandlerFor[In, ToolOutput])
@@ -17458,7 +17458,7 @@ func Register[In any](registry *Registry, server *sdkmcp.Server, name string, de
 Register binds one typed handler to both the MCP SDK and the canonical registry.
 
 <a name="ValidateDescriptor"></a>
-## func [ValidateDescriptor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L257>)
+## func [ValidateDescriptor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L267>)
 
 ```go
 func ValidateDescriptor(descriptor Descriptor) error
@@ -17467,7 +17467,7 @@ func ValidateDescriptor(descriptor Descriptor) error
 
 
 <a name="WithApproval"></a>
-## func [WithApproval](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L117>)
+## func [WithApproval](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L127>)
 
 ```go
 func WithApproval(ctx context.Context) context.Context
@@ -17476,7 +17476,7 @@ func WithApproval(ctx context.Context) context.Context
 WithApproval marks an approval replay after the operation was atomically claimed.
 
 <a name="WithWorkspaceBinding"></a>
-## func [WithWorkspaceBinding](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L124>)
+## func [WithWorkspaceBinding](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L134>)
 
 ```go
 func WithWorkspaceBinding(ctx context.Context, workspaceSlug string) context.Context
@@ -17485,12 +17485,17 @@ func WithWorkspaceBinding(ctx context.Context, workspaceSlug string) context.Con
 WithWorkspaceBinding binds a user\-token MCP session to the selected workspace.
 
 <a name="ApprovalStager"></a>
-## type [ApprovalStager](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L110>)
+## type [ApprovalStager](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L115-L120>)
 
 
 
 ```go
-type ApprovalStager func(context.Context, Descriptor, *sdkmcp.CallToolRequest, json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
+type ApprovalStager func(
+    context.Context,
+    Descriptor,
+    *sdkmcp.CallToolRequest,
+    json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
 ```
 
 <a name="AuditRedaction"></a>
@@ -17526,7 +17531,7 @@ type CancellationPolicy struct {
 ```
 
 <a name="Descriptor"></a>
-## type [Descriptor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L151-L166>)
+## type [Descriptor](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L161-L176>)
 
 
 
@@ -17550,7 +17555,7 @@ type Descriptor struct {
 ```
 
 <a name="Describe"></a>
-### func [Describe](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L274>)
+### func [Describe](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L284>)
 
 ```go
 func Describe(name, description string) Descriptor
@@ -17559,16 +17564,20 @@ func Describe(name, description string) Descriptor
 Describe returns the canonical policy metadata shared by registration, prompts, and audit adapters.
 
 <a name="Handler"></a>
-## type [Handler](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L109>)
+## type [Handler](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L109-L113>)
 
 
 
 ```go
-type Handler func(context.Context, *sdkmcp.CallToolRequest, json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
+type Handler func(
+    context.Context,
+    *sdkmcp.CallToolRequest,
+    json.RawMessage,
+) (*sdkmcp.CallToolResult, ToolOutput, error)
 ```
 
 <a name="Registry"></a>
-## type [Registry](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L168-L172>)
+## type [Registry](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L178-L182>)
 
 
 
@@ -17579,7 +17588,7 @@ type Registry struct {
 ```
 
 <a name="New"></a>
-### func [New](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L174>)
+### func [New](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L184>)
 
 ```go
 func New(stager ...ApprovalStager) *Registry
@@ -17588,7 +17597,7 @@ func New(stager ...ApprovalStager) *Registry
 
 
 <a name="Registry.Add"></a>
-### func \(\*Registry\) [Add](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L182>)
+### func \(\*Registry\) [Add](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L192>)
 
 ```go
 func (r *Registry) Add(descriptor Descriptor) error
@@ -17597,7 +17606,7 @@ func (r *Registry) Add(descriptor Descriptor) error
 
 
 <a name="Registry.Execute"></a>
-### func \(\*Registry\) [Execute](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L214-L219>)
+### func \(\*Registry\) [Execute](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L224-L229>)
 
 ```go
 func (r *Registry) Execute(ctx context.Context, name string, request *sdkmcp.CallToolRequest, arguments json.RawMessage) (*sdkmcp.CallToolResult, ToolOutput, error)
@@ -17606,7 +17615,7 @@ func (r *Registry) Execute(ctx context.Context, name string, request *sdkmcp.Cal
 
 
 <a name="Registry.Get"></a>
-### func \(\*Registry\) [Get](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L207>)
+### func \(\*Registry\) [Get](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L217>)
 
 ```go
 func (r *Registry) Get(name string) (Descriptor, bool)
@@ -17615,7 +17624,7 @@ func (r *Registry) Get(name string) (Descriptor, bool)
 
 
 <a name="Registry.List"></a>
-### func \(\*Registry\) [List](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L195>)
+### func \(\*Registry\) [List](<https://github.com/IrminData/irmin-platform/blob/main/core/toolregistry/registry.go#L205>)
 
 ```go
 func (r *Registry) List() []Descriptor

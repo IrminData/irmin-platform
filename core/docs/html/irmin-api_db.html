@@ -1677,18 +1677,18 @@ const (
 )
 type MCPPendingOperation struct {
 	gorm.Model
-	WorkspaceID     uint                   `json:"workspace_id" gorm:"not null;index"`
-	Workspace       Workspace              `json:"workspace" gorm:"foreignKey:WorkspaceID"`
-	RequestedByID   uint                   `json:"requested_by_id" gorm:"not null;index"`
-	RequestedBy     User                   `json:"requested_by" gorm:"foreignKey:RequestedByID"`
-	ToolName        string                 `json:"tool_name" gorm:"not null;index"`
-	Risk            string                 `json:"risk" gorm:"not null"`
+	WorkspaceID     uint                   `json:"workspace_id"              gorm:"not null;index"`
+	Workspace       Workspace              `json:"workspace"                 gorm:"foreignKey:WorkspaceID"`
+	RequestedByID   uint                   `json:"requested_by_id"           gorm:"not null;index"`
+	RequestedBy     User                   `json:"requested_by"              gorm:"foreignKey:RequestedByID"`
+	ToolName        string                 `json:"tool_name"                 gorm:"not null;index"`
+	Risk            string                 `json:"risk"                      gorm:"not null"`
 	Capability      string                 `json:"capability"`
 	ApprovalPreview string                 `json:"approval_preview"`
-	ArgumentsJSON   string                 `json:"-" gorm:"type:jsonb;not null"`
-	Status          PendingOperationStatus `json:"status" gorm:"default:pending;index"`
+	ArgumentsJSON   string                 `json:"-"                         gorm:"type:jsonb;not null"`
+	Status          PendingOperationStatus `json:"status"                    gorm:"default:pending;index"`
 	ReviewedByID    *uint                  `json:"reviewed_by_id,omitempty"`
-	ReviewedBy      *User                  `json:"reviewed_by,omitempty" gorm:"foreignKey:ReviewedByID"`
+	ReviewedBy      *User                  `json:"reviewed_by,omitempty"     gorm:"foreignKey:ReviewedByID"`
 	ReviewedAt      *time.Time             `json:"reviewed_at,omitempty"`
 	ExecutionError  string                 `json:"execution_error,omitempty"`
 }
