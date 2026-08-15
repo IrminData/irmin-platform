@@ -177,7 +177,7 @@ import "github.com/IrminData/irmin-platform/sdks/go/api"
   - [func NewClientWithSQIDManager\(baseURL, token, locale string, sqidManager \*irminsqids.SQIDManager\) \*Client](<#NewClientWithSQIDManager>)
   - [func \(c \*Client\) AcceptInvite\(ctx context.Context, inviteID string\) \(\*irminmodels.Invite, \*irminmodels.IrminAPIResponse, error\)](<#Client.AcceptInvite>)
   - [func \(c \*Client\) AddTagToEntity\(ctx context.Context, workspace, tagID string, entityType irminmodels.TagEntityType, entityID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.AddTagToEntity>)
-  - [func \(c \*Client\) ApproveAIApplicationPendingOperation\(ctx context.Context, workspace, aiApplicationID, pendingOperationID string\) \(\*irminmodels.AIApplicationPendingOperation, \*irminmodels.IrminAPIResponse, error\)](<#Client.ApproveAIApplicationPendingOperation>)
+  - [func \(c \*Client\) ApproveAIApplicationPendingOperation\(ctx context.Context, workspace, aiApplicationID, pendingOperationID string\) \(\*irminmodels.AIApplicationPendingOperationActionResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.ApproveAIApplicationPendingOperation>)
   - [func \(c \*Client\) AssociatePresignedUpload\(ctx context.Context, workspace, repository, ref, path string, req AssociatePresignedUploadRequest\) \(\*irminmodels.Object, \*irminmodels.IrminAPIResponse, error\)](<#Client.AssociatePresignedUpload>)
   - [func \(c \*Client\) CallSystemWebhook\(ctx context.Context, webhookType string, headers map\[string\]string, body any\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.CallSystemWebhook>)
   - [func \(c \*Client\) CancelWorkflowRun\(ctx context.Context, workspace, workflowID, runID string\) \(\*irminmodels.WorkflowRun, \*irminmodels.IrminAPIResponse, error\)](<#Client.CancelWorkflowRun>)
@@ -312,7 +312,7 @@ import "github.com/IrminData/irmin-platform/sdks/go/api"
   - [func \(c \*Client\) PauseWorkflow\(ctx context.Context, workspace, workflowID string\) \(\*irminmodels.Workflow, \*irminmodels.IrminAPIResponse, error\)](<#Client.PauseWorkflow>)
   - [func \(c \*Client\) RegenerateConnectionSubscriptionToken\(ctx context.Context, workspace, connectionID, subscriptionID string\) \(\*irminmodels.ConnectionSubscriptionWithToken, \*irminmodels.IrminAPIResponse, error\)](<#Client.RegenerateConnectionSubscriptionToken>)
   - [func \(c \*Client\) RegisterNewConnector\(ctx context.Context, req ConnectorRequest\) \(\*irminmodels.Connector, \*irminmodels.IrminAPIResponse, error\)](<#Client.RegisterNewConnector>)
-  - [func \(c \*Client\) RejectAIApplicationPendingOperation\(ctx context.Context, workspace, aiApplicationID, pendingOperationID string\) \(\*irminmodels.AIApplicationPendingOperation, \*irminmodels.IrminAPIResponse, error\)](<#Client.RejectAIApplicationPendingOperation>)
+  - [func \(c \*Client\) RejectAIApplicationPendingOperation\(ctx context.Context, workspace, aiApplicationID, pendingOperationID string\) \(\*irminmodels.AIApplicationPendingOperationActionResult, \*irminmodels.IrminAPIResponse, error\)](<#Client.RejectAIApplicationPendingOperation>)
   - [func \(c \*Client\) RemoveTagFromEntity\(ctx context.Context, workspace, tagID string, entityType irminmodels.TagEntityType, entityID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RemoveTagFromEntity>)
   - [func \(c \*Client\) RemoveUser\(ctx context.Context, workspace, userID string\) \(\*irminmodels.IrminAPIResponse, error\)](<#Client.RemoveUser>)
   - [func \(c \*Client\) Request\(ctx context.Context, opts RequestOptions\) \(\[\]byte, error\)](<#Client.Request>)
@@ -778,12 +778,12 @@ AIAppWriteResult represents the result of a write operation.
 
 ```go
 type AIAppWriteResult struct {
-    Path               string  `json:"path"                 example:"/repo-slug/main/data/file.json"`
-    Operation          string  `json:"operation"            example:"upload"`
-    Committed          bool    `json:"committed"            example:"true"`
-    CommitID           *string `json:"commit_id,omitempty"  example:"abc123def456"`
+    Path               string  `json:"path"                           example:"/repo-slug/main/data/file.json"`
+    Operation          string  `json:"operation"                      example:"upload"`
+    Committed          bool    `json:"committed"                      example:"true"`
+    CommitID           *string `json:"commit_id,omitempty"            example:"abc123def456"`
     PendingOperationID *string `json:"pending_operation_id,omitempty" example:"po_1a2b3c4d"`
-    RequiresApproval   bool    `json:"requires_approval"    example:"false"`
+    RequiresApproval   bool    `json:"requires_approval"              example:"false"`
 }
 ```
 
@@ -908,7 +908,7 @@ AddTagToEntity adds an entity to a tag using the workspace tag route.
 ### func \(\*Client\) [ApproveAIApplicationPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/api/ai-applications.go#L249-L252>)
 
 ```go
-func (c *Client) ApproveAIApplicationPendingOperation(ctx context.Context, workspace, aiApplicationID, pendingOperationID string) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error)
+func (c *Client) ApproveAIApplicationPendingOperation(ctx context.Context, workspace, aiApplicationID, pendingOperationID string) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error)
 ```
 
 ApproveAIApplicationPendingOperation approves a pending operation.
@@ -2143,7 +2143,7 @@ RegisterNewConnector registers a new connector with the system. Requests to this
 ### func \(\*Client\) [RejectAIApplicationPendingOperation](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/api/ai-applications.go#L270-L273>)
 
 ```go
-func (c *Client) RejectAIApplicationPendingOperation(ctx context.Context, workspace, aiApplicationID, pendingOperationID string) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error)
+func (c *Client) RejectAIApplicationPendingOperation(ctx context.Context, workspace, aiApplicationID, pendingOperationID string) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error)
 ```
 
 RejectAIApplicationPendingOperation rejects a pending operation.
@@ -4786,6 +4786,7 @@ import "github.com/IrminData/irmin-platform/sdks/go/models"
 - [type AIApplicationCustomTool](<#AIApplicationCustomTool>)
 - [type AIApplicationDataSource](<#AIApplicationDataSource>)
 - [type AIApplicationPendingOperation](<#AIApplicationPendingOperation>)
+- [type AIApplicationPendingOperationActionResult](<#AIApplicationPendingOperationActionResult>)
 - [type AIApplicationPendingOperationsResponse](<#AIApplicationPendingOperationsResponse>)
 - [type AIApplicationToolConfig](<#AIApplicationToolConfig>)
 - [type AIApplicationToolLog](<#AIApplicationToolLog>)
@@ -5016,38 +5017,55 @@ AIApplicationPendingOperation represents a tool operation awaiting approval.
 ```go
 type AIApplicationPendingOperation struct {
     ID              string                 `json:"id"                        validate:"required,validsqid=ai_application_pending_operations" example:"po_1a2b3c4d"`
-    AIApplicationID string                 `json:"ai_application_id"         validate:"required,validsqid=ai_applications"               example:"ai_8x2m9k4n7p5q"`
-    Repository      string                 `json:"repository"                                                                            example:"customer-analytics"`
-    ToolName        string                 `json:"tool_name"                 example:"irmin_repository_object_write"`
-    Risk            string                 `json:"risk"                      example:"write"`
-    Capability      string                 `json:"capability"                example:"repository_object.write"`
-    ApprovalPreview string                 `json:"approval_preview"          example:"Write /data/customers.json"`
-    Path            string                 `json:"path"                                                                                  example:"/data/customers.json"`
-    Ref             string                 `json:"ref"                                                                                   example:"main"`
-    Operation       string                 `json:"operation"                                                                             example:"upload"`
+    AIApplicationID string                 `json:"ai_application_id"         validate:"required,validsqid=ai_applications"                   example:"ai_8x2m9k4n7p5q"`
+    Repository      string                 `json:"repository"                                                                                example:"customer-analytics"`
+    ToolName        string                 `json:"tool_name"                                                                                 example:"irmin_repository_object_write"`
+    Risk            string                 `json:"risk"                                                                                      example:"write"`
+    Capability      string                 `json:"capability"                                                                                example:"repository_object.write"`
+    ApprovalPreview string                 `json:"approval_preview"                                                                          example:"Write /data/customers.json"`
+    Path            string                 `json:"path"                                                                                      example:"/data/customers.json"`
+    Ref             string                 `json:"ref"                                                                                       example:"main"`
+    Operation       string                 `json:"operation"                                                                                 example:"upload"`
     ContentPreview  string                 `json:"content_preview,omitempty"`
     PatchJSON       string                 `json:"patch_json,omitempty"`
-    CommitMessage   string                 `json:"commit_message"                                                                        example:"Updated customer data"`
-    Status          PendingOperationStatus `json:"status"                                                                                example:"pending"`
+    CommitMessage   string                 `json:"commit_message"                                                                            example:"Updated customer data"`
+    Status          PendingOperationStatus `json:"status"                                                                                    example:"pending"`
     ReviewedBy      *User                  `json:"reviewed_by,omitempty"`
     ReviewedAt      *time.Time             `json:"reviewed_at,omitempty"`
     ExecutionError  string                 `json:"execution_error,omitempty"`
-    CreatedAt       time.Time              `json:"created_at"                validate:"required"                                         example:"2025-01-15T10:30:00Z"`
-    UpdatedAt       time.Time              `json:"updated_at"                validate:"required"                                         example:"2025-12-01T14:22:30Z"`
+    CreatedAt       time.Time              `json:"created_at"                validate:"required"                                             example:"2025-01-15T10:30:00Z"`
+    UpdatedAt       time.Time              `json:"updated_at"                validate:"required"                                             example:"2025-12-01T14:22:30Z"`
+}
+```
+
+<a name="AIApplicationPendingOperationActionResult"></a>
+## type [AIApplicationPendingOperationActionResult](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L159-L167>)
+
+AIApplicationPendingOperationActionResult is returned by approve and reject commands. It intentionally differs from the complete pending\-operation resource returned by the read endpoints.
+
+```go
+type AIApplicationPendingOperationActionResult struct {
+    ID        string                 `json:"id"                  validate:"required"`
+    Status    PendingOperationStatus `json:"status"              validate:"required"`
+    Message   string                 `json:"message"             validate:"required"`
+    Operation string                 `json:"operation,omitempty"`
+    Path      string                 `json:"path,omitempty"`
+    Committed bool                   `json:"committed,omitempty"`
+    CommitID  *string                `json:"commit_id,omitempty"`
 }
 ```
 
 <a name="AIApplicationPendingOperationsResponse"></a>
-## type [AIApplicationPendingOperationsResponse](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L157-L162>)
+## type [AIApplicationPendingOperationsResponse](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L170-L175>)
 
 AIApplicationPendingOperationsResponse represents a paginated list of pending operations.
 
 ```go
 type AIApplicationPendingOperationsResponse struct {
     PendingOperations []AIApplicationPendingOperation `json:"pending_operations"`
-    Total             int64                           `json:"total"          example:"10"`
-    Limit             int                             `json:"limit"          example:"50"`
-    Offset            int                             `json:"offset"         example:"0"`
+    Total             int64                           `json:"total"              example:"10"`
+    Limit             int                             `json:"limit"              example:"50"`
+    Offset            int                             `json:"offset"             example:"0"`
 }
 ```
 
@@ -5092,15 +5110,15 @@ type AIApplicationToolLog struct {
     CreatedAt  time.Time `json:"created_at"  example:"2025-01-15T10:30:00Z"`
 
     // Write-specific audit fields
-    WriteOperation     string  `json:"write_operation,omitempty"   example:"upload"`
-    WriteTargetPath    string  `json:"write_target_path,omitempty" example:"/repo/main/data/file.json"`
-    CommitID           string  `json:"commit_id,omitempty"         example:"abc123def456"`
-    PendingOperationID *string `json:"pending_operation_id,omitempty"  example:"po_1a2b3c4d"`
+    WriteOperation     string  `json:"write_operation,omitempty"      example:"upload"`
+    WriteTargetPath    string  `json:"write_target_path,omitempty"    example:"/repo/main/data/file.json"`
+    CommitID           string  `json:"commit_id,omitempty"            example:"abc123def456"`
+    PendingOperationID *string `json:"pending_operation_id,omitempty" example:"po_1a2b3c4d"`
 }
 ```
 
 <a name="AIApplicationToolLogStats"></a>
-## type [AIApplicationToolLogStats](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L182-L188>)
+## type [AIApplicationToolLogStats](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L195-L201>)
 
 AIApplicationToolLogStats represents aggregated statistics for tool calls.
 
@@ -5115,7 +5133,7 @@ type AIApplicationToolLogStats struct {
 ```
 
 <a name="AIApplicationToolLogsResponse"></a>
-## type [AIApplicationToolLogsResponse](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L165-L170>)
+## type [AIApplicationToolLogsResponse](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L178-L183>)
 
 AIApplicationToolLogsResponse represents a paginated list of tool logs.
 
@@ -5129,7 +5147,7 @@ type AIApplicationToolLogsResponse struct {
 ```
 
 <a name="AIApplicationToolStat"></a>
-## type [AIApplicationToolStat](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L173-L179>)
+## type [AIApplicationToolStat](<https://github.com/IrminData/irmin-platform/blob/main/sdks/go/models/ai_application.go#L186-L192>)
 
 AIApplicationToolStat represents statistics for a specific tool.
 

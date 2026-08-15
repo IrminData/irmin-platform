@@ -6,6 +6,7 @@ import (
 	"irmin-api/db"
 	"irmin-api/lib"
 	"irmin-api/permissions"
+	"irmin-api/toolregistry"
 	"irmin-api/utils"
 	"strings"
 
@@ -781,9 +782,9 @@ func (api *APIServices) createCustomToolFromRequest(
 		return nil, ErrCustomToolNameRequired
 	}
 
-	// Validate tool name uniqueness
-	txDB := &db.Database{DB: tx}
-	exists, err := txDB.CustomToolNameExists(req.Name, aiApplicationID, nil)
+	// MCP registration uses canonical names, so uniqueness must use the same
+	// normalization rather than the administrator-facing label.
+	exists, err := customToolCanonicalNameExists(tx, req.Name, aiApplicationID, nil)
 	if err != nil {
 		return nil, NewInternalErrorf("error checking tool name: %w", err)
 	}
@@ -941,9 +942,8 @@ func (api *APIServices) updateExistingCustomTool(
 		return 0, fmt.Errorf("%w: custom tool not found", ErrInvalidRequest)
 	}
 
-	// Check name uniqueness (excluding current tool)
-	txDB := &db.Database{DB: tx}
-	exists, err := txDB.CustomToolNameExists(ct.Name, aiApplicationID, &toolIDUint)
+	// Check canonical name uniqueness (excluding current tool).
+	exists, err := customToolCanonicalNameExists(tx, ct.Name, aiApplicationID, &toolIDUint)
 	if err != nil {
 		return 0, NewInternalErrorf("error checking tool name: %w", err)
 	}
@@ -955,6 +955,29 @@ func (api *APIServices) updateExistingCustomTool(
 		return 0, updateErr
 	}
 	return toolIDUint, nil
+}
+
+func customToolCanonicalNameExists(
+	tx *gorm.DB,
+	name string,
+	aiApplicationID uint,
+	excludeID *uint,
+) (bool, error) {
+	var tools []db.AIApplicationCustomTool
+	query := tx.Select("id", "name").Where("ai_application_id = ?", aiApplicationID)
+	if excludeID != nil {
+		query = query.Where("id <> ?", *excludeID)
+	}
+	if err := query.Find(&tools).Error; err != nil {
+		return false, err
+	}
+	wanted := toolregistry.CanonicalCustomName(name)
+	for _, tool := range tools {
+		if toolregistry.CanonicalCustomName(tool.Name) == wanted {
+			return true, nil
+		}
+	}
+	return false, nil
 }
 
 // deleteRemovedCustomTools deletes tools that are no longer in the request.
@@ -990,9 +1013,8 @@ func (api *APIServices) updateCustomToolFromRequest(
 		return ErrCustomToolNameRequired
 	}
 
-	// Validate tool name uniqueness (excluding current tool)
-	txDB := &db.Database{DB: tx}
-	exists, err := txDB.CustomToolNameExists(req.Name, tool.AIApplicationID, &toolID)
+	// Validate the registration name, not only the display label.
+	exists, err := customToolCanonicalNameExists(tx, req.Name, tool.AIApplicationID, &toolID)
 	if err != nil {
 		return NewInternalErrorf("error checking tool name: %w", err)
 	}

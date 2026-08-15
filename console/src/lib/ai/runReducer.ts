@@ -8,8 +8,7 @@ export interface RunToolState {
   id: string;
   name: string;
   status: 'running' | 'completed' | 'failed' | 'approval_required';
-  input?: unknown;
-  output?: unknown;
+  summary?: string;
   error?: string;
 }
 
@@ -21,7 +20,6 @@ export interface RunState {
   content: string;
   reasoningSummaries: string[];
   tools: Record<string, RunToolState>;
-  usage?: unknown;
   error?: { code: string; message: string };
 }
 
@@ -141,8 +139,10 @@ export function reduceRunEvent(state: RunState, event: RunEventV1): RunState {
             id,
             name,
             status,
-            input: data.input ?? previous?.input,
-            output: data.output ?? previous?.output,
+            summary:
+              typeof data.summary === 'string'
+                ? data.summary
+                : previous?.summary,
             error:
               typeof data.message === 'string' ? data.message : previous?.error,
           },
@@ -150,7 +150,8 @@ export function reduceRunEvent(state: RunState, event: RunEventV1): RunState {
       };
     }
     case 'usage':
-      return { ...next, usage: event.data };
+      // Exact usage is operational telemetry and is never retained by the UI.
+      return next;
     case 'run.completed':
       return {
         ...next,

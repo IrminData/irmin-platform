@@ -102,12 +102,6 @@ class AgentService {
       { configurable: { thread_id: conversationId }, version: 'v2', signal }
     );
   }
-
-  /** Delete all LangGraph checkpoints and writes for a conversation thread. */
-  async deleteThread(conversationId: string): Promise<void> {
-    const saver = await this.configurePostgresSaver();
-    await saver.deleteThread(conversationId);
-  }
 }
 
 export default new AgentService();

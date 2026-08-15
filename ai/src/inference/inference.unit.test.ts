@@ -92,6 +92,32 @@ describe('inference gateway', () => {
     assert.deepEqual(openRouter.roles, ['assistant', 'query']);
   });
 
+  it('assigns canaries deterministically and supports forced rollback', () => {
+    const openRouter = new TrackingAdapter();
+    const directAnthropic = new TrackingAdapter();
+    const canary = new ProfiledInferenceGateway({
+      profile: MODEL_PROFILE,
+      openRouter,
+      directAnthropic,
+      rollout: { backend: 'canary', openRouterPercentage: 0 },
+    });
+    canary.modelFor('assistant', {
+      workspaceSlug: 'acme',
+      conversationId: 'conversation-1',
+    });
+    assert.deepEqual(openRouter.roles, []);
+    assert.deepEqual(directAnthropic.roles, ['assistant']);
+
+    const forcedOpenRouter = new ProfiledInferenceGateway({
+      profile: MODEL_PROFILE,
+      openRouter,
+      directAnthropic,
+      rollout: { backend: 'openrouter', openRouterPercentage: 0 },
+    });
+    forcedOpenRouter.modelFor('query', { workspaceSlug: 'acme' });
+    assert.deepEqual(openRouter.roles, ['query']);
+  });
+
   it('keeps unevaluated candidates out of the active profile', () => {
     for (const role of Object.values(MODEL_PROFILE.roles)) {
       assert.equal(role.primaryModel, BASELINE_MODEL);
@@ -131,7 +157,11 @@ describe('inference gateway', () => {
       generations: [[{ message: { id: 'generation-1' } }]],
     } as never);
 
-    assert.deepEqual(telemetry.at(-1), {
+    const completed = telemetry.at(-1);
+    assert.ok(completed?.modelCallId);
+    assert.deepEqual(completed, {
+      modelCallId: completed.modelCallId,
+      backend: 'openrouter',
       requestedModel: 'requested-model',
       resolvedModel: 'resolved:generation-1',
       resolvedProvider: 'Reviewed Provider',
@@ -144,5 +174,38 @@ describe('inference gateway', () => {
       timeToFirstTokenMs: undefined,
       status: 'completed',
     });
+  });
+
+  it('resets first-token telemetry for every model call', async () => {
+    const telemetry: InferenceTelemetry[] = [];
+    const callback = new InferenceTelemetryCallback('requested-model', {
+      onTelemetry: (event) => void telemetry.push(event),
+    });
+    const originalNow = Date.now;
+    let now = 100;
+    Date.now = () => now;
+    try {
+      await callback.handleLLMStart?.();
+      now = 110;
+      await callback.handleLLMNewToken?.();
+      now = 120;
+      await callback.handleLLMEnd?.({ generations: [[{}]] } as never);
+      now = 200;
+      await callback.handleLLMStart?.();
+      now = 230;
+      await callback.handleLLMEnd?.({ generations: [[{}]] } as never);
+    } finally {
+      Date.now = originalNow;
+    }
+
+    const completedCalls = telemetry.filter(
+      (event) => event.status === 'completed'
+    );
+    assert.equal(completedCalls[0]?.timeToFirstTokenMs, 10);
+    assert.equal(completedCalls[1]?.timeToFirstTokenMs, undefined);
+    assert.notEqual(
+      completedCalls[0]?.modelCallId,
+      completedCalls[1]?.modelCallId
+    );
   });
 });

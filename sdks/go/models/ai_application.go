@@ -153,6 +153,19 @@ type AIApplicationPendingOperation struct {
 	UpdatedAt       time.Time              `json:"updated_at"                validate:"required"                                             example:"2025-12-01T14:22:30Z"`
 }
 
+// AIApplicationPendingOperationActionResult is returned by approve and reject
+// commands. It intentionally differs from the complete pending-operation
+// resource returned by the read endpoints.
+type AIApplicationPendingOperationActionResult struct {
+	ID        string                 `json:"id"                  validate:"required"`
+	Status    PendingOperationStatus `json:"status"              validate:"required"`
+	Message   string                 `json:"message"             validate:"required"`
+	Operation string                 `json:"operation,omitempty"`
+	Path      string                 `json:"path,omitempty"`
+	Committed bool                   `json:"committed,omitempty"`
+	CommitID  *string                `json:"commit_id,omitempty"`
+}
+
 // AIApplicationPendingOperationsResponse represents a paginated list of pending operations.
 type AIApplicationPendingOperationsResponse struct {
 	PendingOperations []AIApplicationPendingOperation `json:"pending_operations"`

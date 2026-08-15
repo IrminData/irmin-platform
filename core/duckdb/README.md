@@ -102,7 +102,11 @@ Supports extensive configuration options for different data formats, including c
 
 ### Optional Extensions
 
-The client automatically installs optional extensions including:
+Core installs runtime extensions once during process startup; request-scoped
+DuckDB clients only `LOAD` the installed files. The production image also
+preloads the ABI-matched artifacts into the `appuser` home at build time, so a
+fresh container can read Excel without request-time downloads. Optional
+extensions include:
 - `spatial` - Excel file reading via st_read()
 - `avro` - Apache Avro files
 - `delta` - Delta Lake format

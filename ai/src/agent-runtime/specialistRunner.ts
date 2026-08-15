@@ -32,7 +32,7 @@ export class SpecialistRunner {
         message: 'The generated SQL did not pass the DuckDB safety parser.',
       };
     }
-    if (!hasSuccessfulToolCall(response.messages, ['query.execute'])) {
+    if (!hasSuccessfulSqlVerification(response.messages, cleaned)) {
       return {
         kind: 'clarification',
         message: 'The generated SQL could not be verified by DuckDB.',
@@ -41,7 +41,10 @@ export class SpecialistRunner {
     return { kind: 'sql', sql: cleaned };
   }
 
-  async acceptGo(response: AgentResponse): Promise<SpecialistResult> {
+  async acceptGo(
+    response: AgentResponse,
+    signal?: AbortSignal
+  ): Promise<SpecialistResult> {
     const content = stripFence(lastContent(response.messages));
     if (
       !/\bpackage\s+main\b/.test(content) ||
@@ -50,7 +53,7 @@ export class SpecialistRunner {
       return { kind: 'clarification', message: content };
     }
     try {
-      return { kind: 'go', code: await formatAndCompileGo(content) };
+      return { kind: 'go', code: await formatAndCompileGo(content, signal) };
     } catch (error) {
       return {
         kind: 'clarification',
@@ -72,20 +75,43 @@ function stripFence(content: string): string {
     .trim();
 }
 
-function hasSuccessfulToolCall(
+function hasSuccessfulSqlVerification(
   messages: BaseMessage[] | undefined,
-  capabilities: Parameters<typeof toolCatalog.hasCapability>[1]
+  finalSql: string
 ): boolean {
+  const successfulCallIds = new Set(
+    (messages ?? []).flatMap((message) => {
+      const candidate = message as BaseMessage & {
+        name?: string;
+        status?: string;
+        tool_call_id?: string;
+      };
+      return candidate.getType() === 'tool' &&
+        typeof candidate.name === 'string' &&
+        toolCatalog.hasCapability(candidate.name, ['query.execute']) &&
+        candidate.status !== 'error' &&
+        typeof candidate.tool_call_id === 'string'
+        ? [candidate.tool_call_id]
+        : [];
+    })
+  );
+
   return (messages ?? []).some((message) => {
     const candidate = message as BaseMessage & {
-      name?: string;
-      status?: string;
+      tool_calls?: Array<{
+        id?: string;
+        name?: string;
+        args?: Record<string, unknown>;
+      }>;
     };
-    return (
-      candidate.getType() === 'tool' &&
-      typeof candidate.name === 'string' &&
-      toolCatalog.hasCapability(candidate.name, capabilities) &&
-      candidate.status !== 'error'
+    return candidate.tool_calls?.some(
+      (call) =>
+        typeof call.id === 'string' &&
+        successfulCallIds.has(call.id) &&
+        typeof call.name === 'string' &&
+        toolCatalog.hasCapability(call.name, ['query.execute']) &&
+        typeof call.args?.sql === 'string' &&
+        call.args.sql.trim() === finalSql
     );
   });
 }
@@ -110,7 +136,10 @@ function balancedSql(sql: string): boolean {
   return quote === undefined && parentheses === 0;
 }
 
-async function formatAndCompileGo(source: string): Promise<string> {
+async function formatAndCompileGo(
+  source: string,
+  signal?: AbortSignal
+): Promise<string> {
   const directory = await mkdtemp(path.join(tmpdir(), 'irmin-specialist-go-'));
   const sourcePath = path.join(directory, 'main.go');
   const modulePath = path.resolve(process.cwd(), '../sdks/go');
@@ -130,11 +159,15 @@ async function formatAndCompileGo(source: string): Promise<string> {
         `module irmin-specialist-check\n\ngo 1.26.5\n\n${sdkRequirement}\n`
       ),
     ]);
-    await execFileAsync('gofmt', ['-w', sourcePath], { timeout: 10_000 });
+    await execFileAsync('gofmt', ['-w', sourcePath], {
+      timeout: 10_000,
+      signal,
+    });
     await execFileAsync('go', ['build', '-o', 'compiled-check', '.'], {
       cwd: directory,
       timeout: 60_000,
       env: { ...process.env, CGO_ENABLED: '0', GOWORK: 'off' },
+      signal,
     });
     return await readFile(sourcePath, 'utf8');
   } finally {

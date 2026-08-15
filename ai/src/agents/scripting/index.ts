@@ -28,11 +28,14 @@ export class ScriptingAgent extends BaseAgent {
   }> {
     // Create MCP tools with auth token and filter to only include the required tools
     const tools: DynamicStructuredTool[] = [];
-    if (input.authToken) {
+    if (input.authToken && input.workspace) {
       const mcpConfig = toolsService.getIrminMCPConfig(input.authToken);
-      const mcpClient = toolsService.createClient({
-        ...mcpConfig,
-      });
+      const mcpClient = toolsService.createClient(
+        {
+          ...mcpConfig,
+        },
+        input.workspace.slug
+      );
       const mcpTools = await toolsService.getTools(mcpClient);
 
       const filteredTools = toolCatalog.select(mcpTools, [

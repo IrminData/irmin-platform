@@ -34,6 +34,14 @@ func GetRequiredExtensions(options *ReadOptions) []string
 func GetSupportedFormats() []string
     GetSupportedFormats returns a list of all supported file extensions.
 
+func InstallRuntimeExtensions(
+	ctx context.Context,
+	skipOptional bool,
+	logger *slog.Logger,
+) error
+    InstallRuntimeExtensions installs DuckDB extensions once during process or
+    image startup. Request-scoped clients only load the already installed files.
+
 func IsFormatSupported(filePathOrMIMEType string) bool
     IsFormatSupported checks if a file format is supported.
 

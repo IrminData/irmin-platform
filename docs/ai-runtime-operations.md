@@ -12,6 +12,7 @@ flowchart LR
   UI["Console Agent UI"] -->|"RunEventV1 NDJSON"| AI["AI runtime"]
   AI --> GW["InferenceGateway"]
   GW -->|"ZDR + data collection denied"| OR["OpenRouter"]
+  GW -.->|"temporary canary baseline / rollback"| AN["Anthropic direct"]
   AI -->|"capabilities, not names"| CAT["Core tool catalog"]
   CAT --> MCP["MCP and AI Application handlers"]
   AI --> DB["Conversations, checkpoints, telemetry"]
@@ -19,7 +20,9 @@ flowchart LR
   OPS -->|"workspace-user approval"| MCP
 ```
 
-All text and tool inference uses OpenRouter. The direct OpenAI credential is
+OpenRouter is the production target for all text and tool inference. During
+the 5%/25%/100% rollout only, a temporary direct Anthropic adapter supplies the
+baseline and emergency rollback. The direct OpenAI credential is
 embeddings-only. Browser code consumes only `RunEventV1`; provider events,
 LangChain events, raw responses, tool payload internals, and reasoning details
 remain server-side.
@@ -72,16 +75,21 @@ Advance only when failure, cancellation, malformed-stream, missing-usage,
 quality, authorization, cost, and p95 latency metrics remain within the
 approved envelope.
 
-Rollback restores the last reviewed profile or the last known-good AI release.
-The baseline remains available through OpenRouter; there is no direct-provider
-backend switch or Anthropic/Groq credential path.
+Configure rollout with `AI_INFERENCE_BACKEND=canary` and
+`AI_OPENROUTER_CANARY_PERCENT=5`, then `25`, then `100`. Canary assignment is a
+stable hash of workspace and conversation. `ANTHROPIC_API_KEY` is required for
+`canary` and the emergency `anthropic` backend; `openrouter` forces all traffic
+through OpenRouter. After one complete healthy release at 100%, remove the
+direct Anthropic adapter, key, package, and backend modes. Groq is never a
+runtime path.
 
 ## Telemetry and billing
 
 Customer billing remains request-based in Core `ai_requests`. Model telemetry
 does not change customer quotas or invoices.
 
-`model_runs` retains prompt-free run detail: run/conversation/workspace IDs,
+`model_runs` retains prompt-free run detail: HTTP parent run, model-call,
+conversation, and workspace IDs,
 role and profile, requested/resolved model and provider, terminal status,
 fallback index, tokens, exact OpenRouter cost, latency, time to first token, and
 timestamps. It never stores prompts, tool payloads, model responses, or
@@ -116,9 +124,9 @@ transition available only to authenticated workspace users; duplicate approval
 conflicts, and AI Application credentials cannot self-approve.
 
 The generic replay path for destructive tools on the user MCP endpoint is not
-part of this release. The AI runtime filters those descriptors out, preventing
-agent self-execution. Treat direct authenticated machine-client use as an
-operator-only surface until the remaining approval path ships.
+part of this release. The AI runtime filters those descriptors out and the
+registry rejects any direct destructive call before its handler runs. Such
+tools remain unavailable until the authenticated staging/replay path ships.
 
 ## Release order
 
@@ -128,10 +136,11 @@ pre-launch maintenance window:
 1. Back up both PostgreSQL databases and record the active profile version.
 2. Deploy Core with the canonical catalog and pending-operation routes.
 3. Apply AI Drizzle migrations, then deploy AI with the matching catalog
-   client and OpenRouter-only configuration.
+   client and the documented canary configuration.
 4. Deploy Console with `RunEventV1` and pending-operation contracts.
 5. Run the guarded reset below, then require new conversations.
-6. Smoke-test model profile, catalog listing, agent streaming, cancellation,
+6. Smoke-test stable canary assignment, forced rollback, model profile,
+   catalog listing, agent streaming, cancellation,
    AI Application destructive approval, feedback reload, and conversation deletion.
 7. Schedule daily telemetry rollup/pruning and monitor the release gates.
 

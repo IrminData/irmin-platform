@@ -3,6 +3,30 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
 describe('tools service canonical catalog', () => {
+  it('rejects cross-workspace tool arguments', async () => {
+    process.env.AI_API_SYSTEM_TOKEN = 'test-system-token';
+    process.env.DATABASE_URL = 'postgres://test:test@localhost:5432/test';
+    process.env.OPENROUTER_API_KEY = 'test-openrouter-key';
+    process.env.OPENAI_API_KEY = 'test-openai-key';
+    process.env.LANGSMITH_API_KEY = 'test-langsmith-key';
+    const { bindToolArgsToWorkspace } = await import('./tools');
+    assert.throws(
+      () =>
+        bindToolArgsToWorkspace(
+          { workspace_slug: 'workspace-b' },
+          'workspace-a'
+        ),
+      /does not match/
+    );
+    assert.deepEqual(
+      bindToolArgsToWorkspace(
+        { workspace_slug: 'workspace-a', path: 'report.csv' },
+        'workspace-a'
+      ),
+      { args: { workspace_slug: 'workspace-a', path: 'report.csv' } }
+    );
+  });
+
   it('attaches registry descriptors to transport tools', async () => {
     process.env.AI_API_SYSTEM_TOKEN = 'test-system-token';
     process.env.DATABASE_URL = 'postgres://test:test@localhost:5432/test';

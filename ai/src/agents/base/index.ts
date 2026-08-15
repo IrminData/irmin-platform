@@ -393,9 +393,11 @@ export abstract class BaseAgent implements BaseAgentInterface {
       modelRole: options.modelRole,
       runContext: {
         workspaceSlug: input.workspace?.slug,
-        conversationId,
+        conversationId:
+          input.persistConversation === false ? undefined : conversationId,
         runId: input.runId,
         userId: input.user?.id,
+        signal: input.signal,
       },
       systemPrompt,
       tools: options.tools,

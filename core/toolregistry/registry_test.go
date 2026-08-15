@@ -3,6 +3,7 @@ package toolregistry_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"testing"
 
 	"irmin-api/toolregistry"
@@ -12,6 +13,52 @@ import (
 
 type echoInput struct {
 	Value string `json:"value"`
+}
+
+func TestDestructiveToolCannotExecuteWithModelCredentials(t *testing.T) {
+	t.Parallel()
+	ctx := t.Context()
+	registry := toolregistry.New()
+	server := sdkmcp.NewServer(&sdkmcp.Implementation{Name: "server", Version: "1"}, nil)
+	invoked := false
+	toolregistry.Register(registry, server, "irmin_test_delete", "Delete a value", func(
+		_ context.Context,
+		_ *sdkmcp.CallToolRequest,
+		_ echoInput,
+	) (*sdkmcp.CallToolResult, toolregistry.ToolOutput, error) {
+		invoked = true
+		return nil, toolregistry.ToolOutput{}, nil
+	})
+
+	_, _, err := registry.Execute(ctx, "irmin_test_delete", nil, json.RawMessage(`{"value":"unsafe"}`))
+	if !errors.Is(err, toolregistry.ErrApprovalRequired) {
+		t.Fatalf("execute error = %v, want approval required", err)
+	}
+	if invoked {
+		t.Fatal("destructive handler was invoked")
+	}
+
+	clientTransport, serverTransport := sdkmcp.NewInMemoryTransports()
+	serverSession, err := server.Connect(ctx, serverTransport, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer serverSession.Close()
+	client := sdkmcp.NewClient(&sdkmcp.Implementation{Name: "client", Version: "1"}, nil)
+	clientSession, err := client.Connect(ctx, clientTransport, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer clientSession.Close()
+	called, err := clientSession.CallTool(ctx, &sdkmcp.CallToolParams{
+		Name: "irmin_test_delete", Arguments: map[string]any{"value": "unsafe"},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !called.IsError || invoked {
+		t.Fatalf("destructive MCP call = %#v, invoked = %t", called, invoked)
+	}
 }
 
 func TestRegistryDeterministicStrictAndExecutable(t *testing.T) {
@@ -68,6 +115,9 @@ func TestCanonicalCustomName(t *testing.T) {
 	t.Parallel()
 	if got := toolregistry.CanonicalCustomName("Revenue Export (EU)"); got != "irmin_custom_revenue_export_eu" {
 		t.Fatalf("canonical custom name = %q", got)
+	}
+	if toolregistry.CanonicalCustomName("Foo bar") != toolregistry.CanonicalCustomName("foo-bar") {
+		t.Fatal("colliding display names must produce the same canonical name")
 	}
 }
 

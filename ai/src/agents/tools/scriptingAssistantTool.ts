@@ -66,13 +66,17 @@ export function createScriptingAssistantTool(
           'Any Go code already drafted that the expert should refine, if any.'
         ),
     }),
-    func: async ({
-      question,
-      repositorySlug,
-      repositoryObjectPath,
-      repositoryRef,
-      currentScript,
-    }) => {
+    func: async (
+      {
+        question,
+        repositorySlug,
+        repositoryObjectPath,
+        repositoryRef,
+        currentScript,
+      },
+      _runManager,
+      config
+    ) => {
       try {
         const context: Record<string, unknown> = {
           // Required by the ScriptingAgent's config: the agent needs to know
@@ -94,13 +98,14 @@ export function createScriptingAssistantTool(
             workspace,
             user,
             persistConversation: false,
+            signal: config?.signal,
           },
           'specialist-scripting'
         );
 
         const result =
           response.specialistResult ??
-          (await specialistRunner.acceptGo(response));
+          (await specialistRunner.acceptGo(response, config?.signal));
         return JSON.stringify(
           result.kind === 'go'
             ? { success: true, script: result.code }
@@ -113,6 +118,7 @@ export function createScriptingAssistantTool(
               }
         );
       } catch (error) {
+        if (config?.signal?.aborted) throw config.signal.reason;
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         return JSON.stringify({

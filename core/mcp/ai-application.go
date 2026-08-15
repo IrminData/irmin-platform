@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sort"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -723,10 +724,27 @@ func registerAIAppGetContentTool(
 				return result, toolregistry.OutputFromResult(result), nil
 			}
 
+			transformed, transformErr := TransformContentForLLM(ctx, content, args.Path)
+			if transformErr != nil {
+				result := mcpError(fmt.Sprintf("Failed to bound text content: %v", transformErr))
+				logToolCall(
+					ctx,
+					al,
+					apiServices,
+					aiApp,
+					"irmin_repository_object_content_get",
+					"builtin",
+					args,
+					startTime,
+					result,
+				)
+				return result, toolregistry.OutputFromResult(result), nil
+			}
+
 			result := &sdkmcp.CallToolResult{
 				Content: []sdkmcp.Content{
 					&sdkmcp.TextContent{
-						Text: string(content),
+						Text: transformed.Content,
 						Meta: sdkmcp.Meta{
 							"mimeType": mimeType,
 							"path":     args.Path,
@@ -1192,8 +1210,28 @@ func registerAIAppCustomTools(
 ) {
 	executor := services.NewAIAppToolExecutor(aiApp, apiServices)
 	customTools := executor.GetEnabledCustomTools()
+	sort.Slice(customTools, func(i, j int) bool {
+		left := toolregistry.CanonicalCustomName(customTools[i].Name)
+		right := toolregistry.CanonicalCustomName(customTools[j].Name)
+		if left == right {
+			return customTools[i].ID < customTools[j].ID
+		}
+		return left < right
+	})
+	registered := make(map[string]struct{}, len(customTools))
 
 	for _, tool := range customTools {
+		name := toolregistry.CanonicalCustomName(tool.Name)
+		if _, exists := registered[name]; exists {
+			apiServices.Logger.Error(
+				"Skipping colliding custom MCP tool name",
+				"ai_application_id", aiApp.ID,
+				"tool_id", tool.ID,
+				"canonical_name", name,
+			)
+			continue
+		}
+		registered[name] = struct{}{}
 		registerSingleCustomTool(server, registry, aiApp, apiServices, tool, al)
 	}
 }

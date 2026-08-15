@@ -21,6 +21,16 @@ describe('specialist runner', () => {
     );
     const sql = specialistRunner.acceptSql({
       messages: [
+        new AIMessage({
+          content: '',
+          tool_calls: [
+            {
+              id: 'call-1',
+              name: 'irmin_query_execute_sql',
+              args: { sql: 'SELECT 1;' },
+            },
+          ],
+        }),
         new ToolMessage({
           content: '{"success":true}',
           tool_call_id: 'call-1',
@@ -38,6 +48,31 @@ describe('specialist runner', () => {
       }).kind,
       'clarification'
     );
+  });
+
+  it('rejects SQL changed after an earlier successful execution', () => {
+    const result = specialistRunner.acceptSql({
+      messages: [
+        new AIMessage({
+          content: '',
+          tool_calls: [
+            {
+              id: 'call-a',
+              name: 'irmin_query_execute_sql',
+              args: { sql: 'SELECT 1;' },
+            },
+          ],
+        }),
+        new ToolMessage({
+          content: '{"success":true}',
+          tool_call_id: 'call-a',
+          name: 'irmin_query_execute_sql',
+          status: 'success',
+        }),
+        new AIMessage('SELECT 2;'),
+      ],
+    });
+    assert.equal(result.kind, 'clarification');
   });
 
   it('formats and compiles Go before accepting it', async () => {

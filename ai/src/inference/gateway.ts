@@ -1,6 +1,6 @@
 import { env } from '@/config/env';
 
-import { OpenRouterAdapter } from './adapters';
+import { DirectAnthropicAdapter, OpenRouterAdapter } from './adapters';
 import { ProfiledInferenceGateway } from './profiledGateway';
 import {
   assertReviewedModelProfile,
@@ -23,4 +23,11 @@ export const inferenceGateway = new ProfiledInferenceGateway({
     providerAllowlist,
     reviewedProviders: REVIEWED_ZDR_PROVIDERS,
   }),
+  directAnthropic: env.ANTHROPIC_API_KEY
+    ? new DirectAnthropicAdapter({ apiKey: env.ANTHROPIC_API_KEY })
+    : undefined,
+  rollout: {
+    backend: env.AI_INFERENCE_BACKEND,
+    openRouterPercentage: env.AI_OPENROUTER_CANARY_PERCENT,
+  },
 });

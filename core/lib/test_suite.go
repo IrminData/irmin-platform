@@ -76,6 +76,10 @@ func SetupTestSuite(t *testing.T) error {
 	} else {
 		ctx = context.Background()
 	}
+	if installErr := duckdb.InstallRuntimeExtensions(ctx, testEnv.SkipOptionalDuckDBExtensions, logger); installErr != nil {
+		testDB.Close()
+		return installErr
+	}
 	duckDBClient, err := duckdb.NewQueryClient(ctx, testEnv, logger)
 	if err != nil {
 		// Close the DB if DuckDB client fails

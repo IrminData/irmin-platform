@@ -48,8 +48,8 @@ func (c *Client) SearchSimilar(
 		"vector_dimensions", len(queryVector),
 	)
 
-	// Install and load the vss extension if not already loaded
-	if _, err := c.duckDBClient.ExecuteNonQuery(ctx, "INSTALL vss; LOAD vss;"); err != nil {
+	// The extension is installed at process startup.
+	if _, err := c.duckDBClient.ExecuteNonQuery(ctx, "LOAD vss;"); err != nil {
 		c.logger.WarnContext(ctx, "vss extension may already be loaded or not available", "error", err)
 	}
 
@@ -245,7 +245,7 @@ func (c *Client) SearchWithFilter(
 	}
 
 	// Install and load the vss extension if not already loaded
-	if _, err := c.duckDBClient.ExecuteNonQuery(ctx, "INSTALL vss; LOAD vss;"); err != nil {
+	if _, err := c.duckDBClient.ExecuteNonQuery(ctx, "LOAD vss;"); err != nil {
 		c.logger.WarnContext(ctx, "vss extension may already be loaded", "error", err)
 	}
 
@@ -443,7 +443,7 @@ func (c *Client) SearchWithPriority(
 	)
 
 	// Install and load the vss extension if not already loaded
-	if _, err := c.duckDBClient.ExecuteNonQuery(ctx, "INSTALL vss; LOAD vss;"); err != nil {
+	if _, err := c.duckDBClient.ExecuteNonQuery(ctx, "LOAD vss;"); err != nil {
 		c.logger.WarnContext(ctx, "vss extension may already be loaded", "error", err)
 	}
 
@@ -608,7 +608,7 @@ func (c *Client) SearchWithFilterAndPriority(
 	)
 
 	// Install and load the vss extension if not already loaded
-	if _, err := c.duckDBClient.ExecuteNonQuery(ctx, "INSTALL vss; LOAD vss;"); err != nil {
+	if _, err := c.duckDBClient.ExecuteNonQuery(ctx, "LOAD vss;"); err != nil {
 		c.logger.WarnContext(ctx, "vss extension may already be loaded", "error", err)
 	}
 
@@ -1035,7 +1035,7 @@ func (c *Client) CreateVectorIndex(
 	)
 
 	// Install and load the vss extension
-	if _, err := c.duckDBClient.ExecuteNonQuery(ctx, "INSTALL vss; LOAD vss;"); err != nil {
+	if _, err := c.duckDBClient.ExecuteNonQuery(ctx, "LOAD vss;"); err != nil {
 		c.logger.WarnContext(ctx, "vss extension may already be loaded", "error", err)
 	}
 

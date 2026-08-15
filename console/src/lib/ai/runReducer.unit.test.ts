@@ -59,4 +59,27 @@ describe('run reducer', () => {
     const started = reduceRunEvent(initialRunState, event(1, 'run.started'));
     assert.equal(finalizeRunState(started).error?.code, 'missing_terminal');
   });
+
+  it('does not retain operational usage or raw tool payloads', () => {
+    const started = reduceRunEvent(initialRunState, event(1, 'run.started'));
+    const tool = reduceRunEvent(
+      started,
+      event(2, 'tool.started', {
+        toolCallId: 'tool-1',
+        toolName: 'irmin_repository_object_upload_url',
+        input: { headers: { Authorization: 'Bearer secret' } },
+        summary: 'Authorized tool execution started.',
+      })
+    );
+    const usage = reduceRunEvent(
+      tool,
+      event(3, 'usage', { inputTokens: 1, outputTokens: 2 })
+    );
+    const serialized = JSON.stringify(usage);
+    assert.doesNotMatch(serialized, /Bearer secret|inputTokens|outputTokens/);
+    assert.equal(
+      usage.tools['tool-1']?.summary,
+      'Authorized tool execution started.'
+    );
+  });
 });

@@ -1,7 +1,7 @@
 /* eslint-disable import-x/no-unused-modules -- Public agent runtime module. */
 import { conversations, db } from '@/database';
 import { MODEL_PROFILE } from '@/inference';
-import { and, eq } from 'drizzle-orm';
+import { and, eq, sql } from 'drizzle-orm';
 import { randomUUID } from 'node:crypto';
 
 import agentService from '@/services/agent';
@@ -72,8 +72,23 @@ export class ConversationStore {
   }
 
   async delete(conversationId: string): Promise<void> {
-    await agentService.deleteThread(conversationId);
-    await db.delete(conversations).where(eq(conversations.id, conversationId));
+    // Ensure LangGraph's tables exist even when a newly created conversation
+    // is deleted before its first model run.
+    await agentService.configurePostgresSaver();
+    await db.transaction(async (transaction) => {
+      await transaction.execute(
+        sql`DELETE FROM checkpoint_blobs WHERE thread_id = ${conversationId}`
+      );
+      await transaction.execute(
+        sql`DELETE FROM checkpoints WHERE thread_id = ${conversationId}`
+      );
+      await transaction.execute(
+        sql`DELETE FROM checkpoint_writes WHERE thread_id = ${conversationId}`
+      );
+      await transaction
+        .delete(conversations)
+        .where(eq(conversations.id, conversationId));
+    });
   }
 }
 

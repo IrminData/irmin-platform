@@ -61,6 +61,7 @@ export const modelRuns = pgTable(
     runId: text('run_id')
       .primaryKey()
       .$defaultFn(() => ulid()),
+    parentRunId: text('parent_run_id'),
     conversationId: text('conversation_id').references(() => conversations.id, {
       onDelete: 'cascade',
     }),
@@ -104,6 +105,7 @@ export const modelRuns = pgTable(
       table.workspaceSlug,
       table.status
     ),
+    index('model_runs_parent_run_idx').on(table.parentRunId),
   ]
 );
 

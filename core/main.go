@@ -31,6 +31,7 @@ import (
 	"irmin-api/cache"
 	sandbox "irmin-api/compute-sandbox"
 	"irmin-api/db"
+	"irmin-api/duckdb"
 	"irmin-api/engine"
 	"irmin-api/gc"
 	"irmin-api/lakefs"
@@ -600,6 +601,13 @@ func main() {
 	if exitAfterSetup {
 		sentryutil.Flush(sentryutil.FlushTimeout)
 		return
+	}
+	if extensionErr := duckdb.InstallRuntimeExtensions(
+		context.Background(),
+		env.SkipOptionalDuckDBExtensions,
+		slog.Default(),
+	); extensionErr != nil {
+		log.Fatalf("failed to install DuckDB runtime extensions: %v", extensionErr)
 	}
 
 	// Initialize cache storage and middleware

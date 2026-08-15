@@ -38,6 +38,8 @@ export interface ModelProfile {
 }
 
 export interface InferenceTelemetry {
+  modelCallId: string;
+  backend: 'openrouter' | 'anthropic';
   requestedModel: string;
   resolvedModel?: string;
   resolvedProvider?: string;
@@ -56,6 +58,7 @@ export interface InferenceRunContext {
   conversationId?: string;
   runId?: string;
   userId?: string;
+  signal?: AbortSignal;
   onTelemetry?: (telemetry: InferenceTelemetry) => void | Promise<void>;
 }
 

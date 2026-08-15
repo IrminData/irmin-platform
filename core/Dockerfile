@@ -10,6 +10,7 @@ RUN go mod download
 
 COPY . .
 RUN CGO_ENABLED=1 go build -ldflags="-w -s" -o /app/main .
+RUN CGO_ENABLED=1 go build -ldflags="-w -s" -o /app/install-duckdb-extensions ./cmd/install-duckdb-extensions
 
 # Stage 2: Runtime
 FROM debian:bookworm-slim
@@ -60,6 +61,7 @@ WORKDIR /app
 
 # Copy the compiled binary with correct ownership
 COPY --from=builder --chown=appuser:irmingroup /app/main .
+COPY --from=builder --chown=appuser:irmingroup /app/install-duckdb-extensions .
 
 # Lock down app directory and executable
 RUN chown -R appuser:irmingroup /app && \
@@ -67,7 +69,12 @@ RUN chown -R appuser:irmingroup /app && \
     chmod 700 /app/main
 
 # Switch to appuser for running the main application
+ENV HOME=/home/appuser
 USER appuser
+
+# DuckDB request handlers only LOAD extensions. Fetch the pinned, ABI-matched
+# extension artifacts once while building the image.
+RUN ./install-duckdb-extensions && rm ./install-duckdb-extensions
 
 # Expose port
 EXPOSE 8080

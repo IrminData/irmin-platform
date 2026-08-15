@@ -111,12 +111,12 @@ func extractSchemaFromFileData(
 		return nil, fmt.Errorf("unsupported file format: %w", readOptsErr)
 	}
 
-	// Install required extensions if any
+	// Load extensions installed at process startup.
 	requiredExtensions := duckdb.GetRequiredExtensions(readOptions)
 	for _, ext := range requiredExtensions {
-		installSQL := fmt.Sprintf("INSTALL %s; LOAD %s;", ext, ext)
-		if _, installErr := qc.ExecuteNonQuery(ctx, installSQL); installErr != nil {
-			logger.WarnContext(ctx, "failed to install extension", "extension", ext, "error", installErr)
+		loadSQL := fmt.Sprintf("LOAD %s;", ext)
+		if _, loadErr := qc.ExecuteNonQuery(ctx, loadSQL); loadErr != nil {
+			logger.WarnContext(ctx, "failed to load extension", "extension", ext, "error", loadErr)
 		}
 	}
 

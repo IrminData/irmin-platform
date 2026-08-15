@@ -375,11 +375,11 @@ type AIApplicationPendingOperation struct {
 	Ref          string     `json:"ref"`
 
 	// Operation details
-	ToolName        string `json:"tool_name"        gorm:"not null;index"`
-	Risk            string `json:"risk"             gorm:"not null"`
+	ToolName        string `json:"tool_name"                 gorm:"not null;index"`
+	Risk            string `json:"risk"                      gorm:"not null"`
 	Capability      string `json:"capability"`
 	ApprovalPreview string `json:"approval_preview"`
-	ArgumentsJSON   string `json:"-"                gorm:"type:jsonb"`
+	ArgumentsJSON   string `json:"-"                         gorm:"type:jsonb"`
 	Operation       string `json:"operation"`                                   // "upload", "update", "patch"
 	Content         []byte `json:"-"                         gorm:"type:bytea"` // Full content for file operations (not serialized to JSON)
 	ContentHash     string `json:"content_hash"`                                // Hash reference to staged content
@@ -388,9 +388,9 @@ type AIApplicationPendingOperation struct {
 	CommitMessage   string `json:"commit_message"`
 
 	// Status and review
-	Status         PendingOperationStatus `json:"status"                   gorm:"default:pending;index"`
+	Status         PendingOperationStatus `json:"status"                    gorm:"default:pending;index"`
 	ReviewedByID   *uint                  `json:"reviewed_by_id,omitempty"`
-	ReviewedBy     *User                  `json:"reviewed_by,omitempty"    gorm:"foreignKey:ReviewedByID"`
+	ReviewedBy     *User                  `json:"reviewed_by,omitempty"     gorm:"foreignKey:ReviewedByID"`
 	ReviewedAt     *time.Time             `json:"reviewed_at,omitempty"`
 	ExecutionError string                 `json:"execution_error,omitempty"`
 }

@@ -1,5 +1,6 @@
 import { BaseCallbackHandler } from '@langchain/core/callbacks/base';
 import type { LLMResult } from '@langchain/core/outputs';
+import { ulid } from 'ulid';
 
 import type { InferenceRunContext, InferenceTelemetry } from './types';
 
@@ -22,6 +23,7 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
   name = 'irmin_inference_telemetry';
   private startedAt?: number;
   private firstTokenAt?: number;
+  private modelCallId = ulid();
 
   constructor(
     private readonly requestedModel: string,
@@ -29,14 +31,22 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
     private readonly resolveGeneration?: (
       generationId: string
     ) => Promise<ResolvedGenerationUsage | undefined>,
-    private readonly orderedModels: readonly string[] = [requestedModel]
+    private readonly orderedModels: readonly string[] = [requestedModel],
+    private readonly backend: InferenceTelemetry['backend'] = 'openrouter'
   ) {
     super();
   }
 
   override async handleLLMStart() {
+    this.modelCallId = ulid();
     this.startedAt = Date.now();
-    await this.emit({ requestedModel: this.requestedModel, status: 'started' });
+    this.firstTokenAt = undefined;
+    await this.emit({
+      modelCallId: this.modelCallId,
+      backend: this.backend,
+      requestedModel: this.requestedModel,
+      status: 'started',
+    });
   }
 
   override async handleLLMNewToken() {
@@ -49,6 +59,7 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
     const generation = record(output.generations[0]?.[0]);
     const message = record(generation.message);
     const responseMetadata = record(message.response_metadata);
+    const usageMetadata = record(message.usage_metadata);
     const generationId =
       typeof message.id === 'string' ? message.id : undefined;
     let resolved: ResolvedGenerationUsage | undefined;
@@ -63,6 +74,8 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
       }
     }
     await this.emit({
+      modelCallId: this.modelCallId,
+      backend: this.backend,
       requestedModel: this.requestedModel,
       resolvedModel:
         resolved?.model ??
@@ -73,14 +86,26 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
         resolved?.provider ??
         (typeof responseMetadata.provider_name === 'string'
           ? responseMetadata.provider_name
-          : undefined),
+          : this.backend === 'anthropic'
+            ? 'Anthropic Direct'
+            : undefined),
       inputTokens:
         resolved?.inputTokens ??
-        number(tokenUsage.prompt_tokens ?? tokenUsage.input_tokens),
+        number(
+          tokenUsage.prompt_tokens ??
+            tokenUsage.input_tokens ??
+            usageMetadata.input_tokens
+        ),
       outputTokens:
         resolved?.outputTokens ??
-        number(tokenUsage.completion_tokens ?? tokenUsage.output_tokens),
-      totalTokens: resolved?.totalTokens ?? number(tokenUsage.total_tokens),
+        number(
+          tokenUsage.completion_tokens ??
+            tokenUsage.output_tokens ??
+            usageMetadata.output_tokens
+        ),
+      totalTokens:
+        resolved?.totalTokens ??
+        number(tokenUsage.total_tokens ?? usageMetadata.total_tokens),
       cost: resolved?.cost ?? number(tokenUsage.cost ?? llmOutput.cost),
       fallbackIndex: resolved?.model
         ? Math.max(0, this.orderedModels.indexOf(resolved.model))
@@ -97,6 +122,8 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
 
   override async handleLLMError() {
     await this.emit({
+      modelCallId: this.modelCallId,
+      backend: this.backend,
       requestedModel: this.requestedModel,
       latencyMs:
         this.startedAt === undefined ? undefined : Date.now() - this.startedAt,

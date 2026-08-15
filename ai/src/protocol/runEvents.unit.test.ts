@@ -47,6 +47,47 @@ describe('RunEventV1', () => {
     ]);
   });
 
+  it('filters internal summarization streams and operational usage', () => {
+    assert.deepEqual(
+      normalizeLangChainEvent({
+        event: 'on_chat_model_stream',
+        metadata: { lc_source: 'summarization' },
+        data: { chunk: { content: 'private summary' } },
+      }),
+      []
+    );
+    assert.deepEqual(
+      normalizeLangChainEvent({
+        event: 'on_chat_model_stream',
+        data: {
+          chunk: {
+            content: '',
+            usage_metadata: { input_tokens: 10, output_tokens: 2 },
+          },
+        },
+      }),
+      []
+    );
+  });
+
+  it('never forwards raw tool arguments or results', () => {
+    const serialized = JSON.stringify([
+      ...normalizeLangChainEvent({
+        event: 'on_tool_start',
+        run_id: 'tool-1',
+        name: 'irmin_repository_object_upload_url',
+        data: { input: { headers: { Authorization: 'Bearer secret' } } },
+      }),
+      ...normalizeLangChainEvent({
+        event: 'on_tool_end',
+        run_id: 'tool-1',
+        name: 'irmin_repository_object_upload_url',
+        data: { output: { token: 'secret', content: 'private' } },
+      }),
+    ]);
+    assert.doesNotMatch(serialized, /Bearer secret|private|"token"|"headers"/);
+  });
+
   it('emits monotonic envelopes and exactly one successful terminal event', async () => {
     const controller = new AbortController();
     const stream = createRunEventStream({
@@ -96,6 +137,31 @@ describe('RunEventV1', () => {
       events.filter((event) => event.type.startsWith('run.')).length,
       2
     );
+  });
+
+  it('delivers a terminal event even when persistence callbacks reject', async () => {
+    const stream = createRunEventStream({
+      runId: 'run-callback-failure',
+      agentId: 'assistant',
+      conversationId: 'conversation-callback-failure',
+      signal: new AbortController().signal,
+      onEvent: async (event) => {
+        if (event.type === 'run.completed') throw new Error('database down');
+      },
+      source: async () =>
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue({
+              event: 'on_chat_model_stream',
+              data: { chunk: { content: 'Complete' } },
+            });
+            controller.close();
+          },
+        }),
+    });
+
+    const events = await readEvents(stream);
+    assert.equal(events.at(-1)?.type, 'run.completed');
   });
 
   it('records cancellation when the downstream consumer disconnects', async () => {

@@ -24,6 +24,11 @@ const (
 	defaultTimeout            = 30 * time.Second
 )
 
+// ErrApprovalRequired is returned when model credentials attempt a destructive
+// operation. Destructive handlers are only executable by the authenticated
+// pending-operation approval path.
+var ErrApprovalRequired = errors.New("destructive tool requires authenticated approval")
+
 type Risk string
 
 const (
@@ -197,7 +202,16 @@ func (r *Registry) Execute(
 	if err := ctx.Err(); err != nil {
 		return nil, ToolOutput{}, err
 	}
-	return descriptor.Handler(ctx, request, arguments)
+	if descriptor.Risk == RiskDestructive {
+		return nil, ToolOutput{}, ErrApprovalRequired
+	}
+	timeout := time.Duration(descriptor.Cancellation.TimeoutMS) * time.Millisecond
+	if timeout <= 0 {
+		timeout = defaultTimeout
+	}
+	executionContext, cancel := context.WithTimeout(ctx, timeout)
+	defer cancel()
+	return descriptor.Handler(executionContext, request, arguments)
 }
 
 var validName = regexp.MustCompile(`^irmin_[a-z0-9]+(?:_[a-z0-9]+)+$`)
@@ -287,7 +301,17 @@ func Register[In any](
 		Description:  description,
 		InputSchema:  inputSchema,
 		OutputSchema: outputSchema,
-	}, handler)
+	}, func(ctx context.Context, request *sdkmcp.CallToolRequest, input In) (
+		*sdkmcp.CallToolResult,
+		ToolOutput,
+		error,
+	) {
+		raw, marshalErr := json.Marshal(input)
+		if marshalErr != nil {
+			return nil, ToolOutput{}, fmt.Errorf("encode %s input: %w", name, marshalErr)
+		}
+		return registry.Execute(ctx, name, request, raw)
+	})
 }
 
 func inferCapability(domain, action string, risk Risk) string {

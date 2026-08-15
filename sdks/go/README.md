@@ -74,6 +74,12 @@ if result.HasErrors() {
 }
 ```
 
+AI Application approval commands return
+`AIApplicationPendingOperationActionResult`, the command result containing the
+operation ID, terminal status, message, and any commit fields. Use
+`GetAIApplicationPendingOperation` when the complete pending-operation resource
+and its review timestamps are required.
+
 ## Connector client
 
 Connector service URLs include the connector-specific prefix expected by the

@@ -63,13 +63,17 @@ export function createQueryAssistantTool(
           'Any SQL already drafted that the expert should refine, if any.'
         ),
     }),
-    func: async ({
-      question,
-      repositorySlug,
-      repositoryObjectPath,
-      repositoryRef,
-      currentSql,
-    }) => {
+    func: async (
+      {
+        question,
+        repositorySlug,
+        repositoryObjectPath,
+        repositoryRef,
+        currentSql,
+      },
+      _runManager,
+      config
+    ) => {
       try {
         const context: Record<string, unknown> = {};
         if (repositorySlug) context['repository-slug'] = repositorySlug;
@@ -87,6 +91,7 @@ export function createQueryAssistantTool(
             workspace,
             user,
             persistConversation: false,
+            signal: config?.signal,
           },
           'specialist-query'
         );
@@ -105,6 +110,7 @@ export function createQueryAssistantTool(
               }
         );
       } catch (error) {
+        if (config?.signal?.aborted) throw config.signal.reason;
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         return JSON.stringify({

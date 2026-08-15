@@ -44,6 +44,7 @@ export class AgentRunner {
           aiResponse: content ? getContentAsString(content.content) : '',
           user: input.user,
           workspace: input.workspace,
+          signal: input.signal,
         }
       );
     }

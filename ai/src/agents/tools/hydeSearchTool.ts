@@ -38,7 +38,7 @@ export function createHydeSearchTool(
         .default(5)
         .describe('Maximum number of results to return (default: 5)'),
     }),
-    func: async ({ query, maxResults = 5 }) => {
+    func: async ({ query, maxResults = 5 }, _runManager, config) => {
       try {
         // Validate collection access
         const validatedCollection =
@@ -56,6 +56,7 @@ export function createHydeSearchTool(
             scoreThreshold: 0.3,
             includeMetadata: true,
             maxTokens: 4000,
+            signal: config?.signal,
           }
         );
 
@@ -75,6 +76,7 @@ export function createHydeSearchTool(
           metrics: result.metrics,
         });
       } catch (error) {
+        if (config?.signal?.aborted) throw config.signal.reason;
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         return JSON.stringify({
@@ -114,7 +116,7 @@ export function createDuckDbHydeSearchTool(): DynamicStructuredTool {
         .default(5)
         .describe('Maximum number of results to return (default: 5)'),
     }),
-    func: async ({ query, maxResults = 5 }) => {
+    func: async ({ query, maxResults = 5 }, _runManager, config) => {
       try {
         const collectionName = 'duckdb-sql-syntax-docs';
         const validatedCollection =
@@ -131,6 +133,7 @@ export function createDuckDbHydeSearchTool(): DynamicStructuredTool {
             scoreThreshold: 0.3,
             includeMetadata: true,
             maxTokens: 4000,
+            signal: config?.signal,
           }
         );
 
@@ -150,6 +153,7 @@ export function createDuckDbHydeSearchTool(): DynamicStructuredTool {
           metrics: result.metrics,
         });
       } catch (error) {
+        if (config?.signal?.aborted) throw config.signal.reason;
         const errorMessage =
           error instanceof Error ? error.message : 'Unknown error';
         return JSON.stringify({

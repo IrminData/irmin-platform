@@ -37,5 +37,7 @@
 - [ ] Complete one internal release cycle at each 5%, 25%, and 100% promoted
   profile stage with no elevated terminal, malformed-stream, or missing-usage
   rate.
+- [ ] After one healthy release at 100% OpenRouter, remove the temporary direct
+  Anthropic adapter, credential, package, and rollback backend modes.
 - [ ] Add generic pending-operation staging and replay for destructive tools on
   the user MCP endpoint; until then the AI runtime withholds those descriptors.

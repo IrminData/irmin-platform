@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	irmincache "irmin-api/cache"
@@ -843,17 +844,27 @@ func (api *APIControllers) AIApplicationPendingOperationApprove(c fiber.Ctx) err
 		}
 	}
 
-	completed, completeErr := api.DB.UpdatePendingOperationStatusAtomic(
-		uint(pendingOperationID),
-		db.PendingOperationStatusExecuting,
-		db.PendingOperationStatusCompleted,
-		&user.ID,
-	)
+	var completed bool
+	var completeErr error
+	for range 3 {
+		completed, completeErr = api.DB.UpdatePendingOperationStatusAtomic(
+			uint(pendingOperationID),
+			db.PendingOperationStatusExecuting,
+			db.PendingOperationStatusCompleted,
+			&user.ID,
+		)
+		if completeErr == nil {
+			break
+		}
+	}
 	if completeErr != nil || !completed {
 		api.Logger.Error("Failed to complete pending operation", "error", completeErr)
 		return c.Status(fiber.StatusConflict).JSON(irminmodels.IrminAPIResponse{
 			Message: "Pending operation execution status changed unexpectedly",
 		})
+	}
+	if cleanupErr := services.CleanupWriteResult(context.WithoutCancel(c.Context()), result); cleanupErr != nil {
+		api.Logger.Warn("Failed to clean completed pending operation", "error", cleanupErr)
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{

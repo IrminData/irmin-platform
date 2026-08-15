@@ -6,8 +6,8 @@ LangChain-powered (Fastify, TypeScript) AI agents API for Irmin with OpenRouter 
 
 ## What it does
 
-- Version-controlled inference roles routed exclusively through OpenRouter with reviewed ZDR providers, reviewed ordered fallbacks, and exact usage/cost telemetry
-- Request-scoped MCP tool access so the assistant agent can load Irmin MCP tools whenever a bearer token is supplied
+- Version-controlled inference roles targeting OpenRouter with reviewed ZDR providers, deterministic canary assignment, a temporary direct-Anthropic rollback, reviewed ordered fallbacks, and exact OpenRouter usage/cost telemetry
+- Request-scoped MCP tool access pinned to the authenticated request's selected workspace
 - Persisted agent memory via LangGraph Postgres checkpointing to keep multi-turn conversations aligned with the database
 - Versioned `RunEventV1` NDJSON streaming that isolates browsers from LangChain/provider payloads and exposes curated progress instead of raw reasoning
 - Workspace-isolated conversations & analytics with automatic title generation and token usage tracking
@@ -136,10 +136,11 @@ Streaming responses are emitted as newline-delimited `RunEventV1` envelopes. Eve
 
 - `run.started`, `message.delta`, and curated `reasoning.summary`
 - `tool.started`, `tool.completed`, `tool.failed`, and `tool.approval_required`
-- `usage`
 - exactly one terminal `run.completed`, `run.failed`, or `run.cancelled`
 
-Raw reasoning and provider response structures remain server-side. Browser cancellation aborts the model stream and cancellable tools.
+Raw reasoning, tool arguments/results, exact usage, and provider response
+structures remain server-side. Browser cancellation aborts the model stream,
+nested inference, compilation, and cancellable tools.
 
 Use `/api/agents/:agentId/stream` for real-time output. Non-streaming endpoints return `AgentResponse` objects for synchronous agents (query, scripting), while the assistant returns an empty `content` field because output is streamed.
 
@@ -278,7 +279,17 @@ Live test utilities live in `src/tests/`:
 
 ### Inference gateway
 
-`InferenceGateway` resolves stable roles from a Git-reviewed profile, constructs the OpenRouter model with strict provider/privacy policy, and installs prompt-free telemetry callbacks. Callers never supply model IDs or provider options. See [src/inference](src/inference) and `GET /api/info/model-profile`.
+`InferenceGateway` resolves stable roles from a Git-reviewed profile, selects
+the rollout-assigned backend, applies strict OpenRouter provider/privacy policy,
+and installs prompt-free telemetry callbacks. Callers never supply model IDs or
+provider options. See [src/inference](src/inference) and
+`GET /api/info/model-profile`.
+
+`AI_INFERENCE_BACKEND=canary` assigns the configured percentage to OpenRouter
+by stable workspace/conversation hash and leaves the remainder on the temporary
+direct Anthropic baseline. Use `openrouter` after the rollout or `anthropic`
+only for emergency rollback. Canary and rollback modes require
+`ANTHROPIC_API_KEY`; remove that adapter and key after the healthy 100% release.
 
 ### MCP (tools) service
 
@@ -343,7 +354,7 @@ PostgreSQL (via Drizzle ORM) stores conversation metadata, prompt-free model tel
 **Schema highlights**
 
 - `conversations` – Workspace + user scoped threads with optional `agentId`
-- `model_runs` – Resolved provider/model, role/profile, tokens, exact OpenRouter cost, latency, and terminal status; never prompts or tool payloads
+- `model_runs` – One row per model call, linked to its HTTP parent run when present, with resolved provider/model, role/profile, tokens, exact OpenRouter cost, latency, and terminal status; never prompts or tool payloads
 - `model_run_daily_metrics` – Long-lived prompt-free daily usage, cost, latency, status, and missing-usage aggregates
 - `message_feedback` – User-owned rating and optional reason for a message/run
 - `vector_collections` – Tracks Qdrant collections, counts, and metadata
@@ -359,6 +370,7 @@ PostgreSQL (via Drizzle ORM) stores conversation metadata, prompt-free model tel
 
 - Requests require `Authorization` and `X-Workspace-Slug`
 - Middleware enforces user/workspace membership
+- MCP execution rejects any model-selected workspace different from the request workspace
 - Agents verify conversations belong to the caller
 - Vector collections respect workspace membership and creator ownership
 

@@ -6,7 +6,6 @@ import { toolsService } from '@/services/tools';
 interface CachedToolsEntry {
   tools: DynamicStructuredTool[];
   fetchedAt: number;
-  tokenHash: string;
 }
 
 /**
@@ -23,9 +22,12 @@ class ToolCacheService {
    * @param authToken - The bearer token for MCP authentication
    * @returns Array of dynamic structured tools
    */
-  async getTools(authToken: string): Promise<DynamicStructuredTool[]> {
-    const tokenHash = this.hashToken(authToken);
-    const cached = this.cache.get(tokenHash);
+  async getTools(
+    authToken: string,
+    workspaceSlug: string
+  ): Promise<DynamicStructuredTool[]> {
+    const cacheKey = this.cacheKey(authToken, workspaceSlug);
+    const cached = this.cache.get(cacheKey);
 
     // Return cached tools if still valid
     if (cached && Date.now() - cached.fetchedAt < this.CACHE_TTL) {
@@ -33,13 +35,12 @@ class ToolCacheService {
     }
 
     // Fetch fresh tools from MCP
-    const tools = await this.fetchTools(authToken);
+    const tools = await this.fetchTools(authToken, workspaceSlug);
 
     // Cache the result
-    this.cache.set(tokenHash, {
+    this.cache.set(cacheKey, {
       tools,
       fetchedAt: Date.now(),
-      tokenHash,
     });
 
     // Cleanup old entries periodically
@@ -51,10 +52,13 @@ class ToolCacheService {
   /**
    * Force refresh tools for a specific token, bypassing cache.
    */
-  async refreshTools(authToken: string): Promise<DynamicStructuredTool[]> {
-    const tokenHash = this.hashToken(authToken);
-    this.cache.delete(tokenHash);
-    return this.getTools(authToken);
+  async refreshTools(
+    authToken: string,
+    workspaceSlug: string
+  ): Promise<DynamicStructuredTool[]> {
+    const cacheKey = this.cacheKey(authToken, workspaceSlug);
+    this.cache.delete(cacheKey);
+    return this.getTools(authToken, workspaceSlug);
   }
 
   /**
@@ -84,18 +88,26 @@ class ToolCacheService {
   }
 
   private async fetchTools(
-    authToken: string
+    authToken: string,
+    workspaceSlug: string
   ): Promise<DynamicStructuredTool[]> {
     const mcpConfig = toolsService.getIrminMCPConfig(authToken);
-    const mcpClient = toolsService.createClient({
-      ...mcpConfig,
-    });
+    const mcpClient = toolsService.createClient(
+      {
+        ...mcpConfig,
+      },
+      workspaceSlug
+    );
     return toolsService.getTools(mcpClient);
   }
 
   private hashToken(token: string): string {
     // Use first 16 chars of SHA-256 hash for efficiency
     return crypto.createHash('sha256').update(token).digest('hex').slice(0, 16);
+  }
+
+  private cacheKey(token: string, workspaceSlug: string): string {
+    return `${this.hashToken(token)}:${workspaceSlug}`;
   }
 
   private cleanupExpiredEntries(): void {

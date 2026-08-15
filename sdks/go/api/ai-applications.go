@@ -249,8 +249,8 @@ func (c *Client) GetAIApplicationPendingOperation(
 func (c *Client) ApproveAIApplicationPendingOperation(
 	ctx context.Context,
 	workspace, aiApplicationID, pendingOperationID string,
-) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error) {
-	var pendingOperation irminmodels.AIApplicationPendingOperation
+) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error) {
+	var result irminmodels.AIApplicationPendingOperationActionResult
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodPost,
 		Endpoint: fmt.Sprintf(
@@ -259,19 +259,19 @@ func (c *Client) ApproveAIApplicationPendingOperation(
 			aiApplicationID,
 			pendingOperationID,
 		),
-	}, &pendingOperation)
+	}, &result)
 	if err != nil {
 		return nil, nil, fmt.Errorf("approve AI application pending operation error: %w", err)
 	}
-	return &pendingOperation, apiResp, nil
+	return &result, apiResp, nil
 }
 
 // RejectAIApplicationPendingOperation rejects a pending operation.
 func (c *Client) RejectAIApplicationPendingOperation(
 	ctx context.Context,
 	workspace, aiApplicationID, pendingOperationID string,
-) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error) {
-	var pendingOperation irminmodels.AIApplicationPendingOperation
+) (*irminmodels.AIApplicationPendingOperationActionResult, *irminmodels.IrminAPIResponse, error) {
+	var result irminmodels.AIApplicationPendingOperationActionResult
 	apiResp, err := c.FetchAPI(ctx, RequestOptions{
 		Method: http.MethodPost,
 		Endpoint: fmt.Sprintf(
@@ -280,11 +280,11 @@ func (c *Client) RejectAIApplicationPendingOperation(
 			aiApplicationID,
 			pendingOperationID,
 		),
-	}, &pendingOperation)
+	}, &result)
 	if err != nil {
 		return nil, nil, fmt.Errorf("reject AI application pending operation error: %w", err)
 	}
-	return &pendingOperation, apiResp, nil
+	return &result, apiResp, nil
 }
 
 // GetAIApplicationToolLogsOptions contains optional parameters for fetching tool logs.

@@ -49,6 +49,15 @@ const envSchema = z.object({
   OPENROUTER_PROVIDER_ALLOWLIST: z
     .string()
     .default('Anthropic,OpenAI,Google AI Studio'),
+  AI_INFERENCE_BACKEND: z
+    .enum(['canary', 'openrouter', 'anthropic'])
+    .default('openrouter'),
+  AI_OPENROUTER_CANARY_PERCENT: z
+    .string()
+    .default('5')
+    .transform(Number)
+    .pipe(z.number().int().min(0).max(100)),
+  ANTHROPIC_API_KEY: z.string().min(1).optional(),
   OPENAI_API_KEY: z
     .string()
     .min(1, 'OpenAI API key is required to create embeddings'),
@@ -117,6 +126,16 @@ const result = envSchema.safeParse(envToParse);
 if (!result.success) {
   console.error('Environment validation failed:');
   console.error(result.error.format());
+  process.exit(1);
+}
+
+if (
+  result.data.AI_INFERENCE_BACKEND !== 'openrouter' &&
+  !result.data.ANTHROPIC_API_KEY
+) {
+  console.error(
+    'ANTHROPIC_API_KEY is required for canary and direct rollback inference modes'
+  );
   process.exit(1);
 }
 

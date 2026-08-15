@@ -45,9 +45,12 @@ export class AssistantAgent extends BaseAgent {
     // Get MCP tools from cache (1-minute TTL per auth token)
     // This saves 100-300ms on cache hits vs fetching fresh tools
     let tools: DynamicStructuredTool[] = [];
-    if (input.authToken) {
+    if (input.authToken && input.workspace) {
       const toolsStart = Date.now();
-      tools = await toolCacheService.getTools(input.authToken);
+      tools = await toolCacheService.getTools(
+        input.authToken,
+        input.workspace.slug
+      );
       console.log(
         `[Agent Timing] MCP tools loaded: ${Date.now() - toolsStart}ms (${tools.length} tools)`
       );

@@ -137,8 +137,9 @@ cannot self-approve.
 
 The user MCP endpoint does not yet implement generic destructive-operation
 staging and replay. The AI runtime therefore withholds those descriptors from
-agents. Direct authenticated machine-client use remains an operator-only surface
-until that final policy path is implemented.
+agents, and the canonical registry rejects direct destructive calls before a
+handler can run. Those tools remain unavailable until that policy path is
+implemented.
 
 ### Adding new resources
 

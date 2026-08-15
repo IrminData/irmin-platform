@@ -10,6 +10,14 @@ CONSTANTS
 
 const CatalogVersion = 1
 
+VARIABLES
+
+var ErrApprovalRequired = errors.New("destructive tool requires authenticated approval")
+    ErrApprovalRequired is returned when model credentials attempt a destructive
+    operation. Destructive handlers are only executable by the authenticated
+    pending-operation approval path.
+
+
 FUNCTIONS
 
 func CanonicalCustomName(label string) string

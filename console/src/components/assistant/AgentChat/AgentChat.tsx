@@ -253,10 +253,18 @@ const AgentChat = ({
 
         if (status === 'failed') {
           const failure = parts.find((part) => part.type === 'stream-error');
-          throw new Error(
+          const failureMessage =
             (failure as { error?: string } | undefined)?.error ||
-              dict.assistant.error
+            dict.assistant.runFailed;
+          appendMessage(
+            createAssistantMessage(
+              content || dict.assistant.runFailed,
+              [...parts, { type: 'error', error: failureMessage } as const],
+              agentId,
+              messageId ?? `assistant-error-${Date.now()}`
+            )
           );
+          return;
         }
         if (status !== 'completed') return;
 
@@ -279,25 +287,18 @@ const AgentChat = ({
       if (requestController?.signal.aborted) return;
       console.error('Error sending message:', error);
 
-      // If there was streaming content, preserve it even on error
-      if (streamingState.streamingMessage.trim()) {
-        const errorMessage = createAssistantMessage(
-          streamingState.streamingMessage.trim() ||
-            '[Response interrupted due to error]',
-          [
-            ...streamingState.streamingParts.filter(
-              (p) => p.type === 'stream-error' || p.type === 'error'
-            ),
-            {
-              type: 'error',
-              error: error instanceof Error ? error.message : 'Unknown error',
-            },
-          ],
-          agentId,
-          `assistant-error-${Date.now()}`
-        );
-        appendMessage(errorMessage);
-      }
+      const errorMessage = createAssistantMessage(
+        dict.assistant.runFailed,
+        [
+          {
+            type: 'error',
+            error: dict.assistant.runFailed,
+          },
+        ],
+        agentId,
+        `assistant-error-${Date.now()}`
+      );
+      appendMessage(errorMessage);
     } finally {
       streamingState.resetStreamingState();
       setPendingUserMessage(null);

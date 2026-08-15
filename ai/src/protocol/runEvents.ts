@@ -57,17 +57,6 @@ function chunkFromEvent(event: UnknownRecord): UnknownRecord | undefined {
   return asRecord(chunk?.kwargs) ?? chunk;
 }
 
-function usageFromChunk(chunk: UnknownRecord | undefined): unknown {
-  const usage = asRecord(chunk?.usage_metadata);
-  if (!usage) return undefined;
-
-  return {
-    inputTokens: usage.input_tokens,
-    outputTokens: usage.output_tokens,
-    totalTokens: usage.total_tokens,
-  };
-}
-
 function completedMessageId(event: unknown): string | undefined {
   const value = asRecord(event);
   if (value?.event !== 'on_chat_model_end') return undefined;
@@ -83,7 +72,8 @@ export function normalizeLangChainEvent(
   const event = asRecord(rawEvent);
   if (!event || typeof event.event !== 'string') return [];
 
-  const data = asRecord(event.data) ?? {};
+  const metadata = asRecord(event.metadata);
+  if (metadata?.lc_source === 'summarization') return [];
   const runId = typeof event.run_id === 'string' ? event.run_id : undefined;
   const name = typeof event.name === 'string' ? event.name : undefined;
 
@@ -101,8 +91,6 @@ export function normalizeLangChainEvent(
       const normalized: Array<{ type: RunEventType; data: unknown }> = [];
       if (text)
         normalized.push({ type: 'message.delta', data: { delta: text } });
-      const usage = usageFromChunk(chunk);
-      if (usage) normalized.push({ type: 'usage', data: usage });
       return normalized;
     }
     case 'on_tool_start':
@@ -113,14 +101,22 @@ export function normalizeLangChainEvent(
         },
         {
           type: 'tool.started',
-          data: { toolCallId: runId, toolName: name, input: data.input ?? {} },
+          data: {
+            toolCallId: runId,
+            toolName: name,
+            summary: 'Authorized tool execution started.',
+          },
         },
       ];
     case 'on_tool_end':
       return [
         {
           type: 'tool.completed',
-          data: { toolCallId: runId, toolName: name, output: data.output },
+          data: {
+            toolCallId: runId,
+            toolName: name,
+            summary: 'Authorized tool execution completed.',
+          },
         },
       ];
     case 'on_tool_error':
@@ -162,8 +158,16 @@ export function createRunEventStream({
   const encoder = new TextEncoder();
   let sequence = 0;
   let sourceReader: ReadableStreamDefaultReader<unknown> | undefined;
+  let cancelSource: (() => void) | undefined;
   let terminal = false;
   let messageId: string | undefined;
+  const notify = async (event: RunEventV1) => {
+    try {
+      await onEvent?.(event);
+    } catch {
+      // Telemetry and title side effects must never corrupt event delivery.
+    }
+  };
 
   return new ReadableStream<Uint8Array>({
     start(controller) {
@@ -177,9 +181,9 @@ export function createRunEventStream({
           type,
           data,
         };
-        if (TERMINAL_EVENT_TYPES.has(type)) terminal = true;
-        await onEvent?.(event);
         controller.enqueue(encoder.encode(`${JSON.stringify(event)}\n`));
+        if (TERMINAL_EVENT_TYPES.has(type)) terminal = true;
+        await notify(event);
       };
 
       void (async () => {
@@ -193,6 +197,10 @@ export function createRunEventStream({
 
           const stream = await source();
           sourceReader = stream.getReader();
+          cancelSource = () => {
+            void sourceReader?.cancel(signal.reason).catch(() => undefined);
+          };
+          signal.addEventListener('abort', cancelSource, { once: true });
           while (!terminal) {
             if (signal.aborted) {
               await sourceReader.cancel(signal.reason).catch(() => undefined);
@@ -228,6 +236,7 @@ export function createRunEventStream({
             // The consumer may already have cancelled the stream.
           }
         } finally {
+          if (cancelSource) signal.removeEventListener('abort', cancelSource);
           sourceReader?.releaseLock();
         }
       })();
@@ -237,7 +246,7 @@ export function createRunEventStream({
       await sourceReader?.cancel(reason).catch(() => undefined);
       if (!terminal) {
         terminal = true;
-        await onEvent?.({
+        await notify({
           version: RUN_EVENT_VERSION,
           sequence: ++sequence,
           timestamp: new Date().toISOString(),
