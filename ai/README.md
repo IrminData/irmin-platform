@@ -295,12 +295,12 @@ See [src/services/systemPromptBuilder.ts](src/services/systemPromptBuilder.ts).
 
 ### Title generation service
 
-Creates fallback titles, triggers async updates after assistant responses, validates AI output, and records analytics.
+Creates fallback titles and atomically claims one generation attempt after the first successful response; failed/cancelled runs never trigger titles.
 See [src/services/titleGeneration.ts](src/services/titleGeneration.ts).
 
-## Input Sanitization
+## Input normalization and context trust
 
-`AgentsManager` sanitizes messages before execution, stripping prompt-injection markers, script/command payloads, and zero-width characters while enforcing max length (35,000 characters by default). Empty messages after sanitization raise an error. See [src/utils/sanitization.ts](src/utils/sanitization.ts) for the full rule set.
+User messages retain valid SQL, source code, base64, and role-like text. The runtime applies NFC Unicode and line-ending normalization and rejects content above 35,000 characters instead of truncating it. `ContextAssembler` labels provenance/trust, reserves 25% of each role budget for output and tools, and deterministically summarizes retrieved context. Tool authorization and specialist output validation provide the security boundary.
 
 ## Vector Embeddings & RAG
 
@@ -332,7 +332,7 @@ The agents framework sits atop `InferenceGateway`, `toolsService`, and LangChain
 - `query` – `query` role that validates repository context before SQL generation
 - `scripting` – `scripting` role for Go automation generation
 
-All agents share sanitized inputs, workspace/user validation, persisted conversation history, and analytics logging. Extend the framework via [src/agents/README.md](src/agents/README.md).
+All agents share normalized inputs, workspace/user validation, persisted conversation history, and analytics logging. SQL results require successful execution evidence; Go results are formatted and compiled before acceptance. Extend the framework via [src/agents/README.md](src/agents/README.md).
 
 ## Database
 

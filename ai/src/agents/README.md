@@ -4,7 +4,12 @@ Irmin AI wraps LangChain’s `createAgent` API with workspace-aware validation, 
 
 ## Core pieces
 
-- `AgentsManager` – registers all agents, validates workspace/user context, manages conversations, sanitizes messages, and orchestrates execution
+- `AgentsManager` – registers agents and delegates execution to the deep runtime modules
+- `AgentRunner` – preserves normalized user content, propagates cancellation, and owns successful completion
+- `ContextAssembler` – applies role budgets plus provenance/trust labels
+- `SpecialistRunner` – returns typed SQL, Go, or clarification results after validation
+- `ConversationStore` – owns relational metadata and LangGraph thread lifecycle
+- `ToolCatalog` – selects transport tools by capability rather than literal MCP names in agents
 - `BaseAgent` – shared implementation that builds a LangChain agent, prepares context, and exposes overridable hooks (`getAgentOptions`, `prepareContext`, `execute`)
 - `AgentService` – internal singleton that configures LangGraph’s Postgres saver, invokes/streams agents, and retrieves agent state
 - `InferenceGateway` – resolves a role from the reviewed model profile, installs telemetry, and hides provider/model options from callers
@@ -14,14 +19,14 @@ Irmin AI wraps LangChain’s `createAgent` API with workspace-aware validation, 
 
 1. `AgentsManager.executeAgent` receives an `AgentInput` containing `message`, optional `conversationId`, optional `context`, plus authenticated `workspace` and `user` objects supplied by Fastify middleware.
 2. Existing conversations are validated to ensure they belong to the caller; new conversations are created with fallback titles and stored in Postgres.
-3. Messages are bounded and validated before context assembly.
+3. Messages are NFC/line-ending normalized and bounded without destructive rewriting.
 4. The target `BaseAgent` subclass builds a LangChain agent:
    - Resolves an inference role, middleware, and tool selection via `getAgentOptions`
    - Prepares additional context via `prepareContext`
    - Generates a system prompt using `SystemPromptBuilder`
    - Creates the LangChain agent with the Postgres checkpointer
 5. The agent is invoked or streamed. The resulting content is normalized to `RunEventV1` before it crosses the HTTP boundary.
-6. Conversation metadata (`updatedAt`) is refreshed and async title generation is kicked off for non-streaming responses.
+6. After the first successful response, title generation is atomically claimed once; failed and cancelled runs never trigger it.
 
 ### Streaming responses
 

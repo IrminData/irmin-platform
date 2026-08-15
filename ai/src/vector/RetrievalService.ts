@@ -559,7 +559,8 @@ class RetrievalService {
   private async generateHypotheticalContent(
     query: string,
     collectionName?: string,
-    agentContext?: Record<string, unknown>
+    agentContext?: Record<string, unknown>,
+    signal?: AbortSignal
   ): Promise<string | null> {
     const effectiveCollectionName =
       collectionName || this.defaultCollectionName;
@@ -572,11 +573,7 @@ class RetrievalService {
       effectiveCollectionName,
       async () => {
         const startTime = Date.now();
-        const TIMEOUT_MS = 5000;
-
         try {
-          const llm = inferenceGateway.modelFor('hyde');
-
           // Select domain-specific prompt based on collection name
           const basePrompt =
             HYDE_PROMPTS[collectionName ?? ''] || HYDE_PROMPTS.default;
@@ -595,8 +592,9 @@ class RetrievalService {
 
 Just respond with the hypothetical documentation excerpt, no other text.`;
 
-          const response = await Promise.race([
-            llm.invoke([
+          const response = await inferenceGateway.invoke<{ content: unknown }>(
+            'hyde',
+            [
               {
                 role: 'system',
                 content: systemPrompt,
@@ -605,14 +603,10 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
                 role: 'user',
                 content: query,
               },
-            ]),
-            new Promise<never>((_resolve, reject) =>
-              setTimeout(
-                () => reject(new Error('Hypothetical generation timeout')),
-                TIMEOUT_MS
-              )
-            ),
-          ]);
+            ],
+            undefined,
+            { signal }
+          );
 
           const hypotheticalContent = getContentAsString(
             response.content
@@ -622,7 +616,6 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
           analyticsService.logEvent({
             eventType: 'hypothetical_generation',
             eventData: {
-              query,
               collectionName: effectiveCollectionName,
               processingTimeMs: generationTime,
               promptType: HYDE_PROMPTS[collectionName ?? '']
@@ -638,7 +631,6 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
           analyticsService.logEvent({
             eventType: 'hypothetical_generation_error',
             eventData: {
-              query,
               collectionName: effectiveCollectionName,
               error: error instanceof Error ? error.message : 'Unknown error',
             },
@@ -663,6 +655,7 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
       scoreThreshold?: number;
       includeMetadata?: boolean;
       maxTokens?: number;
+      signal?: AbortSignal;
     } = {},
     agentContext?: Record<string, unknown>
   ): Promise<{
@@ -699,6 +692,7 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
         scoreThreshold = 0.0,
         includeMetadata = false,
         maxTokens = 4000, // Consistent with retrieveContext and API schema default
+        signal,
       } = options;
 
       // Track generation timing
@@ -706,7 +700,8 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
       const hypotheticalContent = await this.generateHypotheticalContent(
         query,
         collectionName,
-        agentContext
+        agentContext,
+        signal
       );
       const generationTimeMs = Date.now() - generationStartTime;
 

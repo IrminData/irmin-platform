@@ -1,16 +1,17 @@
+import { specialistRunner } from '@/agent-runtime/specialistRunner';
+import { toolCatalog } from '@/agent-runtime/toolCatalog';
 import type { ModelRole } from '@/inference';
-import { indexingService, retrievalService } from '@/vector';
-import { collectionService } from '@/vector/vectorCollections';
 import { AgentMiddleware, DynamicStructuredTool } from 'langchain';
 
 import { toolsService } from '@/services/tools';
 
 import { BaseAgent } from '@/agents/base';
-import type { AgentInput } from '@/agents/types';
+import type { AgentInput, AgentResponse } from '@/agents/types';
 
 import { agentConfig } from './config';
 
 export class QueryAgent extends BaseAgent {
+  protected override executionRole: ModelRole = 'query';
   constructor() {
     super(agentConfig);
   }
@@ -31,19 +32,11 @@ export class QueryAgent extends BaseAgent {
       });
       const mcpTools = await toolsService.getTools(mcpClient);
 
-      // Only include the necessary tools
-      const requiredToolNames = [
-        'irmin_list_repositories',
-        'irmin_list_repository_objects',
-        'irmin_list_repository_branches',
-        'irmin_list_repository_tags',
-        'irmin_get_repository_object_schema',
-        'irmin_retrieve_docs_context',
-        'irmin_execute_sql',
-      ];
-      const filteredTools = mcpTools.filter((tool) =>
-        requiredToolNames.includes(tool.name)
-      );
+      const filteredTools = toolCatalog.select(mcpTools, [
+        'repository.read',
+        'documentation.retrieve',
+        'query.execute',
+      ]);
       tools.push(...filteredTools);
     }
 
@@ -54,131 +47,15 @@ export class QueryAgent extends BaseAgent {
     };
   }
 
-  protected async prepareContext(
-    input: AgentInput
-  ): Promise<Record<string, unknown>> {
-    const context: Record<string, unknown> = { ...(input.context || {}) };
-
-    // 1. Prepare non-docs context (connection, workflow, repo, schema, etc.)
-    await this.prepareNonDocsContext(input, context);
-
-    // 2. Prepare Agent Context
-    const agentContext = {
-      agentDescription: this.config.description,
-      agentName: this.config.name,
-      currentSql: input.context?.['current-sql'] as string | undefined,
-    };
-
-    // 3. Retrieve documentation (Irmin Docs & DuckDB Docs)
-    // We try to retrieve DuckDB docs first to generate a SQL-specific hypothetical,
-    // which we then reuse for Irmin docs to save an LLM call.
-    const duckDbCollectionName = 'duckdb-sql-syntax-docs';
-    const irminDocsCollectionName = 'irmin-docs';
-
-    let hypotheticalContent: string | undefined;
-
-    // A. Retrieve DuckDB Docs
-    try {
-      // Check if collection exists
-      const duckDbCollection = await collectionService.getCollectionByName(
-        duckDbCollectionName,
-        undefined,
-        undefined,
-        true // isSystemCollection
-      );
-
-      if (duckDbCollection) {
-        const duckDbCollectionNameValidated =
-          await indexingService.validateCollectionAccess(
-            duckDbCollectionName,
-            true
-          );
-
-        const duckDbResult =
-          await retrievalService.retrieveWithHypotheticalContent(
-            duckDbCollectionNameValidated,
-            input.message,
-            {
-              maxDocuments: 5,
-              scoreThreshold: 0.3,
-              includeMetadata: false,
-              maxTokens: 6000,
-            },
-            agentContext
-          );
-
-        if (duckDbResult.context && duckDbResult.context.trim()) {
-          context.duckdb_documentation = duckDbResult.context;
-        }
-
-        // Capture hypothetical content for reuse
-        if (duckDbResult.usedHypothetical && duckDbResult.hypotheticalContent) {
-          hypotheticalContent = duckDbResult.hypotheticalContent;
-        }
-      } else {
-        console.warn(
-          `Collection '${duckDbCollectionName}' not found. DuckDB documentation context will not be available.`
-        );
-      }
-    } catch (error) {
-      console.warn(
-        `Failed to retrieve DuckDB documentation context: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-    }
-
-    // B. Retrieve Irmin Docs
-    // If we have hypothetical content from DuckDB retrieval, use retrieveContext directly.
-    // Otherwise, use retrieveWithHypotheticalContent.
-    try {
-      const irminCollectionName =
-        await indexingService.validateCollectionAccess(
-          irminDocsCollectionName,
-          true
-        );
-
-      if (hypotheticalContent) {
-        // Reuse hypothetical content
-        const irminResult = await retrievalService.retrieveContext(
-          irminCollectionName,
-          hypotheticalContent,
-          {
-            maxDocuments: 5,
-            scoreThreshold: 0.3,
-            includeMetadata: false,
-            maxTokens: 6000,
-          }
-        );
-
-        if (irminResult.context && irminResult.context.trim()) {
-          context.irmin_documentation = irminResult.context;
-        }
-      } else {
-        // Generate new hypothetical content
-        const irminResult =
-          await retrievalService.retrieveWithHypotheticalContent(
-            irminCollectionName,
-            input.message,
-            {
-              maxDocuments: 5,
-              scoreThreshold: 0.3,
-              includeMetadata: false,
-              maxTokens: 6000,
-            },
-            agentContext
-          );
-
-        if (irminResult.context && irminResult.context.trim()) {
-          context.irmin_documentation = irminResult.context;
-        }
-      }
-    } catch (error) {
-      console.warn(
-        `Failed to retrieve Irmin documentation context: ${error instanceof Error ? error.message : 'Unknown error'}`
-      );
-    }
-
-    return context;
-  }
-
   // Uses base execute() - non-streaming
+  override async execute(
+    input: AgentInput,
+    conversationId: string
+  ): Promise<AgentResponse> {
+    const response = await super.execute(input, conversationId);
+    return {
+      ...response,
+      specialistResult: specialistRunner.acceptSql(response),
+    };
+  }
 }

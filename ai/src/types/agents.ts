@@ -3,7 +3,10 @@ import { z } from 'zod';
 
 // Agent request schema
 export const AgentRequestSchema = z.object({
-  message: z.string().trim().min(1, 'Message cannot be empty'),
+  message: z
+    .string()
+    .max(35_000, 'Message exceeds the 35000 character limit')
+    .refine((message) => message.trim().length > 0, 'Message cannot be empty'),
   context: z.record(z.string(), z.unknown()).optional(),
   conversationId: z.string().optional(),
 });
@@ -13,6 +16,13 @@ export const AgentResponseSchema = z.object({
   messages: z.array(z.custom<StoredMessage>()).optional(),
   conversationId: z.string().optional(),
   metadata: z.record(z.string(), z.unknown()).optional(),
+  specialistResult: z
+    .discriminatedUnion('kind', [
+      z.object({ kind: z.literal('sql'), sql: z.string() }),
+      z.object({ kind: z.literal('go'), code: z.string() }),
+      z.object({ kind: z.literal('clarification'), message: z.string() }),
+    ])
+    .optional(),
 });
 
 // Context requirement schema

@@ -1,6 +1,6 @@
 {
-  "id": "59c4ee23-e97b-4d31-a53f-c03722a616f4",
-  "prevId": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+  "id": "bb198075-1eed-4a8b-94c0-ff0a74011ccb",
+  "prevId": "59c4ee23-e97b-4d31-a53f-c03722a616f4",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -222,6 +222,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": true
+        },
+        "title_status": {
+          "name": "title_status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'pending'"
         },
         "metadata": {
           "name": "metadata",

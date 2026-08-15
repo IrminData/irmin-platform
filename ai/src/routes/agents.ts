@@ -6,6 +6,7 @@ import { eq } from 'drizzle-orm';
 import { FastifyInstance } from 'fastify';
 import { ulid } from 'ulid';
 
+import { titleGenerationService } from '@/services/titleGeneration';
 import { reportAIUsage } from '@/services/usageReporter';
 
 import type { AgentInput } from '@/agents/types';
@@ -246,6 +247,7 @@ export async function agentRoutes(fastify: FastifyInstance) {
       });
 
       let firstTokenRecorded = false;
+      let assistantText = '';
       const runStream = createRunEventStream({
         runId,
         agentId,
@@ -267,6 +269,10 @@ export async function agentRoutes(fastify: FastifyInstance) {
           return response.agentResponse.stream;
         },
         onEvent: async (event) => {
+          if (event.type === 'message.delta') {
+            const delta = (event.data as { delta?: unknown }).delta;
+            if (typeof delta === 'string') assistantText += delta;
+          }
           if (event.type === 'message.delta' && !firstTokenRecorded) {
             firstTokenRecorded = true;
             await db
@@ -313,6 +319,17 @@ export async function agentRoutes(fastify: FastifyInstance) {
                 updatedAt: new Date(),
               })
               .where(eq(modelRuns.runId, runId));
+            if (event.type === 'run.completed') {
+              await titleGenerationService.updateConversationTitleIfNeeded(
+                conversation.id,
+                {
+                  message: agentRequest.message,
+                  aiResponse: assistantText,
+                  user: authContext.user,
+                  workspace: workspaceContext.workspace,
+                }
+              );
+            }
           }
         },
       });

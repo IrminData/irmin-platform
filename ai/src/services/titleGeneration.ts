@@ -1,6 +1,6 @@
 import { conversations, db } from '@/database';
 import { inferenceGateway } from '@/inference';
-import { eq } from 'drizzle-orm';
+import { and, eq } from 'drizzle-orm';
 
 import { getContentAsString } from '@/utils/getContentAsString';
 
@@ -56,8 +56,6 @@ Examples:
 - Title: "Workflow Creation Help"
 
 Return only the title, nothing else.`;
-  private readonly TITLE_GENERATION_TIMEOUT_MS = 15000;
-
   constructor() {
     // No need for any initialization
   }
@@ -84,20 +82,15 @@ Return only the title, nothing else.`;
         titlePrompt += `\n\nAI response: "${truncatedResponse}"`;
       }
 
-      const llm = inferenceGateway.modelFor('title', {
-        workspaceSlug: options.workspace.slug,
-        conversationId: options.conversationId,
-        userId: options.user.id,
-      });
-
       const logPrefix = options.conversationId
         ? `[TitleGeneration][conversation=${options.conversationId}]`
         : '[TitleGeneration][conversation=new]';
 
       console.log(`${logPrefix} Generating title...`);
 
-      const response = await Promise.race([
-        llm.invoke([
+      const response = await inferenceGateway.invoke<{ content: unknown }>(
+        'title',
+        [
           {
             role: 'system',
             content: this.titleGenerationSystemPrompt,
@@ -106,14 +99,14 @@ Return only the title, nothing else.`;
             role: 'user',
             content: titlePrompt,
           },
-        ]),
-        new Promise<never>((_resolve, reject) =>
-          setTimeout(
-            () => reject(new Error('Hypothetical generation timeout')),
-            this.TITLE_GENERATION_TIMEOUT_MS
-          )
-        ),
-      ]);
+        ],
+        undefined,
+        {
+          workspaceSlug: options.workspace.slug,
+          conversationId: options.conversationId,
+          userId: options.user.id,
+        }
+      );
 
       let generatedTitle = getContentAsString(response.content).trim();
 
@@ -169,34 +162,19 @@ Return only the title, nothing else.`;
     options: Omit<TitleGenerationOptions, 'conversationId'>
   ): Promise<boolean> {
     try {
-      // Get the current conversation
-      const conversation = await db
-        .select()
-        .from(conversations)
-        .where(eq(conversations.id, conversationId))
-        .limit(1);
+      const claimed = await db
+        .update(conversations)
+        .set({ titleStatus: 'generating', updatedAt: new Date() })
+        .where(
+          and(
+            eq(conversations.id, conversationId),
+            eq(conversations.titleStatus, 'pending')
+          )
+        )
+        .returning({ title: conversations.title });
+      if (!claimed.length) return false;
 
-      if (!conversation.length) {
-        console.log(
-          `[TitleGeneration] ❌ Conversation ${conversationId} not found`
-        );
-        return false;
-      }
-
-      const currentTitle = conversation[0].title;
-      console.log(`[TitleGeneration] Current title: "${currentTitle}"`);
-
-      // Check if the title looks like a fallback/default title
-      if (!this.shouldUpdateTitle(currentTitle)) {
-        console.log(
-          `[TitleGeneration] ✅ Title "${currentTitle}" doesn't need updating`
-        );
-        return false;
-      }
-
-      console.log(
-        `[TitleGeneration] 🔄 Title "${currentTitle}" needs updating, generating new title...`
-      );
+      const currentTitle = claimed[0].title;
 
       // Generate new title
       const result = await this.generateTitle({
@@ -214,6 +192,7 @@ Return only the title, nothing else.`;
           .update(conversations)
           .set({
             title: result.title,
+            titleStatus: 'generated',
             updatedAt: new Date(),
           })
           .where(eq(conversations.id, conversationId));
@@ -232,9 +211,10 @@ Return only the title, nothing else.`;
 
         return true;
       } else {
-        console.log(
-          `[TitleGeneration] ❌ Title generation failed, keeping current title: "${currentTitle}"`
-        );
+        await db
+          .update(conversations)
+          .set({ titleStatus: 'failed', updatedAt: new Date() })
+          .where(eq(conversations.id, conversationId));
       }
 
       return false;
@@ -258,73 +238,6 @@ Return only the title, nothing else.`;
       minute: '2-digit',
     });
     return `untitled - ${timestamp}`;
-  }
-
-  /**
-   * Updates a conversation title using the user's message and optionally the AI's response
-   * This should be called after the AI has responded to get a better title
-   */
-  async updateTitle(
-    conversationId: string,
-    userMessage: string,
-    options: Omit<
-      TitleGenerationOptions,
-      'message' | 'conversationId' | 'aiResponse'
-    >,
-    aiResponse?: string
-  ): Promise<boolean> {
-    try {
-      const hasAIResponse = Boolean(aiResponse);
-      console.log(
-        `[TitleGeneration][conversation=${conversationId}] Updating title (hasAIResponse=${hasAIResponse})`
-      );
-
-      const result = await this.generateTitle({
-        message: userMessage,
-        aiResponse,
-        conversationId,
-        ...options,
-      });
-
-      if (result.generated) {
-        // Update the conversation title
-        await db
-          .update(conversations)
-          .set({
-            title: result.title,
-            updatedAt: new Date(),
-          })
-          .where(eq(conversations.id, conversationId));
-
-        // Log analytics for successful title update
-        analyticsService.logEvent({
-          eventType: 'conversation_updated',
-          conversationId,
-          eventData: {
-            titleUpdated: true,
-            newTitle: result.title,
-            withAIResponse: aiResponse ? true : false,
-          },
-        });
-
-        console.log(
-          `[TitleGeneration][conversation=${conversationId}] ✅ Title updated to "${result.title}"`
-        );
-
-        return true;
-      } else {
-        console.warn(
-          `[TitleGeneration][conversation=${conversationId}] ⚠️ Title generation returned fallback`
-        );
-        return false;
-      }
-    } catch (error) {
-      console.error(
-        `[TitleGeneration] ❌ Failed to update title without AI response for conversation ${conversationId}:`,
-        error
-      );
-      return false;
-    }
   }
 
   /**
@@ -368,41 +281,6 @@ Return only the title, nothing else.`;
     ];
 
     return !invalidPatterns.some((pattern) => lowerTitle.includes(pattern));
-  }
-
-  /**
-   * Determines if a conversation title should be updated
-   */
-  private shouldUpdateTitle(currentTitle: string): boolean {
-    if (!currentTitle) {
-      return true;
-    }
-
-    const lowerTitle = currentTitle.toLowerCase();
-
-    // Check if title starts with common fallback patterns
-    const fallbackPrefixes = [
-      'untitled',
-      'new conversation',
-      'query generation:',
-      'script generation:',
-    ];
-
-    const isFallback = fallbackPrefixes.some((prefix) =>
-      lowerTitle.startsWith(prefix)
-    );
-
-    // Additional check: if title is very long (>50 chars) or ends with "...", it might be a truncated user message
-    const isLikelyUserMessage =
-      currentTitle.length > 50 || currentTitle.endsWith('...');
-
-    const shouldUpdate = isFallback || isLikelyUserMessage;
-
-    console.log(
-      `[TitleGeneration] Title "${currentTitle}" - isFallback: ${isFallback}, isLikelyUserMessage: ${isLikelyUserMessage}, shouldUpdate: ${shouldUpdate}`
-    );
-
-    return shouldUpdate;
   }
 }
 

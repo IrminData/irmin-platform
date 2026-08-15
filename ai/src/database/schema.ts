@@ -19,6 +19,7 @@ export const conversations = pgTable(
       .primaryKey()
       .$defaultFn(() => ulid()),
     title: text('title').notNull(),
+    titleStatus: text('title_status').notNull().default('pending'),
     metadata: jsonb('metadata').default({}),
     context: jsonb('context').default({}),
 

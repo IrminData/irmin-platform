@@ -14,6 +14,21 @@ async function readEvents(stream: ReadableStream<Uint8Array>) {
 }
 
 describe('RunEventV1', () => {
+  it('emits only curated progress text for workflow phases', () => {
+    assert.deepEqual(
+      normalizeLangChainEvent({
+        event: 'on_chat_model_start',
+        data: { input: 'private prompt' },
+      }),
+      [
+        {
+          type: 'reasoning.summary',
+          data: { summary: 'Reviewing context and planning the next step.' },
+        },
+      ]
+    );
+  });
+
   it('never forwards raw reasoning blocks', () => {
     const events = normalizeLangChainEvent({
       event: 'on_chat_model_stream',
@@ -30,6 +45,50 @@ describe('RunEventV1', () => {
     assert.deepEqual(events, [
       { type: 'message.delta', data: { delta: 'Safe answer' } },
     ]);
+  });
+
+  it('filters internal summarization model events', () => {
+    assert.deepEqual(
+      normalizeLangChainEvent({
+        event: 'on_chat_model_stream',
+        metadata: { lc_source: 'summarization' },
+        data: { chunk: { content: 'private conversation summary' } },
+      }),
+      []
+    );
+  });
+
+  it('never forwards raw tool payloads or exact token counts', () => {
+    assert.deepEqual(
+      normalizeLangChainEvent({
+        event: 'on_tool_start',
+        run_id: 'tool-1',
+        name: 'irmin_repository_upload',
+        data: { input: { Authorization: 'secret' } },
+      }).at(-1),
+      {
+        type: 'tool.started',
+        data: {
+          toolCallId: 'tool-1',
+          toolName: 'irmin_repository_upload',
+        },
+      }
+    );
+    assert.deepEqual(
+      normalizeLangChainEvent({
+        event: 'on_chat_model_stream',
+        data: {
+          chunk: {
+            usage_metadata: {
+              input_tokens: 100,
+              output_tokens: 10,
+              total_tokens: 110,
+            },
+          },
+        },
+      }),
+      [{ type: 'usage', data: { reported: true } }]
+    );
   });
 
   it('emits monotonic envelopes and exactly one successful terminal event', async () => {
@@ -83,6 +142,29 @@ describe('RunEventV1', () => {
     );
   });
 
+  it('delivers a terminal event even when persistence fails', async () => {
+    const events = await readEvents(
+      createRunEventStream({
+        runId: 'run-side-effect-failure',
+        agentId: 'assistant',
+        conversationId: 'conversation-4',
+        signal: new AbortController().signal,
+        onEvent: (event) => {
+          if (event.type === 'run.completed') {
+            throw new Error('database unavailable');
+          }
+        },
+        source: async () =>
+          new ReadableStream({
+            start(controller) {
+              controller.close();
+            },
+          }),
+      })
+    );
+    assert.equal(events.at(-1)?.type, 'run.completed');
+  });
+
   it('records cancellation when the downstream consumer disconnects', async () => {
     const controller = new AbortController();
     const recorded: string[] = [];
@@ -105,6 +187,7 @@ describe('RunEventV1', () => {
     const reader = stream.getReader();
     await reader.read();
     await reader.cancel();
+    await Promise.resolve();
 
     assert.equal(recorded.at(-1), 'run.cancelled');
     assert.equal(controller.signal.aborted, true);

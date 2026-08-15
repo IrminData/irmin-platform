@@ -99,9 +99,7 @@
         "ai_models_model_id_unique": {
           "name": "ai_models_model_id_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "model_id"
-          ]
+          "columns": ["model_id"]
         }
       },
       "policies": {},
@@ -188,12 +186,8 @@
           "name": "analytics_conversation_id_conversations_id_fk",
           "tableFrom": "analytics",
           "tableTo": "conversations",
-          "columnsFrom": [
-            "conversation_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["conversation_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -201,12 +195,8 @@
           "name": "analytics_ai_model_id_ai_models_id_fk",
           "tableFrom": "analytics",
           "tableTo": "ai_models",
-          "columnsFrom": [
-            "ai_model_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["ai_model_id"],
+          "columnsTo": ["id"],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -523,9 +513,7 @@
         "vector_collections_name_unique": {
           "name": "vector_collections_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "name"
-          ]
+          "columns": ["name"]
         }
       },
       "policies": {},

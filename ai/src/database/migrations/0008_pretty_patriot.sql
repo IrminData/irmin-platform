@@ -1,0 +1,1 @@
+ALTER TABLE "conversations" ADD COLUMN "title_status" text DEFAULT 'pending' NOT NULL;
