@@ -1,4 +1,3 @@
-import { ChatAnthropic } from '@langchain/anthropic';
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { FakeListChatModel } from '@langchain/core/utils/testing';
 import { ChatOpenRouter } from '@langchain/openrouter';
@@ -20,42 +19,6 @@ interface OpenRouterAdapterOptions {
   siteName: string;
   providerAllowlist: readonly string[];
   reviewedProviders: readonly string[];
-}
-
-interface DirectAnthropicAdapterOptions {
-  apiKey: string;
-}
-
-/** Temporary rollback adapter retained only for the staged OpenRouter rollout. */
-export class DirectAnthropicAdapter implements InferenceAdapter {
-  constructor(private readonly options: DirectAnthropicAdapterOptions) {}
-
-  modelFor(
-    _role: ModelRole,
-    roleProfile: ModelRoleProfile,
-    runContext: InferenceRunContext
-  ): BaseChatModel {
-    const model = roleProfile.primaryModel.replace(/^anthropic\//, '');
-    if (model === roleProfile.primaryModel) {
-      throw new Error(
-        `Direct Anthropic rollback cannot serve ${roleProfile.primaryModel}`
-      );
-    }
-    return new ChatAnthropic({
-      apiKey: this.options.apiKey,
-      model,
-      maxTokens: roleProfile.maxOutputTokens,
-      callbacks: [
-        new InferenceTelemetryCallback(
-          roleProfile.primaryModel,
-          runContext,
-          undefined,
-          [model],
-          'anthropic'
-        ),
-      ],
-    });
-  }
 }
 
 export class OpenRouterAdapter implements InferenceAdapter {

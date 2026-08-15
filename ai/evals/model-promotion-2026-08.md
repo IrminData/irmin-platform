@@ -6,10 +6,9 @@ No cost-optimized candidate is promoted by this change. The default remains
 Claude Sonnet 4.6, routed through OpenRouter. This is the required fallback when
 no candidate has a reviewed result set that clears every promotion gate.
 Profile `irmin-balanced@2026-08-15.2` therefore uses that baseline for every
-role and configures no unevaluated fallback. Direct Anthropic remains only as
-the temporary deterministic-canary baseline and emergency rollback until one
-healthy release after 100% OpenRouter; Groq is removed and direct OpenAI remains
-embeddings-only.
+role and configures no unevaluated fallback. All text and tool inference runs
+through OpenRouter; Groq and direct Anthropic are removed, while direct OpenAI
+remains embeddings-only.
 
 ## Fixed matrix
 
@@ -43,8 +42,6 @@ latency, tokens, and cost—never prompts, responses, reasoning, or tool payload
 
 ## Release status
 
-The inference and evaluation machinery is deployable, but model promotion is
-intentionally still open. Completion requires a credentialed matrix run plus
-the 5%, 25%, and 100% internal release holds documented in
-`../../docs/ai-runtime-operations.md`; source changes alone cannot manufacture that
-production evidence.
+The inference and evaluation machinery is deployed, but model promotion is
+intentionally still open. Completion requires a credentialed matrix run and a
+reviewed profile change; source changes alone cannot manufacture that evidence.

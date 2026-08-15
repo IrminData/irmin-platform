@@ -39,7 +39,7 @@ export interface ModelProfile {
 
 export interface InferenceTelemetry {
   modelCallId: string;
-  backend: 'openrouter' | 'anthropic';
+  backend: 'openrouter';
   requestedModel: string;
   resolvedModel?: string;
   resolvedProvider?: string;

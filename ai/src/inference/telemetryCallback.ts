@@ -31,8 +31,7 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
     private readonly resolveGeneration?: (
       generationId: string
     ) => Promise<ResolvedGenerationUsage | undefined>,
-    private readonly orderedModels: readonly string[] = [requestedModel],
-    private readonly backend: InferenceTelemetry['backend'] = 'openrouter'
+    private readonly orderedModels: readonly string[] = [requestedModel]
   ) {
     super();
   }
@@ -43,7 +42,7 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
     this.firstTokenAt = undefined;
     await this.emit({
       modelCallId: this.modelCallId,
-      backend: this.backend,
+      backend: 'openrouter',
       requestedModel: this.requestedModel,
       status: 'started',
     });
@@ -75,7 +74,7 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
     }
     await this.emit({
       modelCallId: this.modelCallId,
-      backend: this.backend,
+      backend: 'openrouter',
       requestedModel: this.requestedModel,
       resolvedModel:
         resolved?.model ??
@@ -86,9 +85,7 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
         resolved?.provider ??
         (typeof responseMetadata.provider_name === 'string'
           ? responseMetadata.provider_name
-          : this.backend === 'anthropic'
-            ? 'Anthropic Direct'
-            : undefined),
+          : undefined),
       inputTokens:
         resolved?.inputTokens ??
         number(
@@ -123,7 +120,7 @@ export class InferenceTelemetryCallback extends BaseCallbackHandler {
   override async handleLLMError() {
     await this.emit({
       modelCallId: this.modelCallId,
-      backend: this.backend,
+      backend: 'openrouter',
       requestedModel: this.requestedModel,
       latencyMs:
         this.startedAt === undefined ? undefined : Date.now() - this.startedAt,

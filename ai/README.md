@@ -6,7 +6,7 @@ LangChain-powered (Fastify, TypeScript) AI agents API for Irmin with OpenRouter 
 
 ## What it does
 
-- Version-controlled inference roles targeting OpenRouter with reviewed ZDR providers, deterministic canary assignment, a temporary direct-Anthropic rollback, reviewed ordered fallbacks, and exact OpenRouter usage/cost telemetry
+- Version-controlled inference roles targeting OpenRouter exclusively, with reviewed ZDR providers, reviewed ordered fallbacks, and exact OpenRouter usage/cost telemetry
 - Request-scoped MCP tool access pinned to the authenticated request's selected workspace
 - Persisted agent memory via LangGraph Postgres checkpointing to keep multi-turn conversations aligned with the database
 - Versioned `RunEventV1` NDJSON streaming that isolates browsers from LangChain/provider payloads and exposes curated progress instead of raw reasoning
@@ -280,16 +280,11 @@ Live test utilities live in `src/tests/`:
 ### Inference gateway
 
 `InferenceGateway` resolves stable roles from a Git-reviewed profile, selects
-the rollout-assigned backend, applies strict OpenRouter provider/privacy policy,
-and installs prompt-free telemetry callbacks. Callers never supply model IDs or
-provider options. See [src/inference](src/inference) and
-`GET /api/info/model-profile`.
-
-`AI_INFERENCE_BACKEND=canary` assigns the configured percentage to OpenRouter
-by stable workspace/conversation hash and leaves the remainder on the temporary
-direct Anthropic baseline. Use `openrouter` after the rollout or `anthropic`
-only for emergency rollback. Canary and rollback modes require
-`ANTHROPIC_API_KEY`; remove that adapter and key after the healthy 100% release.
+the OpenRouter adapter, applies strict provider/privacy policy, and installs
+prompt-free telemetry callbacks. Callers never supply model IDs or provider
+options. Rollback means reverting the reviewed profile or application release;
+there is no direct provider backend switch. See [src/inference](src/inference)
+and `GET /api/info/model-profile`.
 
 ### MCP (tools) service
 
