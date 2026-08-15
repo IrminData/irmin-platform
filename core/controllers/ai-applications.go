@@ -530,9 +530,9 @@ func (api *APIControllers) AIApplicationToolLogStats(c fiber.Ctx) error {
 	})
 }
 
-// AIApplicationPendingWrites godoc
-// @Summary Get AI application pending writes
-// @Description Get pending write operations awaiting approval for this AI application
+// AIApplicationPendingOperations godoc
+// @Summary Get AI application pending operations
+// @Description Get pending operations awaiting approval for this AI application
 // @Tags ai-applications
 // @Security ApiKeyAuth
 // @Accept json
@@ -541,13 +541,13 @@ func (api *APIControllers) AIApplicationToolLogStats(c fiber.Ctx) error {
 // @Param ai_application_slug path string true "AI application slug"
 // @Param limit query int false "Limit (default 50, max 200)"
 // @Param offset query int false "Offset (default 0)"
-// @Success 200 {object} irminmodels.IrminAPIResponse "Pending writes retrieved successfully"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Pending operations retrieved successfully"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
 // @Failure 404 {object} irminmodels.IrminAPIResponse "AI application not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
-// @Router /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes [get]
-func (api *APIControllers) AIApplicationPendingWrites(c fiber.Ctx) error {
+// @Router /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-operations [get]
+func (api *APIControllers) AIApplicationPendingOperations(c fiber.Ctx) error {
 	_, dict, _, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
 		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
@@ -558,7 +558,7 @@ func (api *APIControllers) AIApplicationPendingWrites(c fiber.Ctx) error {
 	if !ok {
 		return api.handleServiceError(
 			c,
-			"Error getting locals for AIApplicationPendingWrites",
+			"Error getting locals for AIApplicationPendingOperations",
 			services.NewInternalError("error getting locals"),
 			dict,
 		)
@@ -582,41 +582,45 @@ func (api *APIControllers) AIApplicationPendingWrites(c fiber.Ctx) error {
 		offset = 0
 	}
 
-	// Get pending writes (only pending status)
-	status := db.PendingWriteStatusPending
-	pendingWrites, total, dbErr := api.DB.GetPendingWritesByAIApplicationID(aiApplication.ID, &status, limit, offset)
+	// Get pending operations (only pending status)
+	status := db.PendingOperationStatusPending
+	pendingOperations, total, dbErr := api.DB.GetPendingOperationsByAIApplicationID(aiApplication.ID, &status, limit, offset)
 	if dbErr != nil {
 		return api.handleServiceError(
 			c,
-			"Failed to get pending writes",
-			services.NewInternalErrorf("error getting pending writes: %v", dbErr),
+			"Failed to get pending operations",
+			services.NewInternalErrorf("error getting pending operations: %v", dbErr),
 			dict,
 		)
 	}
 
 	// Format the response
-	formattedWrites := make([]fiber.Map, 0, len(pendingWrites))
-	for _, pw := range pendingWrites {
-		pwSqid, encodeErr := api.SQIDManager.Encode("ai_application_pending_writes", uint64(pw.ID))
+	formattedWrites := make([]fiber.Map, 0, len(pendingOperations))
+	for _, pw := range pendingOperations {
+		pwSqid, encodeErr := api.SQIDManager.Encode("ai_application_pending_operations", uint64(pw.ID))
 		if encodeErr != nil {
 			return api.handleServiceError(
 				c,
-				"Failed to encode pending write ID",
-				services.NewInternalErrorf("error encoding pending write ID: %v", encodeErr),
+				"Failed to encode pending operation ID",
+				services.NewInternalErrorf("error encoding pending operation ID: %v", encodeErr),
 				dict,
 			)
 		}
 		entry := fiber.Map{
-			"id":              pwSqid,
-			"repository":      pw.Repository.Slug,
-			"path":            pw.Path,
-			"ref":             pw.Ref,
-			"operation":       pw.Operation,
-			"content_preview": pw.ContentPreview,
-			"patch_json":      pw.PatchJSON,
-			"commit_message":  pw.CommitMessage,
-			"status":          pw.Status,
-			"created_at":      pw.CreatedAt,
+			"id":               pwSqid,
+			"tool_name":        pw.ToolName,
+			"risk":             pw.Risk,
+			"capability":       pw.Capability,
+			"approval_preview": pw.ApprovalPreview,
+			"repository":       pw.Repository.Slug,
+			"path":             pw.Path,
+			"ref":              pw.Ref,
+			"operation":        pw.Operation,
+			"content_preview":  pw.ContentPreview,
+			"patch_json":       pw.PatchJSON,
+			"commit_message":   pw.CommitMessage,
+			"status":           pw.Status,
+			"created_at":       pw.CreatedAt,
 		}
 		if pw.ReviewedBy != nil {
 			if reviewedByResponse, formatErr := formatter.FormatUserResponse(pw.ReviewedBy, api.SQIDManager); formatErr == nil {
@@ -629,31 +633,31 @@ func (api *APIControllers) AIApplicationPendingWrites(c fiber.Ctx) error {
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: fiber.Map{
-			"pending_writes": formattedWrites,
-			"total":          total,
-			"limit":          limit,
-			"offset":         offset,
+			"pending_operations": formattedWrites,
+			"total":              total,
+			"limit":              limit,
+			"offset":             offset,
 		},
 	})
 }
 
-// AIApplicationPendingWriteShow godoc
-// @Summary Get a specific pending write
-// @Description Get details of a specific pending write operation
+// AIApplicationPendingOperationShow godoc
+// @Summary Get a specific pending operation
+// @Description Get details of a specific pending operation
 // @Tags ai-applications
 // @Security ApiKeyAuth
 // @Accept json
 // @Produce json
 // @Param workspace_slug path string true "Workspace slug"
 // @Param ai_application_slug path string true "AI application slug"
-// @Param pending_write path string true "Pending write ID"
-// @Success 200 {object} irminmodels.IrminAPIResponse "Pending write retrieved successfully"
+// @Param pending_operation path string true "Pending operation ID"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Pending operation retrieved successfully"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Not found"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
-// @Router /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write} [get]
-func (api *APIControllers) AIApplicationPendingWriteShow(c fiber.Ctx) error {
+// @Router /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-operations/{pending_operation} [get]
+func (api *APIControllers) AIApplicationPendingOperationShow(c fiber.Ctx) error {
 	_, dict, _, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
 		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
@@ -664,23 +668,23 @@ func (api *APIControllers) AIApplicationPendingWriteShow(c fiber.Ctx) error {
 	if !ok {
 		return api.handleServiceError(
 			c,
-			"Error getting locals for AIApplicationPendingWriteShow",
+			"Error getting locals for AIApplicationPendingOperationShow",
 			services.NewInternalError("error getting locals"),
 			dict,
 		)
 	}
 
-	// Decode pending write ID
-	pendingWriteSqid := c.Params("pending_write")
-	pendingWriteID, decodeErr := api.SQIDManager.Decode("ai_application_pending_writes", pendingWriteSqid)
+	// Decode pending operation ID
+	pendingOperationSqid := c.Params("pending_operation")
+	pendingOperationID, decodeErr := api.SQIDManager.Decode("ai_application_pending_operations", pendingOperationSqid)
 	if decodeErr != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
 			Message: "Invalid ID",
 		})
 	}
 
-	// Get pending write
-	pendingWrite, dbErr := api.DB.GetAIApplicationPendingWriteByID(uint(pendingWriteID))
+	// Get pending operation
+	pendingOperation, dbErr := api.DB.GetAIApplicationPendingOperationByID(uint(pendingOperationID))
 	if dbErr != nil {
 		return c.Status(fiber.StatusNotFound).JSON(irminmodels.IrminAPIResponse{
 			Message: "Resource not found",
@@ -688,29 +692,34 @@ func (api *APIControllers) AIApplicationPendingWriteShow(c fiber.Ctx) error {
 	}
 
 	// Verify it belongs to this AI Application
-	if pendingWrite.AIApplicationID != aiApplication.ID {
+	if pendingOperation.AIApplicationID != aiApplication.ID {
 		return c.Status(fiber.StatusNotFound).JSON(irminmodels.IrminAPIResponse{
 			Message: "Resource not found",
 		})
 	}
 
 	entry := fiber.Map{
-		"id":              pendingWriteSqid,
-		"repository":      pendingWrite.Repository.Slug,
-		"path":            pendingWrite.Path,
-		"ref":             pendingWrite.Ref,
-		"operation":       pendingWrite.Operation,
-		"content_preview": pendingWrite.ContentPreview,
-		"patch_json":      pendingWrite.PatchJSON,
-		"commit_message":  pendingWrite.CommitMessage,
-		"status":          pendingWrite.Status,
-		"created_at":      pendingWrite.CreatedAt,
+		"id":               pendingOperationSqid,
+		"tool_name":        pendingOperation.ToolName,
+		"risk":             pendingOperation.Risk,
+		"capability":       pendingOperation.Capability,
+		"approval_preview": pendingOperation.ApprovalPreview,
+		"repository":       pendingOperation.Repository.Slug,
+		"path":             pendingOperation.Path,
+		"ref":              pendingOperation.Ref,
+		"operation":        pendingOperation.Operation,
+		"content_preview":  pendingOperation.ContentPreview,
+		"patch_json":       pendingOperation.PatchJSON,
+		"commit_message":   pendingOperation.CommitMessage,
+		"status":           pendingOperation.Status,
+		"execution_error":  pendingOperation.ExecutionError,
+		"created_at":       pendingOperation.CreatedAt,
 	}
-	if pendingWrite.ReviewedBy != nil {
-		if reviewedByResponse, formatErr := formatter.FormatUserResponse(pendingWrite.ReviewedBy, api.SQIDManager); formatErr == nil {
+	if pendingOperation.ReviewedBy != nil {
+		if reviewedByResponse, formatErr := formatter.FormatUserResponse(pendingOperation.ReviewedBy, api.SQIDManager); formatErr == nil {
 			entry["reviewed_by"] = reviewedByResponse
 		}
-		entry["reviewed_at"] = pendingWrite.ReviewedAt
+		entry["reviewed_at"] = pendingOperation.ReviewedAt
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
@@ -718,24 +727,24 @@ func (api *APIControllers) AIApplicationPendingWriteShow(c fiber.Ctx) error {
 	})
 }
 
-// AIApplicationPendingWriteApprove godoc
-// @Summary Approve a pending write
-// @Description Approve a pending write operation, executing the write
+// AIApplicationPendingOperationApprove godoc
+// @Summary Approve a pending operation
+// @Description Approve a pending operation, executing the write
 // @Tags ai-applications
 // @Security ApiKeyAuth
 // @Accept json
 // @Produce json
 // @Param workspace_slug path string true "Workspace slug"
 // @Param ai_application_slug path string true "AI application slug"
-// @Param pending_write path string true "Pending write ID"
-// @Success 200 {object} irminmodels.IrminAPIResponse "Pending write approved and executed"
+// @Param pending_operation path string true "Pending operation ID"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Pending operation completed"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Not found"
 // @Failure 409 {object} irminmodels.IrminAPIResponse "Conflict - already processed"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
-// @Router /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}/approve [post]
-func (api *APIControllers) AIApplicationPendingWriteApprove(c fiber.Ctx) error {
+// @Router /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-operations/{pending_operation}/approve [post]
+func (api *APIControllers) AIApplicationPendingOperationApprove(c fiber.Ctx) error {
 	_, dict, user, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
 		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
@@ -746,23 +755,23 @@ func (api *APIControllers) AIApplicationPendingWriteApprove(c fiber.Ctx) error {
 	if !ok {
 		return api.handleServiceError(
 			c,
-			"Error getting locals for AIApplicationPendingWriteApprove",
+			"Error getting locals for AIApplicationPendingOperationApprove",
 			services.NewInternalError("error getting locals"),
 			dict,
 		)
 	}
 
-	// Decode pending write ID
-	pendingWriteSqid := c.Params("pending_write")
-	pendingWriteID, decodeErr := api.SQIDManager.Decode("ai_application_pending_writes", pendingWriteSqid)
+	// Decode pending operation ID
+	pendingOperationSqid := c.Params("pending_operation")
+	pendingOperationID, decodeErr := api.SQIDManager.Decode("ai_application_pending_operations", pendingOperationSqid)
 	if decodeErr != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
 			Message: "Invalid ID",
 		})
 	}
 
-	// Get pending write
-	pendingWrite, dbErr := api.DB.GetAIApplicationPendingWriteByID(uint(pendingWriteID))
+	// Get pending operation
+	pendingOperation, dbErr := api.DB.GetAIApplicationPendingOperationByID(uint(pendingOperationID))
 	if dbErr != nil {
 		return c.Status(fiber.StatusNotFound).JSON(irminmodels.IrminAPIResponse{
 			Message: "Resource not found",
@@ -770,41 +779,41 @@ func (api *APIControllers) AIApplicationPendingWriteApprove(c fiber.Ctx) error {
 	}
 
 	// Verify it belongs to this AI Application
-	if pendingWrite.AIApplicationID != aiApplication.ID {
+	if pendingOperation.AIApplicationID != aiApplication.ID {
 		return c.Status(fiber.StatusNotFound).JSON(irminmodels.IrminAPIResponse{
 			Message: "Resource not found",
 		})
 	}
 
-	// Atomically claim this pending write by updating status from pending to approved
+	// Atomically claim this pending operation before executing it.
 	// This prevents race conditions where concurrent requests could both execute the same write
-	updated, updateErr := api.DB.UpdatePendingWriteStatusAtomic(
-		uint(pendingWriteID),
-		db.PendingWriteStatusPending,
-		db.PendingWriteStatusApproved,
+	updated, updateErr := api.DB.UpdatePendingOperationStatusAtomic(
+		uint(pendingOperationID),
+		db.PendingOperationStatusPending,
+		db.PendingOperationStatusExecuting,
 		&user.ID,
 	)
 	if updateErr != nil {
-		api.Logger.Error("Failed to update pending write status", "error", updateErr)
+		api.Logger.Error("Failed to update pending operation status", "error", updateErr)
 		return c.Status(fiber.StatusInternalServerError).JSON(irminmodels.IrminAPIResponse{
-			Message: "Failed to process pending write",
+			Message: "Failed to process pending operation",
 		})
 	}
 	if !updated {
 		// Status was already changed by another request
 		return c.Status(fiber.StatusConflict).JSON(irminmodels.IrminAPIResponse{
-			Message: "Pending write has already been processed",
+			Message: "Pending operation has already been processed",
 		})
 	}
 
-	// Execute the pending write (status is now safely claimed)
+	// Execute the pending operation (status is now safely claimed)
 	executor := services.NewAIAppToolExecutor(aiApplication, api.Services)
-	result, execErr := executor.ExecutePendingWrite(c.Context(), pendingWrite)
+	result, execErr := executor.ExecutePendingOperation(c.Context(), pendingOperation)
 	if execErr != nil {
-		api.Logger.Error("Failed to execute pending write", "error", execErr)
-		// Revert status and clear review metadata on execution failure
-		if revertErr := api.DB.RevertPendingWriteToPending(uint(pendingWriteID)); revertErr != nil {
-			api.Logger.Error("Failed to revert pending write status", "error", revertErr)
+		api.Logger.Error("Failed to execute pending operation", "error", execErr)
+		// A claimed operation is terminal even on failure, preventing duplicate side effects.
+		if failErr := api.DB.FailPendingOperation(uint(pendingOperationID), execErr.Error()); failErr != nil {
+			api.Logger.Error("Failed to record pending operation failure", "error", failErr)
 		}
 		// Return appropriate status based on error type
 		switch {
@@ -824,17 +833,30 @@ func (api *APIControllers) AIApplicationPendingWriteApprove(c fiber.Ctx) error {
 			})
 		default:
 			return c.Status(fiber.StatusInternalServerError).JSON(irminmodels.IrminAPIResponse{
-				Message: "Failed to execute pending write",
+				Message: "Failed to execute pending operation",
 			})
 		}
 	}
 
+	completed, completeErr := api.DB.UpdatePendingOperationStatusAtomic(
+		uint(pendingOperationID),
+		db.PendingOperationStatusExecuting,
+		db.PendingOperationStatusCompleted,
+		&user.ID,
+	)
+	if completeErr != nil || !completed {
+		api.Logger.Error("Failed to complete pending operation", "error", completeErr)
+		return c.Status(fiber.StatusConflict).JSON(irminmodels.IrminAPIResponse{
+			Message: "Pending operation execution status changed unexpectedly",
+		})
+	}
+
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: fiber.Map{
-			"id":        pendingWriteSqid,
-			"status":    db.PendingWriteStatusApproved,
-			"message":   "Pending write approved and executed",
-			"operation": pendingWrite.Operation,
+			"id":        pendingOperationSqid,
+			"status":    db.PendingOperationStatusCompleted,
+			"message":   "Pending operation completed",
+			"operation": pendingOperation.Operation,
 			"path":      result.Path,
 			"committed": result.Committed,
 			"commit_id": result.CommitID,
@@ -842,24 +864,24 @@ func (api *APIControllers) AIApplicationPendingWriteApprove(c fiber.Ctx) error {
 	})
 }
 
-// AIApplicationPendingWriteReject godoc
-// @Summary Reject a pending write
-// @Description Reject a pending write operation
+// AIApplicationPendingOperationReject godoc
+// @Summary Reject a pending operation
+// @Description Reject a pending operation
 // @Tags ai-applications
 // @Security ApiKeyAuth
 // @Accept json
 // @Produce json
 // @Param workspace_slug path string true "Workspace slug"
 // @Param ai_application_slug path string true "AI application slug"
-// @Param pending_write path string true "Pending write ID"
-// @Success 200 {object} irminmodels.IrminAPIResponse "Pending write rejected"
+// @Param pending_operation path string true "Pending operation ID"
+// @Success 200 {object} irminmodels.IrminAPIResponse "Pending operation rejected"
 // @Failure 401 {object} irminmodels.IrminAPIResponse "Unauthorized - invalid or missing authentication"
 // @Failure 403 {object} irminmodels.IrminAPIResponse "Forbidden - insufficient permissions"
 // @Failure 404 {object} irminmodels.IrminAPIResponse "Not found"
 // @Failure 409 {object} irminmodels.IrminAPIResponse "Conflict - already processed"
 // @Failure 500 {object} irminmodels.IrminAPIResponse "Internal server error"
-// @Router /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}/reject [post]
-func (api *APIControllers) AIApplicationPendingWriteReject(c fiber.Ctx) error {
+// @Router /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-operations/{pending_operation}/reject [post]
+func (api *APIControllers) AIApplicationPendingOperationReject(c fiber.Ctx) error {
 	_, dict, user, _, err := api.validateWorkspaceParams(c)
 	if err != nil {
 		return api.handleServiceError(c, "Error validating workspace parameters", err, dict)
@@ -870,23 +892,23 @@ func (api *APIControllers) AIApplicationPendingWriteReject(c fiber.Ctx) error {
 	if !ok {
 		return api.handleServiceError(
 			c,
-			"Error getting locals for AIApplicationPendingWriteReject",
+			"Error getting locals for AIApplicationPendingOperationReject",
 			services.NewInternalError("error getting locals"),
 			dict,
 		)
 	}
 
-	// Decode pending write ID
-	pendingWriteSqid := c.Params("pending_write")
-	pendingWriteID, decodeErr := api.SQIDManager.Decode("ai_application_pending_writes", pendingWriteSqid)
+	// Decode pending operation ID
+	pendingOperationSqid := c.Params("pending_operation")
+	pendingOperationID, decodeErr := api.SQIDManager.Decode("ai_application_pending_operations", pendingOperationSqid)
 	if decodeErr != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(irminmodels.IrminAPIResponse{
 			Message: "Invalid ID",
 		})
 	}
 
-	// Get pending write
-	pendingWrite, dbErr := api.DB.GetAIApplicationPendingWriteByID(uint(pendingWriteID))
+	// Get pending operation
+	pendingOperation, dbErr := api.DB.GetAIApplicationPendingOperationByID(uint(pendingOperationID))
 	if dbErr != nil {
 		return c.Status(fiber.StatusNotFound).JSON(irminmodels.IrminAPIResponse{
 			Message: "Resource not found",
@@ -894,7 +916,7 @@ func (api *APIControllers) AIApplicationPendingWriteReject(c fiber.Ctx) error {
 	}
 
 	// Verify it belongs to this AI Application
-	if pendingWrite.AIApplicationID != aiApplication.ID {
+	if pendingOperation.AIApplicationID != aiApplication.ID {
 		return c.Status(fiber.StatusNotFound).JSON(irminmodels.IrminAPIResponse{
 			Message: "Resource not found",
 		})
@@ -902,30 +924,30 @@ func (api *APIControllers) AIApplicationPendingWriteReject(c fiber.Ctx) error {
 
 	// Atomically update status from pending to rejected
 	// This prevents race conditions with concurrent approve requests
-	updated, updateErr := api.DB.UpdatePendingWriteStatusAtomic(
-		uint(pendingWriteID),
-		db.PendingWriteStatusPending,
-		db.PendingWriteStatusRejected,
+	updated, updateErr := api.DB.UpdatePendingOperationStatusAtomic(
+		uint(pendingOperationID),
+		db.PendingOperationStatusPending,
+		db.PendingOperationStatusRejected,
 		&user.ID,
 	)
 	if updateErr != nil {
-		api.Logger.Error("Failed to update pending write status", "error", updateErr)
+		api.Logger.Error("Failed to update pending operation status", "error", updateErr)
 		return c.Status(fiber.StatusInternalServerError).JSON(irminmodels.IrminAPIResponse{
-			Message: "Failed to reject pending write",
+			Message: "Failed to reject pending operation",
 		})
 	}
 	if !updated {
 		// Status was already changed by another request (e.g., approved or rejected)
 		return c.Status(fiber.StatusConflict).JSON(irminmodels.IrminAPIResponse{
-			Message: "Pending write has already been processed",
+			Message: "Pending operation has already been processed",
 		})
 	}
 
 	return api.validateAndWriteResponse(c, fiber.StatusOK, irminmodels.IrminAPIResponse{
 		Data: fiber.Map{
-			"id":      pendingWriteSqid,
-			"status":  db.PendingWriteStatusRejected,
-			"message": "Pending write rejected",
+			"id":      pendingOperationSqid,
+			"status":  db.PendingOperationStatusRejected,
+			"message": "Pending operation rejected",
 		},
 	})
 }

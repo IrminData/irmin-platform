@@ -1425,8 +1425,8 @@ definitions:
       origin:
         example: https://app.example.com
         type: string
-      pending_write_id:
-        example: pw_1a2b3c4d
+      pending_operation_id:
+        example: po_1a2b3c4d
         type: string
       protocol:
         example: mcp
@@ -1438,7 +1438,7 @@ definitions:
         example: true
         type: boolean
       tool_name:
-        example: irmin_execute_sql
+        example: irmin_query_execute_sql
         type: string
       tool_type:
         example: builtin
@@ -1504,7 +1504,7 @@ definitions:
         example: 147
         type: integer
       tool_name:
-        example: irmin_execute_sql
+        example: irmin_query_execute_sql
         type: string
     type: object
   irminmodels.AIApplicationWriteConfig:
@@ -5035,11 +5035,11 @@ paths:
       summary: Patch a file with JSON Patch operations
       tags:
       - ai-app-api
-  /ai-app/pending-writes:
+  /ai-app/pending-operations:
     get:
       consumes:
       - application/json
-      description: List all pending write operations awaiting approval
+      description: List all pending operations awaiting approval
       parameters:
       - description: Number of results per page (default 50)
         in: query
@@ -5053,7 +5053,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Pending writes list
+          description: Pending operations list
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "401":
@@ -5066,16 +5066,16 @@ paths:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
       - AIAppAPIKey: []
-      summary: List pending writes
+      summary: List pending operations
       tags:
       - ai-app-api
-  /ai-app/pending-writes/{id}:
+  /ai-app/pending-operations/{id}:
     get:
       consumes:
       - application/json
-      description: Get details of a specific pending write
+      description: Get details of a specific pending operation
       parameters:
-      - description: Pending write ID
+      - description: Pending operation ID
         in: path
         name: id
         required: true
@@ -5084,7 +5084,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Pending write details
+          description: Pending operation details
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "401":
@@ -5092,7 +5092,7 @@ paths:
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "404":
-          description: Pending write not found
+          description: Pending operation not found
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "500":
@@ -5101,18 +5101,18 @@ paths:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
       - AIAppAPIKey: []
-      summary: Get pending write details
+      summary: Get pending operation details
       tags:
       - ai-app-api
-  /ai-app/pending-writes/{id}/approve:
+  /ai-app/pending-operations/{id}/approve:
     post:
       consumes:
       - application/json
-      description: Approval of pending writes is not allowed via the AI App API. Use
-        the workspace API with user authentication to approve writes. This prevents
+      description: Approval of pending operations is not allowed via the AI App API.
+        Use the workspace API with user authentication to approve writes. This prevents
         AI applications from self-approving and preserves RequireApproval human oversight.
       parameters:
-      - description: Pending write ID
+      - description: Pending operation ID
         in: path
         name: id
         required: true
@@ -5130,18 +5130,18 @@ paths:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
       - AIAppAPIKey: []
-      summary: Approve pending write (forbidden)
+      summary: Approve pending operation (forbidden)
       tags:
       - ai-app-api
-  /ai-app/pending-writes/{id}/reject:
+  /ai-app/pending-operations/{id}/reject:
     post:
       consumes:
       - application/json
-      description: Rejection of pending writes is not allowed via the AI App API.
+      description: Rejection of pending operations is not allowed via the AI App API.
         Use the workspace API with user authentication to reject writes. This prevents
         AI applications from self-rejecting and preserves RequireApproval human oversight.
       parameters:
-      - description: Pending write ID
+      - description: Pending operation ID
         in: path
         name: id
         required: true
@@ -5159,7 +5159,7 @@ paths:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
       - AIAppAPIKey: []
-      summary: Reject pending write (forbidden)
+      summary: Reject pending operation (forbidden)
       tags:
       - ai-app-api
   /ai-app/query:
@@ -6827,11 +6827,11 @@ paths:
       summary: Update AI application
       tags:
       - ai-applications
-  /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes:
+  /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-operations:
     get:
       consumes:
       - application/json
-      description: Get pending write operations awaiting approval for this AI application
+      description: Get pending operations awaiting approval for this AI application
       parameters:
       - description: Workspace slug
         in: path
@@ -6855,7 +6855,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: Pending writes retrieved successfully
+          description: Pending operations retrieved successfully
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "401":
@@ -6876,14 +6876,14 @@ paths:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
       - ApiKeyAuth: []
-      summary: Get AI application pending writes
+      summary: Get AI application pending operations
       tags:
       - ai-applications
-  /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}:
+  /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-operations/{pending_operation}:
     get:
       consumes:
       - application/json
-      description: Get details of a specific pending write operation
+      description: Get details of a specific pending operation
       parameters:
       - description: Workspace slug
         in: path
@@ -6895,16 +6895,16 @@ paths:
         name: ai_application_slug
         required: true
         type: string
-      - description: Pending write ID
+      - description: Pending operation ID
         in: path
-        name: pending_write
+        name: pending_operation
         required: true
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Pending write retrieved successfully
+          description: Pending operation retrieved successfully
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "401":
@@ -6925,14 +6925,14 @@ paths:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
       - ApiKeyAuth: []
-      summary: Get a specific pending write
+      summary: Get a specific pending operation
       tags:
       - ai-applications
-  /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}/approve:
+  /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-operations/{pending_operation}/approve:
     post:
       consumes:
       - application/json
-      description: Approve a pending write operation, executing the write
+      description: Approve a pending operation, executing the write
       parameters:
       - description: Workspace slug
         in: path
@@ -6944,16 +6944,16 @@ paths:
         name: ai_application_slug
         required: true
         type: string
-      - description: Pending write ID
+      - description: Pending operation ID
         in: path
-        name: pending_write
+        name: pending_operation
         required: true
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Pending write approved and executed
+          description: Pending operation completed
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "401":
@@ -6978,14 +6978,14 @@ paths:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
       - ApiKeyAuth: []
-      summary: Approve a pending write
+      summary: Approve a pending operation
       tags:
       - ai-applications
-  /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-writes/{pending_write}/reject:
+  /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/pending-operations/{pending_operation}/reject:
     post:
       consumes:
       - application/json
-      description: Reject a pending write operation
+      description: Reject a pending operation
       parameters:
       - description: Workspace slug
         in: path
@@ -6997,16 +6997,16 @@ paths:
         name: ai_application_slug
         required: true
         type: string
-      - description: Pending write ID
+      - description: Pending operation ID
         in: path
-        name: pending_write
+        name: pending_operation
         required: true
         type: string
       produces:
       - application/json
       responses:
         "200":
-          description: Pending write rejected
+          description: Pending operation rejected
           schema:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
         "401":
@@ -7031,7 +7031,7 @@ paths:
             $ref: '#/definitions/irminmodels.IrminAPIResponse'
       security:
       - ApiKeyAuth: []
-      summary: Reject a pending write
+      summary: Reject a pending operation
       tags:
       - ai-applications
   /workspaces/{workspace_slug}/ai-applications/{ai_application_slug}/tool-logs:

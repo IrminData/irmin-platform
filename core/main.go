@@ -561,7 +561,7 @@ func main() {
 	// Mount MCP handlers before API routes so they are matched first
 	// (the /api/v1 group's AuthMiddleware would otherwise intercept /api/v1/ai-app/mcp)
 	mcpserver.RegisterFiber(app, apiServices)
-	mcpserver.RegisterAIAppMCP(app, apiServices)
+	aiAppAuditLogger := mcpserver.RegisterAIAppMCP(app, apiServices)
 
 	// Register routes
 	routes.RegisterAPIRoutes(
@@ -584,6 +584,14 @@ func main() {
 	// using engine.Client (LakeFS, data operations) to fail with context-cancelled.
 	if shutdownErr := app.ShutdownWithTimeout(GracefulShutdownTimeout); shutdownErr != nil {
 		log.Printf("Server forced to shutdown: %v", shutdownErr)
+	}
+	auditDrainCtx, auditDrainCancel := context.WithTimeout(context.Background(), GracefulShutdownTimeout)
+	if auditErr := aiAppAuditLogger.Close(auditDrainCtx); auditErr != nil {
+		log.Printf("AI Application audit log drain failed: %v", auditErr)
+	}
+	auditDrainCancel()
+	if dropped := aiAppAuditLogger.Dropped(); dropped > 0 {
+		log.Printf("AI Application audit log dropped entries: %d", dropped)
 	}
 
 	// Cancel the context to stop orchestrator and background services

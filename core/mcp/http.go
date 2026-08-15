@@ -72,7 +72,7 @@ func wrapWithHTTPAuth(base http.Handler, cfg *authConfig) http.Handler {
 		defer cancel()
 
 		authHeader := r.Header.Get("Authorization")
-		user, err := validateAuthAndGetUser(cfg, authHeader)
+		user, err := validateAuthAndGetUser(ctx, cfg, authHeader)
 		if err != nil {
 			cfg.apiServices.Logger.Warn("MCP auth failed",
 				"error", err,

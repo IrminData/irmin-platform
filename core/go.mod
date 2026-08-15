@@ -12,6 +12,7 @@ require (
 	github.com/gofiber/storage/memory/v2 v2.1.2
 	github.com/gofiber/storage/s3/v2 v2.6.7
 	github.com/golang-jwt/jwt/v5 v5.3.1
+	github.com/google/jsonschema-go v0.4.3
 	github.com/google/uuid v1.6.0
 	github.com/jackc/pgx/v5 v5.10.0
 	github.com/joho/godotenv v1.5.1
@@ -80,7 +81,6 @@ require (
 	github.com/gofiber/schema v1.8.3 // indirect
 	github.com/gofiber/utils/v2 v2.4.1 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
-	github.com/google/jsonschema-go v0.4.3 // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.29.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect

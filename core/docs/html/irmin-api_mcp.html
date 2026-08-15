@@ -16,9 +16,6 @@ const (
 	AIAppMCPServerVersion = "1.0.0"
 )
 const (
-	// MCPProtocolVersion is the Model Context Protocol version used by this server
-	MCPProtocolVersion = "2025-06-18"
-
 	// MCPServerName is the name of the MCP server implementation
 	MCPServerName = "irmin-mcp"
 
@@ -55,6 +52,14 @@ const (
 	HTTPClientTimeout = 10 * time.Second
 )
 
+VARIABLES
+
+var (
+	ErrTransformInputTooLarge  = errors.New("content exceeds the 25 MiB MCP extraction limit")
+	ErrTransformOutputTooLarge = errors.New("extracted content exceeds the 16k-token MCP output limit")
+	ErrUnsupportedBinary       = errors.New("unsupported binary format")
+)
+
 FUNCTIONS
 
 func CreateMCPClientSession(ctx context.Context, apiServices *services.APIServices) (*mcp.ClientSession, error)
@@ -73,10 +78,6 @@ func OriginAllowed(origin string, allowedOrigins []string) bool
     send Origin and remain eligible for bearer authentication. Browser clients
     must match an explicitly configured origin exactly.
 
-func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices)
-    RegisterAIAppMCP mounts the AI Application MCP endpoint. This endpoint is
-    authenticated by AI Application API keys instead of user tokens.
-
 func RegisterFiber(app *fiber.App, apiServices *services.APIServices)
     RegisterFiber mounts the existing MCP HTTP endpoint and the new HTTP-only
     attach endpoint.
@@ -94,6 +95,17 @@ func NewAuditLogger() *AuditLogger
     NewAuditLogger creates an AuditLogger and starts the background drain
     worker.
 
+func RegisterAIAppMCP(app *fiber.App, apiServices *services.APIServices) *AuditLogger
+    RegisterAIAppMCP mounts the AI Application MCP endpoint. This endpoint is
+    authenticated by AI Application API keys instead of user tokens.
+
+func (al *AuditLogger) Close(ctx context.Context) error
+    Close stops accepting entries and waits for the buffered audit log to drain.
+
+func (al *AuditLogger) Dropped() uint64
+    Dropped returns the number of audit entries rejected because the buffer was
+    full or closed.
+
 func (al *AuditLogger) Send(entry auditLogEntry)
     Send enqueues an audit log entry. If the buffer is full the entry is dropped
     and an error is logged.
@@ -105,7 +117,7 @@ type ContentTransformResult struct {
 }
     ContentTransformResult represents the result of content transformation.
 
-func TransformContentForLLM(content []byte, path string) (*ContentTransformResult, error)
+func TransformContentForLLM(ctx context.Context, content []byte, path string) (*ContentTransformResult, error)
     TransformContentForLLM transforms file content into a format suitable for
     LLM consumption. It handles PDFs (extracts text) and tabular files (converts
     to JSON).
@@ -118,15 +130,15 @@ type RequestMetadata struct {
 }
     RequestMetadata contains HTTP request information for audit logging.
 
-func ExtractRequestMetadata(r *http.Request) *RequestMetadata
+func ExtractRequestMetadata(r *http.Request, trustedProxyCIDRs string) *RequestMetadata
     ExtractRequestMetadata extracts request metadata from an HTTP request for
     audit logging.
 
 type WriteAuditInfo struct {
-	Operation      string // "upload", "update", "patch", "commit"
-	TargetPath     string // Unified path that was written to
-	CommitID       string // Commit ID if changes were committed
-	PendingWriteID *uint  // Link to pending write if approval required
+	Operation          string // "upload", "update", "patch", "commit"
+	TargetPath         string // Unified path that was written to
+	CommitID           string // Commit ID if changes were committed
+	PendingOperationID *uint  // Link to pending operation if approval required
 }
     WriteAuditInfo contains write-specific audit information.
 

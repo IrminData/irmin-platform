@@ -71,11 +71,11 @@ func RegisterAPIRoutes(
 	aiAppAPI.Post("/write", apiControllers.AIAppAPIWriteFile)
 	aiAppAPI.Post("/patch", apiControllers.AIAppAPIPatchFile)
 	aiAppAPI.Post("/commit", apiControllers.AIAppAPICommit)
-	// Pending writes routes
-	aiAppAPI.Get("/pending-writes", apiControllers.AIAppAPIListPendingWrites)
-	aiAppAPI.Get("/pending-writes/:id", apiControllers.AIAppAPIGetPendingWrite)
-	aiAppAPI.Post("/pending-writes/:id/approve", apiControllers.AIAppAPIApprovePendingWrite)
-	aiAppAPI.Post("/pending-writes/:id/reject", apiControllers.AIAppAPIRejectPendingWrite)
+	// Pending operations routes
+	aiAppAPI.Get("/pending-operations", apiControllers.AIAppAPIListPendingOperations)
+	aiAppAPI.Get("/pending-operations/:id", apiControllers.AIAppAPIGetPendingOperation)
+	aiAppAPI.Post("/pending-operations/:id/approve", apiControllers.AIAppAPIApprovePendingOperation)
+	aiAppAPI.Post("/pending-operations/:id/reject", apiControllers.AIAppAPIRejectPendingOperation)
 
 	// OAuth callback (public — vendor redirects here after user approval).
 	// No auth middleware: the `state` parameter self-authenticates the flow.
@@ -635,26 +635,26 @@ func RegisterAPIRoutes(
 		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionRead),
 		apiControllers.AIApplicationToolLogStats,
 	)
-	// Pending writes routes (workspace-scoped for console)
+	// Pending operations routes (workspace-scoped for console)
 	aiApplication.Get(
-		"/pending-writes",
+		"/pending-operations",
 		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionRead),
-		apiControllers.AIApplicationPendingWrites,
+		apiControllers.AIApplicationPendingOperations,
 	)
 	aiApplication.Get(
-		"/pending-writes/:pending_write",
+		"/pending-operations/:pending_operation",
 		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionRead),
-		apiControllers.AIApplicationPendingWriteShow,
+		apiControllers.AIApplicationPendingOperationShow,
 	)
 	aiApplication.Post(
-		"/pending-writes/:pending_write/approve",
+		"/pending-operations/:pending_operation/approve",
 		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionUpdate),
-		apiControllers.AIApplicationPendingWriteApprove,
+		apiControllers.AIApplicationPendingOperationApprove,
 	)
 	aiApplication.Post(
-		"/pending-writes/:pending_write/reject",
+		"/pending-operations/:pending_operation/reject",
 		apiMiddlewares.AIApplicationPermissionMiddleware(db.PolicyActionUpdate),
-		apiControllers.AIApplicationPendingWriteReject,
+		apiControllers.AIApplicationPendingOperationReject,
 	)
 
 	// Billing routes (only active when billing is enabled)

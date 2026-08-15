@@ -68,7 +68,7 @@ export class ScriptingAgent extends BaseAgent {
         llmToolSelectorMiddleware({
           model: selectorModel,
           maxTools: 10,
-          alwaysInclude: toolCatalog.namesFor([
+          alwaysInclude: toolCatalog.namesFor(tools, [
             'documentation.retrieve',
             'query.author',
           ]),

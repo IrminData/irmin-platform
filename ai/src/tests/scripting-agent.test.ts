@@ -1,6 +1,6 @@
 // Scripting Agent API test utility for Irmin AI.
 // Mirrors assistant-agent.test.ts but targets the synchronous scripting agent
-// and exercises the query_sql_assistant sub-agent delegation tool.
+// and exercises the irmin_query_author sub-agent delegation tool.
 import type { AgentConfig, TestResults } from './types';
 import {
   BASE_URL,
@@ -110,8 +110,8 @@ async function testBasicScriptGeneration(): Promise<boolean> {
   return false;
 }
 
-// Prompt that should trigger query_sql_assistant. We inspect the response's
-// messages for a tool_call to query_sql_assistant.
+// Prompt that should trigger irmin_query_author. We inspect the response's
+// messages for a tool_call to irmin_query_author.
 async function testSqlDelegation(): Promise<boolean> {
   logTest('SQL Delegation', 'RUNNING');
   const agentRequest = createAgentRequest(
@@ -145,16 +145,16 @@ async function testSqlDelegation(): Promise<boolean> {
     const kwargs = data.kwargs as Record<string, unknown> | undefined;
     const toolCalls = kwargs?.tool_calls as
       Array<{ name?: string }> | undefined;
-    return toolCalls?.some((tc) => tc.name === 'query_sql_assistant') ?? false;
+    return toolCalls?.some((tc) => tc.name === 'irmin_query_author') ?? false;
   });
   if (calledSqlAssistant) {
-    logTest('SQL Delegation', 'PASS', 'query_sql_assistant was invoked');
+    logTest('SQL Delegation', 'PASS', 'irmin_query_author was invoked');
     return true;
   }
   logTest(
     'SQL Delegation',
     'FAIL',
-    'scripting agent did not delegate to query_sql_assistant'
+    'scripting agent did not delegate to irmin_query_author'
   );
   return false;
 }

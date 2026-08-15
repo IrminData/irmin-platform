@@ -3,6 +3,7 @@ package services
 import (
 	"fmt"
 	"irmin-api/db"
+	"irmin-api/toolregistry"
 	"strings"
 )
 
@@ -83,22 +84,22 @@ func generateToolsSection(config db.AIApplicationToolConfig) string {
 	section += "\n### Read Tools\n"
 
 	if config.QueryEnabled {
-		section += "\n- **irmin_execute_sql** - Execute SQL queries on data using DuckDB"
+		section += promptToolLine("irmin_query_execute_sql")
 	}
 	if config.SchemaEnabled {
-		section += "\n- **irmin_get_object_schema** - Get the schema/structure of a data file (columns, types)"
+		section += promptToolLine("irmin_repository_object_schema_get")
 	}
 	if config.ListObjectsEnabled {
-		section += "\n- **irmin_list_objects** - List files and folders at a path (or all data sources if path is empty)"
+		section += promptToolLine("irmin_repository_object_list")
 	}
 	if config.GetContentEnabled {
-		section += "\n- **irmin_get_object_content** - Get the raw content of a file"
+		section += promptToolLine("irmin_repository_object_content_get")
 	}
 	if config.VectorSearchEnabled {
-		section += "\n- **irmin_search_embeddings** - Search for similar content using natural language (searches all embeddings if path is empty)"
+		section += promptToolLine("irmin_embedding_search")
 	}
 	if config.DocsEnabled {
-		section += "\n- **irmin_get_documentation** - Get comprehensive documentation including SQL syntax guide"
+		section += promptToolLine("irmin_documentation_retrieve")
 	}
 
 	// Write tools
@@ -108,7 +109,8 @@ func generateToolsSection(config db.AIApplicationToolConfig) string {
 
 	// Always available
 	section += "\n\n### Utility Tools\n"
-	section += "\n- **irmin_ai_app_info** - Get information about available data sources and tools"
+	section += promptToolLine("irmin_application_info_get")
+	section += promptToolLine("irmin_tool_catalog_list")
 
 	return section
 }
@@ -117,13 +119,13 @@ func generateWriteToolsSubsection(writeConfig *db.AIApplicationWriteConfig) stri
 	section := "\n\n### Write Tools\n"
 
 	if writeConfig.FileUploadEnabled || writeConfig.FileUpdateEnabled {
-		section += "\n- **irmin_write_file** - Write or update a file at a specified path"
+		section += promptToolLine("irmin_repository_object_write")
 	}
 	if writeConfig.PatchEnabled {
-		section += "\n- **irmin_patch_file** - Apply JSON Patch operations to modify structured JSON files"
+		section += promptToolLine("irmin_repository_object_patch")
 	}
 	if !writeConfig.AutoCommit {
-		section += "\n- **irmin_commit** - Commit staged changes (use when auto-commit is disabled)"
+		section += promptToolLine("irmin_repository_commit_create")
 	}
 
 	// Add write behavior notes
@@ -132,7 +134,7 @@ func generateWriteToolsSubsection(writeConfig *db.AIApplicationWriteConfig) stri
 	if writeConfig.AutoCommit {
 		section += "\n- Changes are automatically committed after each write operation"
 	} else {
-		section += "\n- Changes are staged and must be committed using `irmin_commit`"
+		section += "\n- Changes are staged and must be committed using `irmin_repository_commit_create`"
 	}
 
 	if writeConfig.RequireCommitMessage {
@@ -148,6 +150,14 @@ func generateWriteToolsSubsection(writeConfig *db.AIApplicationWriteConfig) stri
 	}
 
 	return section
+}
+
+func promptToolLine(name string) string {
+	descriptor, ok := toolregistry.Published(name)
+	if !ok {
+		return fmt.Sprintf("\n- **%s**", name)
+	}
+	return fmt.Sprintf("\n- **%s** [%s] - %s", descriptor.Name, descriptor.Risk, descriptor.Summary)
 }
 
 func generateSQLSyntaxSection() string {
@@ -204,8 +214,8 @@ SELECT * FROM $["data-source;data.json"] ORDER BY created_at DESC LIMIT 100;
 ### Best Practices
 
 1. Always use LIMIT to avoid returning too much data
-2. Use irmin_get_object_schema first to understand the data structure
-3. Use irmin_list_objects to discover available files`
+2. Use irmin_repository_object_schema_get first to understand the data structure
+3. Use irmin_repository_object_list to discover available files`
 }
 
 func generateVectorSearchSection() string {
@@ -224,7 +234,7 @@ Search for semantically similar content using natural language queries.
 
 1. Start with an empty path to search across all available embeddings
 2. Phrase your query as a natural language question or description
-3. Use irmin_list_objects to find specific embedding files if needed
+3. Use irmin_repository_object_list to find specific embedding files if needed
 4. Use filters to narrow down results by source file or other metadata`
 }
 
@@ -280,7 +290,7 @@ Write operations allow you to modify data files in the configured data sources. 
 
 ### Writing Files
 
-Use **irmin_write_file** to create new files or update existing ones:
+Use **irmin_repository_object_write** to create new files or update existing ones:
 
 ` + "```" + `json
 {
@@ -292,7 +302,7 @@ Use **irmin_write_file** to create new files or update existing ones:
 
 ### Patching JSON Files
 
-Use **irmin_patch_file** to apply partial modifications using JSON Patch operations:
+Use **irmin_repository_object_patch** to apply partial modifications using JSON Patch operations:
 
 ` + "```" + `json
 {
@@ -325,8 +335,8 @@ Supported operations:
 
 ### Best Practices
 
-1. **Read before write**: Use irmin_get_object_content to understand the current state
+1. **Read before write**: Use irmin_repository_object_content_get to understand the current state
 2. **Use descriptive commit messages**: Explain what changed and why
 3. **Prefer patches for small changes**: Use JSON Patch for surgical updates to reduce conflicts
-4. **Check schema first**: Use irmin_get_object_schema to understand the data structure before modifying`
+4. **Check schema first**: Use irmin_repository_object_schema_get to understand the data structure before modifying`
 }

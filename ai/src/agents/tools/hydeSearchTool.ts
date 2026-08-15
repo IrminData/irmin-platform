@@ -21,7 +21,8 @@ export function createHydeSearchTool(
   collectionName: string = 'irmin-docs'
 ): DynamicStructuredTool {
   return new DynamicStructuredTool({
-    name: 'irmin_hyde_search',
+    name: 'irmin_documentation_hyde_search',
+    metadata: { irminCapability: 'documentation.retrieve' },
     description:
       'Enhanced documentation search using AI-generated hypothetical content. ' +
       'Use this when you need higher quality search results for complex technical questions, ' +
@@ -95,7 +96,8 @@ export function createHydeSearchTool(
  */
 export function createDuckDbHydeSearchTool(): DynamicStructuredTool {
   return new DynamicStructuredTool({
-    name: 'irmin_duckdb_hyde_search',
+    name: 'irmin_documentation_duckdb_hyde_search',
+    metadata: { irminCapability: 'documentation.retrieve' },
     description:
       'Enhanced DuckDB SQL documentation search. ' +
       'Use this when you need accurate SQL syntax, function signatures, or query patterns. ' +

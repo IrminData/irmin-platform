@@ -159,8 +159,8 @@ const fi = {
       commitsTitle: 'Committien lataaminen epäonnistui',
       commitsDescription:
         'Commit-historian lataamisessa tapahtui virhe. Yritä päivittää sivu.',
-      pendingWritesTitle: 'Odottavien muutosten lataaminen epäonnistui',
-      pendingWritesDescription:
+      pendingOperationsTitle: 'Odottavien muutosten lataaminen epäonnistui',
+      pendingOperationsDescription:
         'Odottavien muutosten lataamisessa tapahtui virhe. Yritä päivittää sivu.',
       appSettingsTitle: 'Sovelluksen asetusten lataaminen epäonnistui',
       appSettingsDescription:
@@ -195,7 +195,7 @@ const fi = {
       failedToLoadScript: 'Skriptin lataaminen epäonnistui',
       failedToLoadBillingSubscription: 'Tilauksesi lataaminen epäonnistui',
       failedToLoadEmbedding: 'Upotustietojen lataaminen epäonnistui',
-      failedToLoadPendingWrites:
+      failedToLoadPendingOperations:
         'Odottavien kirjoitusten lataaminen epäonnistui',
       failedToLoadTag: 'Tunnisteen lataaminen epäonnistui',
       failedToLoadWorkspace: 'Työtilan lataaminen epäonnistui',
@@ -322,8 +322,8 @@ const fi = {
         deleteAIApplicationFailed: 'AI-sovelluksen poistaminen epäonnistui',
         updateAIApplicationFailed: 'AI-sovelluksen päivittäminen epäonnistui',
         transferAIApplicationFailed: 'AI-sovelluksen siirto epäonnistui',
-        approveWriteFailed: 'Odottavan muutoksen hyväksyminen epäonnistui',
-        rejectWriteFailed: 'Odottavan muutoksen hylkääminen epäonnistui',
+        approveOperationFailed: 'Odottavan muutoksen hyväksyminen epäonnistui',
+        rejectOperationFailed: 'Odottavan muutoksen hylkääminen epäonnistui',
         // Script
         createScriptFailed: 'Skriptin luominen epäonnistui',
         deleteScriptFailed: 'Skriptin poistaminen epäonnistui',
@@ -531,11 +531,11 @@ const fi = {
     writeRequireCommitMessage: 'Vaadi tallennusviesti',
     writeCommitMessagePrefix: 'Tallennusviestin etuliite',
     writeRequireApproval: 'Vaadi ihmisen hyväksyntä',
-    // Pending Writes
-    pendingWritesTitle: 'Odottavat kirjoitukset',
-    pendingWritesDescription:
+    // Pending Operations
+    pendingOperationsTitle: 'Odottavat kirjoitukset',
+    pendingOperationsDescription:
       'Tarkista ja hyväksy AI-agenttien kirjoitusoperaatiot',
-    noPendingWrites: 'Ei odottavia kirjoituksia tarkistettavaksi',
+    noPendingOperations: 'Ei odottavia kirjoituksia tarkistettavaksi',
     howToConnect: 'Kuinka yhdistää',
     howToConnectMcpPrefix: 'Käytä ',
     howToConnectMcpBold: 'MCP-päätepistettä',

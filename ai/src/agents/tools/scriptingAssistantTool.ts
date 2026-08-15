@@ -28,7 +28,8 @@ export function createScriptingAssistantTool(
   user: User
 ): DynamicStructuredTool {
   return new DynamicStructuredTool({
-    name: 'scripting_assistant',
+    name: 'irmin_script_author',
+    metadata: { irminCapability: 'script.author' },
     description:
       'Delegate a Go script authoring task to the dedicated Irmin Scripting ' +
       'expert agent. Use this whenever the user needs a runnable Go script ' +

@@ -3,7 +3,7 @@
 import AIApplicationConnectionDetails from '@/components/ai-application/AIApplicationConnectionDetails';
 import AIApplicationCustomToolsEditor from '@/components/ai-application/AIApplicationCustomToolsEditor';
 import AIApplicationDataSourcesEditor from '@/components/ai-application/AIApplicationDataSourcesEditor';
-import AIApplicationPendingWritesSection from '@/components/ai-application/AIApplicationPendingWritesSection';
+import AIApplicationPendingOperationsSection from '@/components/ai-application/AIApplicationPendingOperationsSection';
 import AIApplicationToolsConfig from '@/components/ai-application/AIApplicationToolsConfig';
 import { ContentWrapper } from '@/components/ui/ContentWrapper';
 import SafeComponent from '@/components/ui/error/SafeComponent';
@@ -49,8 +49,8 @@ const AIApplicationOverviewContent = () => {
         {/* Custom Tools Editor - Full Width */}
         <AIApplicationCustomToolsEditor />
 
-        {/* Pending Writes Section - Only shown when approval is required */}
-        <AIApplicationPendingWritesSection />
+        {/* Pending Operations Section - Only shown when approval is required */}
+        <AIApplicationPendingOperationsSection />
       </div>
     </ContentWrapper>
   );

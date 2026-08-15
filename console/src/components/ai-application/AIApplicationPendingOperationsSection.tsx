@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 
 import {
   TbAlertCircle,
@@ -29,20 +29,20 @@ import SafeComponent from '@/components/ui/error/SafeComponent';
 import { useAIApplicationContext } from '@/context/AIApplicationContext';
 import { useLocale } from '@/context/LocaleContext';
 
-import { useAIApplicationPendingWrites } from '@/hooks/api';
+import { useAIApplicationPendingOperations } from '@/hooks/api';
 import { useResourceAllowed } from '@/hooks/utils';
 
 import { cn } from '@/utils/tw';
 
 import type {
-  AIApplicationPendingWrite,
-  PendingWriteStatus,
+  AIApplicationPendingOperation,
+  PendingOperationStatus,
 } from '@/types/core/AIApplication';
 
 /**
  * Skeleton row for loading state
  */
-const PendingWriteSkeletonRow = () => {
+const PendingOperationSkeletonRow = () => {
   return (
     <div
       className={`
@@ -88,17 +88,17 @@ const PendingWriteSkeletonRow = () => {
 };
 
 /**
- * Component to display a single pending write entry
+ * Component to display a single pending operation entry
  */
-const PendingWriteEntry = memo(function PendingWriteEntry({
-  pendingWrite,
+const PendingOperationEntry = memo(function PendingOperationEntry({
+  pendingOperation,
   locale,
   onApprove,
   onReject,
   isProcessing,
   canEdit,
 }: {
-  pendingWrite: AIApplicationPendingWrite;
+  pendingOperation: AIApplicationPendingOperation;
   locale: string;
   onApprove: (id: string) => void;
   onReject: (id: string) => void;
@@ -106,7 +106,7 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
   canEdit: boolean;
 }) {
   const getOperationIcon = () => {
-    switch (pendingWrite.operation) {
+    switch (pendingOperation.operation) {
       case 'upload':
         return <TbFileUpload size={16} />;
       case 'update':
@@ -118,7 +118,7 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
     }
   };
 
-  const getStatusBadge = (status: PendingWriteStatus) => {
+  const getStatusBadge = (status: PendingOperationStatus) => {
     switch (status) {
       case 'pending':
         return (
@@ -133,7 +133,7 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
             Pending
           </span>
         );
-      case 'approved':
+      case 'completed':
         return (
           <span
             className={`
@@ -143,9 +143,17 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
             `}
           >
             <TbCheck size={12} />
-            Approved
+            Completed
           </span>
         );
+      case 'executing':
+        return (
+          <span className='inline-flex items-center gap-1 rounded-full bg-blue-500/10 px-2 py-0.5 text-xs text-blue-600 dark:text-blue-400'>
+            <TbClock size={12} />
+            Executing
+          </span>
+        );
+      case 'failed':
       case 'rejected':
         return (
           <span
@@ -156,7 +164,7 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
             `}
           >
             <TbX size={12} />
-            Rejected
+            {status === 'failed' ? 'Failed' : 'Rejected'}
           </span>
         );
     }
@@ -169,7 +177,7 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
           flex flex-col gap-3 rounded-lg bg-card/80 p-4 transition-colors
           hover:bg-card
         `,
-        pendingWrite.status === 'pending' && 'border-l-2 border-yellow-500'
+        pendingOperation.status === 'pending' && 'border-l-2 border-yellow-500'
       )}
     >
       <div className='flex items-start justify-between'>
@@ -185,59 +193,60 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
           <div>
             <div className='flex items-center gap-2'>
               <span className='font-medium capitalize'>
-                {pendingWrite.operation}
+                {pendingOperation.operation}
               </span>
-              {getStatusBadge(pendingWrite.status)}
+              {getStatusBadge(pendingOperation.status)}
             </div>
             <div className='mt-1 font-mono text-xs text-muted-foreground'>
-              {pendingWrite.repository}/{pendingWrite.ref}/{pendingWrite.path}
+              {pendingOperation.repository}/{pendingOperation.ref}/
+              {pendingOperation.path}
             </div>
           </div>
         </div>
         <span className='text-xs text-muted-foreground'>
-          {new Date(pendingWrite.created_at).toLocaleString(locale)}
+          {new Date(pendingOperation.created_at).toLocaleString(locale)}
         </span>
       </div>
 
       {/* Commit message */}
       <div className='text-sm text-muted-foreground'>
         <span className='font-medium'>Message:</span>{' '}
-        {pendingWrite.commit_message}
+        {pendingOperation.commit_message}
       </div>
 
       {/* Content preview */}
-      {pendingWrite.content_preview && (
+      {pendingOperation.content_preview && (
         <div
           className={`
             max-h-24 overflow-auto rounded-md bg-muted/50 p-2 font-mono text-xs
           `}
         >
           <pre className='break-all whitespace-pre-wrap'>
-            {pendingWrite.content_preview}
+            {pendingOperation.content_preview}
           </pre>
         </div>
       )}
 
       {/* Patch operations preview */}
-      {pendingWrite.patch_json && (
+      {pendingOperation.patch_json && (
         <div
           className={`
             max-h-24 overflow-auto rounded-md bg-muted/50 p-2 font-mono text-xs
           `}
         >
           <pre className='break-all whitespace-pre-wrap'>
-            {pendingWrite.patch_json}
+            {pendingOperation.patch_json}
           </pre>
         </div>
       )}
 
       {/* Action buttons (only for pending items) */}
-      {pendingWrite.status === 'pending' && (
+      {pendingOperation.status === 'pending' && (
         <div className='flex justify-end gap-2'>
           <Button
             variant='outline'
             size='sm'
-            onClick={() => onReject(pendingWrite.id)}
+            onClick={() => onReject(pendingOperation.id)}
             disabled={!canEdit || isProcessing}
             className={`
               text-red-600
@@ -250,7 +259,7 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
           <Button
             variant='default'
             size='sm'
-            onClick={() => onApprove(pendingWrite.id)}
+            onClick={() => onApprove(pendingOperation.id)}
             disabled={!canEdit || isProcessing}
           >
             <TbCheck size={14} className='mr-1' />
@@ -260,11 +269,11 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
       )}
 
       {/* Review info */}
-      {pendingWrite.reviewed_by && pendingWrite.reviewed_at && (
+      {pendingOperation.reviewed_by && pendingOperation.reviewed_at && (
         <div className='text-xs text-muted-foreground'>
-          Reviewed by {pendingWrite.reviewed_by.first_name}{' '}
-          {pendingWrite.reviewed_by.last_name} on{' '}
-          {new Date(pendingWrite.reviewed_at).toLocaleString(locale)}
+          Reviewed by {pendingOperation.reviewed_by.first_name}{' '}
+          {pendingOperation.reviewed_by.last_name} on{' '}
+          {new Date(pendingOperation.reviewed_at).toLocaleString(locale)}
         </div>
       )}
     </div>
@@ -272,34 +281,34 @@ const PendingWriteEntry = memo(function PendingWriteEntry({
 });
 
 /**
- * AI Application Pending Writes Section
- * Displays pending write operations that require human approval
+ * AI Application Pending Operations Section
+ * Displays pending operations that require human approval
  */
-const AIApplicationPendingWritesSection = () => {
+const AIApplicationPendingOperationsSection = () => {
   return (
     <SafeComponent
       level='section'
-      titleKey='pendingWritesTitle'
-      descriptionKey='pendingWritesDescription'
+      titleKey='pendingOperationsTitle'
+      descriptionKey='pendingOperationsDescription'
     >
-      <AIApplicationPendingWritesSectionContent />
+      <AIApplicationPendingOperationsSectionContent />
     </SafeComponent>
   );
 };
 
-const AIApplicationPendingWritesSectionContent = () => {
+const AIApplicationPendingOperationsSectionContent = () => {
   const { aiApplication } = useAIApplicationContext();
   const { dict, locale } = useLocale();
   const { isResourceAllowed } = useResourceAllowed();
 
-  // Check if user has permission to approve/reject pending writes
+  // Check if user has permission to approve/reject pending operations
   const canEdit = isResourceAllowed(
     'ai_application',
     'update',
     aiApplication.id
   );
 
-  // Check if write approval is enabled (before hook call to prevent unnecessary polling)
+  // Ordinary writes use this setting, while destructive tools can stage operations regardless.
   const writeConfig = aiApplication.tools?.write_config;
   const approvalEnabled = writeConfig?.require_approval ?? false;
 
@@ -308,48 +317,46 @@ const AIApplicationPendingWritesSectionContent = () => {
   const limit = 10;
   const offset = page * limit;
 
-  // Fetch pending writes using the hook with pagination (only when approval is enabled)
-  const { pendingWritesQuery, approveMutation, rejectMutation } =
-    useAIApplicationPendingWrites(aiApplication.id, {
+  // Always check for staged operations because destructive tools require approval independently.
+  const { pendingOperationsQuery, approveMutation, rejectMutation } =
+    useAIApplicationPendingOperations(aiApplication.id, {
       limit,
       offset,
-      enabled: approvalEnabled,
+      enabled: true,
     });
 
-  const pendingWrites = pendingWritesQuery.data?.data?.pending_writes ?? [];
-  const total = pendingWritesQuery.data?.data?.total ?? 0;
-  const isLoading = pendingWritesQuery.isLoading;
-  const isError = pendingWritesQuery.isError;
-  const refetch = pendingWritesQuery.refetch;
+  const pendingOperations =
+    pendingOperationsQuery.data?.data?.pending_operations ?? [];
+  const total = pendingOperationsQuery.data?.data?.total ?? 0;
+  const isLoading = pendingOperationsQuery.isLoading;
+  const isError = pendingOperationsQuery.isError;
+  const refetch = pendingOperationsQuery.refetch;
   const isProcessing = approveMutation.isPending || rejectMutation.isPending;
 
   // Reset page to last valid page when total decreases (e.g., after approving/rejecting items)
   const totalPages = Math.ceil(total / limit);
-  const [prevTotal, setPrevTotal] = useState(total);
-  if (prevTotal !== total) {
-    setPrevTotal(total);
-    // If current page is now out of bounds, reset to last valid page
+  useEffect(() => {
     if (total > 0 && page >= totalPages) {
       setPage(Math.max(0, totalPages - 1));
     }
-  }
+  }, [page, total, totalPages]);
 
   const handleApprove = useCallback(
     async (id: string) => {
-      approveMutation.mutate({ pendingWriteId: id });
+      approveMutation.mutate({ pendingOperationId: id });
     },
     [approveMutation]
   );
 
   const handleReject = useCallback(
     async (id: string) => {
-      rejectMutation.mutate({ pendingWriteId: id });
+      rejectMutation.mutate({ pendingOperationId: id });
     },
     [rejectMutation]
   );
 
-  // Don't show section if approval is not enabled
-  if (!approvalEnabled) {
+  // Avoid an empty card when ordinary-write approval is disabled and nothing is staged.
+  if (!approvalEnabled && !isLoading && total === 0) {
     return null;
   }
 
@@ -359,10 +366,10 @@ const AIApplicationPendingWritesSectionContent = () => {
         <div>
           <CardTitle className='flex items-center gap-2'>
             <TbAlertCircle size={20} />
-            {dict.aiApplication.pendingWritesTitle}
+            {dict.aiApplication.pendingOperationsTitle}
           </CardTitle>
           <CardDescription>
-            {dict.aiApplication.pendingWritesDescription}
+            {dict.aiApplication.pendingOperationsDescription}
           </CardDescription>
         </div>
         <Button
@@ -382,18 +389,18 @@ const AIApplicationPendingWritesSectionContent = () => {
         {isLoading ? (
           <div className='space-y-3'>
             {[...Array(3)].map((_, i) => (
-              <PendingWriteSkeletonRow key={i} />
+              <PendingOperationSkeletonRow key={i} />
             ))}
           </div>
         ) : isError ? (
           <QueryError
-            error={pendingWritesQuery.error}
+            error={pendingOperationsQuery.error}
             onRetry={() => refetch()}
-            title={dict.common.errors.failedToLoadPendingWrites}
+            title={dict.common.errors.failedToLoadPendingOperations}
             description={dict.common.errors.failedToLoadAgain}
             size='sm'
           />
-        ) : pendingWrites.length === 0 ? (
+        ) : pendingOperations.length === 0 ? (
           <div
             className={`
               flex flex-col items-center justify-center py-8
@@ -401,15 +408,15 @@ const AIApplicationPendingWritesSectionContent = () => {
             `}
           >
             <TbCheck size={32} className='mb-2' />
-            <p>{dict.aiApplication.noPendingWrites}</p>
+            <p>{dict.aiApplication.noPendingOperations}</p>
           </div>
         ) : (
           <>
             <div className='space-y-3'>
-              {pendingWrites.map((pw) => (
-                <PendingWriteEntry
+              {pendingOperations.map((pw) => (
+                <PendingOperationEntry
                   key={pw.id}
-                  pendingWrite={pw}
+                  pendingOperation={pw}
                   locale={locale}
                   onApprove={handleApprove}
                   onReject={handleReject}
@@ -453,4 +460,4 @@ const AIApplicationPendingWritesSectionContent = () => {
   );
 };
 
-export default AIApplicationPendingWritesSection;
+export default AIApplicationPendingOperationsSection;

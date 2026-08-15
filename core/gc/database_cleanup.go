@@ -124,7 +124,7 @@ func (c *Collector) cleanupSoftDeletedRecords(ctx context.Context, dryRun bool, 
 	// Junction tables (QueryTag, ScriptTag, etc.) do NOT have gorm.Model.
 	tables := []softDeleteTable{
 		// Leaf-level — no other soft-delete table has an FK pointing to these.
-		{Name: "ai_application_pending_writes", Model: &db.AIApplicationPendingWrite{}},
+		{Name: "ai_application_pending_operations", Model: &db.AIApplicationPendingOperation{}},
 		{Name: "ai_application_tool_logs", Model: &db.AIApplicationToolLog{}},
 		{Name: "ai_application_custom_tools", Model: &db.AIApplicationCustomTool{}},
 		{Name: "ai_application_data_sources", Model: &db.AIApplicationDataSource{}},

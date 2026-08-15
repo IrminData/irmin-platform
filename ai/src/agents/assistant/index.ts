@@ -111,7 +111,7 @@ export class AssistantAgent extends BaseAgent {
       llmToolSelectorMiddleware({
         model: selectorModel,
         maxTools: AssistantAgent.MAX_SELECTED_TOOLS,
-        alwaysInclude: toolCatalog.namesFor([
+        alwaysInclude: toolCatalog.namesFor(tools, [
           'documentation.retrieve',
           'repository.read',
           'query.execute',

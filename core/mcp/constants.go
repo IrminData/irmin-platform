@@ -3,9 +3,6 @@ package mcp
 import "time"
 
 const (
-	// MCPProtocolVersion is the Model Context Protocol version used by this server
-	MCPProtocolVersion = "2025-06-18"
-
 	// MCPServerName is the name of the MCP server implementation
 	MCPServerName = "irmin-mcp"
 

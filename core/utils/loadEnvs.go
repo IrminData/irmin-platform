@@ -22,6 +22,7 @@ type CoreAPIEnv struct {
 	AIServiceSystemToken         string // Key to authenticate system requests to the AI service
 	OpenAIAPIKey                 string // Key to authenticate system requests to the OpenAI API
 	MCPHTTPPath                  string // Mount path for the embedded MCP streamable HTTP endpoint
+	MCPTrustedProxyCIDRs         string // Comma-separated proxy CIDRs allowed to supply forwarded client IP headers
 	OrchestratorEnabled          bool   // Flag to enable the orchestrator
 	SqidAlphabet                 string // Alphabet to use for SQIDs
 	DatabaseConnectionString     string // Postgres DB connection string
@@ -191,6 +192,10 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		return nil, err
 	}
 	mcpHTTPPath, err := getEnv("MCP_HTTP_PATH", false, "/mcp")
+	if err != nil {
+		return nil, err
+	}
+	mcpTrustedProxyCIDRs, err := getEnv("MCP_TRUSTED_PROXY_CIDRS", false, "")
 	if err != nil {
 		return nil, err
 	}
@@ -487,6 +492,7 @@ func LoadEnv() (*CoreAPIEnv, error) {
 		AIServiceSystemToken:         aiServiceSystemToken,
 		OpenAIAPIKey:                 openAIAPIKey,
 		MCPHTTPPath:                  mcpHTTPPath,
+		MCPTrustedProxyCIDRs:         mcpTrustedProxyCIDRs,
 		OrchestratorEnabled:          orchestratorEnabled,
 		SqidAlphabet:                 sqidAlphabet,
 		DatabaseConnectionString:     databaseConnectionString,

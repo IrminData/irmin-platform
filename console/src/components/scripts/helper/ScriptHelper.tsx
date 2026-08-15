@@ -49,7 +49,7 @@ interface ScriptHelperProps {
 /**
  * Side-sheet AI helper for the script editor. Talks to the irmin-ai
  * `scripting` agent which generates Go code and can delegate SQL authoring
- * to the dedicated query agent via its `query_sql_assistant` tool.
+ * to the dedicated query agent via its `irmin_query_author` tool.
  *
  * Mirrors SqlHelper structurally: a sparkle button opens a two-tab sheet
  * (Generate Script + Reference). Chat state is hoisted here so it survives

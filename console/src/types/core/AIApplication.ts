@@ -288,18 +288,27 @@ export interface AIApplicationToolLogStats {
 }
 
 /**
- * Status of a pending write operation
+ * Status of a pending operation
  */
-export type PendingWriteStatus = 'pending' | 'approved' | 'rejected';
+export type PendingOperationStatus =
+  'pending' | 'executing' | 'completed' | 'failed' | 'rejected';
 
 /**
- * Pending write operation awaiting approval
+ * Tool operation awaiting approval
  */
-export interface AIApplicationPendingWrite {
-  /** Pending write ID */
+export interface AIApplicationPendingOperation {
+  /** Pending operation ID */
   id: string;
   /** AI Application ID */
   ai_application_id: string;
+  /** Canonical registry tool name */
+  tool_name: string;
+  /** Registry risk classification */
+  risk: 'read' | 'write' | 'destructive';
+  /** Capability/policy key */
+  capability: string;
+  /** Human-readable description of the proposed action */
+  approval_preview: string;
   /** Repository slug */
   repository: string;
   /** Path within the repository */
@@ -315,11 +324,13 @@ export interface AIApplicationPendingWrite {
   /** Commit message */
   commit_message: string;
   /** Current status */
-  status: PendingWriteStatus;
-  /** User who reviewed the pending write */
+  status: PendingOperationStatus;
+  /** User who reviewed the pending operation */
   reviewed_by?: User;
   /** Timestamp when reviewed */
   reviewed_at?: string;
+  /** Terminal execution error, if approval was claimed but execution failed */
+  execution_error?: string;
   /** Creation timestamp */
   created_at: string;
   /** Last update timestamp */
@@ -327,12 +338,12 @@ export interface AIApplicationPendingWrite {
 }
 
 /**
- * Response for listing pending writes
+ * Response for listing pending operations
  */
-export interface AIApplicationPendingWritesResponse {
-  /** Pending write entries */
-  pending_writes: AIApplicationPendingWrite[];
-  /** Total number of pending writes */
+export interface AIApplicationPendingOperationsResponse {
+  /** Pending operation entries */
+  pending_operations: AIApplicationPendingOperation[];
+  /** Total number of pending operations */
   total: number;
   /** Current limit */
   limit: number;

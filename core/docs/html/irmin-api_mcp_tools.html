@@ -24,6 +24,9 @@ func NewMCPTools(
 	getUser func(ctx context.Context) (*db.User, bool),
 ) *MCPTools
 
+func (mcpTools *MCPTools) Catalog() []toolregistry.Descriptor
+    Catalog returns the deterministic, handler-free tool catalog.
+
 func (mcpTools *MCPTools) RegisterAll()
     RegisterAll registers all tools in this package.
 

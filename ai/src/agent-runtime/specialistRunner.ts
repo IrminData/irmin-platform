@@ -74,9 +74,8 @@ function stripFence(content: string): string {
 
 function hasSuccessfulToolCall(
   messages: BaseMessage[] | undefined,
-  capabilities: Parameters<typeof toolCatalog.namesFor>[0]
+  capabilities: Parameters<typeof toolCatalog.hasCapability>[1]
 ): boolean {
-  const expected = new Set(toolCatalog.namesFor(capabilities));
   return (messages ?? []).some((message) => {
     const candidate = message as BaseMessage & {
       name?: string;
@@ -85,7 +84,7 @@ function hasSuccessfulToolCall(
     return (
       candidate.getType() === 'tool' &&
       typeof candidate.name === 'string' &&
-      expected.has(candidate.name) &&
+      toolCatalog.hasCapability(candidate.name, capabilities) &&
       candidate.status !== 'error'
     );
   });

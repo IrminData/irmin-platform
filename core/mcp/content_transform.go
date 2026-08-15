@@ -5,7 +5,9 @@ import (
 	"context"
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -20,14 +22,24 @@ import (
 
 // File extension constants for content transformation.
 const (
-	extPDF     = ".pdf"
-	extCSV     = ".csv"
-	extTSV     = ".tsv"
-	extParquet = ".parquet"
-	extXLSX    = ".xlsx"
-	extXLS     = ".xls"
-	extXLSM    = ".xlsm"
-	extXLSB    = ".xlsb"
+	extPDF                  = ".pdf"
+	extCSV                  = ".csv"
+	extTSV                  = ".tsv"
+	extParquet              = ".parquet"
+	extXLSX                 = ".xlsx"
+	extXLS                  = ".xls"
+	extXLSM                 = ".xlsm"
+	extXLSB                 = ".xlsb"
+	maxTransformInputBytes  = 25 * 1024 * 1024
+	maxTabularRows          = 1000
+	maxDocumentPages        = 100
+	maxTransformOutputRunes = 16_000 * 4
+)
+
+var (
+	ErrTransformInputTooLarge  = errors.New("content exceeds the 25 MiB MCP extraction limit")
+	ErrTransformOutputTooLarge = errors.New("extracted content exceeds the 16k-token MCP output limit")
+	ErrUnsupportedBinary       = errors.New("unsupported binary format")
 )
 
 // ContentTransformResult represents the result of content transformation.
@@ -39,26 +51,53 @@ type ContentTransformResult struct {
 
 // TransformContentForLLM transforms file content into a format suitable for LLM consumption.
 // It handles PDFs (extracts text) and tabular files (converts to JSON).
-func TransformContentForLLM(content []byte, path string) (*ContentTransformResult, error) {
+func TransformContentForLLM(ctx context.Context, content []byte, path string) (*ContentTransformResult, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if len(content) > maxTransformInputBytes {
+		return nil, ErrTransformInputTooLarge
+	}
 	ext := strings.ToLower(filepath.Ext(path))
 
+	var result *ContentTransformResult
+	var err error
 	switch ext {
 	case extPDF:
-		return transformPDF(content)
+		result, err = transformPDF(content)
 	case extCSV, extTSV:
-		return transformTabular(content, ext, path)
+		result, err = transformTabular(ctx, content, ext, path)
 	case extParquet:
-		return transformParquet(content, path)
+		result, err = transformParquet(ctx, content, path)
 	case extXLSX, extXLS, extXLSM, extXLSB:
-		return transformExcel(content, ext, path)
+		result, err = transformExcel(ctx, content, ext, path)
 	default:
-		// Return original content for text-based files
-		return &ContentTransformResult{
+		if isUnsupportedBinary(content) {
+			return nil, fmt.Errorf("%w: %s", ErrUnsupportedBinary, ext)
+		}
+		result = &ContentTransformResult{
 			Content:  string(content),
 			MimeType: "text/plain",
 			Format:   "original",
-		}, nil
+		}
 	}
+	if err != nil {
+		return nil, err
+	}
+	if len([]rune(result.Content)) > maxTransformOutputRunes {
+		return nil, ErrTransformOutputTooLarge
+	}
+	return result, nil
+}
+
+func isUnsupportedBinary(content []byte) bool {
+	if len(content) == 0 {
+		return false
+	}
+	mimeType := http.DetectContentType(content)
+	return !strings.HasPrefix(mimeType, "text/") &&
+		mimeType != "application/json" &&
+		mimeType != "application/xml"
 }
 
 // IsBinaryFormatSupported checks if the file extension is a supported binary format
@@ -108,6 +147,9 @@ func transformPDF(content []byte) (*ContentTransformResult, error) {
 		return nil, fmt.Errorf("failed to open PDF: %w", err)
 	}
 	defer f.Close()
+	if r.NumPage() > maxDocumentPages {
+		return nil, fmt.Errorf("PDF exceeds the %d-page MCP extraction limit", maxDocumentPages)
+	}
 
 	// Extract plain text from the PDF
 	var buf bytes.Buffer
@@ -136,7 +178,7 @@ func transformPDF(content []byte) (*ContentTransformResult, error) {
 }
 
 // transformTabular converts CSV/TSV content to JSON using DuckDB.
-func transformTabular(content []byte, ext, _ string) (*ContentTransformResult, error) {
+func transformTabular(ctx context.Context, content []byte, ext, _ string) (*ContentTransformResult, error) {
 	// Create a temporary file for the tabular content
 	tempFile, err := os.CreateTemp("", "mcp_tabular_*"+ext)
 	if err != nil {
@@ -162,7 +204,7 @@ func transformTabular(content []byte, ext, _ string) (*ContentTransformResult, e
 	readQuery := buildReadQuery(tempFile.Name(), readOpts)
 
 	// Execute query and convert to JSON
-	jsonContent, err := executeQueryToJSON(readQuery)
+	jsonContent, err := executeQueryToJSON(ctx, readQuery)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert to JSON: %w", err)
 	}
@@ -175,7 +217,7 @@ func transformTabular(content []byte, ext, _ string) (*ContentTransformResult, e
 }
 
 // transformParquet converts Parquet content to JSON using DuckDB.
-func transformParquet(content []byte, _ string) (*ContentTransformResult, error) {
+func transformParquet(ctx context.Context, content []byte, _ string) (*ContentTransformResult, error) {
 	// Create a temporary file for the parquet content
 	tempFile, err := os.CreateTemp("", "mcp_parquet_*.parquet")
 	if err != nil {
@@ -193,10 +235,10 @@ func transformParquet(content []byte, _ string) (*ContentTransformResult, error)
 
 	// Build read query for parquet
 	escapedPath := duckdb.EscapeSQLString(tempFile.Name())
-	readQuery := fmt.Sprintf("SELECT * FROM read_parquet('%s') LIMIT 1000", escapedPath)
+	readQuery := fmt.Sprintf("SELECT * FROM read_parquet('%s') LIMIT %d", escapedPath, maxTabularRows)
 
 	// Execute query and convert to JSON
-	jsonContent, err := executeQueryToJSON(readQuery)
+	jsonContent, err := executeQueryToJSON(ctx, readQuery)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert parquet to JSON: %w", err)
 	}
@@ -209,7 +251,7 @@ func transformParquet(content []byte, _ string) (*ContentTransformResult, error)
 }
 
 // transformExcel converts Excel content to JSON using DuckDB excel extension.
-func transformExcel(content []byte, ext, _ string) (*ContentTransformResult, error) {
+func transformExcel(ctx context.Context, content []byte, ext, _ string) (*ContentTransformResult, error) {
 	// Create a temporary file for the Excel content
 	tempFile, err := os.CreateTemp("", "mcp_excel_*"+ext)
 	if err != nil {
@@ -225,7 +267,7 @@ func transformExcel(content []byte, ext, _ string) (*ContentTransformResult, err
 		return nil, fmt.Errorf("failed to close temp file: %w", closeErr)
 	}
 
-	// Install and load the excel extension, then read the file
+	// Extensions are installed at deployment/build time; requests only load them.
 	escapedPath := duckdb.EscapeSQLString(tempFile.Name())
 
 	// Determine the correct function based on file extension
@@ -233,21 +275,23 @@ func transformExcel(content []byte, ext, _ string) (*ContentTransformResult, err
 	var readQuery string
 	if ext == extXLSX || ext == extXLSM || ext == extXLSB {
 		readQuery = fmt.Sprintf(
-			"INSTALL excel; LOAD excel; SELECT * FROM read_xlsx('%s') LIMIT 1000",
+			"LOAD excel; SELECT * FROM read_xlsx('%s') LIMIT %d",
 			escapedPath,
+			maxTabularRows,
 		)
 	} else {
 		// For older .xls format, try using st_read with spatial extension as fallback
 		readQuery = fmt.Sprintf(
-			"INSTALL spatial; LOAD spatial; SELECT * FROM st_read('%s') LIMIT 1000",
+			"LOAD spatial; SELECT * FROM st_read('%s') LIMIT %d",
 			escapedPath,
+			maxTabularRows,
 		)
 	}
 
 	// Execute query and convert to JSON
-	jsonContent, err := executeQueryToJSON(readQuery)
+	jsonContent, err := executeQueryToJSON(ctx, readQuery)
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert Excel to JSON: %w", err)
+		return nil, fmt.Errorf("%w: failed to convert Excel: %v", ErrUnsupportedBinary, err)
 	}
 
 	return &ContentTransformResult{
@@ -277,13 +321,11 @@ func buildReadQuery(filePath string, opts *duckdb.ReadOptions) string {
 		paramStr = ", " + strings.Join(params, ", ")
 	}
 
-	return fmt.Sprintf("SELECT * FROM %s('%s'%s) LIMIT 1000", opts.ReadFunction, escapedPath, paramStr)
+	return fmt.Sprintf("SELECT * FROM %s('%s'%s) LIMIT %d", opts.ReadFunction, escapedPath, paramStr, maxTabularRows)
 }
 
 // executeQueryToJSON executes a DuckDB query and returns the results as JSON.
-func executeQueryToJSON(query string) (string, error) {
-	ctx := context.Background()
-
+func executeQueryToJSON(ctx context.Context, query string) (string, error) {
 	// Create a minimal in-memory DuckDB connection for local file processing
 	db, err := sql.Open("duckdb", "")
 	if err != nil {
@@ -306,7 +348,7 @@ func executeQueryToJSON(query string) (string, error) {
 
 	// Collect results
 	var results []map[string]any
-	for rows.Next() {
+	for len(results) < maxTabularRows && rows.Next() {
 		// Create a slice of any to hold the row values
 		values := make([]any, len(columns))
 		valuePtrs := make([]any, len(columns))

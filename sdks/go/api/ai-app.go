@@ -271,12 +271,12 @@ type AIAppCommitRequest struct {
 
 // AIAppWriteResult represents the result of a write operation.
 type AIAppWriteResult struct {
-	Path             string  `json:"path"                 example:"/repo-slug/main/data/file.json"`
-	Operation        string  `json:"operation"            example:"upload"`
-	Committed        bool    `json:"committed"            example:"true"`
-	CommitID         *string `json:"commit_id,omitempty"  example:"abc123def456"`
-	PendingID        *string `json:"pending_id,omitempty" example:"pw_1a2b3c4d"`
-	RequiresApproval bool    `json:"requires_approval"    example:"false"`
+	Path               string  `json:"path"                 example:"/repo-slug/main/data/file.json"`
+	Operation          string  `json:"operation"            example:"upload"`
+	Committed          bool    `json:"committed"            example:"true"`
+	CommitID           *string `json:"commit_id,omitempty"  example:"abc123def456"`
+	PendingOperationID *string `json:"pending_operation_id,omitempty" example:"po_1a2b3c4d"`
+	RequiresApproval   bool    `json:"requires_approval"    example:"false"`
 }
 
 // === Write Operation API Methods ===
@@ -341,80 +341,80 @@ func (c *AIAppClient) CommitChanges(
 	return &result, apiResp, nil
 }
 
-// === Pending Writes API Methods ===
+// === Pending Operations API Methods ===
 
-// ListPendingWrites retrieves all pending write operations awaiting approval.
-func (c *AIAppClient) ListPendingWrites(
+// ListPendingOperations retrieves all pending operations awaiting approval.
+func (c *AIAppClient) ListPendingOperations(
 	ctx context.Context,
 	limit, offset int,
-) (*irminmodels.AIApplicationPendingWritesResponse, *irminmodels.IrminAPIResponse, error) {
-	var result irminmodels.AIApplicationPendingWritesResponse
+) (*irminmodels.AIApplicationPendingOperationsResponse, *irminmodels.IrminAPIResponse, error) {
+	var result irminmodels.AIApplicationPendingOperationsResponse
 
-	endpoint := fmt.Sprintf("/v1/ai-app/pending-writes?limit=%d&offset=%d", limit, offset)
-
-	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
-		Method:   http.MethodGet,
-		Endpoint: endpoint,
-	}, &result)
-	if err != nil {
-		return nil, apiResp, fmt.Errorf("list pending writes error: %w", err)
-	}
-	return &result, apiResp, nil
-}
-
-// GetPendingWrite retrieves a specific pending write by ID.
-func (c *AIAppClient) GetPendingWrite(
-	ctx context.Context,
-	pendingWriteID string,
-) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error) {
-	var result irminmodels.AIApplicationPendingWrite
-
-	endpoint := fmt.Sprintf("/v1/ai-app/pending-writes/%s", url.PathEscape(pendingWriteID))
+	endpoint := fmt.Sprintf("/v1/ai-app/pending-operations?limit=%d&offset=%d", limit, offset)
 
 	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
 		Method:   http.MethodGet,
 		Endpoint: endpoint,
 	}, &result)
 	if err != nil {
-		return nil, apiResp, fmt.Errorf("get pending write error: %w", err)
+		return nil, apiResp, fmt.Errorf("list pending operations error: %w", err)
 	}
 	return &result, apiResp, nil
 }
 
-// ApprovePendingWrite approves a pending write operation, executing the write.
-func (c *AIAppClient) ApprovePendingWrite(
+// GetPendingOperation retrieves a specific pending operation by ID.
+func (c *AIAppClient) GetPendingOperation(
 	ctx context.Context,
-	pendingWriteID string,
+	pendingOperationID string,
+) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error) {
+	var result irminmodels.AIApplicationPendingOperation
+
+	endpoint := fmt.Sprintf("/v1/ai-app/pending-operations/%s", url.PathEscape(pendingOperationID))
+
+	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
+		Method:   http.MethodGet,
+		Endpoint: endpoint,
+	}, &result)
+	if err != nil {
+		return nil, apiResp, fmt.Errorf("get pending operation error: %w", err)
+	}
+	return &result, apiResp, nil
+}
+
+// ApprovePendingOperation approves a pending operation, executing the write.
+func (c *AIAppClient) ApprovePendingOperation(
+	ctx context.Context,
+	pendingOperationID string,
 ) (*AIAppWriteResult, *irminmodels.IrminAPIResponse, error) {
 	var result AIAppWriteResult
 
-	endpoint := fmt.Sprintf("/v1/ai-app/pending-writes/%s/approve", url.PathEscape(pendingWriteID))
+	endpoint := fmt.Sprintf("/v1/ai-app/pending-operations/%s/approve", url.PathEscape(pendingOperationID))
 
 	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: endpoint,
 	}, &result)
 	if err != nil {
-		return nil, apiResp, fmt.Errorf("approve pending write error: %w", err)
+		return nil, apiResp, fmt.Errorf("approve pending operation error: %w", err)
 	}
 	return &result, apiResp, nil
 }
 
-// RejectPendingWrite rejects a pending write operation.
-func (c *AIAppClient) RejectPendingWrite(
+// RejectPendingOperation rejects a pending operation.
+func (c *AIAppClient) RejectPendingOperation(
 	ctx context.Context,
-	pendingWriteID string,
-) (*irminmodels.AIApplicationPendingWrite, *irminmodels.IrminAPIResponse, error) {
-	var result irminmodels.AIApplicationPendingWrite
+	pendingOperationID string,
+) (*irminmodels.AIApplicationPendingOperation, *irminmodels.IrminAPIResponse, error) {
+	var result irminmodels.AIApplicationPendingOperation
 
-	endpoint := fmt.Sprintf("/v1/ai-app/pending-writes/%s/reject", url.PathEscape(pendingWriteID))
+	endpoint := fmt.Sprintf("/v1/ai-app/pending-operations/%s/reject", url.PathEscape(pendingOperationID))
 
 	apiResp, err := c.FetchAPI(ctx, AIAppRequestOptions{
 		Method:   http.MethodPost,
 		Endpoint: endpoint,
 	}, &result)
 	if err != nil {
-		return nil, apiResp, fmt.Errorf("reject pending write error: %w", err)
+		return nil, apiResp, fmt.Errorf("reject pending operation error: %w", err)
 	}
 	return &result, apiResp, nil
 }
