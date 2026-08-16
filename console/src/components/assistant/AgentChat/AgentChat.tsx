@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 
 import type { StoredMessage } from '@langchain/core/messages';
 
-import { TbInfoCircle, TbMessageCircle } from 'react-icons/tb';
+import { TbInfoCircle, TbMessageCircle, TbRefresh } from 'react-icons/tb';
 
 import {
   Conversation,
@@ -28,6 +28,7 @@ import {
   Suggestion,
   Suggestions,
 } from '@/components/ui/ai-elements/suggestion';
+import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { LocalizedErrorDisplay } from '@/components/ui/error/CommonErrorDisplay';
 import ListSkeleton from '@/components/ui/loading/ListSkeleton';
@@ -44,6 +45,7 @@ import {
   getMessageContent,
   getMessageId,
   getMessageRole,
+  getMessageRunStatus,
   getMessageType,
 } from './storedMessageHelpers';
 import { StoredMessageMetadata } from './StoredMessageMetadata';
@@ -62,7 +64,8 @@ const createAssistantMessage = (
   content: string,
   parts: ServerStreamEvent[],
   agentId: string,
-  messageId?: string
+  messageId?: string,
+  runStatus?: 'failed' | 'cancelled'
 ): StoredMessage => {
   // Filter out hidden/internal tools when storing
   const toolCalls = parts.filter((p) => {
@@ -96,6 +99,7 @@ const createAssistantMessage = (
         thinkingSteps,
         errors,
         agentName: agentId,
+        runStatus,
       },
     },
   };
@@ -123,6 +127,9 @@ const AgentChat = ({
     null
   );
   const [localMessages, setLocalMessages] = useState<StoredMessage[]>([]);
+  const [failedPrompts, setFailedPrompts] = useState<Record<string, string>>(
+    {}
+  );
 
   // Use extracted hooks
   const streamingState = useStreamingState();
@@ -191,14 +198,16 @@ const AgentChat = ({
     previousConversationIdRef.current = conversationID;
     if (conversationID && previous && conversationID !== previous) {
       setLocalMessages([]);
+      setFailedPrompts({});
     }
     setCurrentConversationId(conversationID || null);
   }, [conversationID]);
 
-  // Handle form submission
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const text = input;
+  const handleSubmitPrompt = async (
+    text: string,
+    appendUser: boolean,
+    requestTimestamp: number
+  ) => {
     if (!text.trim()) return;
 
     let responseConversationId: string | null = null;
@@ -207,27 +216,29 @@ const AgentChat = ({
     let streamedParts: ServerStreamEvent[] = [];
 
     try {
-      setInput('');
+      if (appendUser) setInput('');
       streamingState.setIsStreaming(true);
       streamingState.setStreamingMessage('');
       streamingState.setStreamingParts([]);
-      streamingState.setStreamingMessageId(`temp-${Date.now()}`);
+      streamingState.setStreamingMessageId(`temp-${requestTimestamp}`);
       setPendingUserMessage(null);
 
       requestController = new AbortController();
       streamingState.setAbortController(requestController);
 
-      const userMessage: StoredMessage = {
-        type: 'human',
-        data: {
-          content: text,
-          id: `user-${Date.now()}`,
-          role: undefined,
-          name: undefined,
-          tool_call_id: undefined,
-        },
-      };
-      appendMessage(userMessage);
+      if (appendUser) {
+        const userMessage: StoredMessage = {
+          type: 'human',
+          data: {
+            content: text,
+            id: `user-${requestTimestamp}`,
+            role: undefined,
+            name: undefined,
+            tool_call_id: undefined,
+          },
+        };
+        appendMessage(userMessage);
+      }
 
       const agentRequest = {
         message: text,
@@ -242,6 +253,10 @@ const AgentChat = ({
       });
 
       responseConversationId = response.conversationId || currentConversationId;
+      if (!currentConversationId && response.conversationId) {
+        setCurrentConversationId(response.conversationId);
+        onConversationCreated?.(response.conversationId);
+      }
 
       if (
         response.stream &&
@@ -264,13 +279,20 @@ const AgentChat = ({
           const failure = parts.find((part) => part.type === 'stream-error');
           const error =
             (failure as { error?: string } | undefined)?.error ||
-            dict.assistant.error;
+            dict.assistant.runFailed;
+          const failureMessageId =
+            messageId || `assistant-error-${requestTimestamp}`;
+          setFailedPrompts((current) => ({
+            ...current,
+            [failureMessageId]: text,
+          }));
           appendMessage(
             createAssistantMessage(
-              content || dict.assistant.error,
+              content || dict.assistant.runFailed,
               [...parts, { type: 'error', error }],
               agentId,
-              messageId || `assistant-error-${Date.now()}`
+              failureMessageId,
+              'failed'
             )
           );
           return;
@@ -285,19 +307,17 @@ const AgentChat = ({
         );
         appendMessage(assistantMessage);
       }
-
-      if (!currentConversationId && response.conversationId) {
-        setCurrentConversationId(response.conversationId);
-        if (onConversationCreated) {
-          onConversationCreated(response.conversationId);
-        }
-      }
     } catch (error) {
       if (requestController?.signal.aborted) return;
       console.error('Error sending message:', error);
 
+      const failureMessageId = `assistant-error-${requestTimestamp}`;
+      setFailedPrompts((current) => ({
+        ...current,
+        [failureMessageId]: text,
+      }));
       const errorMessage = createAssistantMessage(
-        streamedContent || dict.assistant.error,
+        streamedContent || dict.assistant.runFailed,
         [
           ...streamedParts.filter(
             (part) => part.type === 'stream-error' || part.type === 'error'
@@ -308,7 +328,8 @@ const AgentChat = ({
           },
         ],
         agentId,
-        `assistant-error-${Date.now()}`
+        failureMessageId,
+        'failed'
       );
       appendMessage(errorMessage);
     } finally {
@@ -330,6 +351,26 @@ const AgentChat = ({
         }, 2000);
       }
     }
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleSubmitPrompt(input, true, e.timeStamp);
+  };
+
+  const handleRetry = async (messageId: string, requestTimestamp: number) => {
+    const prompt = failedPrompts[messageId];
+    if (!prompt) return;
+    setLocalMessages((messages) =>
+      messages.filter((message) => getMessageId(message) !== messageId)
+    );
+    setFailedPrompts((current) => {
+      const next = { ...current };
+      delete next[messageId];
+      return next;
+    });
+    await handleSubmitPrompt(prompt, false, requestTimestamp);
   };
 
   // Handle input changes
@@ -423,35 +464,64 @@ const AgentChat = ({
                 const role = getMessageRole(message);
                 const content = getMessageContent(message);
                 const messageType = getMessageType(message);
+                const runStatus = getMessageRunStatus(message);
 
                 return (
                   <Message key={messageId} from={role}>
-                    <MessageContent>
-                      {/* Render thinking BEFORE content for assistant messages */}
-                      {role === 'assistant' && (
-                        <MessageMetadata
-                          message={message}
-                          agentId={agentId}
-                          section='thinking'
-                        />
+                    <MessageContent
+                      className={
+                        runStatus === 'failed'
+                          ? 'border border-destructive/30 bg-destructive/10'
+                          : undefined
+                      }
+                    >
+                      {runStatus === 'failed' ? (
+                        <div role='alert' className='space-y-3'>
+                          {content !== dict.assistant.runFailed &&
+                            renderMessageContent(content, messageType)}
+                          <p>{dict.assistant.runFailed}</p>
+                          {failedPrompts[messageId] && (
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              icon={<TbRefresh aria-hidden='true' />}
+                              onClick={(event) =>
+                                void handleRetry(messageId, event.timeStamp)
+                              }
+                            >
+                              {dict.assistant.retryResponse}
+                            </Button>
+                          )}
+                        </div>
+                      ) : (
+                        <>
+                          {/* Render thinking BEFORE content for assistant messages */}
+                          {role === 'assistant' && (
+                            <MessageMetadata
+                              message={message}
+                              agentId={agentId}
+                              section='thinking'
+                            />
+                          )}
+
+                          {renderMessageContent(content, messageType)}
+
+                          {/* Render stored message metadata for different message types */}
+                          <StoredMessageMetadata message={message} />
+
+                          {/* Render tools and iterations AFTER content for assistant messages */}
+                          {role === 'assistant' && (
+                            <MessageMetadata
+                              message={message}
+                              agentId={agentId}
+                              section='tools'
+                            />
+                          )}
+
+                          {role === 'assistant' &&
+                            renderMessageActions(messageId, content)}
+                        </>
                       )}
-
-                      {renderMessageContent(content, messageType)}
-
-                      {/* Render stored message metadata for different message types */}
-                      <StoredMessageMetadata message={message} />
-
-                      {/* Render tools and iterations AFTER content for assistant messages */}
-                      {role === 'assistant' && (
-                        <MessageMetadata
-                          message={message}
-                          agentId={agentId}
-                          section='tools'
-                        />
-                      )}
-
-                      {role === 'assistant' &&
-                        renderMessageActions(messageId, content)}
                     </MessageContent>
                   </Message>
                 );

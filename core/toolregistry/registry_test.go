@@ -159,6 +159,21 @@ func TestRegistryDeterministicStrictAndExecutable(t *testing.T) {
 	if string(schemaJSON) == "" || !contains(string(schemaJSON), `"additionalProperties":false`) {
 		t.Fatalf("input schema is not strict: %s", schemaJSON)
 	}
+	outputSchemaJSON, err := json.Marshal(descriptors[0].OutputSchema)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var outputSchema map[string]any
+	if unmarshalErr := json.Unmarshal(outputSchemaJSON, &outputSchema); unmarshalErr != nil {
+		t.Fatal(unmarshalErr)
+	}
+	properties, ok := outputSchema["properties"].(map[string]any)
+	if !ok {
+		t.Fatalf("output schema has no properties object: %s", outputSchemaJSON)
+	}
+	if _, dataSchemaOK := properties["data"].(map[string]any); !dataSchemaOK {
+		t.Fatalf("output data schema must be an object for MCP clients: %s", outputSchemaJSON)
+	}
 	_, output, err := registry.Execute(context.Background(), "irmin_test_echo", nil, json.RawMessage(`{"value":"ok"}`))
 	if err != nil {
 		t.Fatal(err)

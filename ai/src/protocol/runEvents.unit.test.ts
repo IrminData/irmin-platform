@@ -196,6 +196,39 @@ describe('RunEventV1', () => {
     assert.equal(events.at(-1)?.type, 'run.completed');
   });
 
+  it('reports the upstream failure internally while keeping browser data safe', async () => {
+    const failure = new Error('catalog adapter rejected tool schema');
+    let reported: unknown;
+    const events = await readEvents(
+      createRunEventStream({
+        runId: 'run-source-failure',
+        agentId: 'assistant',
+        conversationId: 'conversation-5',
+        signal: new AbortController().signal,
+        onError: (error) => {
+          reported = error;
+        },
+        source: async () => {
+          throw failure;
+        },
+      })
+    );
+
+    assert.equal(reported, failure);
+    assert.deepEqual(events.at(-1), {
+      version: 1,
+      sequence: 2,
+      timestamp: events.at(-1)?.timestamp,
+      runId: 'run-source-failure',
+      type: 'run.failed',
+      data: {
+        message: 'The agent run failed',
+        code: 'internal_error',
+      },
+    });
+    assert.doesNotMatch(JSON.stringify(events), /catalog adapter/);
+  });
+
   it('records cancellation when the downstream consumer disconnects', async () => {
     const controller = new AbortController();
     const recorded: string[] = [];
