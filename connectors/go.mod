@@ -3,12 +3,12 @@ module irmin-connectors
 go 1.26.5
 
 require (
-	github.com/IrminData/irmin-platform/sdks/go v0.1.0
-	github.com/getsentry/sentry-go v0.48.0
-	github.com/go-sql-driver/mysql v1.10.0
-	github.com/gofiber/fiber/v3 v3.4.0
+	github.com/IrminData/irmin-platform/sdks/go v0.1.1
+	github.com/getsentry/sentry-go v0.49.0
+	github.com/go-sql-driver/mysql v1.10.1
+	github.com/gofiber/fiber/v3 v3.5.0
 	github.com/google/uuid v1.6.0
-	github.com/jackc/pgx/v5 v5.10.0
+	github.com/jackc/pgx/v5 v5.11.0
 	github.com/joho/godotenv v1.5.1
 	github.com/mendableai/firecrawl-go v1.0.0
 	github.com/modelcontextprotocol/go-sdk v1.7.0
@@ -16,9 +16,9 @@ require (
 	github.com/pkg/sftp v1.13.11
 	github.com/swaggo/swag v1.16.6
 	github.com/zeebo/assert v1.3.1
-	golang.org/x/crypto v0.54.0
-	golang.org/x/sync v0.22.0
-	google.golang.org/protobuf v1.36.11
+	golang.org/x/crypto v0.56.0
+	golang.org/x/sync v0.23.0
+	google.golang.org/protobuf v1.36.12
 	gorm.io/datatypes v1.2.7
 	gorm.io/driver/postgres v1.6.2
 	gorm.io/gorm v1.31.2
@@ -57,7 +57,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/klauspost/compress v1.19.1 // indirect
+	github.com/klauspost/compress v1.19.2 // indirect
 	github.com/klauspost/cpuid/v2 v2.4.0 // indirect
 	github.com/kr/fs v0.1.0 // indirect
 	github.com/leodido/go-urn v1.5.0 // indirect
@@ -86,7 +86,7 @@ require (
 	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sys v0.47.0 // indirect
-	golang.org/x/text v0.40.0 // indirect
+	golang.org/x/text v0.41.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260729162451-8efbd57d26e0 // indirect
