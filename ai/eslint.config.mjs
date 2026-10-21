@@ -60,30 +60,8 @@ export default tseslint.config(
       'import-x/no-nodejs-modules': 'off', // This is a server, so we need to use nodejs modules
       'import-x/no-cycle': ['warn', { maxDepth: Infinity }],
       'import-x/no-duplicates': 'error',
-      'import-x/no-unused-modules': [
-        'warn',
-        {
-          unusedExports: true,
-          missingExports: true,
-        },
-      ],
-    },
-  },
-  {
-    // Entry points and standalone scripts: not imported anywhere, so
-    // `missingExports: true` and `unusedExports: true` will always fire.
-    // - instrument.ts/server.ts boot the Fastify app
-    // - src/tests/* are standalone tsx scripts (see AGENTS.md "Testing")
-    // - src/vector/index.ts is a barrel re-export consumed externally
-    // - src/scripts/* are CLI scripts
-    files: [
-      'src/instrument.ts',
-      'src/server.ts',
-      'src/tests/**/*.ts',
-      'src/vector/index.ts',
-      'src/scripts/**/*.ts',
-    ],
-    rules: {
+      // ESLint 10 removed FileEnumerator, which import-x/no-unused-modules still
+      // requires. The rule is a no-op until import-x ships an alternative.
       'import-x/no-unused-modules': 'off',
     },
   },
