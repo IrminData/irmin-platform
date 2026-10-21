@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules -- Node test entrypoint. */
 import { AIMessage, ToolMessage } from '@langchain/core/messages';
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
