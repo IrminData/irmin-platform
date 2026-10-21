@@ -271,7 +271,8 @@ class RetrievalService {
         },
       });
       throw new Error(
-        `Failed to search vectors: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to search vectors: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -338,7 +339,8 @@ class RetrievalService {
         },
       });
       throw new Error(
-        `Failed to retrieve with analysis: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to retrieve with analysis: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -420,7 +422,8 @@ class RetrievalService {
         },
       });
       throw new Error(
-        `Failed to retrieve context: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to retrieve context: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -483,7 +486,8 @@ class RetrievalService {
         },
       });
       throw new Error(
-        `Failed to perform multi-query retrieval: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to perform multi-query retrieval: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -544,7 +548,8 @@ class RetrievalService {
         },
       });
       throw new Error(
-        `Failed to perform compressed retrieval: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to perform compressed retrieval: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -783,7 +788,8 @@ Just respond with the hypothetical documentation excerpt, no other text.`;
         },
       });
       throw new Error(
-        `Failed to retrieve context with hypothetical content: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to retrieve context with hypothetical content: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }

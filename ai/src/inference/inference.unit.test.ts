@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules -- Node test entrypoint. */
 import type { BaseChatModel } from '@langchain/core/language_models/chat_models';
 import { ChatOpenRouter } from '@langchain/openrouter';
 import assert from 'node:assert/strict';
