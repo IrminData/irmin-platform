@@ -112,7 +112,7 @@ class IrminCore {
             error instanceof Error && error.name === 'AbortError'
               ? `Irmin API request timeout after ${timeoutMs}ms: ${requestURL}`
               : `Irmin API request failed: ${errorMessage}`;
-          throw new Error(finalError);
+          throw new Error(finalError, { cause: error });
         }
 
         // Wait before retrying (exponential backoff)

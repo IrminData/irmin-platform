@@ -97,7 +97,8 @@ class QdrantService {
       return true;
     } catch (error) {
       throw new Error(
-        `Failed to create collection ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to create collection ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -142,7 +143,8 @@ class QdrantService {
       return true;
     } catch (error) {
       throw new Error(
-        `Failed to delete collection ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to delete collection ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -168,7 +170,8 @@ class QdrantService {
       });
     } catch (error) {
       throw new Error(
-        `Failed to upsert points into ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to upsert points into ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -202,7 +205,8 @@ class QdrantService {
       }));
     } catch (error) {
       throw new Error(
-        `Failed to search in ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to search in ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -243,7 +247,8 @@ class QdrantService {
       };
     } catch (error) {
       throw new Error(
-        `Failed to scroll ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to scroll ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -262,7 +267,8 @@ class QdrantService {
       });
     } catch (error) {
       throw new Error(
-        `Failed to delete points from ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to delete points from ${collectionName}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }

@@ -195,7 +195,8 @@ class IndexingService {
         },
       });
       throw new Error(
-        `Failed to create vector store: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to create vector store: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -302,7 +303,8 @@ class IndexingService {
         },
       });
       throw new Error(
-        `Failed to index documents: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to index documents: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -341,7 +343,8 @@ class IndexingService {
         },
       });
       throw new Error(
-        `Failed to create embeddings: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to create embeddings: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -380,7 +383,8 @@ class IndexingService {
         },
       });
       throw new Error(
-        `Failed to create embedding: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to create embedding: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -446,7 +450,8 @@ class IndexingService {
         },
       });
       throw new Error(
-        `Failed to delete all documents: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to delete all documents: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -516,7 +521,8 @@ class IndexingService {
         },
       });
       throw new Error(
-        `Failed to delete specific chunks: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to delete specific chunks: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -633,7 +639,8 @@ class IndexingService {
         },
       });
       throw new Error(
-        `Failed to delete documents: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to delete documents: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
