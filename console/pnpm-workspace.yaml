@@ -3,7 +3,7 @@ packages:
 
 overrides:
   '@cyntler/react-doc-viewer>ajv': 8.18.0
-  require-in-the-middle: 7.5.2
+  require-in-the-middle: 8.0.1
   import-in-the-middle: 1.14.4
   '@uiw/react-codemirror': 4.25.4
   '@uiw/codemirror-theme-vscode': 4.25.4
