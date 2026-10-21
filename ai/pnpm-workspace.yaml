@@ -3,6 +3,8 @@ packages:
 
 overrides:
   esbuild: 0.28.1
+  hono: 4.13.13
+  proxy-addr: 2.0.8
 
 allowBuilds:
   '@sentry/cli': true

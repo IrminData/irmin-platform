@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules -- Public versioned run protocol contract. */
 export const RUN_EVENT_VERSION = 1 as const;
 
 export type RunEventType =
