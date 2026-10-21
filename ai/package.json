@@ -65,7 +65,7 @@
     "@eslint/js": "^10.0.1",
     "@swc/core": "^1.15.47",
     "@trivago/prettier-plugin-sort-imports": "^6.0.2",
-    "@types/node": "^24.13.3",
+    "@types/node": "^26.1.2",
     "drizzle-kit": "^0.31.10",
     "eslint": "^10.8.1",
     "eslint-config-prettier": "^10.1.8",
