@@ -228,7 +228,8 @@ class CollectionService {
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new Error(
-          `Validation error: ${error.issues.map((e) => e.message).join(', ')}`
+          `Validation error: ${error.issues.map((e) => e.message).join(', ')}`,
+          { cause: error }
         );
       }
       throw error;
@@ -449,7 +450,8 @@ class CollectionService {
     } catch (error) {
       if (error instanceof z.ZodError) {
         throw new Error(
-          `Validation error: ${error.issues.map((e) => e.message).join(', ')}`
+          `Validation error: ${error.issues.map((e) => e.message).join(', ')}`,
+          { cause: error }
         );
       }
       throw error;

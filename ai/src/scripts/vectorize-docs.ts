@@ -358,7 +358,8 @@ export class VectorizeDocsScript {
       };
     } catch (error) {
       throw new Error(
-        `Failed to fetch document from ${url}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to fetch document from ${url}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -412,7 +413,8 @@ export class VectorizeDocsScript {
       };
     } catch (error) {
       throw new Error(
-        `Failed to fetch local file ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to fetch local file ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -550,7 +552,8 @@ export class VectorizeDocsScript {
       return collection.id;
     } catch (error) {
       throw new Error(
-        `Failed to ensure collection exists: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to ensure collection exists: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -596,7 +599,8 @@ export class VectorizeDocsScript {
       }
     } catch (error) {
       throw new Error(
-        `Failed to index documents: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to index documents: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }
@@ -773,7 +777,8 @@ export class VectorizeDocsScript {
       };
     } catch (error) {
       throw new Error(
-        `Failed to remove old documents: ${error instanceof Error ? error.message : 'Unknown error'}`
+        `Failed to remove old documents: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error }
       );
     }
   }

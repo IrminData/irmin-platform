@@ -2,7 +2,6 @@
  * These tests protect stream cancellation: disconnecting clients must stop
  * upstream model consumption instead of continuing paid work in the background.
  */
-/* eslint-disable import-x/no-unused-modules */
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 
