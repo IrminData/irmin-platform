@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules -- Public agent runtime module. */
 import type { BaseMessage } from '@langchain/core/messages';
 import { execFile } from 'node:child_process';
 import { access, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';

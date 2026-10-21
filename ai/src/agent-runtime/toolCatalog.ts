@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules -- Public agent runtime module. */
 import type { DynamicStructuredTool } from 'langchain';
 
 export type ToolCapability =

@@ -1,4 +1,3 @@
-/* eslint-disable import-x/no-unused-modules -- Public agent runtime module. */
 import { conversations, db } from '@/database';
 import { MODEL_PROFILE } from '@/inference';
 import { and, eq, sql } from 'drizzle-orm';
