@@ -139,7 +139,7 @@
     "globals": "^17.8.0",
     "husky": "^9.1.7",
     "import-in-the-middle": "1.14.4",
-    "knip": "^6.31.0",
+    "knip": "^6.42.1",
     "postcss": "^8.5.25",
     "postcss-flexbugs-fixes": "^5.0.2",
     "postcss-nested": "^8.0.0",
