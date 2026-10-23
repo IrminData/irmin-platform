@@ -44,8 +44,8 @@ importers:
         specifier: ^0.4.8
         version: 0.4.8(@langchain/core@1.2.8(@opentelemetry/api@1.9.1)(@opentelemetry/sdk-trace-base@2.10.0(@opentelemetry/api@1.9.1))(openai@6.49.0(zod@4.4.3)))(zod@4.4.3)
       '@qdrant/js-client-rest':
-        specifier: ^1.18.0
-        version: 1.18.0(typescript@6.0.3)
+        specifier: ^1.19.0
+        version: 1.19.0(typescript@6.0.3)
       '@sentry/cli':
         specifier: ^3.6.2
         version: 3.6.2
@@ -889,9 +889,9 @@ packages:
     resolution: {integrity: sha512-SEeaJLb3qBNF/OaXnaR1NmmBbFYk1zC0ZH/52fATcRPLFg/p791YrcyFFy44Bo9sLaGuSuLp5Q6axbb/O+v/RA==}
     engines: {node: ^14.18.0 || >=16.0.0}
 
-  '@qdrant/js-client-rest@1.18.0':
-    resolution: {integrity: sha512-/0dqX5uV9chC1DnYSnU4gNMrDqse/pt6hHg3Rqqpl5isH7xl1xSNvffjzBoxycDD79luWn7Ho6Rh/61sOs5DNw==}
-    engines: {node: '>=18.17.0', pnpm: '>=8'}
+  '@qdrant/js-client-rest@1.19.0':
+    resolution: {integrity: sha512-1+QLUHsWp+WV4PE35FLnH2ckxotWrQEqi/F3t4goF3cCThR0ZxLVtOC4OoOi/E1iyj/iIYBdbuACWMuQ15NAnA==}
+    engines: {node: '>=22.0.0'}
     peerDependencies:
       typescript: '>=4.7'
 
@@ -3634,11 +3634,11 @@ snapshots:
 
   '@pkgr/core@0.3.6': {}
 
-  '@qdrant/js-client-rest@1.18.0(typescript@6.0.3)':
+  '@qdrant/js-client-rest@1.19.0(typescript@6.0.3)':
     dependencies:
       '@qdrant/openapi-typescript-fetch': 1.2.6
       typescript: 6.0.3
-      undici: 6.28.0
+      undici: 7.29.0
 
   '@qdrant/openapi-typescript-fetch@1.2.6': {}
 
