@@ -14,6 +14,7 @@ Centralizes Sentry initialization, flushing, and panic capture so the rest of th
 - `RecoverAndCapture(logger, component)` — `defer`-friendly panic recovery that logs, captures, and flushes (used by background goroutines in the orchestrator and workers).
 - `FlushTimeout` — default flush deadline (2s).
 - `middleware.go` — Fiber middleware that adds the Sentry hub / request hooks to each request.
+- `NewFiberErrorHandler(logger)` — Fiber `ErrorHandler` that reports 5xx and non-Fiber errors to Sentry, and returns 4xx `*fiber.Error` values (including unknown routes) without a Sentry event.
 
 ## Integration
 

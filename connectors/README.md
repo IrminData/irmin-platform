@@ -339,6 +339,7 @@ This script will:
 - HTML docs: Open `docs/html/index.html` in your browser
 - Markdown: View `docs/docs.md`
 - Swagger UI: `http://localhost:8080/swagger`
+- Health: `GET /health` (lightweight JSON, no auth or DB) plus k8s-style `GET /livez`, `GET /readyz`, `GET /startupz`
 
 ### Manual Generation (Alternative)
 

@@ -21,7 +21,7 @@ Organizes API endpoints for:
 No authentication required:
 
 - **Index**: `GET /` (returns `"Irmin API"`)
-- **Health probes**: `GET /livez`, `GET /readyz`, `GET /startupz`
+- **Health probes**: `GET /health` (lightweight JSON, no DB), plus k8s-style `GET /livez`, `GET /readyz`, `GET /startupz`
 - **Docs**: Swagger UI + spec under `/swagger`
 - **Public system**: small set of system endpoints (e.g. sandbox health)
 
