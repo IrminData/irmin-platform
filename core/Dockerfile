@@ -1,5 +1,5 @@
 # Stage 1: Build Go Application
-FROM golang:1.26-bookworm AS builder
+FROM golang:1.26.10-bookworm AS builder
 
 RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
 
@@ -29,9 +29,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install the same Go patch release used by the workspace.
-RUN wget https://go.dev/dl/go1.26.5.linux-amd64.tar.gz && \
-    tar -C /usr/local -xzf go1.26.5.linux-amd64.tar.gz && \
-    rm go1.26.5.linux-amd64.tar.gz
+RUN wget https://go.dev/dl/go1.26.10.linux-amd64.tar.gz && \
+    tar -C /usr/local -xzf go1.26.10.linux-amd64.tar.gz && \
+    rm go1.26.10.linux-amd64.tar.gz
 
 # Set up environment
 ENV PATH="/usr/local/go/bin:${PATH}"

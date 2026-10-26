@@ -26,7 +26,7 @@ configuration, and detailed agent instructions where applicable.
 
 ## Prerequisites
 
-- Go 1.26.5 or newer
+- Go 1.26.10 or newer
 - Node.js 24 or newer
 - pnpm 11.18.0 or newer
 - PostgreSQL, LakeFS, S3-compatible storage, and Qdrant as required by the

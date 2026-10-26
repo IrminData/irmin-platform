@@ -4,7 +4,7 @@ FROM node:24-alpine AS base
 WORKDIR /app
 RUN corepack enable
 
-FROM golang:1.26.5-alpine AS go-runtime
+FROM golang:1.26.10-alpine AS go-runtime
 
 # ---------- deps ----------
 FROM base AS deps
