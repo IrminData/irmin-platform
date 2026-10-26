@@ -48,7 +48,7 @@
     "@langchain/openai": "^1.5.8",
     "@langchain/openrouter": "^0.4.8",
     "@qdrant/js-client-rest": "^1.19.0",
-    "@sentry/cli": "^3.8.0",
+    "@sentry/cli": "^3.8.2",
     "@sentry/node": "^10.69.0",
     "@sentry/profiling-node": "^10.69.0",
     "cheerio": "^1.2.0",
