@@ -140,8 +140,8 @@ Without this, repository create/upload commits can fail LakeFS pre-commit hooks.
 ### App processes (dev)
 | Service | Command | Health |
 | --- | --- | --- |
-| Core | `cd core && go run main.go` (or `air`) | `GET :8082/readyz` |
-| Connectors | `cd connectors && go run main.go` | `GET :8080/readyz` |
+| Core | `cd core && go run main.go` (or `air`) | `GET :8082/readyz` or `GET :8082/health` |
+| Connectors | `cd connectors && go run main.go` | `GET :8080/readyz` or `GET :8080/health` |
 | AI | `cd ai && pnpm db:migrate && pnpm dev` | `GET :3001/health` |
 | Console | `cd console && pnpm dev` | `https://localhost:3000` (self-signed) |
 

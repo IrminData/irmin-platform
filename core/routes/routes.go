@@ -32,6 +32,10 @@ func RegisterAPIRoutes(
 		return c.SendString("Irmin API")
 	})
 
+	// Lightweight health probe for platforms that GET /health (e.g. Railway).
+	// No auth and no database — the k8s-style probes remain /livez, /readyz, /startupz.
+	app.Get("/health", healthHandler)
+
 	// Health check routes
 	app.Get(healthcheck.LivenessEndpoint, healthcheck.New(healthcheck.Config{}))
 	app.Get(healthcheck.ReadinessEndpoint, healthcheck.New(healthcheck.Config{
