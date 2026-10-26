@@ -187,8 +187,9 @@ class QdrantService {
     scoreThreshold?: number
   ): Promise<SearchResult[]> {
     try {
-      const result = await this.client.search(collectionName, {
-        vector,
+      // Qdrant 1.19 removed REST search(); query() is the replacement and returns { points }.
+      const result = await this.client.query(collectionName, {
+        query: vector,
         limit,
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         filter: filter as any, // Cast to any because Qdrant filter types are complex
@@ -196,7 +197,7 @@ class QdrantService {
         with_payload: true,
       });
 
-      return result.map((item) => ({
+      return result.points.map((item) => ({
         id: item.id,
         version: item.version,
         score: item.score,
