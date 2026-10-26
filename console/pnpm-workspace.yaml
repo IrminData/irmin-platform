@@ -17,7 +17,7 @@ overrides:
   '@codemirror/lang-sql': 6.9.1
   immutable: 5.1.8
   postcss: 8.5.25
-  sharp: 0.35.4
+  sharp: 0.35.5
   seroval: 1.5.3
   brace-expansion@1: 1.1.21
   markdown-it: 14.3.3
