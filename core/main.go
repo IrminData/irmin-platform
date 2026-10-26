@@ -364,7 +364,7 @@ func setupFiberApp(env *utils.CoreAPIEnv, appCacheMiddleware fiber.Handler) *fib
 	app := fiber.New(fiber.Config{
 		AppName:      "Irmin API",
 		BodyLimit:    utils.MaxRequestBodySizeBytes(env),
-		ErrorHandler: sentryutil.HandleFiberError,
+		ErrorHandler: sentryutil.NewFiberErrorHandler(slog.Default()),
 	})
 
 	// 1. Recover: Must be first. It needs to wrap every other handler

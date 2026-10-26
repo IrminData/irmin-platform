@@ -1,11 +1,14 @@
-package sentryutil
+package sentryutil_test
 
 import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"testing"
+
+	sentryutil "irmin-api/sentry"
 
 	"github.com/gofiber/fiber/v3"
 )
@@ -59,7 +62,7 @@ func TestClassifyRequestError(t *testing.T) {
 			name:   "non-fiber error",
 			err:    errors.New("db down"),
 			status: fiber.StatusInternalServerError,
-			body:   internalServerErrorMessage,
+			body:   "Internal Server Error",
 			report: true,
 		},
 	}
@@ -67,7 +70,7 @@ func TestClassifyRequestError(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			status, message, report := classifyRequestError(tt.err)
+			status, message, report := sentryutil.ClassifyRequestError(tt.err)
 			if status != tt.status {
 				t.Fatalf("status = %d, want %d", status, tt.status)
 			}
@@ -81,114 +84,79 @@ func TestClassifyRequestError(t *testing.T) {
 	}
 }
 
-func TestHandleFiberErrorUnknownRouteDoesNotCapture(t *testing.T) {
+func TestFiberErrorHandlerUnknownRouteReturns404(t *testing.T) {
 	t.Parallel()
 
-	captured := 0
-	app := fiber.New(fiber.Config{
-		ErrorHandler: func(c fiber.Ctx, err error) error {
-			return handleFiberError(c, err, func(_ fiber.Ctx, _ error) {
-				captured++
-			})
-		},
-	})
-
-	resp := doErrorHandlerRequest(t, app, http.MethodGet, "/health")
+	app := newErrorHandlerApp()
+	resp := doErrorHandlerRequest(t, app, "/health")
 	defer closeBody(t, resp)
 
 	if resp.StatusCode != fiber.StatusNotFound {
 		t.Fatalf("status = %d, want %d", resp.StatusCode, fiber.StatusNotFound)
 	}
-	if captured != 0 {
-		t.Fatalf("captured = %d, want 0", captured)
-	}
 	assertBody(t, resp, "Not Found")
 }
 
-func TestHandleFiberErrorFiber4xxDoesNotCapture(t *testing.T) {
+func TestFiberErrorHandlerFiber4xxReturnsStatus(t *testing.T) {
 	t.Parallel()
 
-	captured := 0
-	app := fiber.New(fiber.Config{
-		ErrorHandler: func(c fiber.Ctx, err error) error {
-			return handleFiberError(c, err, func(_ fiber.Ctx, _ error) {
-				captured++
-			})
-		},
-	})
+	app := newErrorHandlerApp()
 	app.Get("/private", func(_ fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusUnauthorized, "Unauthorized")
 	})
 
-	resp := doErrorHandlerRequest(t, app, http.MethodGet, "/private")
+	resp := doErrorHandlerRequest(t, app, "/private")
 	defer closeBody(t, resp)
 
 	if resp.StatusCode != fiber.StatusUnauthorized {
 		t.Fatalf("status = %d, want %d", resp.StatusCode, fiber.StatusUnauthorized)
 	}
-	if captured != 0 {
-		t.Fatalf("captured = %d, want 0", captured)
-	}
 	assertBody(t, resp, "Unauthorized")
 }
 
-func TestHandleFiberErrorFiber5xxCaptures(t *testing.T) {
+func TestFiberErrorHandlerFiber5xxReturnsStatus(t *testing.T) {
 	t.Parallel()
 
-	captured := 0
-	app := fiber.New(fiber.Config{
-		ErrorHandler: func(c fiber.Ctx, err error) error {
-			return handleFiberError(c, err, func(_ fiber.Ctx, _ error) {
-				captured++
-			})
-		},
-	})
+	app := newErrorHandlerApp()
 	app.Get("/upstream", func(_ fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusBadGateway, "upstream")
 	})
 
-	resp := doErrorHandlerRequest(t, app, http.MethodGet, "/upstream")
+	resp := doErrorHandlerRequest(t, app, "/upstream")
 	defer closeBody(t, resp)
 
 	if resp.StatusCode != fiber.StatusBadGateway {
 		t.Fatalf("status = %d, want %d", resp.StatusCode, fiber.StatusBadGateway)
 	}
-	if captured != 1 {
-		t.Fatalf("captured = %d, want 1", captured)
-	}
 	assertBody(t, resp, "upstream")
 }
 
-func TestHandleFiberErrorNonFiberCapturesAs500(t *testing.T) {
+func TestFiberErrorHandlerNonFiberReturns500(t *testing.T) {
 	t.Parallel()
 
-	captured := 0
-	app := fiber.New(fiber.Config{
-		ErrorHandler: func(c fiber.Ctx, err error) error {
-			return handleFiberError(c, err, func(_ fiber.Ctx, _ error) {
-				captured++
-			})
-		},
-	})
+	app := newErrorHandlerApp()
 	app.Get("/boom", func(_ fiber.Ctx) error {
 		return errors.New("db down")
 	})
 
-	resp := doErrorHandlerRequest(t, app, http.MethodGet, "/boom")
+	resp := doErrorHandlerRequest(t, app, "/boom")
 	defer closeBody(t, resp)
 
 	if resp.StatusCode != fiber.StatusInternalServerError {
 		t.Fatalf("status = %d, want %d", resp.StatusCode, fiber.StatusInternalServerError)
 	}
-	if captured != 1 {
-		t.Fatalf("captured = %d, want 1", captured)
-	}
-	assertBody(t, resp, internalServerErrorMessage)
+	assertBody(t, resp, "Internal Server Error")
 }
 
-func doErrorHandlerRequest(t *testing.T, app *fiber.App, method, path string) *http.Response {
+func newErrorHandlerApp() *fiber.App {
+	return fiber.New(fiber.Config{
+		ErrorHandler: sentryutil.NewFiberErrorHandler(slog.New(slog.DiscardHandler)),
+	})
+}
+
+func doErrorHandlerRequest(t *testing.T, app *fiber.App, path string) *http.Response {
 	t.Helper()
-	req, err := http.NewRequest(method, path, http.NoBody)
+	req, err := http.NewRequest(http.MethodGet, path, http.NoBody)
 	if err != nil {
 		t.Fatalf("build request: %v", err)
 	}

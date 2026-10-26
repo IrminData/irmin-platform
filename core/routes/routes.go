@@ -34,7 +34,7 @@ func RegisterAPIRoutes(
 
 	// Lightweight health probe for platforms that GET /health (e.g. Railway).
 	// No auth and no database — the k8s-style probes remain /livez, /readyz, /startupz.
-	app.Get("/health", healthHandler)
+	app.Get("/health", HealthHandler)
 
 	// Health check routes
 	app.Get(healthcheck.LivenessEndpoint, healthcheck.New(healthcheck.Config{}))

@@ -123,7 +123,7 @@ func setupFiberApp(env *utils.ConnectorsEnv) *fiber.App {
 		AppName:        "Irmin Connectors",
 		BodyLimit:      MaxRequestBodySize,
 		ReadBufferSize: ReadBufferSize, // 10MB for headers to handle large CORS headers
-		ErrorHandler:   sentryutil.HandleFiberError,
+		ErrorHandler:   sentryutil.NewFiberErrorHandler(slog.Default()),
 	})
 
 	// 1. Recover: Must be first. It needs to wrap every other handler

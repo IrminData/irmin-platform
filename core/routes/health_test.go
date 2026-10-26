@@ -1,19 +1,23 @@
-package routes
+package routes_test
 
 import (
 	"encoding/json"
 	"io"
+	"log/slog"
 	"net/http"
 	"testing"
 
+	"irmin-api/routes"
 	sentryutil "irmin-api/sentry"
 
 	"github.com/gofiber/fiber/v3"
 )
 
 func TestHealthRouteReturnsOKWithoutAuth(t *testing.T) {
-	app := fiber.New(fiber.Config{ErrorHandler: sentryutil.HandleFiberError})
-	app.Get("/health", healthHandler)
+	app := fiber.New(fiber.Config{
+		ErrorHandler: sentryutil.NewFiberErrorHandler(slog.New(slog.DiscardHandler)),
+	})
+	app.Get("/health", routes.HealthHandler)
 
 	resp := doHealthTestRequest(t, app, "/health")
 	defer closeResponseBody(t, resp)
@@ -32,7 +36,9 @@ func TestHealthRouteReturnsOKWithoutAuth(t *testing.T) {
 }
 
 func TestUnknownRouteReturns404(t *testing.T) {
-	app := fiber.New(fiber.Config{ErrorHandler: sentryutil.HandleFiberError})
+	app := fiber.New(fiber.Config{
+		ErrorHandler: sentryutil.NewFiberErrorHandler(slog.New(slog.DiscardHandler)),
+	})
 
 	resp := doHealthTestRequest(t, app, "/definitely-not-a-route")
 	defer closeResponseBody(t, resp)
