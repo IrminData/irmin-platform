@@ -1,5 +1,6 @@
 module github.com/IrminData/irmin-platform/sdks/go
 
+// Consumer minimum. Platform modules and CI use Go 1.26.10.
 go 1.26.5
 
 require github.com/gabriel-vasile/mimetype v1.4.15

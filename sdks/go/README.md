@@ -6,6 +6,10 @@ Irmin platform.
 
 ## Installation
 
+Requires **Go 1.26.5 or later**. Platform services and CI build with Go 1.26.10;
+the SDK `go` directive stays on 1.26.5 so consumers are not forced onto the
+latest patch.
+
 The SDK is a nested Go module in the Irmin platform monorepo. Install a
 released version with:
 

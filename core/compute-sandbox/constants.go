@@ -28,7 +28,7 @@ const (
 
 	// Runtime versions.
 
-	LatestGoVersion = "1.26.5"
+	LatestGoVersion = "1.26.10"
 	GoSDKVersion    = "v0.1.1"
 
 	// Runtime types.
