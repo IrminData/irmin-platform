@@ -123,7 +123,7 @@
     "@typescript-eslint/parser": "^8.65.0",
     "autoprefixer": "^10.5.4",
     "babel-plugin-react-compiler": "19.1.0-rc.3",
-    "baseline-browser-mapping": "^2.11.10",
+    "baseline-browser-mapping": "^2.11.33",
     "eslint": "9.39.4",
     "eslint-config-next": "16.3.3",
     "eslint-config-prettier": "^10.1.8",
