@@ -14,7 +14,7 @@ const (
 
 	DockerImageGo     = "golang:1.26"
 	DockerImagePython = "python:3.11"
-	DockerImageNode   = "node:24"
+	DockerImageNode   = "node:26.13.0"
 
 	// Daytona snapshot defaults. Bump the version suffix whenever the snapshot
 	// contents change (base image, baked SDK version, etc.) so old and new
