@@ -21,13 +21,13 @@ func validateToken(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
 	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
+	if field.Kind() == reflect.Pointer && field.IsNil() {
 		return true
 	}
 
 	// Get the actual string value
 	var token string
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		token = field.Elem().String()
 	} else {
 		token = field.String()
@@ -69,13 +69,13 @@ func validateSlug(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
 	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
+	if field.Kind() == reflect.Pointer && field.IsNil() {
 		return true
 	}
 
 	// Get the actual string value
 	var slugName string
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		slugName = field.Elem().String()
 	} else {
 		slugName = field.String()
@@ -118,13 +118,13 @@ func validateGitTag(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
 	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
+	if field.Kind() == reflect.Pointer && field.IsNil() {
 		return true
 	}
 
 	// Get the actual string value
 	var tagName string
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		tagName = field.Elem().String()
 	} else {
 		tagName = field.String()
@@ -162,13 +162,13 @@ func validateRRule(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
 	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
+	if field.Kind() == reflect.Pointer && field.IsNil() {
 		return true
 	}
 
 	// Get the actual string value
 	var rruleValue string
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		rruleValue = field.Elem().String()
 	} else {
 		rruleValue = field.String()
@@ -187,13 +187,13 @@ func validateCron(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
 	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
+	if field.Kind() == reflect.Pointer && field.IsNil() {
 		return true
 	}
 
 	// Get the actual string value
 	var cronValue string
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		cronValue = field.Elem().String()
 	} else {
 		cronValue = field.String()
@@ -212,13 +212,13 @@ func validateSQL(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
 	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
+	if field.Kind() == reflect.Pointer && field.IsNil() {
 		return true
 	}
 
 	// Get the actual string value
 	var sqlValue string
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		sqlValue = field.Elem().String()
 	} else {
 		sqlValue = field.String()
@@ -259,13 +259,13 @@ func validateDocumentation(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
 	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
+	if field.Kind() == reflect.Pointer && field.IsNil() {
 		return true
 	}
 
 	// Get the actual string value
 	var docValue string
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		docValue = field.Elem().String()
 	} else {
 		docValue = field.String()
@@ -326,13 +326,13 @@ func validateURL(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
 	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
+	if field.Kind() == reflect.Pointer && field.IsNil() {
 		return true
 	}
 
 	// Get the actual string value
 	var urlValue string
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		urlValue = field.Elem().String()
 	} else {
 		urlValue = field.String()
@@ -351,13 +351,13 @@ func validatePhone(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
 	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
+	if field.Kind() == reflect.Pointer && field.IsNil() {
 		return true
 	}
 
 	// Get the actual string value
 	var phoneValue string
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		phoneValue = field.Elem().String()
 	} else {
 		phoneValue = field.String()
@@ -395,13 +395,13 @@ func validateImageURL(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
 	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
+	if field.Kind() == reflect.Pointer && field.IsNil() {
 		return true
 	}
 
 	// Get the actual string value
 	var urlValue string
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		urlValue = field.Elem().String()
 	} else {
 		urlValue = field.String()
@@ -445,13 +445,13 @@ func validateToolName(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
 	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
+	if field.Kind() == reflect.Pointer && field.IsNil() {
 		return true
 	}
 
 	// Get the actual string value
 	var name string
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		name = field.Elem().String()
 	} else {
 		name = field.String()
