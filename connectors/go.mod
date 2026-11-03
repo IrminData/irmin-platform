@@ -13,7 +13,7 @@ require (
 	github.com/mendableai/firecrawl-go v1.0.0
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/pinecone-io/go-pinecone/v4 v4.1.4
-	github.com/pkg/sftp v1.13.11
+	github.com/pkg/sftp v1.13.12
 	github.com/swaggo/swag v1.16.6
 	github.com/zeebo/assert v1.3.1
 	golang.org/x/crypto v0.58.0
