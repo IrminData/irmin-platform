@@ -24,13 +24,13 @@ func (v *Validator) validateSQID(fl validator.FieldLevel) bool {
 	field := fl.Field()
 
 	// Handle nil pointers
-	if field.Kind() == reflect.Ptr && field.IsNil() {
+	if field.Kind() == reflect.Pointer && field.IsNil() {
 		return true
 	}
 
 	// Get the actual string value
 	var sqidValue string
-	if field.Kind() == reflect.Ptr {
+	if field.Kind() == reflect.Pointer {
 		sqidValue = field.Elem().String()
 	} else {
 		sqidValue = field.String()
@@ -500,7 +500,7 @@ func (v *Validator) validateResourceID(resourceIDField reflect.Value, resourceTy
 	}
 
 	var resourceID string
-	if resourceIDField.Kind() == reflect.Ptr {
+	if resourceIDField.Kind() == reflect.Pointer {
 		if resourceIDField.IsNil() {
 			return false
 		}

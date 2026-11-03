@@ -113,7 +113,7 @@ func LimitJSONResponseSize(data any, maxSizeBytes int64) LimitJSONResponseSizeRe
 	val := reflect.ValueOf(data)
 
 	// Handle pointer to slice/array
-	if val.Kind() == reflect.Ptr {
+	if val.Kind() == reflect.Pointer {
 		if val.IsNil() {
 			return LimitJSONResponseSizeResult{
 				Data:       data,

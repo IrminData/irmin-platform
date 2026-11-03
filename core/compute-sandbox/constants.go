@@ -12,7 +12,7 @@ const (
 
 	// Docker images per runtime type.
 
-	DockerImageGo     = "golang:1.26"
+	DockerImageGo     = "golang:1.27"
 	DockerImagePython = "python:3.11"
 	DockerImageNode   = "node:26.13.0"
 
@@ -20,7 +20,7 @@ const (
 	// contents change (base image, baked SDK version, etc.) so old and new
 	// workflows do not collide mid-deploy. Re-seed with `-seed-snapshots`.
 
-	SnapshotGoDefault = "irmin-go-1.26-sdk-v1"
+	SnapshotGoDefault = "irmin-go-1.27-sdk-v1"
 
 	// Workspace directory inside Daytona sandbox.
 
@@ -28,7 +28,7 @@ const (
 
 	// Runtime versions.
 
-	LatestGoVersion = "1.26.10"
+	LatestGoVersion = "1.27.3"
 	GoSDKVersion    = "v0.1.1"
 
 	// Runtime types.

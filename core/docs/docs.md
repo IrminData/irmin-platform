@@ -354,15 +354,15 @@ const (
     DaytonaDefaultDisk   = 5               // GB per sandbox
     DaytonaCreateTimeout = 2 * time.Minute // Maximum time to wait for sandbox creation
 
-    DockerImageGo     = "golang:1.26"
+    DockerImageGo     = "golang:1.27"
     DockerImagePython = "python:3.11"
     DockerImageNode   = "node:26.13.0"
 
-    SnapshotGoDefault = "irmin-go-1.26-sdk-v1"
+    SnapshotGoDefault = "irmin-go-1.27-sdk-v1"
 
     SandboxWorkDir = "/workspace"
 
-    LatestGoVersion = "1.26.10"
+    LatestGoVersion = "1.27.3"
     GoSDKVersion    = "v0.1.1"
 
     RuntimeTypePython = "python"
