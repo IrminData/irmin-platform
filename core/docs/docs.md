@@ -356,7 +356,7 @@ const (
 
     DockerImageGo     = "golang:1.26"
     DockerImagePython = "python:3.11"
-    DockerImageNode   = "node:24"
+    DockerImageNode   = "node:26.13.0"
 
     SnapshotGoDefault = "irmin-go-1.26-sdk-v1"
 
