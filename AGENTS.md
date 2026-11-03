@@ -113,6 +113,7 @@ remaining deployment steps, and any project not exercised locally.
 
 ### Toolchain
 - Node projects require **Node.js 26+** and **pnpm 11.18.0** (`packageManager` in `ai/` and `console/`). Prefer the nvm-managed Node (`nvm use 26`) so `/exec-daemon/node` (often Node 22) does not win on `PATH`.
+- Node 25+ no longer bundles Corepack. Dockerfiles install `pnpm@11.18.0` with npm; local and CI use a PATH pnpm (`pnpm/action-setup` in GitHub Actions). Do not run `corepack enable` on Node 26 images.
 - Go modules use the workspace in `go.work` (Go **1.26.10+**). Run Go commands from the repo root or project dirs as documented in CONTRIBUTING.md.
 
 ### Infra (Docker Compose)

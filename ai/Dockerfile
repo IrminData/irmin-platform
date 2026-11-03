@@ -2,7 +2,8 @@
 
 FROM node:26.13.0-alpine AS base
 WORKDIR /app
-RUN corepack enable
+# Node 25+ official images no longer bundle Corepack. Install the packageManager-pinned pnpm.
+RUN npm install -g pnpm@11.18.0
 
 FROM golang:1.26.10-alpine AS go-runtime
 
@@ -24,9 +25,6 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PATH="/usr/local/go/bin:${PATH}"
 COPY --from=go-runtime /usr/local/go /usr/local/go
-
-# Enable corepack for pnpm
-RUN corepack enable
 
 # Create non-root user
 RUN addgroup --system --gid 1001 nodejs

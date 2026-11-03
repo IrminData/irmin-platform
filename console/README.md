@@ -117,6 +117,10 @@ pnpm start
 
 **With Docker**
 
+The image is `node:26.13.0-alpine`. Node 25+ no longer bundles Corepack, so
+the Dockerfile installs the `packageManager`-pinned pnpm (`pnpm@11.18.0`)
+with npm before `pnpm install`.
+
 ```
 docker build -t irmin-console .
 docker run -p 3000:3000 irmin-console
