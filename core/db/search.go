@@ -2688,7 +2688,7 @@ func (el *EntityLoader) extractEntityIDFromInterface(entity any) *uint {
 	value := reflect.ValueOf(entity)
 
 	// Handle pointer types
-	if value.Kind() == reflect.Ptr {
+	if value.Kind() == reflect.Pointer {
 		if value.IsNil() {
 			return nil
 		}

@@ -207,7 +207,7 @@ func (v *Validator) ValidateDynamic(data any) *ValidationResultError {
 	dataType := dataValue.Type()
 
 	// Handle pointers by dereferencing them
-	if dataType.Kind() == reflect.Ptr {
+	if dataType.Kind() == reflect.Pointer {
 		if dataValue.IsNil() {
 			return &ValidationResultError{
 				IsValid:     true,

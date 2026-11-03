@@ -5,7 +5,7 @@ WORKDIR /app
 # Node 25+ official images no longer bundle Corepack. Install the packageManager-pinned pnpm.
 RUN npm install -g pnpm@11.18.0
 
-FROM golang:1.26.10-alpine AS go-runtime
+FROM golang:1.27.3-alpine AS go-runtime
 
 # ---------- deps ----------
 FROM base AS deps

@@ -24,6 +24,8 @@
 
 - [ ] Separate Core's hermetic and environment-backed tests, fix the existing
   cache invalidation failures, and add the hermetic Core suite to default CI.
+- [ ] Address the additional golangci-lint v2.15.0 findings that appeared after
+  the Go 1.27.3 toolchain bump (`make lint-go` is red until then).
 - [ ] Decide whether the two Node projects should eventually share a root pnpm
   lockfile and task runner; preserve independent lockfiles until then.
 - [x] Add deployment path filters after current provider integrations are

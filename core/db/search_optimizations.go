@@ -637,7 +637,7 @@ func (d *Database) genericSearchWithCursor(
 	// Execute the query
 	// Create a slice of the specific model type using reflection
 	modelType := reflect.TypeOf(config.Model)
-	if modelType.Kind() == reflect.Ptr {
+	if modelType.Kind() == reflect.Pointer {
 		modelType = modelType.Elem()
 	}
 

@@ -57,7 +57,7 @@ and has known imported cache invalidation failures recorded in TODO.md.
 
 ### core/
 
-Read core/AGENTS.md. Use Go 1.26.10+, Fiber, GORM, structured slog logging, and
+Read core/AGENTS.md. Use Go 1.27.3+, Fiber, GORM, structured slog logging, and
 the project golangci-lint configuration.
 
 ### ai/
@@ -72,7 +72,7 @@ Next.js, React, accessibility, localization, and design-system conventions.
 
 ### connectors/
 
-Use Go 1.26.10+, Fiber, GORM, structured logging, and the local golangci-lint
+Use Go 1.27.3+, Fiber, GORM, structured logging, and the local golangci-lint
 configuration. Connector contracts shared with Core belong in sdks/go/.
 
 ### sdks/
@@ -114,7 +114,7 @@ remaining deployment steps, and any project not exercised locally.
 ### Toolchain
 - Node projects require **Node.js 26+** and **pnpm 11.18.0** (`packageManager` in `ai/` and `console/`). Prefer the nvm-managed Node (`nvm use 26`) so `/exec-daemon/node` (often Node 22) does not win on `PATH`.
 - Node 25+ no longer bundles Corepack. Dockerfiles install `pnpm@11.18.0` with npm; local and CI use a PATH pnpm (`pnpm/action-setup` in GitHub Actions). Do not run `corepack enable` on Node 26 images.
-- Go modules use the workspace in `go.work` (Go **1.26.10+**). Run Go commands from the repo root or project dirs as documented in CONTRIBUTING.md.
+- Go modules use the workspace in `go.work` (Go **1.27.3+**). Run Go commands from the repo root or project dirs as documented in CONTRIBUTING.md.
 
 ### Infra (Docker Compose)
 Bring up dependencies before app processes (do **not** put these in the update script):
@@ -153,7 +153,7 @@ Core validates Clerk JWTs with **HS512** using `CLERK_SIGNING_KEY` and the Clerk
 
 ### Validation gotchas
 - Default hermetic gate: `make validate` (see root Makefile / README). `make test-core` needs the live Core integration env and is not part of that gate.
-- `make lint-go` pins `golangci-lint@v2.6.1`. Go 1.27.3 was evaluated and deferred: v2.6.1 cannot decode Go 1.27 export data, and golangci-lint v2.15.0 (which can) reports a large set of new findings. The published Go SDK keeps `go 1.26.5` as its consumer minimum.
+- `make lint-go` pins `golangci-lint@v2.15.0` so it can decode Go 1.27 export data. v2.15.0 reports additional findings versus v2.6.1; those are a follow-up, not part of the toolchain bump. The published Go SDK keeps `go 1.26.5` as its consumer minimum.
 - AI `pnpm db:migrate` can hang after printing success; if so, interrupt and rely on the migrate-on-boot path in `pnpm dev`.
 
 
