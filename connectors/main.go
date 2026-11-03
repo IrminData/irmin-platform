@@ -111,17 +111,19 @@ func setupDatabase(ctx context.Context, runMigrations bool) (*db.Database, error
 	return database, nil
 }
 
+// healthHandler is a lightweight liveness probe for platforms that GET /health
+// (e.g. Railway). It does not authenticate or touch the database.
+func healthHandler(c fiber.Ctx) error {
+	return c.JSON(fiber.Map{"status": "ok"})
+}
+
 // setupFiberApp creates and configures a new Fiber application.
 func setupFiberApp(env *utils.ConnectorsEnv) *fiber.App {
 	app := fiber.New(fiber.Config{
 		AppName:        "Irmin Connectors",
 		BodyLimit:      MaxRequestBodySize,
 		ReadBufferSize: ReadBufferSize, // 10MB for headers to handle large CORS headers
-		ErrorHandler: func(c fiber.Ctx, err error) error {
-			slog.Error("Unhandled request error", "error", err, "path", c.Path(), "method", c.Method())
-			sentryutil.GetHubFromFiber(c).CaptureException(err)
-			return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
-		},
+		ErrorHandler:   sentryutil.NewFiberErrorHandler(slog.Default()),
 	})
 
 	// 1. Recover: Must be first. It needs to wrap every other handler
@@ -526,6 +528,10 @@ func main() {
 	app.Get("/", func(c fiber.Ctx) error {
 		return c.SendString("Irmin Connectors")
 	})
+
+	// Lightweight health probe for platforms that GET /health (e.g. Railway).
+	// No auth and no database — the k8s-style probes remain /livez, /readyz, /startupz.
+	app.Get("/health", healthHandler)
 
 	// Health check routes
 	app.Get(healthcheck.LivenessEndpoint, healthcheck.New(healthcheck.Config{}))

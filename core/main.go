@@ -362,13 +362,9 @@ func runGarbageCollection(d *db.Database, env *utils.CoreAPIEnv, dryRun bool) er
 // setupFiberApp creates and configures a new Fiber application.
 func setupFiberApp(env *utils.CoreAPIEnv, appCacheMiddleware fiber.Handler) *fiber.App {
 	app := fiber.New(fiber.Config{
-		AppName:   "Irmin API",
-		BodyLimit: utils.MaxRequestBodySizeBytes(env),
-		ErrorHandler: func(c fiber.Ctx, err error) error {
-			slog.Error("Unhandled request error", "error", err, "path", c.Path(), "method", c.Method())
-			sentryutil.GetHubFromFiber(c).CaptureException(err)
-			return c.Status(fiber.StatusInternalServerError).SendString("Internal Server Error")
-		},
+		AppName:      "Irmin API",
+		BodyLimit:    utils.MaxRequestBodySizeBytes(env),
+		ErrorHandler: sentryutil.NewFiberErrorHandler(slog.Default()),
 	})
 
 	// 1. Recover: Must be first. It needs to wrap every other handler
