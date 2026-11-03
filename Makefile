@@ -1,6 +1,7 @@
 .PHONY: validate test-go test-core lint-go validate-ai validate-console
 
-PNPM := corepack pnpm
+# Node 25+ no longer bundles Corepack. Use the packageManager-pinned pnpm on PATH.
+PNPM := pnpm
 GOLANGCI_LINT := go run github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.15.0
 
 validate: test-go lint-go validate-ai validate-console

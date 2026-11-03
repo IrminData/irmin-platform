@@ -24,6 +24,9 @@ Install dependencies only for the projects you are changing:
     cd ../../ai && pnpm install --frozen-lockfile
     cd ../console && pnpm install --frozen-lockfile
 
+Node 25+ no longer bundles Corepack. Install pnpm 11.18.0 on PATH (or let
+`pnpm/action-setup` do it in CI). `make validate` calls `pnpm` directly.
+
 The root go.work includes every in-repository Go module and makes the local Go
 SDK available to each consumer. Do not add local replace directives to
 committed go.mod files or use workspace toggle scripts.
