@@ -22,7 +22,7 @@ echo "Starting environment variable replacement..."
 # — exactly the failure that bricked the `development` deploy once.
 env | grep -E '^NEXT_PUBLIC_[A-Z0-9_]+=' | while read -r line ; do
   # Split on the FIRST `=` with parameter expansion rather than
-  # `IFS='=' read -r key value`: BusyBox ash (node:24-alpine) strips a single
+  # `IFS='=' read -r key value`: BusyBox ash (node:26.13.0-alpine) strips a single
   # trailing `=` from the last field per POSIX field-delimiter semantics,
   # which would corrupt base64-padded values like `foo=` or some Clerk keys.
   key="${line%%=*}"
@@ -35,7 +35,7 @@ env | grep -E '^NEXT_PUBLIC_[A-Z0-9_]+=' | while read -r line ; do
   # delimiter below so it must be escaped; `&` is sed's replacement-side
   # "insert matched text" metacharacter. `/` is intentionally NOT in this
   # class even though it appears in URL values: the outer sed here uses `/`
-  # as its own delimiter, and BusyBox sed (node:24-alpine) doesn't track
+  # as its own delimiter, and BusyBox sed (node:26.13.0-alpine) doesn't track
   # bracket expressions when scanning for the delimiter — including `/`
   # inside `[...]` would abort with an unterminated-bracket error.
   escaped_value=$(printf '%s' "$value" | sed 's/[[\.*^$()+?{|&]/\\&/g')

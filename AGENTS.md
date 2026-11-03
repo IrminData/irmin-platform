@@ -62,7 +62,7 @@ the project golangci-lint configuration.
 
 ### ai/
 
-Read ai/AGENTS.md. Use Node.js 24+, TypeScript strict mode, Fastify,
+Read ai/AGENTS.md. Use Node.js 26+, TypeScript strict mode, Fastify,
 LangChain, Drizzle, and Qdrant conventions already established there.
 
 ### console/
@@ -112,7 +112,7 @@ remaining deployment steps, and any project not exercised locally.
 ## Cursor Cloud specific instructions
 
 ### Toolchain
-- Node projects require **Node.js 24+** and **pnpm 11.18.0** (`packageManager` in `ai/` and `console/`). Prefer the nvm-managed Node (`nvm use 24`) so `/exec-daemon/node` (often Node 22) does not win on `PATH`.
+- Node projects require **Node.js 26+** and **pnpm 11.18.0** (`packageManager` in `ai/` and `console/`). Prefer the nvm-managed Node (`nvm use 26`) so `/exec-daemon/node` (often Node 22) does not win on `PATH`.
 - Go modules use the workspace in `go.work` (Go **1.27.3+**). Run Go commands from the repo root or project dirs as documented in CONTRIBUTING.md.
 
 ### Infra (Docker Compose)
@@ -140,8 +140,8 @@ Without this, repository create/upload commits can fail LakeFS pre-commit hooks.
 ### App processes (dev)
 | Service | Command | Health |
 | --- | --- | --- |
-| Core | `cd core && go run main.go` (or `air`) | `GET :8082/readyz` |
-| Connectors | `cd connectors && go run main.go` | `GET :8080/readyz` |
+| Core | `cd core && go run main.go` (or `air`) | `GET :8082/readyz` or `GET :8082/health` |
+| Connectors | `cd connectors && go run main.go` | `GET :8080/readyz` or `GET :8080/health` |
 | AI | `cd ai && pnpm db:migrate && pnpm dev` | `GET :3001/health` |
 | Console | `cd console && pnpm dev` | `https://localhost:3000` (self-signed) |
 

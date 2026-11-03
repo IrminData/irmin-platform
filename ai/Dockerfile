@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.7
 
-FROM node:24-alpine AS base
+FROM node:26.13.0-alpine AS base
 WORKDIR /app
 RUN corepack enable
 
@@ -19,7 +19,7 @@ COPY . .
 RUN pnpm run build
 
 # ---------- runner ----------
-FROM node:24-alpine AS runner
+FROM node:26.13.0-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 ENV PATH="/usr/local/go/bin:${PATH}"

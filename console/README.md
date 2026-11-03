@@ -10,7 +10,7 @@ This repository contains the code for Irmin Console frontend, built using Next.j
 
 Ensure you have the following installed:
 
-- Node.js (24.x)
+- Node.js (26.x)
 - pnpm (11.18.0+). See [pnpm Installation Guide](https://pnpm.io/installation) for installation details.
 
 ## Environment Configuration (.env)
