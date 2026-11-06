@@ -144,7 +144,7 @@
     "postcss-flexbugs-fixes": "^5.0.2",
     "postcss-nested": "^8.0.0",
     "postcss-preset-env": "^11.6.1",
-    "prettier": "^3.9.6",
+    "prettier": "^3.9.10",
     "require-in-the-middle": "8.0.1",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",
