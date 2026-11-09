@@ -375,10 +375,10 @@ func TestPineconeMetadataStructure(t *testing.T) {
 			metadata := &pinecone.Metadata{Fields: pbFields}
 
 			// Verify fields can be accessed
-			assert.Equal(t, len(metadata.Fields), len(tt.fields))
+			assert.Equal(t, len(metadata.GetFields()), len(tt.fields))
 
 			for k := range tt.fields {
-				_, exists := metadata.Fields[k]
+				_, exists := metadata.GetFields()[k]
 				assert.Equal(t, exists, true)
 			}
 		})

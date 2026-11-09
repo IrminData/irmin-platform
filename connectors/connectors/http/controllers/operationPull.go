@@ -46,8 +46,6 @@ func (p *HTTPPullProvider) InitializeClient(
 }
 
 // GetAllFiles makes a request to the configured endpoint and returns the response as a file.
-//
-//nolint:gocognit // Complex? Maybe, but it's okay for now
 func (p *HTTPPullProvider) GetAllFiles(
 	_ context.Context, client any, operation *db.Operation,
 ) ([]string, [][]byte, error) {
@@ -170,8 +168,6 @@ func (p *HTTPPullProvider) GetAllFiles(
 
 // GetFileByPath makes a request to the configured endpoint with an optional path modification.
 // The path parameter is used to modify the request URL (absolute path replaces, relative path appends).
-//
-//nolint:gocognit // Complex? Maybe, but it's okay for now
 func (p *HTTPPullProvider) GetFileByPath(
 	_ context.Context, client any, operation *db.Operation, path string,
 ) (string, []byte, error) {

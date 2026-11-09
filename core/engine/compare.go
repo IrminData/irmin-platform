@@ -115,8 +115,6 @@ func (c *Client) CompareRefs(
 }
 
 // computeSchemaDiffs computes schema differences for structured objects that changed between refs.
-//
-//nolint:gocognit // This function is complex but it's necessary to compute schema differences for structured objects.
 func (c *Client) computeSchemaDiffs(
 	ctx context.Context,
 	user *db.User,

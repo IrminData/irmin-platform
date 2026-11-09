@@ -4,7 +4,6 @@ import (
 	"irmin-api/db"
 	"irmin-api/locales"
 	"irmin-api/services"
-	"log/slog"
 	"time"
 
 	"github.com/gofiber/fiber/v3"
@@ -51,7 +50,7 @@ func (api *APIMiddlewares) WorkspaceMiddleware(c fiber.Ctx) error {
 			Where("user_id = ? AND workspace_id = ?", user.ID, workspace.ID).
 			Update("last_accessed_at", now)
 		if result.Error != nil {
-			slog.Error("Failed to update last_accessed_at",
+			api.Logger.Error("Failed to update last_accessed_at",
 				"user_id", user.ID,
 				"workspace_id", workspace.ID,
 				"error", result.Error,

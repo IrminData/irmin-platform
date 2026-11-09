@@ -10,8 +10,6 @@ import (
 )
 
 // FormatScheduleTriggerResponse formats a schedule trigger for the response.
-//
-//nolint:gocognit // Multiple trigger types require comprehensive handling
 func FormatScheduleTriggerResponse(
 	trigger *db.WorkflowTrigger,
 	sqidManager *irminsqids.SQIDManager,

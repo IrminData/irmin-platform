@@ -32,10 +32,10 @@ func (o *Orchestrator) executeImportWorkflowable(
 		// Patch mode requires patches in trigger payload
 		if !hasPatchPayload {
 			return []string{
-					"Patch mode requires trigger payload with patches",
-				}, errors.New(
-					"patch mode requires trigger payload with patches",
-				)
+				"Patch mode requires trigger payload with patches",
+			}, errors.New(
+				"patch mode requires trigger payload with patches",
+			)
 		}
 		usePatchMode = true
 

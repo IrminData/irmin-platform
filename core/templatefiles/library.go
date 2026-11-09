@@ -161,8 +161,6 @@ func parseMetadataLine(line, commentPrefix string) (string, string, bool) {
 // Description: Template description
 // Tags: tag1, tag2, tag3
 // Placeholders: name1:example1, name2:example2
-//
-//nolint:gocognit // This function is complex but it's ok for now.
 func parseTemplate(
 	content string,
 	templateType irminmodels.TemplateType,

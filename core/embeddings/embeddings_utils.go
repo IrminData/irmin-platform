@@ -138,8 +138,6 @@ func extractFromTSV(
 }
 
 // extractFromStructuredFile uses DuckDB to extract text from structured files.
-//
-//nolint:gocognit // This function is complex but it is necessary to extract text from structured files.
 func extractFromStructuredFile(
 	ctx context.Context,
 	duckDBClient *duckdb.QueryClient,

@@ -341,7 +341,6 @@ func TestInvalidatePathPrefixForCurrentUser_RemovesOnlyThisUser_Behavior(t *test
 	}
 }
 
-//nolint:gocognit // test function has multiple phases that are clearer when written sequentially
 func TestInvalidatePathPrefixForAllUsers_RemovesAllUsers_Behavior(t *testing.T) {
 	storage := cache.NewDefaultStorage()
 	app := fiber.New()

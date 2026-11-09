@@ -1387,10 +1387,12 @@ Package sentryutil provides Sentry error tracking utilities for Irmin Connectors
 
 - [Constants](<#constants>)
 - [func CaptureError\(err error\)](<#CaptureError>)
+- [func ClassifyRequestError\(err error\) \(int, string, bool\)](<#ClassifyRequestError>)
 - [func FiberMiddleware\(\) fiber.Handler](<#FiberMiddleware>)
 - [func Flush\(timeout time.Duration\)](<#Flush>)
 - [func GetHubFromFiber\(c fiber.Ctx\) \*sentry.Hub](<#GetHubFromFiber>)
 - [func Init\(logger \*slog.Logger, env \*utils.ConnectorsEnv\)](<#Init>)
+- [func NewFiberErrorHandler\(logger \*slog.Logger\) fiber.ErrorHandler](<#NewFiberErrorHandler>)
 - [func RecoverAndCapture\(logger \*slog.Logger, component string\)](<#RecoverAndCapture>)
 
 
@@ -1410,6 +1412,15 @@ func CaptureError(err error)
 ```
 
 CaptureError reports an error to Sentry.
+
+<a name="ClassifyRequestError"></a>
+## func [ClassifyRequestError](<https://github.com/IrminData/irmin-platform/blob/main/connectors/sentry/error_handler.go#L37>)
+
+```go
+func ClassifyRequestError(err error) (int, string, bool)
+```
+
+ClassifyRequestError maps a request error to an HTTP status, response body, and whether it should be reported to Sentry.
 
 <a name="FiberMiddleware"></a>
 ## func [FiberMiddleware](<https://github.com/IrminData/irmin-platform/blob/main/connectors/sentry/middleware.go#L14>)
@@ -1446,6 +1457,15 @@ func Init(logger *slog.Logger, env *utils.ConnectorsEnv)
 ```
 
 Init initializes the Sentry SDK using the provided environment configuration. Returns early if Sentry is disabled or no DSN is configured.
+
+<a name="NewFiberErrorHandler"></a>
+## func [NewFiberErrorHandler](<https://github.com/IrminData/irmin-platform/blob/main/connectors/sentry/error_handler.go#L16>)
+
+```go
+func NewFiberErrorHandler(logger *slog.Logger) fiber.ErrorHandler
+```
+
+NewFiberErrorHandler returns a Fiber ErrorHandler that reports unexpected errors to Sentry. Expected client errors \(\*fiber.Error with a 4xx status\) are returned with that status and are not sent to Sentry. 5xx Fiber errors and non\-Fiber errors are logged, reported, and returned as 5xx.
 
 <a name="RecoverAndCapture"></a>
 ## func [RecoverAndCapture](<https://github.com/IrminData/irmin-platform/blob/main/connectors/sentry/sentry.go#L59>)
@@ -2997,7 +3017,7 @@ type EnsureOperationFromRequestError struct {
 ```
 
 <a name="EnsureOperationFromRequest"></a>
-### func [EnsureOperationFromRequest](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/common/operationConfig.go#L86-L91>)
+### func [EnsureOperationFromRequest](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/common/operationConfig.go#L84-L89>)
 
 ```go
 func EnsureOperationFromRequest(c fiber.Ctx, database *db.Database, info *models.ConnectorDetails, provider OperationConfigProvider) (*db.Operation, *EnsureOperationFromRequestError)
@@ -6927,7 +6947,7 @@ func (cs *Controllers) OperationPatch(c fiber.Ctx) error
 OperationPatch godoc @Summary Apply patch operations via HTTP requests @Description Apply JSON Patch operations by making HTTP requests to the configured endpoint. Each patch operation becomes an HTTP request. @Tags http @Security SystemTokenAuth @Accept multipart/form\-data @Produce json @Param patches formData file true "JSON file containing array of patch operations" @Success 200 \{object\} fiber.Map "Patch operations applied successfully" @Failure 400 \{object\} fiber.Map "Bad request \- invalid patch format" @Failure 401 \{object\} fiber.Map "Unauthorized \- invalid or missing authentication" @Failure 500 \{object\} fiber.Map "Internal server error" @Router /http/operation/patch \[post\]
 
 <a name="Controllers.OperationPull"></a>
-### func \(\*Controllers\) [OperationPull](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/http/controllers/operationPull.go#L319>)
+### func \(\*Controllers\) [OperationPull](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/http/controllers/operationPull.go#L315>)
 
 ```go
 func (cs *Controllers) OperationPull(c fiber.Ctx) error
@@ -7010,7 +7030,7 @@ type HTTPPullProvider struct {
 ```
 
 <a name="HTTPPullProvider.GetAllFiles"></a>
-### func \(\*HTTPPullProvider\) [GetAllFiles](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/http/controllers/operationPull.go#L51-L53>)
+### func \(\*HTTPPullProvider\) [GetAllFiles](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/http/controllers/operationPull.go#L49-L51>)
 
 ```go
 func (p *HTTPPullProvider) GetAllFiles(_ context.Context, client any, operation *db.Operation) ([]string, [][]byte, error)
@@ -7019,7 +7039,7 @@ func (p *HTTPPullProvider) GetAllFiles(_ context.Context, client any, operation 
 GetAllFiles makes a request to the configured endpoint and returns the response as a file.
 
 <a name="HTTPPullProvider.GetFileByPath"></a>
-### func \(\*HTTPPullProvider\) [GetFileByPath](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/http/controllers/operationPull.go#L175-L177>)
+### func \(\*HTTPPullProvider\) [GetFileByPath](<https://github.com/IrminData/irmin-platform/blob/main/connectors/connectors/http/controllers/operationPull.go#L171-L173>)
 
 ```go
 func (p *HTTPPullProvider) GetFileByPath(_ context.Context, client any, operation *db.Operation, path string) (string, []byte, error)

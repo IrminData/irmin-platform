@@ -203,11 +203,11 @@ func (o *Orchestrator) executeWorkflowableByType(
 		actionWorkflowable, ok := wf.(*db.ActionWorkflowable)
 		if !ok {
 			return []string{
-					"Invalid workflowable type: expected ActionWorkflowable",
-				}, fmt.Errorf(
-					"invalid workflowable type: expected ActionWorkflowable, got %T",
-					wf,
-				)
+				"Invalid workflowable type: expected ActionWorkflowable",
+			}, fmt.Errorf(
+				"invalid workflowable type: expected ActionWorkflowable, got %T",
+				wf,
+			)
 		}
 		return o.executeActionWorkflowable(ctx, workflow, run, actionWorkflowable)
 
@@ -215,11 +215,11 @@ func (o *Orchestrator) executeWorkflowableByType(
 		exportWorkflowable, ok := wf.(*db.ExportWorkflowable)
 		if !ok {
 			return []string{
-					"Invalid workflowable type: expected ExportWorkflowable",
-				}, fmt.Errorf(
-					"invalid workflowable type: expected ExportWorkflowable, got %T",
-					wf,
-				)
+				"Invalid workflowable type: expected ExportWorkflowable",
+			}, fmt.Errorf(
+				"invalid workflowable type: expected ExportWorkflowable, got %T",
+				wf,
+			)
 		}
 		return o.executeExportWorkflowable(ctx, workflow, run, exportWorkflowable)
 
@@ -227,11 +227,11 @@ func (o *Orchestrator) executeWorkflowableByType(
 		importWorkflowable, ok := wf.(*db.ImportWorkflowable)
 		if !ok {
 			return []string{
-					"Invalid workflowable type: expected ImportWorkflowable",
-				}, fmt.Errorf(
-					"invalid workflowable type: expected ImportWorkflowable, got %T",
-					wf,
-				)
+				"Invalid workflowable type: expected ImportWorkflowable",
+			}, fmt.Errorf(
+				"invalid workflowable type: expected ImportWorkflowable, got %T",
+				wf,
+			)
 		}
 		return o.executeImportWorkflowable(ctx, workflow, run, importWorkflowable)
 
@@ -239,11 +239,11 @@ func (o *Orchestrator) executeWorkflowableByType(
 		pipelineWorkflowable, ok := wf.(*db.PipelineWorkflowable)
 		if !ok {
 			return []string{
-					"Invalid workflowable type: expected PipelineWorkflowable",
-				}, fmt.Errorf(
-					"invalid workflowable type: expected PipelineWorkflowable, got %T",
-					wf,
-				)
+				"Invalid workflowable type: expected PipelineWorkflowable",
+			}, fmt.Errorf(
+				"invalid workflowable type: expected PipelineWorkflowable, got %T",
+				wf,
+			)
 		}
 		return o.executePipelineWorkflowable(ctx, workflow, run, pipelineWorkflowable)
 
