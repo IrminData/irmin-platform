@@ -7,6 +7,10 @@ package routes // import "irmin-api/routes"
 
 FUNCTIONS
 
+func HealthHandler(c fiber.Ctx) error
+    HealthHandler is a lightweight liveness probe for platforms that GET /health
+    (e.g. Railway). It does not authenticate or touch the database.
+
 func RegisterAPIRoutes(
 	app *fiber.App,
 	apiServices *services.APIServices,

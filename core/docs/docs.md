@@ -3232,7 +3232,7 @@ var ErrLockNotHeld = errors.New("advisory lock not held by current session")
 ```
 
 <a name="ContainsSQLInjectionPattern"></a>
-## func [ContainsSQLInjectionPattern](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2940>)
+## func [ContainsSQLInjectionPattern](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2938>)
 
 ```go
 func ContainsSQLInjectionPattern(input string) bool
@@ -3241,7 +3241,7 @@ func ContainsSQLInjectionPattern(input string) bool
 ContainsSQLInjectionPattern checks for common SQL injection patterns.
 
 <a name="ContainsSuspiciousPatterns"></a>
-## func [ContainsSuspiciousPatterns](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2950>)
+## func [ContainsSuspiciousPatterns](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2948>)
 
 ```go
 func ContainsSuspiciousPatterns(input string) bool
@@ -3412,7 +3412,7 @@ func ValidateFieldMappings(fieldMappings map[string]string) map[string]string
 ValidateFieldMappings validates and filters field mappings to ensure they are safe.
 
 <a name="ValidateSearchToken"></a>
-## func [ValidateSearchToken](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2909>)
+## func [ValidateSearchToken](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2907>)
 
 ```go
 func ValidateSearchToken(token SearchToken) bool
@@ -3769,7 +3769,7 @@ const (
 ```
 
 <a name="BatchLoadResult"></a>
-## type [BatchLoadResult](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2468-L2471>)
+## type [BatchLoadResult](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2466-L2469>)
 
 BatchLoadResult represents the result of a batch loading operation.
 
@@ -5806,7 +5806,7 @@ func (d *Database) WaitForNotification(ctx context.Context, channel string) (*pg
 WaitForNotification waits for a notification on the given channel. It uses the connection pool to get a connection and waits for notifications.
 
 <a name="EntityLoader"></a>
-## type [EntityLoader](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2474-L2476>)
+## type [EntityLoader](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2472-L2474>)
 
 EntityLoader provides methods for batch loading entities.
 
@@ -5817,7 +5817,7 @@ type EntityLoader struct {
 ```
 
 <a name="NewEntityLoader"></a>
-### func [NewEntityLoader](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2479>)
+### func [NewEntityLoader](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2477>)
 
 ```go
 func NewEntityLoader(db *Database) *EntityLoader
@@ -5826,7 +5826,7 @@ func NewEntityLoader(db *Database) *EntityLoader
 NewEntityLoader creates a new EntityLoader instance.
 
 <a name="EntityLoader.BatchLoadEntities"></a>
-### func \(\*EntityLoader\) [BatchLoadEntities](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2484-L2488>)
+### func \(\*EntityLoader\) [BatchLoadEntities](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2482-L2486>)
 
 ```go
 func (el *EntityLoader) BatchLoadEntities(model any, ids []uint, preloads []string) (map[uint]any, error)
@@ -5835,7 +5835,7 @@ func (el *EntityLoader) BatchLoadEntities(model any, ids []uint, preloads []stri
 BatchLoadEntities loads multiple entities of the same type in a single query.
 
 <a name="EntityLoader.BatchLoadTags"></a>
-### func \(\*EntityLoader\) [BatchLoadTags](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2555-L2558>)
+### func \(\*EntityLoader\) [BatchLoadTags](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2553-L2556>)
 
 ```go
 func (el *EntityLoader) BatchLoadTags(entityType string, entityIDs []uint) (map[uint][]Tag, error)
@@ -6637,7 +6637,7 @@ type SearchLimits struct {
 ```
 
 <a name="CreateCustomSearchLimits"></a>
-### func [CreateCustomSearchLimits](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2875>)
+### func [CreateCustomSearchLimits](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2873>)
 
 ```go
 func CreateCustomSearchLimits(maxTotal, maxPerType, timeoutSeconds int) SearchLimits
@@ -6646,7 +6646,7 @@ func CreateCustomSearchLimits(maxTotal, maxPerType, timeoutSeconds int) SearchLi
 CreateCustomSearchLimits creates a SearchLimits configuration with custom values.
 
 <a name="CreateExtensiveSearchLimits"></a>
-### func [CreateExtensiveSearchLimits](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2898>)
+### func [CreateExtensiveSearchLimits](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2896>)
 
 ```go
 func CreateExtensiveSearchLimits() SearchLimits
@@ -6655,7 +6655,7 @@ func CreateExtensiveSearchLimits() SearchLimits
 CreateExtensiveSearchLimits creates search limits for comprehensive searches.
 
 <a name="CreateFastSearchLimits"></a>
-### func [CreateFastSearchLimits](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2887>)
+### func [CreateFastSearchLimits](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2885>)
 
 ```go
 func CreateFastSearchLimits() SearchLimits
@@ -6728,7 +6728,7 @@ type SearchResult struct {
 ```
 
 <a name="SearchResultSorter"></a>
-## type [SearchResultSorter](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L1993>)
+## type [SearchResultSorter](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L1991>)
 
 SearchResultSorter provides methods for sorting and merging search results.
 
@@ -6737,7 +6737,7 @@ type SearchResultSorter struct{}
 ```
 
 <a name="SearchResultSorter.BoostRelevanceForExactMatches"></a>
-### func \(\*SearchResultSorter\) [BoostRelevanceForExactMatches](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2109>)
+### func \(\*SearchResultSorter\) [BoostRelevanceForExactMatches](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2107>)
 
 ```go
 func (s *SearchResultSorter) BoostRelevanceForExactMatches(results []SearchResult, query string) []SearchResult
@@ -6746,7 +6746,7 @@ func (s *SearchResultSorter) BoostRelevanceForExactMatches(results []SearchResul
 BoostRelevanceForExactMatches boosts relevance scores for exact matches.
 
 <a name="SearchResultSorter.CalculateEnhancedRelevance"></a>
-### func \(\*SearchResultSorter\) [CalculateEnhancedRelevance](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2197-L2200>)
+### func \(\*SearchResultSorter\) [CalculateEnhancedRelevance](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2195-L2198>)
 
 ```go
 func (s *SearchResultSorter) CalculateEnhancedRelevance(results []SearchResult, parsedQuery *SearchQuery) []SearchResult
@@ -6755,7 +6755,7 @@ func (s *SearchResultSorter) CalculateEnhancedRelevance(results []SearchResult, 
 CalculateEnhancedRelevance calculates enhanced relevance scores for search results.
 
 <a name="SearchResultSorter.FilterByMinimumRelevance"></a>
-### func \(\*SearchResultSorter\) [FilterByMinimumRelevance](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2186>)
+### func \(\*SearchResultSorter\) [FilterByMinimumRelevance](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2184>)
 
 ```go
 func (s *SearchResultSorter) FilterByMinimumRelevance(results []SearchResult, minRelevance float64) []SearchResult
@@ -6764,7 +6764,7 @@ func (s *SearchResultSorter) FilterByMinimumRelevance(results []SearchResult, mi
 FilterByMinimumRelevance filters out results below a minimum relevance threshold.
 
 <a name="SearchResultSorter.MergeAndDeduplicate"></a>
-### func \(\*SearchResultSorter\) [MergeAndDeduplicate](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2069>)
+### func \(\*SearchResultSorter\) [MergeAndDeduplicate](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L2067>)
 
 ```go
 func (s *SearchResultSorter) MergeAndDeduplicate(resultsList ...[]SearchResult) []SearchResult
@@ -6773,7 +6773,7 @@ func (s *SearchResultSorter) MergeAndDeduplicate(resultsList ...[]SearchResult) 
 MergeAndDeduplicate merges search results from multiple sources and removes duplicates.
 
 <a name="SearchResultSorter.SortByRelevance"></a>
-### func \(\*SearchResultSorter\) [SortByRelevance](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L1996>)
+### func \(\*SearchResultSorter\) [SortByRelevance](<https://github.com/IrminData/irmin-platform/blob/main/core/db/search.go#L1994>)
 
 ```go
 func (s *SearchResultSorter) SortByRelevance(results []SearchResult) []SearchResult
@@ -7679,7 +7679,7 @@ const (
 ```
 
 <a name="ChunkText"></a>
-## func [ChunkText](<https://github.com/IrminData/irmin-platform/blob/main/core/embeddings/embeddings_utils.go#L249>)
+## func [ChunkText](<https://github.com/IrminData/irmin-platform/blob/main/core/embeddings/embeddings_utils.go#L247>)
 
 ```go
 func ChunkText(text string, chunkSize, overlap int) []string
@@ -7688,7 +7688,7 @@ func ChunkText(text string, chunkSize, overlap int) []string
 ChunkText splits text into chunks of the specified size with overlap.
 
 <a name="ChunkTextBySentences"></a>
-## func [ChunkTextBySentences](<https://github.com/IrminData/irmin-platform/blob/main/core/embeddings/embeddings_utils.go#L302>)
+## func [ChunkTextBySentences](<https://github.com/IrminData/irmin-platform/blob/main/core/embeddings/embeddings_utils.go#L300>)
 
 ```go
 func ChunkTextBySentences(text string, maxChunkSize int) []string
@@ -8811,7 +8811,7 @@ func (c *Client) GetTag(workspace, repository, tag string) (*irminmodels.GitTag,
 
 
 <a name="Client.GetUncommittedChanges"></a>
-### func \(\*Client\) [GetUncommittedChanges](<https://github.com/IrminData/irmin-platform/blob/main/core/engine/compare.go#L189-L191>)
+### func \(\*Client\) [GetUncommittedChanges](<https://github.com/IrminData/irmin-platform/blob/main/core/engine/compare.go#L187-L189>)
 
 ```go
 func (c *Client) GetUncommittedChanges(workspace, repository, branch string) (*irminmodels.Diff, error)
@@ -8856,7 +8856,7 @@ func (c *Client) ListTags(workspace, repository string) ([]irminmodels.GitTag, e
 
 
 <a name="Client.MergeRefs"></a>
-### func \(\*Client\) [MergeRefs](<https://github.com/IrminData/irmin-platform/blob/main/core/engine/compare.go#L227-L230>)
+### func \(\*Client\) [MergeRefs](<https://github.com/IrminData/irmin-platform/blob/main/core/engine/compare.go#L225-L228>)
 
 ```go
 func (c *Client) MergeRefs(workspace, repository, baseRef, compareRef, message, author, strategy string, squash, allowEmpty bool) (*irminmodels.Commit, error)
@@ -9424,7 +9424,7 @@ func FormatScheduleResponse(schedule *db.Schedule, sqidManager *irminsqids.SQIDM
 FormatScheduleResponse creates a schedule response object from a schedule object.
 
 <a name="FormatScheduleTriggerResponse"></a>
-## func [FormatScheduleTriggerResponse](<https://github.com/IrminData/irmin-platform/blob/main/core/formatter/formatScheduleTriggerResponse.go#L15-L18>)
+## func [FormatScheduleTriggerResponse](<https://github.com/IrminData/irmin-platform/blob/main/core/formatter/formatScheduleTriggerResponse.go#L13-L16>)
 
 ```go
 func FormatScheduleTriggerResponse(trigger *db.WorkflowTrigger, sqidManager *irminsqids.SQIDManager) (*irminmodels.ScheduleTrigger, error)
@@ -13359,7 +13359,7 @@ func (api *APIMiddlewares) WorkflowRunPermissionMiddleware(action db.PolicyActio
 WorkflowRunPermissionMiddleware creates a middleware for workflow run\-level permissions.
 
 <a name="APIMiddlewares.WorkspaceMiddleware"></a>
-### func \(\*APIMiddlewares\) [WorkspaceMiddleware](<https://github.com/IrminData/irmin-platform/blob/main/core/middlewares/workspace.go#L14>)
+### func \(\*APIMiddlewares\) [WorkspaceMiddleware](<https://github.com/IrminData/irmin-platform/blob/main/core/middlewares/workspace.go#L13>)
 
 ```go
 func (api *APIMiddlewares) WorkspaceMiddleware(c fiber.Ctx) error
@@ -14541,8 +14541,18 @@ import "irmin-api/routes"
 
 ## Index
 
+- [func HealthHandler\(c fiber.Ctx\) error](<#HealthHandler>)
 - [func RegisterAPIRoutes\(app \*fiber.App, apiServices \*services.APIServices\)](<#RegisterAPIRoutes>)
 
+
+<a name="HealthHandler"></a>
+## func [HealthHandler](<https://github.com/IrminData/irmin-platform/blob/main/core/routes/health.go#L7>)
+
+```go
+func HealthHandler(c fiber.Ctx) error
+```
+
+HealthHandler is a lightweight liveness probe for platforms that GET /health \(e.g. Railway\). It does not authenticate or touch the database.
 
 <a name="RegisterAPIRoutes"></a>
 ## func [RegisterAPIRoutes](<https://github.com/IrminData/irmin-platform/blob/main/core/routes/routes.go#L16-L19>)
@@ -14565,10 +14575,12 @@ Package sentryutil provides Sentry error tracking utilities for the Irmin Core A
 
 - [Constants](<#constants>)
 - [func CaptureError\(err error\)](<#CaptureError>)
+- [func ClassifyRequestError\(err error\) \(int, string, bool\)](<#ClassifyRequestError>)
 - [func FiberMiddleware\(\) fiber.Handler](<#FiberMiddleware>)
 - [func Flush\(timeout time.Duration\)](<#Flush>)
 - [func GetHubFromFiber\(c fiber.Ctx\) \*sentry.Hub](<#GetHubFromFiber>)
 - [func Init\(logger \*slog.Logger, env \*utils.CoreAPIEnv\)](<#Init>)
+- [func NewFiberErrorHandler\(logger \*slog.Logger\) fiber.ErrorHandler](<#NewFiberErrorHandler>)
 - [func RecoverAndCapture\(logger \*slog.Logger, component string\)](<#RecoverAndCapture>)
 
 
@@ -14588,6 +14600,15 @@ func CaptureError(err error)
 ```
 
 CaptureError reports an error to Sentry.
+
+<a name="ClassifyRequestError"></a>
+## func [ClassifyRequestError](<https://github.com/IrminData/irmin-platform/blob/main/core/sentry/error_handler.go#L37>)
+
+```go
+func ClassifyRequestError(err error) (int, string, bool)
+```
+
+ClassifyRequestError maps a request error to an HTTP status, response body, and whether it should be reported to Sentry.
 
 <a name="FiberMiddleware"></a>
 ## func [FiberMiddleware](<https://github.com/IrminData/irmin-platform/blob/main/core/sentry/middleware.go#L14>)
@@ -14624,6 +14645,15 @@ func Init(logger *slog.Logger, env *utils.CoreAPIEnv)
 ```
 
 Init initializes the Sentry SDK using the provided environment configuration. Returns early if Sentry is disabled or no DSN is configured.
+
+<a name="NewFiberErrorHandler"></a>
+## func [NewFiberErrorHandler](<https://github.com/IrminData/irmin-platform/blob/main/core/sentry/error_handler.go#L16>)
+
+```go
+func NewFiberErrorHandler(logger *slog.Logger) fiber.ErrorHandler
+```
+
+NewFiberErrorHandler returns a Fiber ErrorHandler that reports unexpected errors to Sentry. Expected client errors \(\*fiber.Error with a 4xx status\) are returned with that status and are not sent to Sentry. 5xx Fiber errors and non\-Fiber errors are logged, reported, and returned as 5xx.
 
 <a name="RecoverAndCapture"></a>
 ## func [RecoverAndCapture](<https://github.com/IrminData/irmin-platform/blob/main/core/sentry/sentry.go#L60>)
@@ -17372,7 +17402,7 @@ func GetAllTemplates() ([]TemplateDefinition, error)
 GetAllTemplates returns all embedded templates with parsed metadata.
 
 <a name="ParseTemplateForTest"></a>
-### func [ParseTemplateForTest](<https://github.com/IrminData/irmin-platform/blob/main/core/templatefiles/library.go#L244-L248>)
+### func [ParseTemplateForTest](<https://github.com/IrminData/irmin-platform/blob/main/core/templatefiles/library.go#L242-L246>)
 
 ```go
 func ParseTemplateForTest(content string, templateType irminmodels.TemplateType, language irminmodels.TemplateLanguage) TemplateDefinition
