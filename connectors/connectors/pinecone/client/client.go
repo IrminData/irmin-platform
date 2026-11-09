@@ -299,7 +299,7 @@ func (c *PineconeClient) Search(ctx context.Context, queryVector []float32, topK
 		topK = MaxTopK
 	}
 
-	topKUint32 := uint32(topK) //nolint:gosec // bounds checked above
+	topKUint32 := uint32(topK)
 	resp, err := c.index.QueryByVectorValues(ctx, &pinecone.QueryByVectorValuesRequest{
 		Vector:          queryVector,
 		TopK:            topKUint32,
@@ -449,11 +449,11 @@ func (c *PineconeClient) vectorToRecord(vec *pinecone.Vector) EmbeddingRecord {
 
 // extractMetadataFields extracts metadata from Pinecone metadata into the record.
 func (c *PineconeClient) extractMetadataFields(metadata *pinecone.Metadata, record *EmbeddingRecord) {
-	if metadata == nil || metadata.Fields == nil {
+	if metadata == nil || metadata.GetFields() == nil {
 		return
 	}
 
-	fields := metadata.Fields
+	fields := metadata.GetFields()
 	c.extractStandardFields(fields, record)
 	c.extractCustomMetadata(fields, record)
 }
@@ -516,11 +516,11 @@ func valueToString(v *structpb.Value) string {
 // extractMetadataStrings converts Pinecone metadata to string map.
 func (c *PineconeClient) extractMetadataStrings(metadata *pinecone.Metadata) map[string]string {
 	result := make(map[string]string)
-	if metadata == nil || metadata.Fields == nil {
+	if metadata == nil || metadata.GetFields() == nil {
 		return result
 	}
 
-	for k, v := range metadata.Fields {
+	for k, v := range metadata.GetFields() {
 		result[k] = valueToString(v)
 	}
 	return result

@@ -220,7 +220,8 @@ func (api *APIControllers) ReportUsage(c fiber.Ctx) error {
 	dimension := db.UsageDimension(req.Dimension)
 	switch dimension {
 	case db.UsageDimensionStorage, db.UsageDimensionWorkflowRuns, db.UsageDimensionAIRequests,
-		db.UsageDimensionAPIRequests, db.UsageDimensionDataTransfer, db.UsageDimensionSeats:
+		db.UsageDimensionAPIRequests, db.UsageDimensionDataTransfer, db.UsageDimensionSeats,
+		db.UsageDimensionComputeInvocations, db.UsageDimensionVectorizations:
 		// valid
 	default:
 		return api.handleServiceError(c, "Invalid usage dimension", services.ErrInvalidRequest, dict)

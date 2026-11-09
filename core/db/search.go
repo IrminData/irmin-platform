@@ -1695,8 +1695,6 @@ func (d *Database) searchScripts(
 }
 
 // searchUsers searches users using a specific implementation for workspace relationships.
-//
-//nolint:gocognit // This function is not complex enough to warrant a refactor.
 func (d *Database) searchUsers(
 	workspaceID uint,
 	query string,

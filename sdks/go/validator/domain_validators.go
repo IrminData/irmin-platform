@@ -573,8 +573,6 @@ func (v *Validator) validateFieldMappingPipelineStage(parentStruct reflect.Value
 }
 
 // validateEmbeddingsPipelineStage validates embeddings-type pipeline stages.
-//
-//nolint:gocognit // There is no need to refactor this code
 func (v *Validator) validateEmbeddingsPipelineStage(parentStruct reflect.Value) bool {
 	embeddingsOperationField := parentStruct.FieldByName("EmbeddingsOperation")
 	embeddingsRepositoryField := parentStruct.FieldByName("EmbeddingsRepository")

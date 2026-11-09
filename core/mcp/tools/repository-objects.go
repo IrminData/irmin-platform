@@ -608,8 +608,6 @@ func (mcpTools *MCPTools) registerUploadRepositoryObjectFromURLTool() {
 }
 
 // registerMoveOrCopyRepositoryObjectTool registers the irmin_repository_object_move_or_copy tool for moving or copying a repository object in a workspace
-//
-//nolint:gocognit // Nothing complex, just wanted to put both copy and move in the same tool
 func (mcpTools *MCPTools) registerMoveOrCopyRepositoryObjectTool() {
 	toolregistry.Register(
 		mcpTools.registry,

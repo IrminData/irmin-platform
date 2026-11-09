@@ -81,8 +81,6 @@ func (e *EnsureOperationFromRequestError) Unwrap() error {
 // translate the carried HTTP status into their preferred envelope
 // (RespondJobError for Start*, plain fiber.Map for the legacy init
 // route during the transitional release).
-//
-//nolint:gocognit // upsert-with-lock + form parsing is inherently branchy
 func EnsureOperationFromRequest(
 	c fiber.Ctx,
 	database *db.Database,

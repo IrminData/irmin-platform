@@ -440,8 +440,6 @@ func setValueAtPointer(data any, pointer string, value any) (any, error) {
 }
 
 // setValueRecursive recursively navigates and sets a value.
-//
-//nolint:gocognit // Recursive JSON pointer navigation is inherently complex
 func setValueRecursive(data any, segments []string, value any) (any, error) {
 	if len(segments) == 0 {
 		return value, nil

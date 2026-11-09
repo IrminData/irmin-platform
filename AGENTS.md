@@ -153,7 +153,7 @@ Core validates Clerk JWTs with **HS512** using `CLERK_SIGNING_KEY` and the Clerk
 
 ### Validation gotchas
 - Default hermetic gate: `make validate` (see root Makefile / README). `make test-core` needs the live Core integration env and is not part of that gate.
-- `make lint-go` pins `golangci-lint@v2.15.0` so it can decode Go 1.27 export data. v2.15.0 reports additional findings versus v2.6.1; those are a follow-up, not part of the toolchain bump. The published Go SDK keeps `go 1.26.5` as its consumer minimum.
+- `make lint-go` pins `golangci-lint@v2.15.0` with `GOTOOLCHAIN=go1.27.3` so it can decode Go 1.27 export data (the linter module would otherwise download Go 1.26.10). Each Go module's `.golangci.yml` keeps the v2.6.1 pass bar: v2.15.0's bundled analyzers (goconst composite lits, golines 0.16, sloglint context methods, staticcheck QF1012, gosec G118, gocognit 1.3, predeclared 0.3) are configured not to fail CI on preexisting findings. The published Go SDK keeps `go 1.26.5` as its consumer minimum.
 - AI `pnpm db:migrate` can hang after printing success; if so, interrupt and rely on the migrate-on-boot path in `pnpm dev`.
 
 
