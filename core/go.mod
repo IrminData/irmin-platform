@@ -4,11 +4,11 @@ go 1.27.3
 
 require (
 	github.com/IrminData/irmin-platform/sdks/go v0.1.1
-	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.6
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.114.9
 	github.com/clerk/clerk-sdk-go/v2 v2.8.0
 	github.com/daytonaio/daytona/libs/sdk-go v0.190.0
 	github.com/getsentry/sentry-go v0.50.0
-	github.com/gofiber/fiber/v3 v3.6.1
+	github.com/gofiber/fiber/v3 v3.7.0
 	github.com/gofiber/storage/memory/v2 v2.1.2
 	github.com/gofiber/storage/s3/v2 v2.7.3
 	github.com/golang-jwt/jwt/v5 v5.3.1
@@ -21,7 +21,7 @@ require (
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/nguyenthenguyen/docx v0.0.0-20230621112118-9c8e795a11db
 	github.com/novuhq/novu-go v1.5.0
-	github.com/openai/openai-go/v3 v3.91.1
+	github.com/openai/openai-go/v3 v3.98.0
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/swaggo/swag v1.16.6
 	github.com/teambition/rrule-go v1.8.2
@@ -36,24 +36,24 @@ require (
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/apache/arrow-go/v18 v18.7.0 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.47.5 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.25 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.47.8 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.26 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.33.13 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.20.13 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.20.5 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.23.19 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.8 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.8 // indirect
-	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.23 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.9 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.8 // indirect
-	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.8 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.5.11 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.8.11 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.5.11 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.24 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.11.12 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.14.11 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.20.11 // indirect
 	github.com/aws/aws-sdk-go-v2/service/signin v1.12.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.39.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.44.1 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.51.6 // indirect
-	github.com/aws/smithy-go v1.28.7 // indirect
+	github.com/aws/smithy-go v1.28.8 // indirect
 	github.com/cenkalti/backoff/v5 v5.0.3 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/coder/websocket v1.8.15 // indirect
@@ -78,8 +78,8 @@ require (
 	github.com/go-playground/validator/v10 v10.30.3 // indirect
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/goccy/go-json v0.10.6 // indirect
-	github.com/gofiber/schema v1.8.8 // indirect
-	github.com/gofiber/utils/v2 v2.6.2 // indirect
+	github.com/gofiber/schema v1.9.3 // indirect
+	github.com/gofiber/utils/v2 v2.6.4 // indirect
 	github.com/google/flatbuffers v25.12.19+incompatible // indirect
 	github.com/gorilla/websocket v1.5.4-0.20250319132907-e064f32e3674 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.30.0 // indirect
@@ -94,22 +94,22 @@ require (
 	github.com/mattn/go-colorable v0.1.16 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/mattn/go-sqlite3 v1.14.49 // indirect
-	github.com/molecule-man/go-brrr v1.3.0 // indirect
-	github.com/philhofer/fwd v1.2.0 // indirect
+	github.com/molecule-man/go-brrr v1.3.1 // indirect
+	github.com/philhofer/fwd v1.2.1 // indirect
 	github.com/pierrec/lz4/v4 v4.1.27 // indirect
 	github.com/richardlehane/mscfb v1.0.9 // indirect
 	github.com/richardlehane/msoleps v1.0.6 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/segmentio/encoding v0.5.4 // indirect
 	github.com/sqids/sqids-go v0.4.1 // indirect
-	github.com/tidwall/gjson v1.19.0 // indirect
+	github.com/tidwall/gjson v1.20.0 // indirect
 	github.com/tidwall/match v1.2.0 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
 	github.com/tiendc/go-deepcopy v1.7.2 // indirect
 	github.com/tinylib/msgp v1.6.5 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
-	github.com/valyala/fasthttp v1.75.0 // indirect
+	github.com/valyala/fasthttp v1.78.0 // indirect
 	github.com/xuri/efp v0.0.3-0.20260924042702-217b81952dec // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
 	github.com/yosida95/uritemplate/v3 v3.0.2 // indirect
